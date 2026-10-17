@@ -19,7 +19,7 @@ running on Bun. Production uses `Bun.serve` in a single process. Both default to
 SQLite persistence in `apps/calendarpit/.calendarpit/calendarpit.sqlite` when using
 workspace scripts. Use `CALENDARPIT_DATABASE=:memory: bun run dev` for disposable
 data, or `bun run start -- --database :memory:` after building. Server hot reloads
-close the previous store before reopening the saved database.
+close the previous workspace before reopening the saved database.
 
 Run `bun run docs:dev` for the documentation preview at `http://localhost:4487`.
 The preview does not open an external browser automatically.

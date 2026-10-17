@@ -2,18 +2,38 @@ import { Database } from 'bun:sqlite';
 import { chmodSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
+/**
+ * Normalizes a database option to an absolute path, keeping `:memory:` as is.
+ *
+ * @param value - Path relative to the current directory, or `:memory:`.
+ * Defaults to `.calendarpit/calendarpit.sqlite`.
+ * @throws Error when the path is empty.
+ */
 export function resolveDatabase(value = '.calendarpit/calendarpit.sqlite') {
   if (!value.trim()) throw new Error('Database path must not be empty.');
   return value === ':memory:' ? value : resolve(value);
 }
 
-/** A versioned, atomic snapshot keeps protocol state and its reset baseline together. */
+/**
+ * Stores the workspace snapshot as one JSON row in SQLite.
+ *
+ * A versioned, atomic snapshot keeps protocol state and its reset baseline
+ * together. File databases use WAL with FULL synchronization and mode 0600. A
+ * separate lock file holds an exclusive SQLite lock for the instance's
+ * lifetime, so two processes cannot overwrite one workspace. The OS releases
+ * the lock on exit, including crashes.
+ */
 export class Persistence {
   readonly path: string;
   private db!: Database;
   private lock?: Database;
   private previous?: string;
 
+  /**
+   * @param path - SQLite file path or `:memory:`.
+   * @throws Error when another instance holds the lock or the schema version
+   * is unsupported.
+   */
   constructor(path = ':memory:') {
     this.path = resolveDatabase(path);
     if (this.path !== ':memory:') {
@@ -52,6 +72,7 @@ export class Persistence {
     }
   }
 
+  /** Returns the saved snapshot, or `undefined` for a new database. */
   read(): unknown {
     const row = this.db
       .query<{ state: string }, []>('SELECT state FROM workspace WHERE id = 1')
@@ -60,6 +81,7 @@ export class Persistence {
     return row ? JSON.parse(row.state) : undefined;
   }
 
+  /** Saves the snapshot, skipping the write when nothing changed. */
   write(state: unknown) {
     const value = JSON.stringify(state);
     if (value === this.previous) return;
@@ -71,6 +93,7 @@ export class Persistence {
     this.previous = value;
   }
 
+  /** Closes the database and releases the instance lock. */
   close() {
     this.db.close();
     this.lock?.close();

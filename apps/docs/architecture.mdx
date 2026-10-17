@@ -70,18 +70,18 @@ comments.
 
 ## Runtime and state
 
-`createCalendarpit()` owns a store per instance and exposes an async Web Request
+`createCalendarpit()` owns a workspace per instance and exposes an async Web Request
 handler. It returns null for UI routes. TanStack Start delegates protocol requests
 to that handler before rendering pages. The CLI and dev server default to a local
 SQLite file through Bun's built-in `bun:sqlite`; the programmatic factory defaults
 to `:memory:` for isolated embedded tests. No external database server is needed.
 
-The store keeps its working set in memory and checkpoints a versioned JSON snapshot
+The workspace keeps its working set in memory and checkpoints a versioned JSON snapshot
 into one SQLite row. A single atomic statement saves the fixture baseline, current
 data, grants/tokens, sync snapshots, calendar tombstones, subscriptions, and bounded logs together. Unchanged snapshots
 are not rewritten. File databases use WAL and FULL synchronization. A separate
 SQLite lock file holds an exclusive lock for the lifetime of the instance, preventing
-two independent stores from overwriting the same workspace. OS locks release on exit,
+two independent instances from overwriting the same workspace. OS locks release on exit,
 including crashes; no stale PID cleanup is needed. Database and lock files use mode 0600.
 
 A new database validates and captures its seed fixture. Existing databases restore

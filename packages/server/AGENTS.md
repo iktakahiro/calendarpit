@@ -36,7 +36,8 @@ The file name states the role. Anything without a role suffix is a rule module.
 - `workspace/` imports only `shared/` and `model/`.
 - `http/` imports only `shared/`, `model/`, and `workspace/`.
 - A feature may import another feature's rule or operation modules, never its
-  route modules. Keep imports one-way; Oxlint rejects import cycles.
+  route modules. Module imports must not form a cycle; Oxlint's
+  `import/no-cycle` rejects them.
 - Nothing inside `src/` imports `app.ts` or `index.ts`, and production code never
   imports `testing/`.
 

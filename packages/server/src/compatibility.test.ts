@@ -3,6 +3,9 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setup } from './testing/server-harness';
+import { snapshot } from './features/status/snapshot-operations';
+import { resetWorkspace } from './features/fixtures/fixture-operations';
+import { findEvent } from './features/events/event-operations';
 
 const path = '/calendar/v3/calendars/primary/events';
 const timed = {
@@ -70,7 +73,7 @@ describe('Google-compatible event details', () => {
   test('invalid guest permission values fail atomically for insert, replace and patch', async () => {
     const s = await client();
     await s.api(path, 'POST', timed);
-    const before = s.app.store.snapshot();
+    const before = snapshot(s.app.workspace);
     for (const field of [
       'guestsCanModify',
       'guestsCanInviteOthers',
@@ -94,7 +97,7 @@ describe('Google-compatible event details', () => {
         }
       }
     }
-    expect(s.app.store.snapshot()).toEqual(before);
+    expect(snapshot(s.app.workspace)).toEqual(before);
   });
   test('guest permissions propagate to invitation copies and recurring instances without granting shared-field writes', async () => {
     const s = await client();
@@ -158,11 +161,11 @@ describe('Google-compatible event details', () => {
       };
       await s.api(path, 'POST', { ...timed, ...permissions });
       // Saved workspaces from older versions have no guest permission fields.
-      const legacy = s.app.store.event('alex-work', 'planning');
+      const legacy = findEvent(s.app.workspace, 'alex-work', 'planning');
       delete legacy.guestsCanModify;
       delete legacy.guestsCanInviteOthers;
       delete legacy.guestsCanSeeOtherGuests;
-      s.app.store.persist();
+      s.app.workspace.persist();
       s.app.close();
       const next = await client({ database });
       expect(await next.api(`${path}/appointment`)).toMatchObject(permissions);
@@ -231,7 +234,7 @@ describe('Google-compatible event details', () => {
     expect(free.calendars.primary.busy).toEqual([
       { start: '2026-10-19T15:00:00+00:00', end: '2026-10-20T15:00:00+00:00' },
     ]);
-    expect(s.app.store.notifications[0]?.recipients).toEqual([
+    expect(s.app.workspace.notifications[0]?.recipients).toEqual([
       'outside@example.test',
     ]);
     await s.api(`${path}/appointment`, 'PUT', timed);
@@ -259,7 +262,7 @@ describe('Google-compatible event details', () => {
       await s.api(path, 'POST', body, 400);
     await s.api(`${path}?sendUpdates=yes`, 'POST', timed, 400);
     await s.api(`${path}?conferenceDataVersion=2`, 'POST', timed, 400);
-    expect(s.app.store.data.events).toHaveLength(1);
+    expect(s.app.workspace.data.events).toHaveLength(1);
   });
   test('synthetic conferences are idempotent, copyable, removable and never call Google', async () => {
     const s = await client();
@@ -391,7 +394,7 @@ describe('incremental sync', () => {
         )
       ).status,
     ).toBe(410);
-    s.app.store.reset();
+    resetWorkspace(s.app.workspace);
     const after = await s.token();
     expect(
       (
@@ -420,14 +423,14 @@ describe('incremental sync', () => {
         type: 'web_hook',
         address: 'http://127.0.0.1:5555/watch',
       });
-      await s.app.store.drain();
+      await s.app.drain();
       await s.api(
         '/__calendarpit/calendars/alex-work/events/planning',
         'DELETE',
         undefined,
         204,
       );
-      await s.app.store.drain();
+      await s.app.drain();
       expect(deliveries).toBe(2);
       s.app.close();
       const restarted = setup({ database, deliver });
@@ -571,7 +574,7 @@ test('local invitations, RSVP propagation, cancellation and sendUpdates modes', 
       shared: { tag: 'shared' },
     },
   });
-  expect(s.app.store.notifications[0]?.recipients).toEqual([
+  expect(s.app.workspace.notifications[0]?.recipients).toEqual([
     'external@example.test',
   ]);
   const { access_token: sam } = await s.token(undefined, 'sam');
@@ -610,7 +613,7 @@ test('local invitations, RSVP propagation, cancellation and sendUpdates modes', 
   expect((await s.api(`${path}/appointment`)).attendees[0].responseStatus).toBe(
     'accepted',
   );
-  expect(s.app.store.notifications[1]?.method).toBe('REPLY');
+  expect(s.app.workspace.notifications[1]?.method).toBe('REPLY');
   await s.api(`${path}/appointment?sendUpdates=none`, 'DELETE', undefined, 204);
   expect(
     (
@@ -619,7 +622,7 @@ test('local invitations, RSVP propagation, cancellation and sendUpdates modes', 
       ).json()
     ).status,
   ).toBe('cancelled');
-  expect(s.app.store.notifications).toHaveLength(2);
+  expect(s.app.workspace.notifications).toHaveLength(2);
 });
 
 test('instance RSVP changes the organizer occurrence and series cancellation cancels modified copies', async () => {
@@ -689,7 +692,7 @@ test('recurrence UNTIL, monthly ordinal weekdays, and exceptions survive restart
     await s.api(`${path}/${list.items[1].id}`, 'PATCH', {
       summary: 'Exception',
     });
-    const original = s.app.store.data.events.find(
+    const original = s.app.workspace.data.events.find(
       (e) => e.id === list.items[1].id,
     )!;
     s.app.close();

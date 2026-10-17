@@ -1,7 +1,21 @@
 import { afterEach, expect } from 'bun:test';
-import { createCalendarpit, type StoreOptions } from '../index';
+import { createCalendarpit, type WorkspaceOptions } from '../index';
 const instances: ReturnType<typeof createCalendarpit>[] = [];
-export function setup(options: StoreOptions = {}) {
+
+/**
+ * Creates an in-memory Calendarpit for one test, closed automatically after
+ * the test. The helpers send requests through `app.handle()` without a
+ * network server:
+ *
+ * - `request(path, method, body, token, headers)` sends JSON with an optional
+ *   bearer token.
+ * - `form(path, data)` posts a URL-encoded form.
+ * - `consent(scope, user, decision, params)` completes the consent page for
+ *   the default `sample-app` client and returns the redirect URL.
+ * - `token(scope, user)` runs the full authorization code flow and returns
+ *   the token response.
+ */
+export function setup(options: WorkspaceOptions = {}) {
   const app = createCalendarpit(options);
   instances.push(app);
   const request = async (

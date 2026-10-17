@@ -1,37 +1,25 @@
-import { fail, fields, object, string } from './model';
+import { fail } from '../../shared/errors';
+import { fields, object, string } from '../../shared/validation';
+import type {
+  Attendee,
+  Conference,
+  Person,
+  Reminders,
+} from '../../model/event';
 
+/** Google's defaults for the `guestsCan*` event fields. */
 export const guestPermissionDefaults = {
   guestsCanModify: false,
   guestsCanInviteOthers: true,
   guestsCanSeeOtherGuests: true,
 } as const;
 
-export type Person = { email: string; displayName?: string; self?: boolean };
-export type Attendee = Person & {
-  responseStatus: 'needsAction' | 'declined' | 'tentative' | 'accepted';
-  organizer?: boolean;
-  optional?: boolean;
-  resource?: boolean;
-  comment?: string;
-  additionalGuests?: number;
-};
-export type Reminders = {
-  useDefault: boolean;
-  overrides?: { method: 'email' | 'popup'; minutes: number }[];
-};
-export type Conference = {
-  createRequest?: {
-    requestId: string;
-    conferenceSolutionKey?: { type: 'hangoutsMeet' };
-    status?: { statusCode: 'success' };
-  };
-  conferenceId?: string;
-  conferenceSolution?: {
-    key: { type: 'hangoutsMeet' };
-    name: string;
-  };
-  entryPoints?: { entryPointType: 'video'; uri: string; label?: string }[];
-};
+/**
+ * Parses an `organizer` or `creator` reference. Google's read-only `id` field
+ * is accepted and dropped.
+ *
+ * @throws {@link ApiError} 400 for an invalid email or a non-boolean `self`.
+ */
 export function person(value: unknown): Person {
   const data = object(value);
   fields(data, ['email', 'displayName', 'self', 'id']);
@@ -47,6 +35,12 @@ export function person(value: unknown): Person {
     ...(data.self !== undefined ? { self: data.self } : {}),
   };
 }
+/**
+ * Parses an attendee list of at most 200 entries with unique emails
+ * (case-insensitive). `responseStatus` defaults to `needsAction`.
+ *
+ * @throws {@link ApiError} 400 for an invalid entry or a duplicate email.
+ */
 export function attendees(value: unknown): Attendee[] {
   if (!Array.isArray(value) || value.length > 200)
     fail('attendees must be an array of at most 200 entries.');
@@ -100,6 +94,13 @@ export function attendees(value: unknown): Attendee[] {
     fail('Duplicate attendee email.');
   return result;
 }
+/**
+ * Parses reminder settings: `useDefault`, or up to five overrides of at most
+ * four weeks each.
+ *
+ * @throws {@link ApiError} 400 for overrides combined with `useDefault`, or an
+ * invalid override.
+ */
 export function reminders(value: unknown): Reminders {
   const d = object(value);
   fields(d, ['useDefault', 'overrides']);
@@ -129,6 +130,13 @@ export function reminders(value: unknown): Reminders {
   });
   return { useDefault: d.useDefault, ...(overrides ? { overrides } : {}) };
 }
+/**
+ * Parses conference data. Only synthetic `hangoutsMeet` conferences with
+ * video entry points are supported; other solutions are rejected.
+ *
+ * @throws {@link ApiError} 400 `unsupportedFeature` for other conference
+ * types, or 400 for data with neither a create request nor entry points.
+ */
 export function conference(value: unknown): Conference {
   const d = object(value);
   fields(d, [

@@ -1,8 +1,16 @@
 import { describe, expect, test } from 'bun:test';
 import { defaultFixture } from './index';
-import { busy, interval, makeEvent, parseFixture } from './model';
+import { busy } from './features/freebusy/busy';
+import { interval } from './features/events/event-time';
+import { makeEvent } from './features/events/event-input';
+import { parseFixture } from './features/fixtures/fixture';
 
 import { setup } from './testing/server-harness';
+import { snapshot } from './features/status/snapshot-operations';
+import { revokeGrant } from './features/oauth/oauth-operations';
+import { resetWorkspace } from './features/fixtures/fixture-operations';
+import { findEvent } from './features/events/event-operations';
+import { findCalendar } from './features/calendars/calendar-operations';
 const timed = {
   id: 'test-event',
   summary: 'Busy',
@@ -266,7 +274,7 @@ describe('calendar behavior', () => {
     expect(
       (await s.request(`${path}?syncToken=old`, 'GET', undefined, t)).status,
     ).toBe(410);
-    expect(s.app.store.data.events.length).toBe(1);
+    expect(s.app.workspace.data.events.length).toBe(1);
   });
   test('merge overlaps, clip, exclude free/cancelled, handle DST all-day durations', () => {
     const c = parseFixture(defaultFixture, 0).calendars.find(
@@ -349,7 +357,7 @@ describe('management and watch', () => {
   test('fixture validation is atomic and reset restores startup data and clears runtime', async () => {
     const s = setup();
     await s.token();
-    const before = s.app.store.snapshot();
+    const before = snapshot(s.app.workspace);
     expect(
       (
         await s.request('/__calendarpit/fixtures', 'POST', {
@@ -358,18 +366,18 @@ describe('management and watch', () => {
         })
       ).status,
     ).toBe(400);
-    expect(s.app.store.data.users).toEqual(before.users);
+    expect(s.app.workspace.data.users).toEqual(before.users);
     await s.request('/__calendarpit/fixtures', 'POST', {
       users: [],
       calendars: [],
       events: [],
       clients: [],
     });
-    expect(s.app.store.data.users).toEqual([]);
+    expect(s.app.workspace.data.users).toEqual([]);
     await s.request('/__calendarpit/reset', 'POST', {});
-    expect(s.app.store.data.users.length).toBe(2);
-    expect(s.app.store.grants.size).toBe(0);
-    expect(s.app.store.history).toEqual([]);
+    expect(s.app.workspace.data.users.length).toBe(2);
+    expect(s.app.workspace.grants.size).toBe(0);
+    expect(s.app.workspace.history).toEqual([]);
   });
   test('management CRUD maintains primary invariants and rejects cross-origin writes', async () => {
     const s = setup();
@@ -390,15 +398,17 @@ describe('management and watch', () => {
       })
     ).json();
     expect(c.primary).toBe(true);
-    expect(s.app.store.calendar('alex-work').primary).toBe(false);
+    expect(findCalendar(s.app.workspace, 'alex-work').primary).toBe(false);
     await s.request('/__calendarpit/calendars/new', 'DELETE', {});
-    expect(s.app.store.calendar('primary', 'alex').id).toBe('alex-work');
+    expect(findCalendar(s.app.workspace, 'primary', 'alex').id).toBe(
+      'alex-work',
+    );
   });
   test('history masks tokens, client secrets, codes and callback state', async () => {
     const s = setup();
     const t = await s.token();
     await s.request(path, 'GET', undefined, t.access_token);
-    const log = JSON.stringify(s.app.store.history);
+    const log = JSON.stringify(s.app.workspace.history);
     expect(log).not.toContain(t.access_token);
     expect(log).not.toContain(t.refresh_token);
     expect(log).not.toContain('local-sample-secret');
@@ -427,7 +437,7 @@ describe('management and watch', () => {
       )
     ).json();
     await s.request(path, 'POST', timed, t);
-    await s.app.store.drain();
+    await s.app.drain();
     expect(messages.map((h) => h.get('X-Goog-Resource-State'))).toEqual([
       'sync',
       'exists',
@@ -437,7 +447,9 @@ describe('management and watch', () => {
       '2',
     ]);
     expect(messages[0]!.get('X-Goog-Channel-Token')).toBe('channel-secret');
-    expect(JSON.stringify(s.app.store.history)).not.toContain('channel-secret');
+    expect(JSON.stringify(s.app.workspace.history)).not.toContain(
+      'channel-secret',
+    );
     await s.request(
       '/calendar/v3/channels/stop',
       'POST',
@@ -445,7 +457,7 @@ describe('management and watch', () => {
       t,
     );
     await s.request(`${path}/test-event`, 'DELETE', undefined, t);
-    await s.app.store.drain();
+    await s.app.drain();
     expect(messages.length).toBe(2);
   });
   test('watch restricts destinations, retries failures and expires', async () => {
@@ -481,12 +493,12 @@ describe('management and watch', () => {
       },
       t,
     );
-    await s.app.store.drain();
+    await s.app.drain();
     expect(calls).toBe(3);
-    expect(s.app.store.deliveries[0]!.status).toBe('failed');
+    expect(s.app.workspace.deliveries[0]!.status).toBe('failed');
     now += 1001;
     await s.request(path, 'POST', timed, t);
-    await s.app.store.drain();
+    await s.app.drain();
     expect(calls).toBe(3);
   });
   test('reset aborts in-flight delivery and prevents retries and stale state', async () => {
@@ -513,11 +525,11 @@ describe('management and watch', () => {
       t,
     );
     await ready;
-    s.app.store.reset();
-    await s.app.store.drain();
+    resetWorkspace(s.app.workspace);
+    await s.app.drain();
     expect(calls).toBe(1);
-    expect(s.app.store.deliveries).toEqual([]);
-    expect(s.app.store.channels.size).toBe(0);
+    expect(s.app.workspace.deliveries).toEqual([]);
+    expect(s.app.workspace.channels.size).toBe(0);
   });
   test('revoking a connection cancels its watch channels', async () => {
     const s = setup({
@@ -530,9 +542,9 @@ describe('management and watch', () => {
       { id: 'revoked', type: 'web_hook', address: 'http://127.0.0.1:5555' },
       t,
     );
-    s.app.store.revoke([...s.app.store.grants.keys()][0]!);
-    await s.app.store.drain();
-    expect(s.app.store.channels.size).toBe(0);
+    revokeGrant(s.app.workspace, [...s.app.workspace.grants.keys()][0]!);
+    await s.app.drain();
+    expect(s.app.workspace.channels.size).toBe(0);
   });
 });
 
@@ -585,8 +597,8 @@ test('instance reset and failed mutations cannot change another instance', async
   const b = setup();
   const t = await a.token();
   await a.request(path, 'POST', timed, t.access_token);
-  expect(b.app.store.data.events.map((e) => e.id)).toEqual(['planning']);
-  const old = a.app.store.event('alex-work', 'test-event');
+  expect(b.app.workspace.data.events.map((e) => e.id)).toEqual(['planning']);
+  const old = findEvent(a.app.workspace, 'alex-work', 'test-event');
   expect(
     (
       await a.request(
@@ -598,9 +610,9 @@ test('instance reset and failed mutations cannot change another instance', async
       )
     ).status,
   ).toBe(412);
-  expect(a.app.store.event('alex-work', 'test-event').summary).toBe(
+  expect(findEvent(a.app.workspace, 'alex-work', 'test-event').summary).toBe(
     old.summary,
   );
-  a.app.store.reset();
-  expect(b.app.store.data.events.map((e) => e.id)).toEqual(['planning']);
+  resetWorkspace(a.app.workspace);
+  expect(b.app.workspace.data.events.map((e) => e.id)).toEqual(['planning']);
 });

@@ -16,6 +16,7 @@ export default defineConfig({
   ],
   rules: {
     'typescript/no-explicit-any': 'error',
+    'import/no-cycle': 'error',
     'no-unused-vars': [
       'error',
       { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
