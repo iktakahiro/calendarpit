@@ -74,13 +74,13 @@ test('Google SDK: approve → select → watch → CRUD/busy → stop → revoke
       expect((await state()).calendars).toHaveLength(2);
       await action('select', { calendarId: 'alex-work' });
       await action('watch');
-      await app.store.drain();
+      await app.drain();
       expect(sample.notifications.at(-1)!['x-goog-resource-state']).toBe(
         'sync',
       );
       const created = await action('create');
       expect(created.lastEventId).toBeTruthy();
-      await app.store.drain();
+      await app.drain();
       expect(sample.notifications.at(-1)!['x-goog-resource-state']).toBe(
         'exists',
       );
@@ -105,7 +105,7 @@ test('Google SDK: approve → select → watch → CRUD/busy → stop → revoke
         ).summary,
       ).toBe('Changed');
       await action('delete');
-      await app.store.drain();
+      await app.drain();
       expect(
         (await state()).events.some(
           (e: { id: string }) => e.id === created.lastEventId,
@@ -114,7 +114,7 @@ test('Google SDK: approve → select → watch → CRUD/busy → stop → revoke
       await action('stop');
       const count = sample.notifications.length;
       await action('create');
-      await app.store.drain();
+      await app.drain();
       expect(sample.notifications).toHaveLength(count);
       await action('delete');
       const listed = await sample.sdk.calendarList.list({
@@ -216,7 +216,7 @@ test('Google SDK: approve → select → watch → CRUD/busy → stop → revoke
       await action('revoke');
       expect((await state()).status).toContain('Revoked');
       await connect();
-      const grant = [...app.store.grants.values()]
+      const grant = [...app.workspace.grants.values()]
         .filter((g) => !g.revoked)
         .at(-1)!;
       const revoke = await fetch(
@@ -244,9 +244,9 @@ test('Google SDK: approve → select → watch → CRUD/busy → stop → revoke
         body: '{}',
       });
       expect(reset.status).toBe(200);
-      expect(app.store.data.events.map((e) => e.id)).toEqual(['planning']);
-      expect(app.store.history).toEqual([]);
-      expect(app.store.grants.size).toBe(0);
+      expect(app.workspace.data.events.map((e) => e.id)).toEqual(['planning']);
+      expect(app.workspace.history).toEqual([]);
+      expect(app.workspace.grants.size).toBe(0);
     }
     expect(sample.requests.length).toBeGreaterThan(20);
     expect(
@@ -254,7 +254,7 @@ test('Google SDK: approve → select → watch → CRUD/busy → stop → revoke
     ).toBe(true);
   } finally {
     app.close();
-    await app.store.drain();
+    await app.drain();
     await server.stop(true);
     await sampleServer.stop(true);
   }

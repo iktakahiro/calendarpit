@@ -23,7 +23,9 @@ const runtime = createCalendarpit({
 if (import.meta.env.DEV) development.calendarpitDevelopmentRuntime = runtime;
 export const close = () => runtime.close();
 if (import.meta.hot) import.meta.hot.dispose(close);
-console.info(`Calendarpit data: ${runtime.store.storage.path ?? ':memory:'}`);
+console.info(
+  `Calendarpit data: ${runtime.workspace.storage.path ?? ':memory:'}`,
+);
 const handleStartRequest = createStartHandler(defaultStreamHandler);
 
 export default createServerEntry({

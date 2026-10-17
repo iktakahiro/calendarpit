@@ -3,7 +3,13 @@ import { Database } from 'bun:sqlite';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createCalendarpit, defaultFixture, type StoreOptions } from './index';
+import {
+  createCalendarpit,
+  defaultFixture,
+  type WorkspaceOptions,
+} from './index';
+import { snapshot } from './features/status/snapshot-operations';
+import { findEvent } from './features/events/event-operations';
 
 const directories: string[] = [];
 const instances: ReturnType<typeof createCalendarpit>[] = [];
@@ -12,7 +18,7 @@ function file() {
   directories.push(directory);
   return join(directory, 'nested', 'workspace.sqlite');
 }
-function open(database: string, options: StoreOptions = {}) {
+function open(database: string, options: WorkspaceOptions = {}) {
   const app = createCalendarpit({ ...options, database });
   instances.push(app);
   const request = async (
@@ -76,7 +82,7 @@ function open(database: string, options: StoreOptions = {}) {
 }
 afterEach(async () => {
   for (const app of instances) app.close();
-  await Promise.all(instances.map((app) => app.store.drain()));
+  await Promise.all(instances.map((app) => app.drain()));
   instances.length = 0;
   for (const directory of directories)
     rmSync(directory, { recursive: true, force: true });
@@ -94,7 +100,7 @@ describe('SQLite persistence', () => {
   test('reopens data with stable metadata and the original reset baseline', async () => {
     const database = file();
     const first = open(database);
-    const baseline = structuredClone(first.app.store.startup);
+    const baseline = structuredClone(first.app.workspace.startup);
     expect((await first.request(eventPath, 'POST', event)).status).toBe(200);
     expect(
       (
@@ -105,14 +111,14 @@ describe('SQLite persistence', () => {
         })
       ).status,
     ).toBe(201);
-    const before = first.app.store.snapshot();
+    const before = snapshot(first.app.workspace);
     first.app.close();
     const second = open(database, {
       fixture: { users: [], calendars: [], events: [], clients: [] },
     });
-    expect(second.app.store.snapshot().events).toEqual(before.events);
-    expect(second.app.store.snapshot().users).toEqual(before.users);
-    expect(second.app.store.startup).toEqual(baseline);
+    expect(snapshot(second.app.workspace).events).toEqual(before.events);
+    expect(snapshot(second.app.workspace).users).toEqual(before.users);
+    expect(second.app.workspace.startup).toEqual(baseline);
     expect((await second.request('/__calendarpit/health')).status).toBe(200);
     expect(
       await (await second.request('/__calendarpit/health')).json(),
@@ -126,31 +132,31 @@ describe('SQLite persistence', () => {
     ).toBe(200);
     second.app.close();
     const third = open(database);
-    expect(third.app.store.event('alex-work', 'saved-event').summary).toBe(
-      'Updated',
-    );
+    expect(
+      findEvent(third.app.workspace, 'alex-work', 'saved-event').summary,
+    ).toBe('Updated');
     await third.request(`${eventPath}/saved-event`, 'DELETE');
     third.app.close();
     const fourth = open(database);
     expect(
-      fourth.app.store.data.events.some(
+      fourth.app.workspace.data.events.some(
         (e) => e.id === 'saved-event' && e.status !== 'cancelled',
       ),
     ).toBe(false);
     await fourth.request('/__calendarpit/reset', 'POST', {});
     fourth.app.close();
-    expect(open(database).app.store.data).toEqual(baseline);
+    expect(open(database).app.workspace.data).toEqual(baseline);
   });
 
   test('restores OAuth tokens and history; revocation and reset survive restart', async () => {
     const database = file();
     let current = open(database);
     const tokens = await current.authorize();
-    const grantId = [...current.app.store.grants.keys()][0]!;
+    const grantId = [...current.app.workspace.grants.keys()][0]!;
     current.app.close();
     current = open(database);
-    expect(current.app.store.history.length).toBeGreaterThan(0);
-    expect(JSON.stringify(current.app.store.history)).not.toContain(
+    expect(current.app.workspace.history.length).toBeGreaterThan(0);
+    expect(JSON.stringify(current.app.workspace.history)).not.toContain(
       tokens.access_token,
     );
     expect(
@@ -201,16 +207,16 @@ describe('SQLite persistence', () => {
     await current.request('/__calendarpit/reset', 'POST', {});
     current.app.close();
     current = open(database);
-    expect(current.app.store.grants.size).toBe(0);
-    expect(current.app.store.access.size).toBe(0);
-    expect(current.app.store.refresh.size).toBe(0);
-    expect(current.app.store.history).toEqual([]);
+    expect(current.app.workspace.grants.size).toBe(0);
+    expect(current.app.workspace.access.size).toBe(0);
+    expect(current.app.workspace.refresh.size).toBe(0);
+    expect(current.app.workspace.history).toEqual([]);
   });
 
   test('resumes active watch channels and message numbering for admin mutations', async () => {
     const database = file();
     const messages: Headers[] = [];
-    const deliver: StoreOptions['deliver'] = async (_url, init) => {
+    const deliver: WorkspaceOptions['deliver'] = async (_url, init) => {
       messages.push(new Headers(init.headers));
       return new Response(null, { status: 204 });
     };
@@ -229,17 +235,19 @@ describe('SQLite persistence', () => {
     );
     const channel = await watched.json();
     expect(watched.status).toBe(200);
-    await current.app.store.drain();
+    await current.app.drain();
     expect(messages[0]!.get('X-Goog-Resource-State')).toBe('sync');
     current.app.close();
     current = open(database, { deliver });
     expect(messages.length).toBe(1);
     await current.request(eventPath, 'POST', event);
-    await current.app.store.drain();
+    await current.app.drain();
     expect(messages[1]!.get('X-Goog-Message-Number')).toBe('2');
     expect(messages[1]!.get('X-Goog-Resource-ID')).toBe(channel.resourceId);
     expect(messages[1]!.get('X-Goog-Channel-Token')).toBe('channel-secret');
-    expect(current.app.store.snapshot().channels[0]!.token).toBe('[REDACTED]');
+    expect(snapshot(current.app.workspace).channels[0]!.token).toBe(
+      '[REDACTED]',
+    );
     await current.request(
       '/calendar/v3/channels/stop',
       'POST',
@@ -248,8 +256,8 @@ describe('SQLite persistence', () => {
     );
     current.app.close();
     current = open(database, { deliver });
-    expect(current.app.store.channels.size).toBe(0);
-    expect(current.app.store.deliveries.map((d) => d.status)).toEqual([
+    expect(current.app.workspace.channels.size).toBe(0);
+    expect(current.app.workspace.deliveries.map((d) => d.status)).toEqual([
       'delivered',
       'delivered',
     ]);
@@ -280,12 +288,12 @@ describe('SQLite persistence', () => {
     );
     first.app.close();
     const second = open(database);
-    await first.app.store.drain();
-    expect(second.app.store.deliveries[0]!.status).toBe('cancelled');
-    expect(second.app.store.channels.size).toBe(1);
+    await first.app.drain();
+    expect(second.app.workspace.deliveries[0]!.status).toBe('cancelled');
+    expect(second.app.workspace.channels.size).toBe(1);
     await second.request('/__calendarpit/reset', 'POST', {});
     second.app.close();
-    expect(open(database).app.store.deliveries).toEqual([]);
+    expect(open(database).app.workspace.deliveries).toEqual([]);
   });
 
   test('expired tokens and channels stay expired after reopening', async () => {
@@ -307,7 +315,7 @@ describe('SQLite persistence', () => {
     current.app.close();
     now += 1000;
     current = open(database, { now: () => now });
-    expect(current.app.store.channels.size).toBe(0);
+    expect(current.app.workspace.channels.size).toBe(0);
     expect(
       (
         await current.request(
@@ -323,7 +331,7 @@ describe('SQLite persistence', () => {
   test('fixture replacement persists while invalid fixtures leave saved state intact', async () => {
     const database = file();
     let current = open(database);
-    const baseline = structuredClone(current.app.store.startup);
+    const baseline = structuredClone(current.app.workspace.startup);
     await current.request('/__calendarpit/fixtures', 'POST', {
       ...defaultFixture,
       events: [],
@@ -337,23 +345,23 @@ describe('SQLite persistence', () => {
     ).toBe(400);
     current.app.close();
     current = open(database);
-    expect(current.app.store.data.events).toEqual([]);
+    expect(current.app.workspace.data.events).toEqual([]);
     await current.request('/__calendarpit/reset', 'POST', {});
-    expect(current.app.store.data).toEqual(baseline);
+    expect(current.app.workspace.data).toEqual(baseline);
   });
 
   test('memory sessions are isolated and do not survive reopening', async () => {
     const first = open(':memory:');
     const second = open(':memory:');
     await first.request(eventPath, 'POST', event);
-    expect(second.app.store.data.events.some((e) => e.id === event.id)).toBe(
-      false,
-    );
+    expect(
+      second.app.workspace.data.events.some((e) => e.id === event.id),
+    ).toBe(false);
     first.app.close();
     expect(
-      open(':memory:').app.store.data.events.some((e) => e.id === event.id),
+      open(':memory:').app.workspace.data.events.some((e) => e.id === event.id),
     ).toBe(false);
-    expect(second.app.store.storage).toEqual({ mode: 'memory' });
+    expect(second.app.workspace.storage).toEqual({ mode: 'memory' });
   });
 
   test('a file has one active owner and releases its lock on close', () => {
@@ -361,7 +369,7 @@ describe('SQLite persistence', () => {
     const first = open(database);
     expect(() => open(database)).toThrow('Database is already in use');
     first.app.close();
-    expect(open(database).app.store.storage).toEqual({
+    expect(open(database).app.workspace.storage).toEqual({
       mode: 'sqlite',
       path: database,
     });
@@ -381,7 +389,7 @@ describe('SQLite persistence', () => {
     });
     repair.exec('PRAGMA user_version = 1');
     repair.close();
-    expect(open(database).app.store.data.users.length).toBe(2);
+    expect(open(database).app.workspace.data.users.length).toBe(2);
   });
 });
 
@@ -405,9 +413,9 @@ test('closed instances reject writes and cannot affect a reopened workspace', as
   old.app.close();
   const current = open(database);
   expect((await old.request(eventPath, 'POST', event)).status).toBe(503);
-  expect(current.app.store.data.events.some((row) => row.id === event.id)).toBe(
-    false,
-  );
+  expect(
+    current.app.workspace.data.events.some((row) => row.id === event.id),
+  ).toBe(false);
 });
 
 test('restart drops one-use consent, authorization codes and pagination cursors', async () => {
@@ -445,8 +453,8 @@ test('restart drops one-use consent, authorization codes and pagination cursors'
   expect(cursor).toBeString();
   first.app.close();
   const second = open(database);
-  expect(second.app.store.codes.size).toBe(0);
-  expect(second.app.store.consents.size).toBe(0);
+  expect(second.app.workspace.codes.size).toBe(0);
+  expect(second.app.workspace.consents.size).toBe(0);
   expect(
     (
       await second.form('/oauth/token', {

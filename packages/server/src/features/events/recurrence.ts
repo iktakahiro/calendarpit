@@ -1,20 +1,22 @@
 import { Temporal } from '@js-temporal/polyfill';
 import { RRule, RRuleSet } from 'rrule';
-import {
-  fail,
-  interval,
-  timeValue,
-  zone,
-  type Calendar,
-  type CalendarEvent,
-  type EventTime,
-} from './model';
+import { fail } from '../../shared/errors';
+import { zone } from '../../shared/validation';
+import type { Calendar } from '../../model/directory';
+import type { CalendarEvent, EventTime } from '../../model/event';
+import { interval, timeValue } from './event-time';
 
 const day = 86400000;
+/** Expansion never reaches further than about 100 years past DTSTART. */
 const maxSpan = 366 * 100 * day;
+/** Upper bound for COUNT, INTERVAL, and instances per expansion. */
 const limit = 10000;
 const compact = (value: string) =>
   value.replace(/[-:]/g, '').replace(/\.\d+/, '');
+/**
+ * Converts an instant to a "floating" Date whose UTC fields equal the local
+ * wall-clock time in `tz`. rrule computes in wall-clock time this way.
+ */
 function wall(value: number, tz: string): Date {
   const local = Temporal.Instant.fromEpochMilliseconds(value)
     .toZonedDateTimeISO(tz)
@@ -35,6 +37,11 @@ function localDate(value: string, allDay: boolean): Temporal.PlainDateTime {
     return fail('Invalid recurrence date.');
   }
 }
+/**
+ * Builds the rrule set for a recurring event after validating every line.
+ * Only the documented subset of RFC 5545 is accepted; anything else is
+ * rejected rather than approximated.
+ */
 function schedule(event: CalendarEvent, calendar: Calendar): RRuleSet {
   const tz = event.start.timeZone ?? calendar.timeZone;
   if (!event.start.date && !event.start.timeZone)
@@ -163,9 +170,21 @@ function schedule(event: CalendarEvent, calendar: Calendar): RRuleSet {
   }
   return set;
 }
+/**
+ * Validates a series' `recurrence` lines against the supported subset:
+ * DAILY/WEEKLY/MONTHLY/YEARLY rules with COUNT, UNTIL, INTERVAL, BY* parts, and
+ * WKST; EXRULE; and RDATE/EXDATE with VALUE=DATE or TZID.
+ *
+ * @throws {@link ApiError} 400, or 400 `unsupportedFeature` for valid iCalendar
+ * that Calendarpit does not implement.
+ */
 export function validateRecurrence(event: CalendarEvent, calendar: Calendar) {
   schedule(event, calendar);
 }
+/**
+ * Returns Google's instance ID for an occurrence: `<seriesId>_<start>`, where
+ * the start is `YYYYMMDD` for all-day series and `YYYYMMDDTHHMMSSZ` otherwise.
+ */
 export function occurrenceId(
   event: CalendarEvent,
   original: EventTime,
@@ -173,6 +192,12 @@ export function occurrenceId(
 ) {
   return `${event.id}_${original.date ? compact(original.date) : compact(new Date(timeValue(original, calendar.timeZone)).toISOString())}`;
 }
+/**
+ * Materializes one occurrence of a series at a wall-clock start.
+ *
+ * @throws {@link ApiError} 400 `unsupportedFeature` when the occurrence falls
+ * in a DST gap, because Google's shifting behavior is not reproduced.
+ */
 function instance(
   event: CalendarEvent,
   date: Date,
@@ -218,6 +243,18 @@ function instance(
     originalStartTime: start,
   };
 }
+/**
+ * Expands a series into its occurrences that intersect `[min, max)`.
+ *
+ * Exceptions stored as separate events are not applied; use
+ * {@link expandEvents} for that.
+ *
+ * @param min - Epoch milliseconds, or `-Infinity`.
+ * @param max - Epoch milliseconds, or `Infinity`. Unbounded expansion is
+ * allowed only when every rule has COUNT or UNTIL.
+ * @throws {@link ApiError} 400 `unsupportedFeature` when the expansion is
+ * unbounded or exceeds the instance or time-span limits.
+ */
 export function instances(
   event: CalendarEvent,
   calendar: Calendar,
@@ -280,6 +317,14 @@ export function instances(
       return start < max && end > min;
     });
 }
+/**
+ * Returns the calendar's events in `[min, max)` with series expanded into
+ * occurrences, as Google does for `singleEvents=true`.
+ *
+ * A stored exception replaces its generated occurrence. A cancelled series
+ * cancels its exceptions too. Moved exceptions appear even when their
+ * original slot is outside the window.
+ */
 export function expandEvents(
   events: CalendarEvent[],
   calendar: Calendar,
@@ -317,6 +362,13 @@ export function expandEvents(
     return a < max && b > min;
   });
 }
+/**
+ * Finds the generated occurrence for an instance ID such as
+ * `series_20261019T010000Z`, so clients can read or modify one occurrence
+ * that has no stored exception yet.
+ *
+ * @returns The occurrence, or `undefined` when no series produces that ID.
+ */
 export function resolveInstance(
   events: CalendarEvent[],
   calendar: Calendar,
