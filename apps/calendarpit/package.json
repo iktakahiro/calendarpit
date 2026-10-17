@@ -1,0 +1,40 @@
+{
+  "name": "calendarpit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A local calendar service for development and repeatable tests.",
+  "bin": {
+    "calendarpit": "./bin/calendarpit.ts"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "bun --bun vite --host 127.0.0.1 --port 4173 --strictPort",
+    "build": "bun --bun vite build",
+    "build:binary": "bun scripts/build-binary.ts",
+    "start": "bun bin/calendarpit.ts",
+    "type-check": "bun check",
+    "test": "bun test",
+    "smoke": "bun scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@calendarpit/server": "workspace:*",
+    "@cloudflare/kumo": "2.14.0",
+    "@gravity-ui/icons": "2.23.0",
+    "@phosphor-icons/react": "2.1.10",
+    "@tanstack/react-form": "1.33.5",
+    "@tanstack/react-router": "1.170.45",
+    "@tanstack/react-start": "1.169.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@calendarpit/typescript-config": "workspace:*",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/bun": "1.4.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "tailwindcss": "4.3.3",
+    "vite": "8.3.4"
+  }
+}

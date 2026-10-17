@@ -1,0 +1,13 @@
+{
+  "name": "@calendarpit/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --bun mint dev --port 4487 --no-open",
+    "validate": "bun --bun mint validate --disable-openapi"
+  },
+  "devDependencies": {
+    "mint": "4.2.1056"
+  }
+}

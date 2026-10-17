@@ -1,0 +1,38 @@
+{
+  "name": "calendarpit-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev --filter=calendarpit",
+    "docs:dev": "bun run --cwd apps/docs dev",
+    "docs:check": "bun run --cwd apps/docs validate",
+    "build": "turbo run build",
+    "build:binary": "bun run build && bun run --cwd apps/calendarpit build:binary",
+    "start": "bun run --cwd apps/calendarpit start",
+    "lint": "bun --bun oxlint .",
+    "lint:fix": "bun --bun oxlint --fix .",
+    "format": "bun --bun oxfmt --check .",
+    "format:fix": "bun --bun oxfmt .",
+    "type-check": "turbo run type-check && bun check -p tsconfig.json",
+    "test": "turbo run test",
+    "validate": "bun run lint && bun run format && bun run type-check && bun run test",
+    "fix": "bun run lint:fix && bun run format:fix",
+    "smoke": "bun run --cwd apps/calendarpit smoke",
+    "sample:dev": "bun run --cwd apps/sample dev"
+  },
+  "devDependencies": {
+    "@calendarpit/typescript-config": "workspace:*",
+    "@types/bun": "1.4.3",
+    "oxfmt": "0.73.0",
+    "oxlint": "1.88.0",
+    "turbo": "2.11.9"
+  },
+  "engines": {
+    "bun": ">=1.4.3"
+  },
+  "packageManager": "bun@1.4.3"
+}

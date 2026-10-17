@@ -1,0 +1,6 @@
+{
+  "cooldown": 2,
+  "removeRange": true,
+  "format": ["group"],
+  "peer": true
+}

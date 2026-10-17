@@ -8,6 +8,9 @@ lerna-debug.log*
 
 # database
 *.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite.lock
 
 # package-json
 package-json.lock
@@ -111,3 +114,13 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Calendarpit workspace output
+.turbo/
+.output/
+.tanstack/
+.calendarpit/
+.mintlify/
+.DS_Store
+.env.*
+!.env.example

@@ -1,0 +1,9 @@
+{
+  "extends": "@calendarpit/typescript-config/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["bun", "vite/client", "react", "react-dom"]
+  },
+  "include": ["src", "bin", "scripts", "vite.config.ts"],
+  "exclude": ["dist", ".output", ".calendarpit", "node_modules"]
+}

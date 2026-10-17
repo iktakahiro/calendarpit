@@ -1,0 +1,7 @@
+[install]
+exact = true
+# Only resolve package versions published at least 48 hours ago.
+minimumReleaseAge = 172800
+
+[run]
+bun = true

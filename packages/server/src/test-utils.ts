@@ -1,0 +1,79 @@
+import { afterEach, expect } from 'bun:test';
+import { createCalendarpit, type StoreOptions } from './index';
+const instances: ReturnType<typeof createCalendarpit>[] = [];
+export function setup(options: StoreOptions = {}) {
+  const app = createCalendarpit(options);
+  instances.push(app);
+  const request = async (
+    path: string,
+    method = 'GET',
+    body?: unknown,
+    token?: string,
+    extra: Record<string, string> = {},
+  ) =>
+    (await app.handle(
+      new Request(`http://127.0.0.1:4173${path}`, {
+        method,
+        headers: {
+          ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...extra,
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      }),
+    ))!;
+  const form = async (path: string, data: Record<string, string>) =>
+    (await app.handle(
+      new Request(`http://127.0.0.1:4173${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(data),
+      }),
+    ))!;
+  const consent = async (
+    scope = 'https://www.googleapis.com/auth/calendar',
+    user = 'alex',
+    decision = 'approve',
+    extra: Record<string, string> = {},
+  ) => {
+    const params = new URLSearchParams({
+      client_id: 'sample-app',
+      redirect_uri: 'http://127.0.0.1:4175/callback',
+      response_type: 'code',
+      scope,
+      state: 'preserve & = state',
+      access_type: 'offline',
+      ...extra,
+    });
+    const page = await request(`/oauth/authorize?${params}`);
+    expect(page.status).toBe(200);
+    const nonce = /name="consent" value="([^"]+)"/.exec(await page.text())![1]!;
+    const result = await form('/oauth/authorize', {
+      consent: nonce,
+      user_id: user,
+      decision,
+    });
+    expect(result.status).toBe(302);
+    return new URL(result.headers.get('location')!);
+  };
+  const token = async (scope?: string, user?: string) => {
+    const redirect = await consent(scope, user);
+    const response = await form('/oauth/token', {
+      grant_type: 'authorization_code',
+      client_id: 'sample-app',
+      client_secret: 'local-sample-secret',
+      redirect_uri: 'http://127.0.0.1:4175/callback',
+      code: redirect.searchParams.get('code')!,
+    });
+    expect(response.status).toBe(200);
+    return (await response.json()) as {
+      access_token: string;
+      refresh_token: string;
+    };
+  };
+  return { app, request, form, consent, token };
+}
+afterEach(() => {
+  for (const app of instances) app.close();
+  instances.length = 0;
+});

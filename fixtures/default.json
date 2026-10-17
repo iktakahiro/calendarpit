@@ -1,0 +1,57 @@
+{
+  "users": [
+    {
+      "id": "alex",
+      "name": "Alex Morgan",
+      "email": "alex@example.test"
+    },
+    {
+      "id": "sam",
+      "name": "Sam Rivera",
+      "email": "sam@example.test"
+    }
+  ],
+  "calendars": [
+    {
+      "id": "alex-work",
+      "userId": "alex",
+      "summary": "Work calendar",
+      "timeZone": "Asia/Tokyo",
+      "primary": true
+    },
+    {
+      "id": "alex-personal",
+      "userId": "alex",
+      "summary": "Personal",
+      "timeZone": "Asia/Tokyo",
+      "primary": false
+    },
+    {
+      "id": "sam-work",
+      "userId": "sam",
+      "summary": "Work calendar",
+      "timeZone": "America/New_York",
+      "primary": true
+    }
+  ],
+  "events": [
+    {
+      "id": "planning",
+      "calendarId": "alex-work",
+      "summary": "Weekly planning",
+      "start": {
+        "dateTime": "2026-10-19T10:00:00+09:00"
+      },
+      "end": {
+        "dateTime": "2026-10-19T11:00:00+09:00"
+      }
+    }
+  ],
+  "clients": [
+    {
+      "id": "sample-app",
+      "secret": "local-sample-secret",
+      "redirectUris": ["http://127.0.0.1:4175/callback"]
+    }
+  ]
+}
