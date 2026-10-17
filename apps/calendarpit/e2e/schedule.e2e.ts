@@ -15,6 +15,7 @@ test.describe('schedule', () => {
     await editor.getByRole('button', { name: 'Save event' }).click();
 
     await expect(toast(page)).toHaveText('Event saved.');
+    await expect(editor).toHaveCount(0);
     const agenda = page.getByRole('list').filter({ hasText: 'Design review' });
     await expect(agenda.getByText('1h 30m')).toBeVisible();
 
@@ -24,7 +25,11 @@ test.describe('schedule', () => {
       .getByLabel('Summary', { exact: true })
       .fill('Design review (moved)');
     await editor.getByRole('button', { name: 'Save event' }).click();
-    await expect(page.getByText('Design review (moved)')).toBeVisible();
+    // Saving closes the editor, whose heading also shows the summary.
+    await expect(editor).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: /^Design review \(moved\)/ }),
+    ).toBeVisible();
 
     page.once('dialog', (dialog) => void dialog.accept());
     await page
