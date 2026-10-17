@@ -7,9 +7,9 @@ import {
   createCalendarpit,
   defaultFixture,
   type WorkspaceOptions,
-} from './index';
-import { snapshot } from './features/status/snapshot-operations';
-import { findEvent } from './features/events/event-operations';
+} from '../index';
+import { snapshot } from '../features/status/snapshot-operations';
+import { findEvent } from '../features/events/event-operations';
 
 const directories: string[] = [];
 const instances: ReturnType<typeof createCalendarpit>[] = [];

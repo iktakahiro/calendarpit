@@ -19,6 +19,7 @@
     "format:fix": "bun --bun oxfmt .",
     "type-check": "turbo run type-check && bun check -p tsconfig.json",
     "test": "turbo run test",
+    "test:coverage": "bun run --cwd packages/server test --coverage",
     "validate": "bun run lint && bun run format && bun run type-check && bun run test",
     "fix": "bun run lint:fix && bun run format:fix",
     "smoke": "bun run --cwd apps/calendarpit smoke",
