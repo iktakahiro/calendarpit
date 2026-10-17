@@ -113,9 +113,14 @@ its theme. The app root is isolated for portal stacking. Application icons use
 Gravity UI; Phosphor Icons is also a required Kumo peer for internal icons.
 The admin UI uses Roboto Mono from Google Fonts with system-font fallbacks.
 
-The event editor uses TanStack Form. Management state polls every two seconds
-so mutations from another application appear without reloading the page. Calendar
-operations use explicit management routes, not TanStack server functions.
+Each section has its own route (`/`, `/users`, `/calendars`, `/connections`,
+`/watch`, `/history`, `/settings`). The selected user, calendar, date, and open
+event live in search params, so links and reloads restore the same view.
+TanStack Query reads the management API and polls every two seconds, so
+mutations from another application appear without reloading the page. Mutations
+invalidate the workspace queries instead of refetching by hand. Forms use
+TanStack Form with one form-level validator each. Calendar operations use
+explicit management routes, not TanStack server functions.
 
 ## Packaging
 

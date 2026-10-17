@@ -1,118 +1,35 @@
 import type { Calendar, CalendarEvent } from '@calendarpit/server';
 import { Badge } from '@cloudflare/kumo/components/badge';
 import { Button } from '@cloudflare/kumo/components/button';
-import { Icon } from './icon';
-import { localTime } from './event-editor';
+import { Icon } from '../../../components/icon';
+import { longDate } from '../models/dates';
+import {
+  clockLabel,
+  crossesClockChange,
+  dayMinutes,
+  duration,
+  eventEnd,
+  eventStart,
+  minuteOf,
+  placeEvents,
+} from '../models/day-layout';
+import { localTime } from '../models/local-time';
 
-const dayMinutes = 24 * 60;
+/** Hour labels on the day track. */
 const ticks = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 
-type Placed = {
-  event: CalendarEvent;
-  start: string;
-  end: string;
-  startMinute: number;
-  endMinute: number;
-  lane: number;
-};
-
-/** Returns the calendar-local `YYYY-MM-DDTHH:mm` (timed) or `YYYY-MM-DD` (all-day). */
-export function eventStart(event: CalendarEvent, timeZone: string) {
-  return event.start.date ?? localTime(event.start.dateTime!, timeZone);
-}
-export function eventEnd(event: CalendarEvent, timeZone: string) {
-  return event.end.date ?? localTime(event.end.dateTime!, timeZone);
-}
-export function shortDate(date: string) {
-  return new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${date.slice(0, 10)}T12:00:00Z`));
-}
-export function longDate(date: string) {
-  return new Intl.DateTimeFormat('en', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${date}T12:00:00Z`));
-}
-function minuteOf(local: string, date: string) {
-  const day = local.slice(0, 10);
-  if (day < date) return 0;
-  if (day > date) return dayMinutes;
-  return Number(local.slice(11, 13)) * 60 + Number(local.slice(14, 16));
-}
-function duration(event: CalendarEvent) {
-  if (event.start.date && event.end.date) {
-    const days = Math.round(
-      (Date.parse(`${event.end.date}T00:00:00Z`) -
-        Date.parse(`${event.start.date}T00:00:00Z`)) /
-        86_400_000,
-    );
-    return days === 1 ? '1 day' : `${days} days`;
-  }
-  const minutes = Math.round(
-    (Date.parse(event.end.dateTime!) - Date.parse(event.start.dateTime!)) /
-      60_000,
-  );
-  if (!Number.isFinite(minutes)) return '';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
-}
-function clock(local: string, date: string) {
-  return {
-    time: local.slice(11, 16),
-    day: local.slice(0, 10) === date ? '' : shortDate(local),
-  };
-}
-function place(events: CalendarEvent[], timeZone: string, date: string) {
-  const laneEnds: number[] = [];
-  return events
-    .filter((e) => !e.start.date)
-    .map((event) => {
-      const start = eventStart(event, timeZone);
-      const end = eventEnd(event, timeZone);
-      return {
-        event,
-        start,
-        end,
-        startMinute: minuteOf(start, date),
-        endMinute: minuteOf(end, date),
-      };
-    })
-    .sort((a, b) => a.startMinute - b.startMinute || b.endMinute - a.endMinute)
-    .map((item): Placed => {
-      let lane = laneEnds.findIndex((end) => end <= item.startMinute);
-      if (lane < 0) lane = laneEnds.push(item.endMinute) - 1;
-      else laneEnds[lane] = item.endMinute;
-      return { ...item, lane };
-    });
-}
-
-function crossesClockChange(events: CalendarEvent[], timeZone: string) {
-  const offsets = new Set<number>();
-  for (const event of events) {
-    for (const time of [event.start.dateTime, event.end.dateTime]) {
-      if (!time) continue;
-      offsets.add(
-        Date.parse(`${localTime(time, timeZone)}:00Z`) -
-          Math.floor(Date.parse(time) / 60_000) * 60_000,
-      );
-    }
-  }
-  return offsets.size > 1;
-}
-
+/**
+ * One day of a calendar: a 24-hour overview track, the agenda, and quick
+ * actions. The track is hidden when events span a DST change, because a fixed
+ * 24-hour scale would misplace them.
+ */
 export function DayView({
   calendar,
   date,
   events,
   editingId,
-  pending,
+  now,
+  busy,
   open,
   remove,
   create,
@@ -121,19 +38,24 @@ export function DayView({
   date: string;
   events: CalendarEvent[];
   editingId?: string;
-  pending: boolean;
+  /** Current time, for the "now" marker. */
+  now: Date;
+  busy: boolean;
   open: (event: CalendarEvent) => void;
   remove: (event: CalendarEvent) => void;
   create: () => void;
 }) {
   const timeZone = calendar.timeZone;
   const allDay = events.filter((e) => e.start.date);
-  const timed = place(events, timeZone, date);
+  const timed = placeEvents(events, timeZone, date);
   const clockChange = crossesClockChange(events, timeZone);
   const laneCount = Math.max(1, ...timed.map((p) => p.lane + 1));
-  const now = localTime(new Date().toISOString(), timeZone);
-  const nowMinute = now.slice(0, 10) === date ? minuteOf(now, date) : -1;
-  const busy = events.filter((e) => e.transparency !== 'transparent').length;
+  const nowLocal = localTime(now.toISOString(), timeZone);
+  const nowMinute =
+    nowLocal.slice(0, 10) === date ? minuteOf(nowLocal, date) : -1;
+  const busyCount = events.filter(
+    (e) => e.transparency !== 'transparent',
+  ).length;
   return (
     <section className='day-sheet' aria-label='Daily events'>
       <header className='day-head'>
@@ -143,8 +65,8 @@ export function DayView({
             <span>
               {events.length} {events.length === 1 ? 'event' : 'events'}
             </span>
-            <span>{busy} busy</span>
-            <span>{events.length - busy} free</span>
+            <span>{busyCount} busy</span>
+            <span>{events.length - busyCount} free</span>
           </p>
         </div>
         <div className='legend' aria-hidden='true'>
@@ -220,8 +142,8 @@ export function DayView({
           {events.map((e) => {
             const start = eventStart(e, timeZone);
             const end = eventEnd(e, timeZone);
-            const from = clock(start, date);
-            const to = clock(end, date);
+            const from = clockLabel(start, date);
+            const to = clockLabel(end, date);
             const free = e.transparency === 'transparent';
             return (
               <li
@@ -274,7 +196,7 @@ export function DayView({
                   size='sm'
                   className='event-delete'
                   aria-label={`Delete ${e.summary || e.id}`}
-                  disabled={pending}
+                  disabled={busy}
                   icon={<Icon name='trash' />}
                   onClick={() => remove(e)}
                 />

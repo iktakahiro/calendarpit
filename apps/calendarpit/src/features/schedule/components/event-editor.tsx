@@ -1,40 +1,37 @@
-import { useEffect, useRef, useState } from 'react';
+import type { Calendar, CalendarEvent } from '@calendarpit/server';
 import { Button } from '@cloudflare/kumo/components/button';
 import { Input } from '@cloudflare/kumo/components/input';
-import { useForm } from '@tanstack/react-form';
-import type { Calendar, CalendarEvent } from '@calendarpit/server';
-import { Icon } from './icon';
+import { revalidateLogic, useForm } from '@tanstack/react-form';
+import { useEffect, useRef, useState } from 'react';
+import { FieldError } from '../../../components/field-error';
+import { Icon } from '../../../components/icon';
+import { useSaveEvent } from '../hooks/use-event-mutations';
+import {
+  eventFormValues,
+  toEventBody,
+  toggleAllDay,
+  validateEventForm,
+} from '../models/event-form';
 
-export function localTime(value: string, timeZone: string) {
-  if (!/[zZ]|[+-]\d{2}:\d{2}$/.test(value)) return value.slice(0, 16);
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(new Date(value));
-  const p = Object.fromEntries(parts.map((v) => [v.type, v.value]));
-  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
-}
+/**
+ * Creates or replaces an event in `calendar`. Times are edited in the
+ * calendar's zone. Escape closes the editor; focus moves into it on open.
+ */
 export function EventEditor({
   calendar,
   event,
   date,
-  save,
   close,
-  pending,
 }: {
   calendar: Calendar;
+  /** The event to edit; `undefined` creates a new one. */
   event?: CalendarEvent;
+  /** Date a new event starts on. */
   date: string;
-  save: (body: unknown, id?: string) => Promise<void>;
   close: () => void;
-  pending: boolean;
 }) {
   const [submitError, setSubmitError] = useState('');
+  const save = useSaveEvent();
   const panel = useRef<HTMLElement>(null);
   useEffect(() => {
     // Move focus into the editor so keyboard and narrow-screen users land on it.
@@ -42,51 +39,24 @@ export function EventEditor({
     panel.current?.scrollIntoView({ block: 'nearest' });
   }, []);
   const form = useForm({
-    defaultValues: {
-      summary: event?.summary ?? '',
-      description: event?.description ?? '',
-      location: event?.location ?? '',
-      allDay: !!event?.start.date,
-      start:
-        event?.start.date ??
-        (event?.start.dateTime
-          ? localTime(event.start.dateTime, calendar.timeZone)
-          : `${date}T10:00`),
-      end:
-        event?.end.date ??
-        (event?.end.dateTime
-          ? localTime(event.end.dateTime, calendar.timeZone)
-          : `${date}T11:00`),
-      transparency: event?.transparency ?? 'opaque',
-      extendedProperties: JSON.stringify(
-        event?.extendedProperties ?? {},
-        null,
-        2,
-      ),
+    defaultValues: eventFormValues(calendar, date, event),
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'change',
+    }),
+    validators: {
+      onDynamic: ({ value }) => {
+        const fields = validateEventForm(value);
+        return fields ? { fields } : undefined;
+      },
     },
     onSubmit: async ({ value }) => {
-      let extendedProperties: unknown;
-      try {
-        extendedProperties = JSON.parse(value.extendedProperties);
-      } catch {
-        throw new Error('Extended properties must be valid JSON.');
-      }
-      await save(
-        {
-          summary: value.summary,
-          description: value.description,
-          location: value.location,
-          start: value.allDay
-            ? { date: value.start.slice(0, 10) }
-            : { dateTime: value.start, timeZone: calendar.timeZone },
-          end: value.allDay
-            ? { date: value.end.slice(0, 10) }
-            : { dateTime: value.end, timeZone: calendar.timeZone },
-          transparency: value.transparency,
-          extendedProperties,
-        },
-        event?.id,
-      );
+      await save.mutateAsync({
+        calendarId: calendar.id,
+        id: event?.id,
+        body: toEventBody(value, calendar),
+      });
+      close();
     },
   });
   return (
@@ -121,12 +91,13 @@ export function EventEditor({
       </div>
       <form
         className='editor-form'
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           setSubmitError('');
-          void form
+          form
             .handleSubmit()
-            .catch((error) =>
+            .catch((error: unknown) =>
               setSubmitError(
                 error instanceof Error
                   ? error.message
@@ -142,6 +113,7 @@ export function EventEditor({
               <Input
                 aria-label='Summary'
                 value={field.state.value}
+                onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
             </label>
@@ -157,62 +129,49 @@ export function EventEditor({
                   checked={field.state.value}
                   onChange={(e) => {
                     field.handleChange(e.target.checked);
-                    if (e.target.checked) {
-                      const start = form.getFieldValue('start').slice(0, 10);
-                      form.setFieldValue('start', start);
-                      const next = new Date(`${start}T12:00:00Z`);
-                      next.setUTCDate(next.getUTCDate() + 1);
-                      form.setFieldValue(
-                        'end',
-                        next.toISOString().slice(0, 10),
-                      );
-                    } else {
-                      form.setFieldValue(
-                        'start',
-                        form.getFieldValue('start').slice(0, 10) + 'T10:00',
-                      );
-                      form.setFieldValue(
-                        'end',
-                        form.getFieldValue('end').slice(0, 10) + 'T11:00',
-                      );
-                    }
+                    const next = toggleAllDay(
+                      {
+                        start: form.getFieldValue('start'),
+                        end: form.getFieldValue('end'),
+                      },
+                      e.target.checked,
+                    );
+                    form.setFieldValue('start', next.start);
+                    form.setFieldValue('end', next.end);
                   }}
                 />
                 All-day event
               </label>
             )}
           </form.Field>
-          <form.Subscribe selector={(s) => s.values.allDay}>
+          <form.Subscribe selector={(state) => state.values.allDay}>
             {(allDay) => (
               <div className='form-row'>
-                {(['start', 'end'] as const).map((name) => (
-                  <form.Field name={name} key={name}>
-                    {(field) => (
-                      <label className='field'>
-                        <span>
-                          {name === 'start'
-                            ? 'Start'
-                            : allDay
-                              ? 'End (exclusive)'
-                              : 'End'}
-                        </span>
-                        <Input
-                          aria-label={
-                            name === 'start'
-                              ? 'Start'
-                              : allDay
-                                ? 'End (exclusive)'
-                                : 'End'
-                          }
-                          type={allDay ? 'date' : 'datetime-local'}
-                          required
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                        />
-                      </label>
-                    )}
-                  </form.Field>
-                ))}
+                {(['start', 'end'] as const).map((name) => {
+                  const label =
+                    name === 'start'
+                      ? 'Start'
+                      : allDay
+                        ? 'End (exclusive)'
+                        : 'End';
+                  return (
+                    <form.Field name={name} key={name}>
+                      {(field) => (
+                        <label className='field'>
+                          <span>{label}</span>
+                          <Input
+                            aria-label={label}
+                            type={allDay ? 'date' : 'datetime-local'}
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          <FieldError errors={field.state.meta.errors} />
+                        </label>
+                      )}
+                    </form.Field>
+                  );
+                })}
               </div>
             )}
           </form.Subscribe>
@@ -240,6 +199,7 @@ export function EventEditor({
               <Input
                 aria-label='Location'
                 value={field.state.value}
+                onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
             </label>
@@ -252,6 +212,7 @@ export function EventEditor({
               <textarea
                 rows={3}
                 value={field.state.value}
+                onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
             </label>
@@ -266,11 +227,10 @@ export function EventEditor({
                 rows={4}
                 spellCheck={false}
                 value={field.state.value}
+                onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-              {field.state.meta.errors.length > 0 && (
-                <span role='alert'>{field.state.meta.errors.join(', ')}</span>
-              )}
+              <FieldError errors={field.state.meta.errors} />
             </label>
           )}
         </form.Field>
@@ -280,9 +240,13 @@ export function EventEditor({
           </p>
         )}
         <div className='editor-actions'>
-          <Button type='submit' variant='primary' loading={pending}>
-            Save event
-          </Button>
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(submitting) => (
+              <Button type='submit' variant='primary' loading={submitting}>
+                Save event
+              </Button>
+            )}
+          </form.Subscribe>
           <span className='hint'>
             <kbd>Esc</kbd> to close
           </span>

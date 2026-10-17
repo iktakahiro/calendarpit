@@ -35,7 +35,8 @@ function render(
       }}
       date={date}
       events={events}
-      pending={false}
+      now={new Date('2026-10-18T00:00:00Z')}
+      busy={false}
       open={() => {}}
       remove={() => {}}
       create={() => {}}

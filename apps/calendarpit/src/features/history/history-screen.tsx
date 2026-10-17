@@ -1,85 +1,20 @@
 import { Button } from '@cloudflare/kumo/components/button';
 import { Input } from '@cloudflare/kumo/components/input';
 import { useState } from 'react';
-import { Icon } from './icon';
+import { Icon } from '../../components/icon';
+import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
+import { Payload } from './components/payload';
+import { useClearHistory, useHistory } from './hooks/use-history';
+import { area, filterHistory, statusClass } from './models/history-filter';
 
-export type HistoryRow = {
-  id: string;
-  time: string;
-  method: string;
-  path: string;
-  status: number;
-  request: unknown;
-  response: unknown;
-  headers: unknown;
-  responseHeaders: unknown;
-};
-
-function statusClass(status: number) {
-  if (status >= 500) return 'status-5xx';
-  if (status >= 400) return 'status-4xx';
-  if (status >= 300) return 'status-3xx';
-  return 'status-2xx';
-}
-function area(path: string) {
-  if (path.startsWith('/calendar/')) return 'Calendar';
-  if (path.startsWith('/oauth')) return 'OAuth';
-  return '';
-}
-
-function Payload({ title, value }: { title: string; value: unknown }) {
-  const [copied, setCopied] = useState(false);
-  const text = JSON.stringify(value, null, 2);
-  return (
-    <div className='payload'>
-      <div className='payload-head'>
-        <h3>{title}</h3>
-        <Button
-          variant='ghost'
-          size='sm'
-          icon={<Icon name={copied ? 'check' : 'copy'} />}
-          aria-label={`Copy ${title.toLowerCase()} JSON`}
-          onClick={() => {
-            void navigator.clipboard
-              ?.writeText(text)
-              .then(() => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1500);
-              })
-              .catch(() => {});
-          }}
-        >
-          {copied ? 'Copied' : 'Copy'}
-        </Button>
-      </div>
-      <pre>{text}</pre>
-    </div>
-  );
-}
-
-export function HistoryView({
-  history,
-  pending,
-  clear,
-}: {
-  history: HistoryRow[];
-  pending: boolean;
-  clear: () => void;
-}) {
+/** The protocol log: recorded Calendar and OAuth requests from the app. */
+export function HistoryScreen() {
+  const { data: history = [] } = useHistory();
+  const clear = useClearHistory();
+  const busy = useWorkspaceBusy();
   const [query, setQuery] = useState('');
   const [errorsOnly, setErrorsOnly] = useState(false);
-  const needle = query.trim().toLowerCase();
-  const rows = history
-    .slice()
-    .reverse()
-    .filter((row) => !errorsOnly || row.status >= 400)
-    .filter(
-      (row) =>
-        !needle ||
-        `${row.method} ${row.path} ${row.status}`
-          .toLowerCase()
-          .includes(needle),
-    );
+  const rows = filterHistory(history, query, errorsOnly);
   const errors = history.filter((row) => row.status >= 400).length;
   return (
     <>
@@ -115,8 +50,8 @@ export function HistoryView({
           className='toolbar-end'
           variant='secondary'
           icon={<Icon name='trash' />}
-          onClick={clear}
-          disabled={pending}
+          onClick={() => clear.mutate(undefined)}
+          disabled={busy}
         >
           Clear history
         </Button>
