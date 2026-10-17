@@ -1,0 +1,107 @@
+---
+title: MVP scope
+description: The product contract and acceptance criteria for the first release.
+---
+
+This is the MVP product contract. See [Compatibility](/compatibility) for the
+implemented subset and [Roadmap](/roadmap) for integration/release follow-up work.
+
+## Runtime and state
+
+- One process serves the API and admin UI. Bind to loopback by default.
+- Persist local state with SQLite by default; allow `:memory:` for disposable E2E sessions. No external database server.
+- Distribute a CLI, Docker image, and standalone Bun executables.
+- Print the API and admin URLs when the server starts.
+- Run parallel E2E suites in separate processes on separate ports, using memory mode or distinct database files.
+
+## Test users and calendars
+
+Support multiple test users without passwords or real login. Each user can own
+multiple calendars with a name, time zone, and primary flag. Resolve `primary`
+against the authenticated user. Only access to owned calendars is required.
+
+## Events and availability
+
+Support create, read, list, replace, patch, and delete for single timed events and
+all-day events, recurring series and exceptions. Preserve IDs, summary, description, location, start, end, time
+zones, transparency, and application extended properties. Listing supports
+period bounds, pagination, and start-time ordering.
+
+The following rules require explicit tests:
+
+- Mutations immediately affect event listing and free/busy responses.
+- Intervals include their start and exclude their end: `[start, end)`.
+- Events ending at 10:00 do not overlap events beginning at 10:00.
+- Interpret all-day dates in the calendar's time zone, including DST boundaries.
+- Exclude transparent (free) and deleted events from busy intervals.
+- Merge overlapping busy intervals and clip them to the query window.
+
+Preserve attendees, invitation responses, organizer/creator identity, reminders,
+visibility, color and tentative status. Simulate local invitation copies and
+notification intent without sending email. Generate synthetic conference information
+without creating real meetings. See [Compatibility](/compatibility) for the bounded
+recurrence and local simulation contract.
+
+## OAuth
+
+Provide local authorization approval and denial with a test-user selector.
+Preserve `state`, validate registered redirect URIs, and issue short-lived,
+single-use authorization codes. Support code exchange, access-token expiration,
+scope checks, refresh tokens, and revocation from the admin UI.
+
+Register test OAuth clients in configuration. The consuming application must be
+able to override authorization, token, user-info, and Calendar API endpoints
+independently. A Google SDK sample will demonstrate all four overrides. Full
+Google login and OIDC compatibility are out of scope.
+
+## Watch notifications
+
+Event subscriptions and local webhook delivery are part of the MVP. Support
+`events.watch`, `channels.stop`, initial synchronization notifications, event
+change notifications, expiration, and cleanup. See the [Watch design](/watch).
+Support incremental event synchronization with `showDeleted`, `nextSyncToken`,
+paginated snapshots and cancellation tombstones. Test synchronization across
+mutations, restart, expiration and reset. See [Incremental sync](/sync).
+
+## Admin UI
+
+Provide user/calendar selection, a daily event list, event editing, connection
+revocation, and request history. History includes method, path, status, and
+request/response bodies, with credentials masked. Inspect watch channels and
+delivery results. Weekly grids and dragging can wait.
+
+## Test control
+
+Configuration defines OAuth clients, users, calendars, and events with optional
+fixed IDs. Management APIs under `/__calendarpit/` load fixtures, reset to the
+initial fixture baseline, export current state, inspect/clear history, and revoke access.
+Reset clears events, tokens, history, watch channels, and pending deliveries
+before restoring the original fixture state. Persist both current data and the original
+reset baseline in SQLite so reset stays deterministic after restarting.
+
+## Exclusions
+
+No ACLs, shared-calendar access, delegation, real invitation/reminder emails, real Meet generation,
+full OIDC, Microsoft Graph, CalDAV, or synchronization with real Google.
+Reject unsupported features explicitly; never store a recurring event as a
+single event silently. Calendar-list/ACL/settings watch subscriptions are not
+included in the first event-watch implementation.
+
+## Acceptance criteria
+
+Using the Google SDK sample, without requests to real Google:
+
+1. Approve authorization and select a calendar.
+2. Register a watch channel and receive its initial notification.
+3. Create an event and verify its busy interval.
+4. Update and delete the event; receive notifications and refetch state.
+5. Stop a watch channel and verify that further changes are not delivered.
+6. Revoke the connection and complete reauthorization.
+7. Handle consent denial without losing `state`.
+8. Reset and repeat the scenario with the same fixtures and IDs.
+9. Fetch a full event snapshot, then consume changes/deletions with sync tokens.
+10. Exercise all-day null fields, recurring exceptions, local RSVP and synthetic meetings.
+
+Also test channel expiration, delivery failures, reset during pending delivery,
+and user isolation. Compatibility means reliably reproducing this supported
+workflow, not implementing the entire Google Calendar API.

@@ -1,0 +1,95 @@
+---
+title: Incremental sync
+description: Consume event changes and deletions with durable sync tokens and watch notifications.
+---
+
+Calendarpit supports full event lists followed by incremental synchronization. This
+implements the protocol described by Google's [sync guide](https://developers.google.com/workspace/calendar/api/guides/sync)
+and [events.list reference](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)
+within the limits below.
+
+## Full synchronization
+
+Call `events.list` with `showDeleted=true`, optionally `singleEvents=true` and a time
+window. Follow every `nextPageToken` using the same query. Only the last page has
+`nextSyncToken`; save it after applying all pages successfully. Page contents and the
+sync checkpoint are captured together, so mutations during pagination appear in the
+next incremental response.
+
+```ts
+// api is the Google SDK client configured with Calendarpit's rootUrl.
+const query = {
+  calendarId: 'primary',
+  singleEvents: true,
+  showDeleted: true,
+  timeMin: '2026-10-01T00:00:00Z',
+  timeMax: '2026-11-01T00:00:00Z',
+};
+let pageToken: string | undefined;
+let syncToken: string | undefined;
+do {
+  const { data } = await api.events.list({ ...query, pageToken });
+  for (const event of data.items ?? []) {
+    if (event.status === 'cancelled') await removeLocalEvent(event.id!);
+    else await upsertLocalEvent(event);
+  }
+  pageToken = data.nextPageToken ?? undefined;
+  if (!pageToken) syncToken = data.nextSyncToken ?? undefined;
+} while (pageToken);
+```
+
+## Incremental synchronization
+
+After a watch notification (or periodic polling), send the saved token. Keep
+`singleEvents` and `timeZone` consistent with the original request. Do not send
+`timeMin`, `timeMax`, `updatedMin`, `orderBy`, `iCalUID`, `privateExtendedProperty`,
+or `sharedExtendedProperty` with a sync token. Explicit `showDeleted=false` is
+invalid because deletions must be consumed.
+
+```ts
+const previousToken = syncToken;
+do {
+  const { data } = await api.events.list({
+    calendarId: 'primary',
+    singleEvents: true,
+    showDeleted: true,
+    syncToken: previousToken,
+    pageToken,
+  });
+  for (const event of data.items ?? []) {
+    if (event.status === 'cancelled') await removeLocalEvent(event.id!);
+    else await upsertLocalEvent(event);
+  }
+  pageToken = data.nextPageToken ?? undefined;
+  if (!pageToken) syncToken = data.nextSyncToken ?? undefined;
+} while (pageToken);
+```
+
+The same token remains valid for retries. An unchanged workspace returns an empty
+`items` array and a new token. Deleted events retain tombstones; series changes also
+cancel occurrences removed from the previous expansion. Individual non-recurring
+changes can fall outside the initial time window. For recurring series, Calendarpit
+retains the initial expansion window; perform a new full sync when that window moves.
+Infinite recurrence expansion requires an explicit upper bound on the full request.
+
+## Lifecycle and limits
+
+Tokens are opaque and bound to user, calendar and expansion options. SQLite stores
+sync snapshots with event state so valid tokens survive process restarts. A token
+expires after seven days; at most 100 snapshots are retained per workspace, oldest
+first. Unknown, expired, evicted, reset and cross-resource tokens return HTTP 410
+with `fullSyncRequired`. Discard the local synced dataset and perform a full sync.
+A different expansion option returns HTTP 400.
+
+Reset and fixture replacement invalidate tokens. Memory-mode restarts discard them.
+Event page cursors last one hour, are bounded to 1,000 entries and do not survive
+restart; restart the list from its sync token after a cursor error. Notification
+intent records and webhook logs are separate from the event sync stream.
+
+## Validation boundary
+
+Repository tests cover frozen pagination, concurrent mutations, cancellation,
+recurrence trimming, ownership, expiration, reset, and sync after SQLite restart.
+Watch tests confirm that management mutations trigger notifications whose consumers
+can fetch deltas. Consumer applications remain responsible for their own UI, booking,
+database and worker E2E scenarios; those scenarios and fixtures are not bundled here.

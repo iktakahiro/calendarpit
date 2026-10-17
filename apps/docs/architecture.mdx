@@ -1,0 +1,75 @@
+---
+title: Architecture
+description: Workspace boundaries, runtime choices, and distribution.
+---
+
+| Workspace                    | Responsibility                                                             |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `apps/calendarpit`           | React admin UI, TanStack Start adapter, Bun CLI and packaging              |
+| `apps/sample`                | Separate Bun consumer using the official Google SDK; HTTP integration test |
+| `apps/docs`                  | Mintlify product and developer documentation                               |
+| `packages/server`            | Isolated state, validation, Google API, OAuth, watch delivery and tests    |
+| `packages/typescript-config` | Shared strict TypeScript configuration                                     |
+
+## Runtime and state
+
+`createCalendarpit()` owns a store per instance and exposes an async Web Request
+handler. It returns null for UI routes. TanStack Start delegates protocol requests
+to that handler before rendering pages. The CLI and dev server default to a local
+SQLite file through Bun's built-in `bun:sqlite`; the programmatic factory defaults
+to `:memory:` for isolated embedded tests. No external database server is needed.
+
+The store keeps its working set in memory and checkpoints a versioned JSON snapshot
+into one SQLite row. A single atomic statement saves the fixture baseline, current
+data, grants/tokens, sync snapshots, calendar tombstones, subscriptions, and bounded logs together. Unchanged snapshots
+are not rewritten. File databases use WAL and FULL synchronization. A separate
+SQLite lock file holds an exclusive lock for the lifetime of the instance, preventing
+two independent stores from overwriting the same workspace. OS locks release on exit,
+including crashes; no stale PID cleanup is needed. Database and lock files use mode 0600.
+
+A new database validates and captures its seed fixture. Existing databases restore
+saved data and the original reset target, preserving event IDs, timestamps, and etags.
+Loading another fixture replaces current data without replacing that target.
+Schema version 1 is supported; newer versions are rejected without overwriting data.
+Optional sync snapshots, calendar tombstones and notification-intent fields default
+to empty collections when opening older version-1 snapshots. Future incompatible
+format changes require an explicit migration.
+
+Event time conversion uses Temporal with explicit time zones. API authorization,
+resource ownership, interval calculations, and lifecycle rules live in the server
+package, independent of React and the consuming application. The injected clock
+and delivery function support expiry and cancellation tests without sleeps.
+
+Watch callbacks use per-channel promise queues, abort signals, bounded retries,
+and observable delivery records. Reset invalidates tokens, consent, cursors,
+history, channels, and queued/in-flight deliveries before restoring fixture data.
+Restart preserves access/refresh tokens and unexpired channels, rechecking callback
+host permissions. Event sync tokens also survive restart. Consent, authorization codes, and pagination cursors are ephemeral.
+Pending notifications become cancelled records on restart and are not replayed.
+HTTP bodies are limited to 1 MiB; protocol history and delivery logs are bounded.
+
+## UI
+
+React 19 and TanStack Start provide file-based routing and SSR. Kumo supplies UI
+components; Tailwind CSS 4 scans Kumo's distribution for classes after loading
+its theme. The app root is isolated for portal stacking. Application icons use
+Gravity UI; Phosphor Icons is also a required Kumo peer for internal icons.
+The admin UI uses Roboto Mono from Google Fonts with system-font fallbacks.
+
+The event editor uses TanStack Form. Management state polls every two seconds
+so mutations from another application appear without reloading the page. Calendar
+operations use explicit management routes, not TanStack server functions.
+
+## Packaging
+
+Bun provides installs, scripts, tests, type checking, HTTP serving, and compilation.
+Vite transforms the client/server while running on Bun. The production CLI serves
+an allowlisted map of built assets and delegates other requests to the server.
+Paths never resolve to arbitrary disk files. The standalone binary embeds server,
+assets and runtime. The admin UI loads Roboto Mono from Google Fonts,
+with system-font fallbacks when unavailable. Calendar and OAuth operations remain
+local. Fixture configuration is loaded before server startup.
+
+Docker configuration remains available but its build/startup verification is
+pending. The docs preview and sample are separate development processes. Dependency
+resolution observes the repository's 48-hour publication interval.

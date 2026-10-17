@@ -1,0 +1,161 @@
+---
+title: Compatibility
+description: The implemented Google-compatible subset and explicit limitations.
+---
+
+## Calendar API
+
+All endpoints require a Calendarpit bearer token. Access is limited to calendars
+owned by the authorized test user. `primary` resolves against that user.
+
+| Method                  | Path                                                             | Behavior                                        |
+| ----------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
+| GET                     | `/calendar/v3/users/me/calendarList`                             | Owned calendars; `maxResults`, `pageToken`      |
+| GET                     | `/calendar/v3/calendars/{calendarId}`                            | Calendar metadata                               |
+| GET, POST               | `/calendar/v3/calendars/{calendarId}/events`                     | List/create events                              |
+| GET, PUT, PATCH, DELETE | `/calendar/v3/calendars/{calendarId}/events/{eventId}`           | Read/replace/patch/delete                       |
+| GET                     | `/calendar/v3/calendars/{calendarId}/events/{eventId}/instances` | Recurring instances and exceptions              |
+| POST                    | `/calendar/v3/freeBusy`                                          | Merged, clipped busy ranges, up to 50 calendars |
+| POST                    | `/calendar/v3/calendars/{calendarId}/events/watch`               | Subscribe to changes                            |
+| POST                    | `/calendar/v3/channels/stop`                                     | Stop a subscription                             |
+
+Supported event fields include `id`, `summary`, `description`, `location`,
+`start`, `end`, `transparency`, `status` (`confirmed`, `tentative`, `cancelled`),
+`visibility`, `colorId` (1–11), `attendees`, `reminders`, `recurrence`, and
+`extendedProperties.private/shared` string maps. Responses include organizer,
+creator, `iCalUID`, sequence, timestamps and etag. Organizer/creator identity is
+relative to the calendar copy; `self` identifies its owner. Event IDs follow
+Calendarpit's fixture ID rules, broader than Google's base32hex IDs.
+`If-Match` protects individual event mutations.
+
+`PUT` replaces writable fields; `PATCH` preserves omitted fields. Extended-property
+maps merge on patch; null removes an entry or map. Start/end objects replace the
+previous object. All-day inputs accept `dateTime: null` and `timeZone: null`.
+Deletion retains a `cancelled` tombstone for synchronization; individual GETs can
+read it. Default lists and free/busy exclude cancelled events.
+
+Calendar lists support `minAccessRole` (`freeBusyReader`, `reader`, `writer`,
+`owner`) and `showDeleted`. Every accessible calendar has the owner role, so all
+valid minimum roles include it. Deleted calendars appear only with `showDeleted=true`.
+ACLs and shared-calendar access are not simulated.
+
+Event lists support `timeMin`, `timeMax`, `maxResults` (1–2500), `pageToken`,
+`singleEvents`, `showDeleted`, `timeZone`, `updatedMin`, `iCalUID`, and repeated
+`privateExtendedProperty=name=value` / `sharedExtendedProperty=name=value` filters.
+Repeated constraints must all match. `orderBy=startTime` requires
+`singleEvents=true`; `orderBy=updated` is also supported. Time bounds are RFC3339
+with offsets; matching uses `start < timeMax` and `end > timeMin`.
+
+Event pages capture a snapshot, so writes between pages do not skip results.
+Cursors are query/user-bound, expire after one hour and are lost on restart/reset.
+Calendar-list pagination remains invalidated by calendar mutations.
+See [Incremental sync](/sync) for `nextSyncToken`, deletions and watch-driven updates.
+
+## Recurrence
+
+`singleEvents=false` returns series masters and saved exceptions.
+`singleEvents=true` expands occurrences. `GET .../events/{eventId}/instances`
+accepts time bounds, `showDeleted`, pagination, `timeZone`, and `originalStart`.
+An occurrence has a stable ID, `recurringEventId`, and `originalStartTime`.
+GET/PATCH/PUT/DELETE on that ID reads, overrides or cancels the occurrence.
+Changes to a master update generated instances; deleted/trimmed occurrences produce
+cancellations during incremental synchronization. Free/busy expands the same rules.
+
+Supported recurrence lines are `RRULE`, `EXRULE`, `RDATE`, and `EXDATE`.
+Rules support DAILY/WEEKLY/MONTHLY/YEARLY with INTERVAL, COUNT or UNTIL,
+BYDAY, BYMONTHDAY, BYMONTH, BYSETPOS and WKST. Timed series require
+`start.timeZone`; UTC UNTIL values are interpreted in that zone. All-day explicit
+dates use `RDATE;VALUE=DATE` / `EXDATE;VALUE=DATE`. Wall-clock time is maintained
+across DST offset changes. An occurrence in a nonexistent local time at a DST
+gap returns an explicit error instead of moving the event silently. Ambiguous fold
+times resolve to the earlier offset. Sub-daily frequencies and unlisted rule parts are rejected.
+
+An infinite series requires `timeMax` when expanding. Finite expansion is limited
+to 10,000 instances and 100 years from DTSTART; exceeding limits returns an explicit
+error. Narrow the requested window for larger series. Incremental expanded sync
+retains the initial recurrence window; start a new full sync when moving that window.
+
+## Invitations, reminders and local meetings
+
+Attendees preserve email, display name, optional/resource flags, additional guests,
+comment and responseStatus (`needsAction`, `accepted`, `tentative`, `declined`).
+Inviting another configured test user creates a copy in their primary calendar.
+Private extended properties and reminders remain local to each copy. Organizer
+changes/cancellations update these copies and notify their event watch channels.
+Invitees can PATCH their own response, reminders, transparency, color and extended
+properties; organizer-only shared edits return 403. Use `attendeesOmitted: true`
+with a single own-attendee entry to update a response without replacing other guests.
+RSVP propagates to the organizer's local copy, including a single recurring instance.
+External organizers can be represented in fixtures; no external calendar is contacted.
+
+Write endpoints accept `sendUpdates=all|externalOnly|none` (default `none`). They
+record notification intent in `/__calendarpit/state.notifications`, capped at 200.
+`all` includes attendees; `externalOnly` includes addresses not registered as local
+test users; `none` records no delivery. These are local REQUEST/CANCEL/REPLY records,
+not email delivery. Local invitation copies synchronize regardless of notification mode.
+Calendarpit does not emulate Google's account discovery or invitation spam policies.
+
+Reminders support `useDefault` and up to five email/popup overrides (0–40320 minutes).
+They round-trip as configuration; there is no reminder scheduler or actual email.
+
+With `conferenceDataVersion=1`, a `conferenceData.createRequest` for `hangoutsMeet`
+returns a successful synthetic conference and video entry point. Reusing a request ID
+produces the same identifier. Its URL uses the reserved `meet.calendarpit.invalid`
+host and cannot join a real meeting. Conference data can be copied or cleared with
+null. A conference payload without version 1 is explicitly rejected. Version 0 is
+accepted for writes that contain no conference data. No Google Meet API is called.
+
+## Time semantics
+
+Intervals are half-open: `[start, end)`. Start must precede end. All-day end dates
+are exclusive and use the calendar's time zone, including 23/25-hour DST days.
+Timed events may supply an explicit offset, or a local date/time plus IANA zone.
+Ambiguous or nonexistent local times require an explicit offset.
+
+Free/busy ignores free (`transparent`) and cancelled/deleted events, merges
+intersecting or adjacent intervals, and clips to the query range. Unknown or
+unowned calendars produce per-calendar `notFound` errors. A response `timeZone`
+is supported. Calendar groups are not supported.
+
+## OAuth
+
+| Method | Path               | Behavior                                             |
+| ------ | ------------------ | ---------------------------------------------------- |
+| GET    | `/oauth/authorize` | Local consent page with test-user selection          |
+| POST   | `/oauth/authorize` | Consume the one-use consent nonce; approve or deny   |
+| POST   | `/oauth/token`     | Form-encoded code exchange or refresh-token exchange |
+| POST   | `/oauth/revoke`    | Form-encoded token revocation                        |
+| GET    | `/userinfo`        | Authorized test-user ID and scoped email/name claims |
+
+Clients and exact redirect URIs must be registered in a fixture. Consent expires
+after five minutes; authorization codes expire after one minute and are single-use,
+client-bound, and redirect-bound. PKCE S256 is supported. Client authentication
+accepts a form secret or HTTP Basic. Access tokens expire after one hour. Offline
+access issues a refresh token; revocation/reset invalidates the connection's tokens.
+OAuth `state` is preserved on approval and denial. Revocation of an unknown token
+returns success without exposing whether it existed.
+
+Supported scopes are `https://www.googleapis.com/auth/calendar`, and the suffixes
+`.readonly`, `.events`, `.events.readonly`, `.calendarlist.readonly`,
+`.calendars.readonly`, `.freebusy`, and `.events.freebusy`. Calendar-list reads,
+calendar metadata reads, event reads, event writes, and free/busy each enforce
+appropriate scopes. User-info accepts `openid`, `email`, `profile`,
+`https://www.googleapis.com/auth/userinfo.email`, and
+`https://www.googleapis.com/auth/userinfo.profile`; email/name are only returned
+when their corresponding scope was granted. `openid` provides a user identifier
+only: no ID token, discovery document, or full OIDC implementation is provided.
+
+Only interactive consent is supported. `prompt=none`, incremental authorization,
+and unknown authorization parameters return errors. Refresh does not expand or
+change scopes. Reconnect for different permissions.
+
+## Explicit exclusions
+
+ACLs, shared calendars, delegation, real invitation/reminder email delivery, real
+Meet creation, calendar-list watch, full OIDC, and unlisted behavior are unsupported. Unknown request fields/query parameters
+return explicit errors; unsupported API routes return 501. Common transport query
+parameters (`alt=json`, `prettyPrint`, `quotaUser`, `key`) are accepted, but API
+keys never replace bearer authorization. There is no real Google proxy or sync.
+
+See [Test control](/fixtures) for management endpoints and [Connect your
+application](/integration) for SDK endpoint configuration.

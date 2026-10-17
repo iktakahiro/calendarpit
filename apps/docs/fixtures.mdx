@@ -1,0 +1,136 @@
+---
+title: Fixtures and test control
+description: Reproducible local data and management API reference.
+---
+
+## Startup configuration
+
+Copy `fixtures/default.json` and edit it for your test. Use fixed IDs to make
+assertions stable. The root object accepts `users`, `calendars`, `events`, and
+`clients` arrays. Every owner/reference must exist; a user with calendars must
+have exactly one primary calendar. Validation is atomic.
+
+```sh
+CALENDARPIT_DATABASE=:memory: CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev
+bun run build
+bun run start -- --database :memory: --config "$PWD/fixtures/default.json" --port 4173
+```
+
+For workspace scripts, use an **absolute path** for `CALENDARPIT_CONFIG` or
+`--config`, since the application runs from `apps/calendarpit`.
+
+```json
+{
+  "users": [{ "id": "alex", "name": "Alex", "email": "alex@example.test" }],
+  "calendars": [
+    {
+      "id": "work",
+      "userId": "alex",
+      "summary": "Work",
+      "timeZone": "Asia/Tokyo",
+      "primary": true
+    }
+  ],
+  "events": [
+    {
+      "id": "meeting",
+      "calendarId": "work",
+      "summary": "Planning",
+      "start": { "dateTime": "2026-10-19T10:00:00+09:00" },
+      "end": { "dateTime": "2026-10-19T11:00:00+09:00" }
+    }
+  ],
+  "clients": [
+    {
+      "id": "sample-app",
+      "secret": "local-sample-secret",
+      "redirectUris": ["http://127.0.0.1:4175/callback"]
+    }
+  ]
+}
+```
+
+IDs may contain ASCII letters, digits, `@`, `.`, `_`, and `-`, up to 128
+characters. `primary` is reserved. IDs are optional for users, calendars, events,
+and clients, but referenced resources should use fixed IDs. Event IDs are unique
+within each calendar. Generated IDs and initial event metadata are captured in
+the initial snapshot so repeated resets reproduce the same data. SQLite also preserves
+that snapshot across process restarts.
+
+## Persistent and temporary storage
+
+The CLI and dev server default to `.calendarpit/calendarpit.sqlite` relative to
+process working directory. Repository workspace commands run in `apps/calendarpit`.
+Use `--database /absolute/path/workspace.sqlite` or `CALENDARPIT_DATABASE` to choose
+a file; CLI flags win. `--database :memory:` uses SQLite in memory without creating
+any database or lock files. The embedded `createCalendarpit()` API defaults to
+memory; pass `{ database: '/absolute/path/workspace.sqlite' }` for persistence and
+call `app.close()` when finished.
+
+The CLI prints the resolved path. The health response reports `storage` as `sqlite`
+or `memory`; `/state` also exposes `{ mode, path? }` under `storage`.
+
+| State                                         | SQLite restart behavior                                                                 |
+| --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Users, calendars, events, OAuth clients       | Restored, including event IDs, timestamps, and etags                                    |
+| Reset baseline                                | Original seed retained; a changed config does not overwrite an existing DB              |
+| Connections, access and refresh tokens        | Restored with original expiration and revocation state                                  |
+| Watch channels                                | Unexpired channels restored, with message numbers; current callback allowlist reapplied |
+| API and delivery history                      | Latest 200 entries of each retained                                                     |
+| Queued or in-flight deliveries                | Marked cancelled; never replayed automatically                                          |
+| Event sync tokens and cancellation tombstones | Restored; reset/fixture load invalidates sync tokens                                    |
+| Consent, authorization codes, page cursors    | Discarded; restart the flow or listing                                                  |
+
+After a restart, refetch calendar state to reconcile notifications interrupted by
+shutdown. New mutations notify restored subscriptions. Graceful shutdown aborts
+pending deliveries; a callback already received cannot be undone.
+
+A fixture seeds only a **new** database. Use the fixture-loading API to replace an
+existing workspace. Reset always restores the original seed, invalidates credentials
+and subscriptions, and clears logs, with the result saved immediately. It does not
+delete the database file. The fixture file itself is never modified.
+
+Use one process per database file. A second owner fails at startup; use distinct
+files or memory mode for parallel workers. The DB contains local test credentials,
+so it and its lock file are owner-readable/writable and excluded from Git. SQLite
+may create `-wal`, `-shm`, and `.lock` sidecar files; keep them with the database while
+it is running. Stop the server before copying a persistent workspace.
+
+## Management endpoints
+
+All paths below start with `/__calendarpit`. No bearer token is required.
+The server is a local development service. Writes require `application/json`;
+cross-origin browser requests are rejected. Use `{}` for bodyless POST controls.
+
+| Method                     | Path                               | Behavior                                                                                                 |
+| -------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| GET / HEAD                 | `/health`                          | Version and capability flags                                                                             |
+| GET                        | `/state`                           | Users, calendars, events, clients without secrets, connections, channels, deliveries                     |
+| POST                       | `/fixtures`                        | Validate and replace current data; invalidate connections and clear runtime state                        |
+| POST                       | `/reset`                           | Restore the immutable startup fixture, clearing tokens, consent, history, channels and queued deliveries |
+| GET / DELETE               | `/history`                         | Inspect or clear the latest 200 protocol requests                                                        |
+| POST                       | `/users`                           | Create a user (`name`, `email`, optional `id`)                                                           |
+| PATCH / DELETE             | `/users/{id}`                      | Edit or delete a user and owned data                                                                     |
+| POST                       | `/calendars`                       | Create a calendar (`userId`, `summary`, `timeZone`, `primary`, optional `id`)                            |
+| PATCH / DELETE             | `/calendars/{id}`                  | Edit or delete a calendar; ID and owner are immutable                                                    |
+| GET / POST                 | `/calendars/{id}/events`           | List or create events                                                                                    |
+| GET / PUT / PATCH / DELETE | `/calendars/{id}/events/{eventId}` | Read, replace, edit or delete an event                                                                   |
+| POST                       | `/connections/{id}/revoke`         | Revoke the connection's tokens and stop its watch channels                                               |
+| POST                       | `/deliveries/drain`                | Wait for currently queued deliveries, including bounded retries                                          |
+
+Loading a fixture does **not** replace the startup reset target. User/calendar
+removal cascades to their events; user removal also revokes connections. Deleting
+a primary calendar selects another owned calendar as primary when available.
+Setting another calendar primary transfers the flag atomically.
+
+State exports intentionally omit client secrets and credentials; they are
+inspection output, not reloadable fixture files. Keep your original fixture file.
+Management requests are excluded from protocol history to avoid polling noise.
+
+## Repeatable tests
+
+Use one process per parallel worker, with `--database :memory:` and `--port 0`
+or a unique port. Separate SQLite files are also supported. Reset before
+each scenario. The startup log prints the selected port. Use the delivery drain
+control instead of arbitrary sleeps. In-flight callback requests are aborted by
+reset; a remote receiver may already have observed a request before cancellation.

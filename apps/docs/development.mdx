@@ -1,0 +1,96 @@
+---
+title: Development
+description: Run, validate, and package Calendarpit with Bun.
+---
+
+## Prerequisites
+
+Use Bun 1.4.3, pinned in `.bun-version` and the root `packageManager` field.
+This version includes the native `bun check` type checker. No external database,
+Google account, secrets, or environment file is needed for local use.
+
+```sh
+bun install --frozen-lockfile
+bun run dev
+```
+
+The admin UI and API listen at `http://127.0.0.1:4173`. Development uses Vite
+running on Bun. Production uses `Bun.serve` in a single process. Both default to
+SQLite persistence in `apps/calendarpit/.calendarpit/calendarpit.sqlite` when using
+workspace scripts. Use `CALENDARPIT_DATABASE=:memory: bun run dev` for disposable
+data, or `bun run start -- --database :memory:` after building. Server hot reloads
+close the previous store before reopening the saved database.
+
+Run `bun run docs:dev` for the documentation preview at `http://localhost:4487`.
+The preview does not open an external browser automatically.
+
+## Checks
+
+### Dependency release interval
+
+`bunfig.toml` sets `install.minimumReleaseAge = 172800` (48 hours) for new
+dependency resolutions, including transitive dependencies. `.ncurc.json` sets
+the matching two-day `cooldown` for npm-check-updates and preserves exact versions.
+Keep both settings aligned. Do not disable the gate, lower the interval, or add
+package exclusions without explicit approval.
+
+The age filter does not re-evaluate versions already recorded in `bun.lock`.
+CI uses `bun install --frozen-lockfile` to reproduce the reviewed dependency set.
+This delay is a supply-chain buffer, not a guarantee that a package is safe.
+
+### Validation commands
+
+```sh
+bun run validate
+bun run build
+bun run docs:check
+```
+
+`validate` runs Oxlint, Oxfmt, workspace type checks using `bun check`, and Bun
+tests. `bun run fix` applies formatting and lint fixes. The API package is tested
+without starting a UI server. CLI tests cover bind defaults, argument parsing,
+and asset serving.
+
+Do not create a package script named `check` that obscures Bun's native command.
+Use `type-check` for type checking and `validate` for the aggregate checks.
+
+## Production and packaging
+
+```sh
+bun run build
+bun run start
+bun run build:binary
+bun run smoke
+```
+
+The executable is written to `apps/calendarpit/dist/bin/calendarpit` (with `.exe`
+on Windows). Client assets are embedded with Bun's file loader. The smoke check
+copies the executable into a temporary directory with a test fixture, starts it
+on an available loopback port, and checks config loading, HTML, assets, the
+health endpoint, and explicit API errors. It also verifies recovery after a forced
+process exit, memory-mode isolation, and reset persistence across restarts. No source
+or node_modules are needed.
+
+Use `--host`, `--port`, `--database`, `--help`, and `--version` on the CLI. Environment defaults
+are `CALENDARPIT_HOST` and `CALENDARPIT_PORT`; command-line flags take precedence.
+The default host is `127.0.0.1` and the default port is `4173`.
+
+### Optional Docker setup
+
+Use Bun directly for day-to-day development. The Dockerfile is available, but
+container build and startup validation are still pending.
+
+```sh
+docker build -t calendarpit:local .
+docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
+```
+
+The Docker build compiles for the container's platform. Publishing images,
+cross-compiling release binaries, and npm publishing remain release work.
+
+## Generated files
+
+TanStack Start generates `src/routeTree.gen.ts`. Keep the generated route tree
+with the source so type checking works before the first build. Do not edit it
+manually. Build output, Turbo caches, and generated executable entry files are
+ignored by Git, linting, and formatting.
