@@ -1,12 +1,8 @@
 name: Docs
 
+# Publishing is manual until the custom domain and hosting are decided. CI
+# still builds the site and validates links on every pull request.
 on:
-  push:
-    branches: [main]
-    paths:
-      - apps/docs/**
-      - .github/workflows/docs.yml
-      - bun.lock
   workflow_dispatch:
 
 permissions:
