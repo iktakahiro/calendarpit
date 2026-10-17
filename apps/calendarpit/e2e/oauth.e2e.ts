@@ -1,12 +1,14 @@
-import { expect, sampleClient, test, toast } from './support/fixtures';
+import {
+  expect,
+  redirectAfter,
+  sampleClient,
+  test,
+  toast,
+} from './support/fixtures';
 
 test('consent creates a connection that the admin UI can revoke', async ({
   page,
 }) => {
-  // Stand in for the client application's callback server.
-  await page.route(`${sampleClient.redirectUri}**`, (route) =>
-    route.fulfill({ body: 'Signed in.' }),
-  );
   const params = new URLSearchParams({
     client_id: sampleClient.id,
     redirect_uri: sampleClient.redirectUri,
@@ -19,10 +21,9 @@ test('consent creates a connection that the admin UI can revoke', async ({
     page.getByRole('heading', { name: 'Connect your calendar.' }),
   ).toBeVisible();
   await page.getByLabel('Test user').selectOption('sam');
-  await page.getByRole('button', { name: 'Approve' }).click();
-
-  await page.waitForURL(`${sampleClient.redirectUri}?**`);
-  const callback = new URL(page.url());
+  const callback = await redirectAfter(page, () =>
+    page.getByRole('button', { name: 'Approve' }).click(),
+  );
   expect(callback.searchParams.get('state')).toBe('e2e-state');
   expect(callback.searchParams.get('code')).toBeTruthy();
 
@@ -40,9 +41,6 @@ test('consent creates a connection that the admin UI can revoke', async ({
 });
 
 test('denial returns access_denied to the client', async ({ page }) => {
-  await page.route(`${sampleClient.redirectUri}**`, (route) =>
-    route.fulfill({ body: 'Denied.' }),
-  );
   const params = new URLSearchParams({
     client_id: sampleClient.id,
     redirect_uri: sampleClient.redirectUri,
@@ -50,7 +48,8 @@ test('denial returns access_denied to the client', async ({ page }) => {
     scope: 'https://www.googleapis.com/auth/calendar',
   });
   await page.goto(`/oauth/authorize?${params}`);
-  await page.getByRole('button', { name: 'Deny' }).click();
-  await page.waitForURL(`${sampleClient.redirectUri}?**`);
-  expect(new URL(page.url()).searchParams.get('error')).toBe('access_denied');
+  const callback = await redirectAfter(page, () =>
+    page.getByRole('button', { name: 'Deny' }).click(),
+  );
+  expect(callback.searchParams.get('error')).toBe('access_denied');
 });

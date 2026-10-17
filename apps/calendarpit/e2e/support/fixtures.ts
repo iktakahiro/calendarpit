@@ -34,3 +34,24 @@ export const sectionLink = (page: Page, name: string) =>
   page
     .getByRole('navigation', { name: 'Workspace sections' })
     .getByRole('button', { name });
+
+/**
+ * Runs `action` and returns the URL the consent form redirects to.
+ *
+ * The browser submits the form as usual, but the server's 302 is read
+ * instead of followed: nothing serves the client callback, and route handlers
+ * never see requests that follow a redirect.
+ */
+export async function redirectAfter(page: Page, action: () => Promise<void>) {
+  let location: string | undefined;
+  await page.route('**/oauth/authorize', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    const response = await route.fetch({ maxRedirects: 0 });
+    location = response.headers().location;
+    await route.fulfill({ status: 200, body: 'Redirect captured.' });
+  });
+  await Promise.all([page.waitForLoadState('load'), action()]);
+  await expect.poll(() => location).toBeTruthy();
+  await page.unroute('**/oauth/authorize');
+  return new URL(location!);
+}
