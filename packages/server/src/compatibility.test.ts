@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { setup } from './test-utils';
+import { setup } from './testing/server-harness';
 
 const path = '/calendar/v3/calendars/primary/events';
 const timed = {

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { defaultFixture } from './index';
 import { busy, interval, makeEvent, parseFixture } from './model';
 
-import { setup } from './test-utils';
+import { setup } from './testing/server-harness';
 const timed = {
   id: 'test-event',
   summary: 'Busy',

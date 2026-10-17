@@ -20,7 +20,7 @@
       },
       {
         "group": "Engineering",
-        "pages": ["architecture", "roadmap"]
+        "pages": ["architecture", "testing", "roadmap"]
       }
     ]
   }
