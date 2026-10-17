@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
+import { guestPermissionDefaults } from './event-details';
 import { resolveInstance } from './recurrence';
 import {
   fail,
@@ -19,6 +20,7 @@ export function decorate(
   const organizer = event.organizer ?? identity;
   const creator = event.creator ?? identity;
   return {
+    ...guestPermissionDefaults,
     ...event,
     iCalUID: event.iCalUID ?? `${event.id}@calendarpit.local`,
     organizer: {

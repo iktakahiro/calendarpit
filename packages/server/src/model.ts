@@ -4,6 +4,7 @@ import {
   reminders,
   person,
   conference,
+  guestPermissionDefaults,
   type Attendee,
   type Person,
   type Reminders,
@@ -92,6 +93,9 @@ export type CalendarEvent = {
   visibility?: 'default' | 'public' | 'private' | 'confidential';
   colorId?: string;
   attendees?: Attendee[];
+  guestsCanModify?: boolean;
+  guestsCanInviteOthers?: boolean;
+  guestsCanSeeOtherGuests?: boolean;
   reminders?: Reminders;
   organizer?: Person;
   creator?: Person;
@@ -211,6 +215,7 @@ export function makeEvent(
     'visibility',
     'colorId',
     'attendees',
+    ...Object.keys(guestPermissionDefaults),
     'reminders',
     'organizer',
     'creator',
@@ -322,6 +327,14 @@ export function makeEvent(
     event.colorId = String(data.colorId);
   }
   if (data.attendees != null) event.attendees = attendees(data.attendees);
+  for (const key of Object.keys(guestPermissionDefaults) as Array<
+    keyof typeof guestPermissionDefaults
+  >) {
+    const value = data[key];
+    if (value !== undefined && typeof value !== 'boolean')
+      fail(`${key} must be boolean.`);
+    event[key] = value ?? guestPermissionDefaults[key];
+  }
   if (data.reminders != null) event.reminders = reminders(data.reminders);
   if (data.organizer != null) event.organizer = person(data.organizer);
   if (data.creator != null) event.creator = person(data.creator);

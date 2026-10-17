@@ -1,5 +1,11 @@
 import { fail, fields, object, string } from './model';
 
+export const guestPermissionDefaults = {
+  guestsCanModify: false,
+  guestsCanInviteOthers: true,
+  guestsCanSeeOtherGuests: true,
+} as const;
+
 export type Person = { email: string; displayName?: string; self?: boolean };
 export type Attendee = Person & {
   responseStatus: 'needsAction' | 'declined' | 'tentative' | 'accepted';

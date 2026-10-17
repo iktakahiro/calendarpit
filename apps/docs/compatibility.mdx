@@ -95,6 +95,16 @@ test users; `none` records no delivery. These are local REQUEST/CANCEL/REPLY rec
 not email delivery. Local invitation copies synchronize regardless of notification mode.
 Calendarpit does not emulate Google's account discovery or invitation spam policies.
 
+Guest permission fields round-trip as boolean configuration:
+`guestsCanModify` defaults to `false`, while `guestsCanInviteOthers` and
+`guestsCanSeeOtherGuests` default to `true`, matching the
+[event resource defaults](https://developers.google.com/workspace/calendar/api/v3/reference/events).
+PATCH preserves omitted flags; PUT restores omitted flags to their defaults.
+Only the organizer can change these shared fields. They persist across restarts
+and propagate to local invitation copies and recurring instances. Guest editing,
+guest-initiated invitations, and attendee-list filtering based on these flags
+are not simulated; the existing invitee PATCH restrictions still apply.
+
 Reminders support `useDefault` and up to five email/popup overrides (0–40320 minutes).
 They round-trip as configuration; there is no reminder scheduler or actual email.
 

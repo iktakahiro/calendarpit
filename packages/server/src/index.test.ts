@@ -258,7 +258,7 @@ describe('calendar behavior', () => {
     const { access_token: t } = await s.token();
     for (const body of [
       { ...timed, recurrence: ['RRULE:FREQ=DAILY'] },
-      { ...timed, guestsCanModify: true },
+      { ...timed, unsupportedProperty: true },
       { ...timed, start: { date: '2026-02-30' }, end: { date: '2026-03-01' } },
       { ...timed, end: timed.start },
     ])

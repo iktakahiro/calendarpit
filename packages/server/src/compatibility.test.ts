@@ -30,6 +30,152 @@ async function client(options: Parameters<typeof setup>[0] = {}) {
 }
 
 describe('Google-compatible event details', () => {
+  test('guest permissions preserve explicit booleans across reads and PATCH, and reset on PUT', async () => {
+    const s = await client();
+    const defaults = {
+      guestsCanModify: false,
+      guestsCanInviteOthers: true,
+      guestsCanSeeOtherGuests: true,
+    };
+    const permissions = {
+      guestsCanModify: true,
+      guestsCanInviteOthers: false,
+      guestsCanSeeOtherGuests: false,
+    };
+    expect(await s.api(`${path}/planning`)).toMatchObject(defaults);
+    expect(
+      await s.api(path, 'POST', { ...timed, ...permissions }),
+    ).toMatchObject(permissions);
+    expect(await s.api(`${path}/appointment`)).toMatchObject(permissions);
+    const initial = await s.api(`${path}?showDeleted=true`);
+    expect(
+      initial.items.find((event: { id: string }) => event.id === 'appointment'),
+    ).toMatchObject(permissions);
+    expect(
+      await s.api(`${path}/appointment`, 'PATCH', { summary: 'Renamed' }),
+    ).toMatchObject(permissions);
+    const changed = { ...permissions, guestsCanModify: false };
+    expect(
+      await s.api(`${path}/appointment`, 'PATCH', { guestsCanModify: false }),
+    ).toMatchObject(changed);
+    const delta = await s.api(
+      `${path}?showDeleted=true&syncToken=${initial.nextSyncToken}`,
+    );
+    expect(delta.items).toHaveLength(1);
+    expect(delta.items[0]).toMatchObject(changed);
+    expect(await s.api(`${path}/appointment`, 'PUT', timed)).toMatchObject(
+      defaults,
+    );
+  });
+  test('invalid guest permission values fail atomically for insert, replace and patch', async () => {
+    const s = await client();
+    await s.api(path, 'POST', timed);
+    const before = s.app.store.snapshot();
+    for (const field of [
+      'guestsCanModify',
+      'guestsCanInviteOthers',
+      'guestsCanSeeOtherGuests',
+    ]) {
+      for (const value of ['true', 'false', 0, 1, null, [], {}]) {
+        for (const method of ['POST', 'PUT', 'PATCH']) {
+          const response = await s.api(
+            method === 'POST' ? path : `${path}/appointment`,
+            method,
+            method === 'PATCH'
+              ? { [field]: value }
+              : {
+                  ...timed,
+                  id: method === 'POST' ? 'invalid' : timed.id,
+                  [field]: value,
+                },
+            400,
+          );
+          expect(response.error.errors[0].reason).toBe('invalidParameter');
+        }
+      }
+    }
+    expect(s.app.store.snapshot()).toEqual(before);
+  });
+  test('guest permissions propagate to invitation copies and recurring instances without granting shared-field writes', async () => {
+    const s = await client();
+    const permissions = {
+      guestsCanModify: true,
+      guestsCanInviteOthers: false,
+      guestsCanSeeOtherGuests: false,
+    };
+    await s.api(path, 'POST', {
+      ...timed,
+      ...permissions,
+      recurrence: ['RRULE:FREQ=DAILY;COUNT=2'],
+      attendees: [{ email: 'sam@example.test' }],
+    });
+    const sam = await s.token(undefined, 'sam');
+    const invitation = await s.request(
+      `${path}/appointment`,
+      'GET',
+      undefined,
+      sam.access_token,
+    );
+    expect(invitation.status).toBe(200);
+    expect(await invitation.json()).toMatchObject(permissions);
+    const instances = await s.api(`${path}/appointment/instances`);
+    expect(instances.items).toHaveLength(2);
+    for (const instance of instances.items)
+      expect(instance).toMatchObject(permissions);
+    for (const field of Object.keys(permissions)) {
+      const denied = await s.request(
+        `${path}/appointment`,
+        'PATCH',
+        { [field]: true },
+        sam.access_token,
+      );
+      expect(denied.status).toBe(403);
+      expect((await denied.json()).error.errors[0].reason).toBe(
+        'forbiddenForNonOrganizer',
+      );
+    }
+    await s.api(`${path}/appointment`, 'PATCH', { guestsCanModify: false });
+    expect(
+      await (
+        await s.request(
+          `${path}/appointment`,
+          'GET',
+          undefined,
+          sam.access_token,
+        )
+      ).json(),
+    ).toMatchObject({ ...permissions, guestsCanModify: false });
+  });
+  test('guest permissions survive SQLite restart and older saved events receive response defaults', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'calendarpit-permissions-'));
+    const database = join(dir, 'state.sqlite');
+    try {
+      const s = await client({ database });
+      const permissions = {
+        guestsCanModify: true,
+        guestsCanInviteOthers: false,
+        guestsCanSeeOtherGuests: false,
+      };
+      await s.api(path, 'POST', { ...timed, ...permissions });
+      // Saved workspaces from older versions have no guest permission fields.
+      const legacy = s.app.store.event('alex-work', 'planning');
+      delete legacy.guestsCanModify;
+      delete legacy.guestsCanInviteOthers;
+      delete legacy.guestsCanSeeOtherGuests;
+      s.app.store.persist();
+      s.app.close();
+      const next = await client({ database });
+      expect(await next.api(`${path}/appointment`)).toMatchObject(permissions);
+      expect(await next.api(`${path}/planning`)).toMatchObject({
+        guestsCanModify: false,
+        guestsCanInviteOthers: true,
+        guestsCanSeeOtherGuests: true,
+      });
+      next.app.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
   test('all-day nulls, tentative, visibility, color, reminders and private property filters round-trip', async () => {
     const s = await client();
     const event = await s.api(
