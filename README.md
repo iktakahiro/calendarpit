@@ -8,7 +8,7 @@ database.
 Google-compatible event APIs and free/busy, local OAuth, watch notifications,
 fixture/reset controls, and masked request history. Compatibility is intentionally
 limited; unsupported features return explicit errors. See
-[compatibility](apps/docs/compatibility.mdx).
+[compatibility](apps/docs/src/content/docs/compatibility.mdx).
 
 ## Quick start
 
@@ -26,9 +26,10 @@ Changes are saved in SQLite by default. No `.env` file or credentials are needed
 bun run docs:dev
 ```
 
-Open <http://localhost:4487>. Docs use Mintlify, following the Chronock/Emopi
-documentation setup. The docs development tool may download its preview runtime;
-this is separate from the Calendarpit server.
+Open <http://127.0.0.1:4487/calendarpit/>. The docs are an Astro Starlight site
+with a landing page, published to GitHub Pages at
+<https://iktakahiro.github.io/calendarpit/>. They are separate from the
+Calendarpit server.
 
 ## Try a calendar integration
 
@@ -46,7 +47,7 @@ external changes every two seconds.
 The built-in test client is `sample-app` / `local-sample-secret`, with callback
 `http://127.0.0.1:4175/callback`. The sample overrides authorization, token, user-info,
 Calendar API, and revocation endpoints and blocks real Google requests. See
-[SDK integration](apps/docs/integration.mdx) for consuming-app configuration.
+[SDK integration](apps/docs/src/content/docs/integration.mdx) for consuming-app configuration.
 
 For reproducible custom data in a temporary session:
 
@@ -56,7 +57,7 @@ CALENDARPIT_DATABASE=:memory: CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bu
 
 Use absolute fixture paths with workspace commands. Loading a fixture replaces
 current data; reset always restores the startup fixture and clears credentials,
-history and watch state. See [fixture API](apps/docs/fixtures.mdx).
+history and watch state. See [fixture API](apps/docs/src/content/docs/fixtures.mdx).
 
 ## Data storage
 
@@ -78,13 +79,13 @@ Existing databases reopen their saved data, connections, tokens, watch channels,
 and bounded history. A fixture seeds only a new database; reset restores that
 original baseline even after restarting. Loading a fixture replaces current data
 without changing the baseline. Each parallel worker must use `:memory:` or its own
-file. See [storage and lifecycle details](apps/docs/fixtures.mdx).
+file. See [storage and lifecycle details](apps/docs/src/content/docs/fixtures.mdx).
 
 ## Connect your application
 
 Point your existing Google SDK and OAuth flow at Calendarpit. See the docs for
-[OAuth setup](apps/docs/integration.mdx) and
-[SDK examples](apps/docs/sdks.mdx) in TypeScript/JavaScript, Python, Go, Java,
+[OAuth setup](apps/docs/src/content/docs/integration.mdx) and
+[SDK examples](apps/docs/src/content/docs/sdks.mdx) in TypeScript/JavaScript, Python, Go, Java,
 C#, and HTTP/curl, including calendar lists and FreeBusy queries.
 
 ## Workspace

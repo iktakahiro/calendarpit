@@ -58,5 +58,5 @@ Use `POST /__calendarpit/deliveries/drain` to await currently queued work in tes
 After receiving a notification, call `events.list` with the last `nextSyncToken`.
 Process every page, upsert returned events, remove cancelled entries, and only then
 save the final page's next token. HTTP 410 requires a new full synchronization.
-See [Incremental sync](/sync) for a complete loop. The initial watch notification
+See [Incremental sync](/calendarpit/sync/) for a complete loop. The initial watch notification
 is a signal to fetch state, not an event snapshot.

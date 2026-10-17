@@ -3,8 +3,8 @@ title: MVP scope
 description: The product contract and acceptance criteria for the first release.
 ---
 
-This is the MVP product contract. See [Compatibility](/compatibility) for the
-implemented subset and [Roadmap](/roadmap) for integration/release follow-up work.
+This is the MVP product contract. See [Compatibility](/calendarpit/compatibility/) for the
+implemented subset and [Roadmap](/calendarpit/roadmap/) for integration/release follow-up work.
 
 ## Runtime and state
 
@@ -39,7 +39,7 @@ The following rules require explicit tests:
 Preserve attendees, invitation responses, organizer/creator identity, reminders,
 visibility, color and tentative status. Simulate local invitation copies and
 notification intent without sending email. Generate synthetic conference information
-without creating real meetings. See [Compatibility](/compatibility) for the bounded
+without creating real meetings. See [Compatibility](/calendarpit/compatibility/) for the bounded
 recurrence and local simulation contract.
 
 ## OAuth
@@ -58,10 +58,10 @@ Google login and OIDC compatibility are out of scope.
 
 Event subscriptions and local webhook delivery are part of the MVP. Support
 `events.watch`, `channels.stop`, initial synchronization notifications, event
-change notifications, expiration, and cleanup. See the [Watch design](/watch).
+change notifications, expiration, and cleanup. See the [Watch design](/calendarpit/watch/).
 Support incremental event synchronization with `showDeleted`, `nextSyncToken`,
 paginated snapshots and cancellation tombstones. Test synchronization across
-mutations, restart, expiration and reset. See [Incremental sync](/sync).
+mutations, restart, expiration and reset. See [Incremental sync](/calendarpit/sync/).
 
 ## Admin UI
 

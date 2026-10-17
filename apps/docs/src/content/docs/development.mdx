@@ -21,7 +21,10 @@ workspace scripts. Use `CALENDARPIT_DATABASE=:memory: bun run dev` for disposabl
 data, or `bun run start -- --database :memory:` after building. Server hot reloads
 close the previous workspace before reopening the saved database.
 
-Run `bun run docs:dev` for the documentation preview at `http://localhost:4487`.
+Run `bun run docs:dev` for the documentation preview at
+`http://127.0.0.1:4487/calendarpit/`. The docs are an Astro Starlight site.
+`bun run docs:check` builds it and fails on broken internal links or anchors.
+Pushing to `main` publishes it to GitHub Pages through `.github/workflows/docs.yml`.
 The preview does not open an external browser automatically.
 
 ## Checks

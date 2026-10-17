@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --bun mint dev --port 4487 --no-open",
-    "validate": "bun --bun mint validate --disable-openapi"
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1 --port 4487",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview --host 127.0.0.1 --port 4487",
+    "validate": "bun run build"
   },
   "devDependencies": {
-    "mint": "4.2.1056"
+    "@astrojs/starlight": "0.42.6",
+    "astro": "7.3.8",
+    "satteri": "0.10.5",
+    "starlight-links-validator": "0.27.0"
   }
 }
