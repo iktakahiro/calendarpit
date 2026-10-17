@@ -1,0 +1,39 @@
+import type { History } from '@calendarpit/server';
+
+/** CSS class for an HTTP status family. */
+export function statusClass(status: number) {
+  if (status >= 500) return 'status-5xx';
+  if (status >= 400) return 'status-4xx';
+  if (status >= 300) return 'status-3xx';
+  return 'status-2xx';
+}
+
+/** Labels a request path as Calendar or OAuth traffic. */
+export function area(path: string) {
+  if (path.startsWith('/calendar/')) return 'Calendar';
+  if (path.startsWith('/oauth')) return 'OAuth';
+  return '';
+}
+
+/**
+ * Returns history rows newest first, optionally only errors (status 400 and
+ * above), matching a case-insensitive query against method, path, and status.
+ */
+export function filterHistory(
+  history: History[],
+  query: string,
+  errorsOnly: boolean,
+): History[] {
+  const needle = query.trim().toLowerCase();
+  return history
+    .slice()
+    .reverse()
+    .filter((row) => !errorsOnly || row.status >= 400)
+    .filter(
+      (row) =>
+        !needle ||
+        `${row.method} ${row.path} ${row.status}`
+          .toLowerCase()
+          .includes(needle),
+    );
+}

@@ -9,50 +9,206 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as WorkspaceRouteImport } from './routes/_workspace'
+import { Route as WorkspaceIndexRouteImport } from './routes/_workspace/index'
+import { Route as WorkspaceCalendarsRouteImport } from './routes/_workspace/calendars'
+import { Route as WorkspaceConnectionsRouteImport } from './routes/_workspace/connections'
+import { Route as WorkspaceHistoryRouteImport } from './routes/_workspace/history'
+import { Route as WorkspaceSettingsRouteImport } from './routes/_workspace/settings'
+import { Route as WorkspaceUsersRouteImport } from './routes/_workspace/users'
+import { Route as WorkspaceWatchRouteImport } from './routes/_workspace/watch'
 
-const IndexRoute = IndexRouteImport.update({
+const WorkspaceRoute = WorkspaceRouteImport.update({
+  id: '/_workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkspaceIndexRoute = WorkspaceIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceCalendarsRoute = WorkspaceCalendarsRouteImport.update({
+  id: '/calendars',
+  path: '/calendars',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceConnectionsRoute = WorkspaceConnectionsRouteImport.update({
+  id: '/connections',
+  path: '/connections',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceHistoryRoute = WorkspaceHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceSettingsRoute = WorkspaceSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceUsersRoute = WorkspaceUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceWatchRoute = WorkspaceWatchRouteImport.update({
+  id: '/watch',
+  path: '/watch',
+  getParentRoute: () => WorkspaceRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof WorkspaceIndexRoute
+  '/calendars': typeof WorkspaceCalendarsRoute
+  '/connections': typeof WorkspaceConnectionsRoute
+  '/history': typeof WorkspaceHistoryRoute
+  '/settings': typeof WorkspaceSettingsRoute
+  '/users': typeof WorkspaceUsersRoute
+  '/watch': typeof WorkspaceWatchRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/calendars': typeof WorkspaceCalendarsRoute
+  '/connections': typeof WorkspaceConnectionsRoute
+  '/history': typeof WorkspaceHistoryRoute
+  '/settings': typeof WorkspaceSettingsRoute
+  '/users': typeof WorkspaceUsersRoute
+  '/watch': typeof WorkspaceWatchRoute
+  '/': typeof WorkspaceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_workspace': typeof WorkspaceRouteWithChildren
+  '/_workspace/calendars': typeof WorkspaceCalendarsRoute
+  '/_workspace/connections': typeof WorkspaceConnectionsRoute
+  '/_workspace/history': typeof WorkspaceHistoryRoute
+  '/_workspace/settings': typeof WorkspaceSettingsRoute
+  '/_workspace/users': typeof WorkspaceUsersRoute
+  '/_workspace/watch': typeof WorkspaceWatchRoute
+  '/_workspace/': typeof WorkspaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/calendars'
+    | '/connections'
+    | '/history'
+    | '/settings'
+    | '/users'
+    | '/watch'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/calendars'
+    | '/connections'
+    | '/history'
+    | '/settings'
+    | '/users'
+    | '/watch'
+    | '/'
+  id:
+    | '__root__'
+    | '/_workspace'
+    | '/_workspace/calendars'
+    | '/_workspace/connections'
+    | '/_workspace/history'
+    | '/_workspace/settings'
+    | '/_workspace/users'
+    | '/_workspace/watch'
+    | '/_workspace/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  WorkspaceRoute: typeof WorkspaceRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_workspace': {
+      id: '/_workspace'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof WorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_workspace/': {
+      id: '/_workspace/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof WorkspaceIndexRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/calendars': {
+      id: '/_workspace/calendars'
+      path: '/calendars'
+      fullPath: '/calendars'
+      preLoaderRoute: typeof WorkspaceCalendarsRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/connections': {
+      id: '/_workspace/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof WorkspaceConnectionsRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/history': {
+      id: '/_workspace/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof WorkspaceHistoryRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/settings': {
+      id: '/_workspace/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof WorkspaceSettingsRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/users': {
+      id: '/_workspace/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof WorkspaceUsersRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/watch': {
+      id: '/_workspace/watch'
+      path: '/watch'
+      fullPath: '/watch'
+      preLoaderRoute: typeof WorkspaceWatchRouteImport
+      parentRoute: typeof WorkspaceRoute
     }
   }
 }
 
+interface WorkspaceRouteChildren {
+  WorkspaceCalendarsRoute: typeof WorkspaceCalendarsRoute
+  WorkspaceConnectionsRoute: typeof WorkspaceConnectionsRoute
+  WorkspaceHistoryRoute: typeof WorkspaceHistoryRoute
+  WorkspaceSettingsRoute: typeof WorkspaceSettingsRoute
+  WorkspaceUsersRoute: typeof WorkspaceUsersRoute
+  WorkspaceWatchRoute: typeof WorkspaceWatchRoute
+  WorkspaceIndexRoute: typeof WorkspaceIndexRoute
+}
+
+const WorkspaceRouteChildren: WorkspaceRouteChildren = {
+  WorkspaceCalendarsRoute: WorkspaceCalendarsRoute,
+  WorkspaceConnectionsRoute: WorkspaceConnectionsRoute,
+  WorkspaceHistoryRoute: WorkspaceHistoryRoute,
+  WorkspaceSettingsRoute: WorkspaceSettingsRoute,
+  WorkspaceUsersRoute: WorkspaceUsersRoute,
+  WorkspaceWatchRoute: WorkspaceWatchRoute,
+  WorkspaceIndexRoute: WorkspaceIndexRoute,
+}
+
+const WorkspaceRouteWithChildren = WorkspaceRoute._addFileChildren(
+  WorkspaceRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  WorkspaceRoute: WorkspaceRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

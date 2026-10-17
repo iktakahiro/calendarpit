@@ -2,21 +2,17 @@ import type { Snapshot } from '@calendarpit/server';
 import { Button } from '@cloudflare/kumo/components/button';
 import { Tabs } from '@cloudflare/kumo/primitives/tabs';
 import { useState } from 'react';
-import { AppearanceSwitcher } from './appearance';
-import { Icon } from './icon';
+import { AppearanceSwitcher } from '../../components/appearance';
+import { Icon } from '../../components/icon';
+import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
+import { useLoadFixture, useResetWorkspace } from './hooks/use-fixtures';
 
-export function WorkspaceView({
-  snapshot,
-  pending,
-  loadFixture,
-  reset,
-}: {
-  snapshot: Snapshot;
-  pending: boolean;
-  loadFixture: (text: string) => void;
-  reset: () => void;
-}) {
+/** Appearance, storage, fixtures and reset, and registered OAuth clients. */
+export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
   const [fixture, setFixture] = useState('');
+  const loadFixture = useLoadFixture();
+  const reset = useResetWorkspace();
+  const busy = useWorkspaceBusy();
   return (
     <Tabs.Root defaultValue='appearance' className='settings-content'>
       <Tabs.List className='settings-tabs' aria-label='Settings sections'>
@@ -44,7 +40,7 @@ export function WorkspaceView({
             <div>
               <h2 id='storage-title'>Storage</h2>
               <p>
-                {snapshot?.storage.mode === 'sqlite'
+                {snapshot.storage.mode === 'sqlite'
                   ? 'Changes are saved automatically across restarts.'
                   : 'Temporary session. Restarting discards changes.'}
               </p>
@@ -53,7 +49,7 @@ export function WorkspaceView({
           </header>
           <div className='panel-body'>
             <code className='storage-path'>
-              {snapshot?.storage.path ?? ':memory:'}
+              {snapshot.storage.path ?? ':memory:'}
             </code>
           </div>
         </section>
@@ -98,14 +94,14 @@ export function WorkspaceView({
               </label>
               <Button
                 variant='primary'
-                disabled={pending || !fixture.trim()}
+                disabled={busy || !fixture.trim()}
                 onClick={() => {
                   if (
                     window.confirm(
                       'Replace current data and revoke all connections?',
                     )
                   )
-                    loadFixture(fixture);
+                    loadFixture.mutate(fixture);
                 }}
               >
                 Load fixture
@@ -122,14 +118,14 @@ export function WorkspaceView({
               <Button
                 variant='secondary-destructive'
                 icon={<Icon name='arrowRotateLeft' />}
-                disabled={pending}
+                disabled={busy}
                 onClick={() => {
                   if (
                     window.confirm(
                       'Restore initial data and clear connections, history, and watch channels?',
                     )
                   )
-                    reset();
+                    reset.mutate(undefined);
                 }}
               >
                 Reset workspace

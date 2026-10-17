@@ -1,6 +1,7 @@
 import type { Snapshot } from '@calendarpit/server';
 import { Badge } from '@cloudflare/kumo/components/badge';
-import { Icon } from './icon';
+import { Icon } from '../../components/icon';
+import { formatTimestamp } from '../../lib/format';
 
 const deliveryBadge = {
   delivered: 'success',
@@ -9,11 +10,8 @@ const deliveryBadge = {
   cancelled: 'secondary',
 } as const;
 
-function when(value: string | number) {
-  return new Date(value).toLocaleString('en', { hour12: false });
-}
-
-export function WatchView({ snapshot }: { snapshot: Snapshot }) {
+/** Active watch channels and the webhook delivery log. */
+export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
   return (
     <div className='stack'>
       <section className='panel' aria-labelledby='channels-title'>
@@ -42,7 +40,7 @@ export function WatchView({ snapshot }: { snapshot: Snapshot }) {
                   <p className='data-sub'>
                     Expires{' '}
                     <time dateTime={new Date(c.expiration).toISOString()}>
-                      {when(c.expiration)}
+                      {formatTimestamp(c.expiration)}
                     </time>
                   </p>
                 </div>
@@ -99,7 +97,7 @@ export function WatchView({ snapshot }: { snapshot: Snapshot }) {
                         {d.attempts} {d.attempts === 1 ? 'attempt' : 'attempts'}
                       </td>
                       <td className='num'>
-                        <time dateTime={d.time}>{when(d.time)}</time>
+                        <time dateTime={d.time}>{formatTimestamp(d.time)}</time>
                       </td>
                       <td>
                         <Badge variant={deliveryBadge[d.status] ?? 'secondary'}>

@@ -1,23 +1,16 @@
 import type { Snapshot } from '@calendarpit/server';
 import { Badge } from '@cloudflare/kumo/components/badge';
 import { Button } from '@cloudflare/kumo/components/button';
-import { Icon } from './icon';
+import { Icon } from '../../components/icon';
+import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
+import { useRevokeConnection } from './hooks/use-revoke-connection';
+import { formatTimestamp } from '../../lib/format';
+import { scopeLabel } from './models/connection-format';
 
-const scopePrefix = 'https://www.googleapis.com/auth/';
-
-function when(value: string | number) {
-  return new Date(value).toLocaleString('en', { hour12: false });
-}
-
-export function ConnectionsView({
-  snapshot,
-  pending,
-  revoke,
-}: {
-  snapshot: Snapshot;
-  pending: boolean;
-  revoke: (id: string) => void;
-}) {
+/** OAuth connections (grants) with revocation, for reconnection tests. */
+export function ConnectionsScreen({ snapshot }: { snapshot: Snapshot }) {
+  const revoke = useRevokeConnection();
+  const busy = useWorkspaceBusy();
   const active = snapshot.connections.filter((c) => !c.revoked).length;
   return (
     <div className='stack'>
@@ -47,14 +40,15 @@ export function ConnectionsView({
                   <ul className='scopes' aria-label='Granted scopes'>
                     {c.scopes.map((s) => (
                       <li key={s} title={s}>
-                        {s.startsWith(scopePrefix)
-                          ? s.slice(scopePrefix.length)
-                          : s}
+                        {scopeLabel(s)}
                       </li>
                     ))}
                   </ul>
                   <p className='data-sub'>
-                    Granted <time dateTime={c.created}>{when(c.created)}</time>
+                    Granted{' '}
+                    <time dateTime={c.created}>
+                      {formatTimestamp(c.created)}
+                    </time>
                   </p>
                 </div>
                 <Badge variant={c.revoked ? 'secondary' : 'success'}>
@@ -63,8 +57,8 @@ export function ConnectionsView({
                 <Button
                   variant='secondary-destructive'
                   size='sm'
-                  disabled={c.revoked || pending}
-                  onClick={() => revoke(c.id)}
+                  disabled={c.revoked || busy}
+                  onClick={() => revoke.mutate(c.id)}
                 >
                   Revoke
                 </Button>

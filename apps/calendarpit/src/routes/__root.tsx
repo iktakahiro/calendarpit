@@ -1,5 +1,6 @@
+import type { QueryClient } from '@tanstack/react-query';
 import {
-  createRootRoute,
+  createRootRouteWithContext,
   HeadContent,
   Link,
   Outlet,
@@ -11,7 +12,10 @@ import { getAppearance } from '../lib/appearance.functions';
 import { appearanceScript } from '../lib/appearance';
 import { AppearanceProvider } from '../components/appearance';
 
-export const Route = createRootRoute({
+/** Context available to every route. */
+export type RouterContext = { queryClient: QueryClient };
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async () => ({ appearance: await getAppearance() }),
   headers: () => ({ 'Cache-Control': 'private, no-store' }),
   head: () => ({
