@@ -91,3 +91,26 @@ afterEach(() => {
   for (const app of instances) app.close();
   instances.length = 0;
 });
+
+/**
+ * Like {@link setup}, but already authorized as `alex` with full Calendar
+ * scope. `api(url, method, body, status)` sends JSON with the token, asserts
+ * the expected status, and returns the parsed body (or `undefined` for 204).
+ */
+export async function apiClient(options: WorkspaceOptions = {}) {
+  const s = setup(options);
+  const { access_token: t } = await s.token();
+  const api = async (
+    url: string,
+    method = 'GET',
+    body?: unknown,
+    status = 200,
+  ) => {
+    const response = await s.request(url, method, body, t, {
+      'Content-Type': 'application/json',
+    });
+    expect(response.status).toBe(status);
+    return response.status === 204 ? undefined : response.json();
+  };
+  return { ...s, t, api };
+}

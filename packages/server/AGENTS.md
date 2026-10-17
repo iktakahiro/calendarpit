@@ -56,8 +56,11 @@ The file name states the role. Anything without a role suffix is a rule module.
 
 ## Tests
 
-- Rule modules: co-located unit tests, table-driven with `test.each` where
-  several cases share one contract.
-- Operations: an in-memory workspace from `src/testing/` with a fixed clock.
-- Routes: HTTP contract tests through `app.handle()`, grouped by feature.
-- Restart, token, and watch lifecycles: tests against a temporary SQLite file.
+- Rule modules: `<module>.test.ts` unit tests, table-driven with `test.each`
+  where several cases share one contract.
+- Operations: `<module>.test.ts` against `testWorkspace()` from `src/testing/`,
+  which provides an adjustable clock.
+- Routes: `<topic>.http.test.ts` contract tests through `app.handle()`, one
+  set per feature.
+- Restart, token, and watch lifecycles:
+  `src/workspace/workspace-lifecycle.test.ts`, against temporary SQLite files.

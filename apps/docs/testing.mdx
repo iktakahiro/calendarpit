@@ -23,6 +23,29 @@ Most behavior belongs in the cheapest layer that can observe it. Keep HTTP
 contract tests for protocol behavior: response shapes, status codes, and
 explicit rejections.
 
+## File names and helpers
+
+| Pattern                | Contents                                           |
+| ---------------------- | -------------------------------------------------- |
+| `<module>.test.ts`     | Unit tests for one rule or operation module        |
+| `<topic>.http.test.ts` | HTTP contract tests for one feature                |
+| `src/testing/`         | Shared helpers; production code never imports them |
+
+The server package provides these helpers:
+
+- `setup()` and `apiClient()` in `server-harness.ts` create an in-memory
+  instance, send requests through `app.handle()`, and run the OAuth flow.
+- `testWorkspace()` in `workspace.ts` opens an in-memory workspace with an
+  adjustable `clock` for operation tests.
+- `calendarIn()` and `eventIn()` in `records.ts` build validated records.
+- `apiError()` in `api-error.ts` returns the thrown `ApiError`, so tests can
+  assert on status and reason.
+
+Every helper closes what it opens after each test.
+
+Run `bun run test:coverage` for the server package's line and function
+coverage.
+
 ## Conventions
 
 - Test observable behavior and documented contracts, not private structure.
