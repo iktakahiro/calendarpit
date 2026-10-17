@@ -116,6 +116,8 @@ dist
 .tern-port
 
 # Calendarpit workspace output
+test-results/
+playwright-report/
 .turbo/
 .output/
 .tanstack/
