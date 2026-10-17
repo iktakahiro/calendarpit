@@ -42,7 +42,8 @@ Read the nearest scoped guide before editing a workspace:
 ## Validation
 
 Run `bun run validate` and `bun run build` for implementation changes. Run
-`bun run build:binary` when changing packaging and `bun run docs:check` for docs.
+`bun run test:e2e` when changing the admin UI or OAuth consent, `bun run build:binary`
+when changing packaging, and `bun run docs:check` for docs.
 Add meaningful tests for protocol behavior, time calculations, state isolation,
 and lifecycle changes as those features are implemented.
 

@@ -43,6 +43,7 @@ This delay is a supply-chain buffer, not a guarantee that a package is safe.
 ```sh
 bun run validate
 bun run build
+bun run test:e2e
 bun run docs:check
 ```
 
@@ -50,6 +51,11 @@ bun run docs:check
 tests. `bun run fix` applies formatting and lint fixes. The API package is tested
 without starting a UI server. CLI tests cover bind defaults, argument parsing,
 and asset serving.
+
+`test:e2e` builds the app and runs the Playwright browser tests in
+`apps/calendarpit/e2e` against the production server with an in-memory
+database. Install the browser once with
+`bun run --cwd apps/calendarpit playwright install chromium`.
 
 Do not create a package script named `check` that obscures Bun's native command.
 Use `type-check` for type checking and `validate` for the aggregate checks.

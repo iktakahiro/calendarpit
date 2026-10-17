@@ -46,6 +46,16 @@ Every helper closes what it opens after each test.
 Run `bun run test:coverage` for the server package's line and function
 coverage.
 
+## Browser E2E
+
+Playwright tests live in `apps/calendarpit/e2e` as `*.e2e.ts`, a suffix
+`bun test` does not pick up. The Playwright `webServer` starts the built CLI
+on port 4191 with `--database :memory:`. The `test` export from
+`e2e/support/fixtures.ts` resets the workspace before every test, so tests run
+serially against one server. OAuth tests answer the client callback with
+`page.route` instead of running a client application. Prefer role and label
+locators, scoped to a region, over CSS selectors.
+
 ## Conventions
 
 - Test observable behavior and documented contracts, not private structure.
