@@ -49,7 +49,7 @@ with offsets; matching uses `start < timeMax` and `end > timeMin`.
 Event pages capture a snapshot, so writes between pages do not skip results.
 Cursors are query/user-bound, expire after one hour and are lost on restart/reset.
 Calendar-list pagination remains invalidated by calendar mutations.
-See [Incremental sync](/sync) for `nextSyncToken`, deletions and watch-driven updates.
+See [Incremental sync](/calendarpit/sync/) for `nextSyncToken`, deletions and watch-driven updates.
 
 ## Recurrence
 
@@ -167,5 +167,5 @@ return explicit errors; unsupported API routes return 501. Common transport quer
 parameters (`alt=json`, `prettyPrint`, `quotaUser`, `key`) are accepted, but API
 keys never replace bearer authorization. There is no real Google proxy or sync.
 
-See [Test control](/fixtures) for management endpoints and [Connect your
-application](/integration) for SDK endpoint configuration.
+See [Test control](/calendarpit/fixtures/) for management endpoints and [Connect your
+application](/calendarpit/integration/) for SDK endpoint configuration.

@@ -1,0 +1,12 @@
+/* Calendarpit's terracotta accent, matching the admin UI and consent page. */
+:root {
+  --sl-color-accent-low: #3d1a10;
+  --sl-color-accent: #e17a54;
+  --sl-color-accent-high: #f6d3c4;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #f6d3c4;
+  --sl-color-accent: #b9502d;
+  --sl-color-accent-high: #5c2413;
+}

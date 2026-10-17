@@ -9,7 +9,7 @@
 - Keep Google-compatible HTTP behavior separate from the admin UI and the CLI.
 - Use Bun’s built-in SQLite for local persistence by default; support `--database :memory:` for isolated E2E sessions. Do not introduce an external database server. Preserve the saved reset baseline and test restart, token, and watch lifecycles.
 - Do not add Chronock-specific behavior or fixtures. Chronock is an integration consumer.
-- Treat `apps/docs/mvp.mdx` as the product scope; distinguish implemented behavior from planned behavior.
+- Treat `apps/docs/src/content/docs/mvp.mdx` as the product scope; distinguish implemented behavior from planned behavior.
 - Explicitly reject unsupported API features. Never silently degrade a recurring event into a single event.
 - Keep runtime assets local except for the admin UI's Roboto Mono font, which loads from Google Fonts with system-font fallbacks. Calendar and OAuth behavior must not require real Google credentials or network access to Google.
 - Bind to loopback by default. A non-loopback host must be explicitly configured.
@@ -23,7 +23,7 @@
 Read the nearest scoped guide before editing a workspace:
 [packages/server/AGENTS.md](packages/server/AGENTS.md) and
 [apps/calendarpit/AGENTS.md](apps/calendarpit/AGENTS.md). The rationale lives in
-[apps/docs/architecture.mdx](apps/docs/architecture.mdx).
+[apps/docs/src/content/docs/architecture.mdx](apps/docs/src/content/docs/architecture.mdx).
 
 - Organize code by feature, not by technical category. Keep code in its owning
   feature and promote it to a shared location only when it is domain-neutral.
@@ -50,4 +50,4 @@ and lifecycle changes as those features are implemented.
 Use Bun's built-in test runner and co-locate tests as `*.test.ts` or
 `*.test.tsx`. Test observable behavior and contracts, not implementation details.
 Do not add a test only because a file changed. See
-[apps/docs/testing.mdx](apps/docs/testing.mdx) for the test layers.
+[apps/docs/src/content/docs/testing.mdx](apps/docs/src/content/docs/testing.mdx) for the test layers.

@@ -3,6 +3,8 @@ title: Connect your application
 description: Configure local OAuth, redirect Google SDK requests, and run the sample.
 ---
 
+import { TabItem, Tabs } from '@astrojs/starlight/components';
+
 ## Start the two applications
 
 Run these commands in separate terminals:
@@ -36,7 +38,7 @@ Changing the Calendar SDK URL alone is not enough. Configure these separately:
 | Token revocation          | `http://127.0.0.1:4173/oauth/revoke`    |
 
 The JavaScript Calendar SDK appends `/calendar/v3/...` to `rootUrl`; do not include
-that path twice. Other SDKs expect a full service URL; see [SDK examples](/sdks).
+that path twice. Other SDKs expect a full service URL; see [SDK examples](/calendarpit/sdks/).
 A watch address points in the opposite direction: from Calendarpit
 to the consuming app, such as `http://127.0.0.1:4175/notifications`.
 
@@ -65,7 +67,7 @@ This flow applies to every language. No Google Cloud project is required.
    can only be exchanged once. Store the returned credentials in your app's
    local test session.
 5. Pass the returned `access_token` to a Calendar SDK configured for Calendarpit.
-   Use [the language examples](/sdks) to list calendars and query FreeBusy.
+   Use [the language examples](/calendarpit/sdks/) to list calendars and query FreeBusy.
 
 The following HTTP examples represent requests made by your application's
 backend. Set `PIT_CLIENT_ID`, `PIT_CLIENT_SECRET`, `PIT_REDIRECT_URI`, and
@@ -73,9 +75,11 @@ backend. Set `PIT_CLIENT_ID`, `PIT_CLIENT_SECRET`, `PIT_REDIRECT_URI`, and
 Do not reuse a code already exchanged by the bundled sample. If you use PKCE,
 also send the matching `code_verifier` in the exchange.
 
-<CodeGroup>
+<Tabs>
 
-```sh Exchange
+<TabItem label="Exchange">
+
+```sh
 curl --fail-with-body http://127.0.0.1:4173/oauth/token \
   --data-urlencode 'grant_type=authorization_code' \
   --data-urlencode "client_id=$PIT_CLIENT_ID" \
@@ -84,7 +88,10 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/token \
   --data-urlencode "code=$PIT_CODE"
 ```
 
-```sh Refresh
+</TabItem>
+<TabItem label="Refresh">
+
+```sh
 curl --fail-with-body http://127.0.0.1:4173/oauth/token \
   --data-urlencode 'grant_type=refresh_token' \
   --data-urlencode "client_id=$PIT_CLIENT_ID" \
@@ -92,17 +99,25 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/token \
   --data-urlencode "refresh_token=$PIT_REFRESH_TOKEN"
 ```
 
-```sh Profile
+</TabItem>
+<TabItem label="Profile">
+
+```sh
 curl --fail-with-body http://127.0.0.1:4173/userinfo \
   -H "Authorization: Bearer $CALENDARPIT_ACCESS_TOKEN"
 ```
 
-```sh Revoke
+</TabItem>
+<TabItem label="Revoke">
+
+```sh
 curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
   --data-urlencode "token=$CALENDARPIT_ACCESS_TOKEN"
 ```
 
-</CodeGroup>
+</TabItem>
+
+</Tabs>
 
 Refresh before the token's `expires_in` lifetime elapses and update the SDK's
 credentials. If the connection has been revoked or the workspace reset, repeat
@@ -172,5 +187,5 @@ runs with separate ephemeral ports and repeats the workflow after reset.
 These environment switches belong in the consuming application. Its maintainers
 should verify all endpoint overrides, callback reachability and the complete UI/worker
 flow. Calendarpit provides generic compatibility tests; consumer-specific fixtures and
-E2E scenarios belong to the consumer repository. See [Incremental sync](/sync) for
+E2E scenarios belong to the consumer repository. See [Incremental sync](/calendarpit/sync/) for
 watch-driven event refresh.
