@@ -1,5 +1,5 @@
 import { afterEach, expect } from 'bun:test';
-import { createCalendarpit, type StoreOptions } from './index';
+import { createCalendarpit, type StoreOptions } from '../index';
 const instances: ReturnType<typeof createCalendarpit>[] = [];
 export function setup(options: StoreOptions = {}) {
   const app = createCalendarpit(options);

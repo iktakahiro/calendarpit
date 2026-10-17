@@ -18,9 +18,35 @@
 - Stay on `main` during initial setup. Do not create commits unless the user asks.
 - For authorized commits, follow [.agents/skills/commit/SKILL.md](.agents/skills/commit/SKILL.md) and use English Conventional Commits. Push only when explicitly requested.
 
+## Code organization
+
+Read the nearest scoped guide before editing a workspace:
+[packages/server/AGENTS.md](packages/server/AGENTS.md) and
+[apps/calendarpit/AGENTS.md](apps/calendarpit/AGENTS.md). The rationale lives in
+[apps/docs/architecture.mdx](apps/docs/architecture.mdx).
+
+- Organize code by feature, not by technical category. Keep code in its owning
+  feature and promote it to a shared location only when it is domain-neutral.
+- Use kebab-case file and directory names, except framework-required route names.
+- Do not use `any`. Narrow `unknown` at the boundary where data enters.
+- Prefer static imports. A dynamic import needs a comment that states why.
+- Do not add barrel files. A package entry point is the only re-exporting module.
+- Write English TSDoc for every exported function, class, type, and constant.
+  Describe the contract: purpose, non-obvious parameters and results, thrown
+  errors, and the Google behavior it mirrors or rejects. Calendarpit is an OSS
+  library, so the documentation is part of the public interface.
+- Use other comments only for intent or constraints the code cannot show.
+- `architecture.test.ts` files enforce dependency rules. Change a rule, its
+  documentation, and its test together; never bypass a failing rule.
+
 ## Validation
 
 Run `bun run validate` and `bun run build` for implementation changes. Run
 `bun run build:binary` when changing packaging and `bun run docs:check` for docs.
 Add meaningful tests for protocol behavior, time calculations, state isolation,
 and lifecycle changes as those features are implemented.
+
+Use Bun's built-in test runner and co-locate tests as `*.test.ts` or
+`*.test.tsx`. Test observable behavior and contracts, not implementation details.
+Do not add a test only because a file changed. See
+[apps/docs/testing.mdx](apps/docs/testing.mdx) for the test layers.

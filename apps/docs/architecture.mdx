@@ -11,6 +11,63 @@ description: Workspace boundaries, runtime choices, and distribution.
 | `packages/server`            | Isolated state, validation, Google API, OAuth, watch delivery and tests    |
 | `packages/typescript-config` | Shared strict TypeScript configuration                                     |
 
+## Code organization
+
+Calendarpit groups code by feature and gives every file one of a few explicit
+roles. The scoped guides
+[`packages/server/AGENTS.md`](https://github.com/iktakahiro/calendarpit/blob/main/packages/server/AGENTS.md)
+and
+[`apps/calendarpit/AGENTS.md`](https://github.com/iktakahiro/calendarpit/blob/main/apps/calendarpit/AGENTS.md)
+list the directories and rules. `architecture.test.ts` in each workspace enforces
+the import rules, and Oxlint rejects import cycles.
+
+### Why not full DDD or onion layers
+
+The domain model of an emulator is the Google API contract. Its resource shapes
+are fixed by the upstream API, so entity classes and DTO mappers would describe
+the same JSON twice. There is also a single storage mechanism: an in-memory
+working set checkpointed to SQLite. Repository interfaces and a DI container
+would add indirection without a second implementation to swap in.
+
+Two ideas from those approaches still pay off, and the layout keeps them:
+
+- **Invariants live in one place.** Validation and calculations are plain
+  functions in rule modules, free of HTTP and storage, so they can be unit-tested
+  directly.
+- **Dependencies point inward.** HTTP route modules call operations, and
+  operations call rules. Rules never depend on the workspace or on `Request`.
+
+### Server layers
+
+Shared helpers sit at the bottom: `shared/` holds domain-neutral errors and
+validation, and `model/` holds type-only record shapes. Next come `workspace/`
+(state and persistence) and `http/` (request and response handling). Feature
+directories sit on top. Inside a feature, the suffix gives each file its role:
+
+| Suffix           | Role                                                       | May import                 |
+| ---------------- | ---------------------------------------------------------- | -------------------------- |
+| `-routes.ts`     | HTTP adapter for Google-compatible or management endpoints | everything below, `http/`  |
+| `-operations.ts` | Reads and changes workspace state as one unit of work      | rules, `workspace/`        |
+| none             | Rule module: validation, invariants, and calculations      | `shared/`, `model/`, rules |
+
+Features may use another feature's rules and operations, but never its routes.
+Google-compatible routes and management routes share operations; they differ
+only in authentication and response shape.
+
+### Admin UI layers
+
+Route files parse URL params and search and render one feature screen. Each
+feature owns its `components/`, `hooks/`, and pure `models/`. Server state is
+read and changed through TanStack Query hooks. Code moves to the shared
+`components/` or `lib/` only when it has no feature knowledge.
+
+### Documentation
+
+Every exported function, class, type, and constant has TSDoc. The comment covers
+the contract: purpose, errors thrown, and the Google behavior it mirrors or
+rejects. Readers of the published package and contributors use the same
+comments.
+
 ## Runtime and state
 
 `createCalendarpit()` owns a store per instance and exposes an async Web Request

@@ -1,0 +1,41 @@
+---
+title: Testing
+description: Test layers, helpers, and conventions for contributors.
+---
+
+All unit and integration tests use Bun's built-in runner (`bun:test`). Tests sit
+next to the code they cover as `*.test.ts` or `*.test.tsx`. `bun run validate`
+runs every workspace's tests through Turborepo.
+
+## Layers
+
+| Layer         | Covers                                                                   | How                                                       |
+| ------------- | ------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Rules         | Time math, recurrence, free/busy merging, sync deltas, validation        | Plain function calls. Use `test.each` for case tables.    |
+| Operations    | Workspace invariants: primary calendars, cascades, reset baselines       | In-memory workspace with a fixed clock, no HTTP           |
+| HTTP contract | Google and management responses, error shapes, scopes, rejected features | `app.handle()` with `Request` objects, grouped by feature |
+| Lifecycle     | Restart, token, and watch persistence                                    | Temporary SQLite files                                    |
+| SDK           | The official Google SDK against a running instance                       | `apps/sample`                                             |
+| Browser E2E   | Admin UI flows and OAuth consent                                         | Playwright against an in-memory server                    |
+| Binary smoke  | The compiled executable                                                  | `bun run smoke`                                           |
+
+Most behavior belongs in the cheapest layer that can observe it. Keep HTTP
+contract tests for protocol behavior: response shapes, status codes, and
+explicit rejections.
+
+## Conventions
+
+- Test observable behavior and documented contracts, not private structure.
+- Inject time with the `now` option instead of sleeping or mocking `Date`.
+- Inject watch delivery with the `deliver` option instead of a real callback server.
+- Use `:memory:` databases unless the test covers persistence.
+- Close every workspace the test opens. The server harness does this
+  automatically after each test.
+- Do not add a test only because a file changed.
+
+## Architecture tests
+
+`architecture.test.ts` in `packages/server` and `apps/calendarpit` reads every
+source file's imports and fails on a dependency that breaks the documented
+layering. Each file also asserts that the rules flag known-bad imports, so a
+broken scanner cannot pass silently.
