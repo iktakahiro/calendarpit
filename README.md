@@ -27,9 +27,8 @@ bun run docs:dev
 ```
 
 Open <http://127.0.0.1:4487/calendarpit/>. The docs are an Astro Starlight site
-with a landing page, published to GitHub Pages at
-<https://iktakahiro.github.io/calendarpit/>. They are separate from the
-Calendarpit server.
+with a landing page. Publishing is manual while the custom domain and hosting
+are decided. The docs are separate from the Calendarpit server.
 
 ## Try a calendar integration
 
