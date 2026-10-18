@@ -1,0 +1,45 @@
+---
+/**
+ * Starlight language select, rendered with the Kumo select used by the admin UI.
+ *
+ * Option paths come from `language-options.ts`: the same locale swap as
+ * Starlight's built-in select, including `/calendarpit`, and the locale root
+ * when the page has no translation.
+ */
+import { getCollection } from 'astro:content';
+import context from 'virtual:starlight/project-context';
+import config from 'virtual:starlight/user-config';
+import { languageChoices, type DocsLocale } from './language-options';
+import LanguageSelectMenu from './language-select-menu';
+
+const route = Astro.locals.starlightRoute;
+const localeEntries = Object.entries(config.locales ?? {});
+const locales: DocsLocale[] = localeEntries.flatMap(([code, locale]) =>
+  locale ? [{ code, label: locale.label }] : [],
+);
+const docs = await getCollection('docs');
+const translatedIds = docs
+  .filter((entry) => import.meta.env.DEV || entry.data.draft !== true)
+  .map((entry) => entry.id);
+const choices = languageChoices({
+  pathname: Astro.url.pathname,
+  routeId: route.id,
+  routeLocale: route.locale,
+  locales,
+  translatedIds,
+  base: import.meta.env.BASE_URL,
+  trailingSlash: context.trailingSlash,
+});
+const label = Astro.locals.t('languageSelect.accessibleLabel');
+---
+
+{
+  config.isMultilingual && (
+    <LanguageSelectMenu
+      client:load
+      label={label}
+      options={choices.options}
+      value={choices.value}
+    />
+  )
+}

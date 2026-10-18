@@ -1,3 +1,12 @@
+/* Kumo's Tailwind layers stay under Starlight's, so shared class names such
+   as `sr-only` and `print:block` keep Starlight's definitions. Declared first
+   because Starlight imports this file before its own layer order. */
+@layer theme, base, components, utilities, starlight.base, starlight.reset, starlight.core, starlight.content, starlight.components, starlight.utils;
+
+@import '@cloudflare/kumo/styles/tailwind';
+@import 'tailwindcss';
+@source '../../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}';
+
 /* Roboto Mono everywhere, matching the admin UI. The font link lives in
    `astro.config.ts`; these stacks fall back to the system monospace. Roboto
    Mono has no Japanese glyphs, so Japanese pages name common system fonts
@@ -98,8 +107,79 @@ body {
   padding: 0.35rem 0.75rem;
 }
 
-/* Starlight sizes the language select for a proportional font ("7em"); Roboto
-   Mono is wider and clipped "English". */
-starlight-lang-select label {
-  --sl-select-width: 8em !important;
+/* Kumo tokens for the language select, the same palette as the admin UI.
+   Starlight's default theme is dark; light is `data-theme='light'`. These
+   unlayered custom properties replace Kumo's `light-dark()` defaults. */
+:root,
+:root[data-theme='dark'] {
+  --color-kumo-brand: #393c43;
+  --color-kumo-brand-hover: #45484f;
+  --color-kumo-base: #222326;
+  --color-kumo-control: #28292d;
+  --color-kumo-tint: #303135;
+  --color-kumo-fill: #393a3e;
+  --color-kumo-line: #55565a;
+  --color-kumo-hairline: #38393c;
+  --color-kumo-focus: #ff8d57;
+  --color-kumo-danger: #ff9c9e;
+  --text-color-kumo-default: #f1eee7;
+  --text-color-kumo-danger: #ff9c9e;
+  --text-color-kumo-strong: #f1eee7;
+  --text-color-kumo-subtle: #b1b0a8;
+  --text-color-kumo-placeholder: #95968f;
+  --text-color-kumo-inverse: #222326;
+}
+:root[data-theme='light'] {
+  --color-kumo-brand: #1d1e22;
+  --color-kumo-brand-hover: #000;
+  --color-kumo-base: #fdfcfa;
+  --color-kumo-control: #fff;
+  --color-kumo-tint: #efede6;
+  --color-kumo-fill: #e9e7e0;
+  --color-kumo-line: rgb(22 23 26 / 0.15);
+  --color-kumo-hairline: rgb(22 23 26 / 0.1);
+  --color-kumo-focus: #e5531a;
+  --color-kumo-danger: #ad2329;
+  --text-color-kumo-default: #16171a;
+  --text-color-kumo-danger: #ad2329;
+  --text-color-kumo-strong: #16171a;
+  --text-color-kumo-subtle: #5d605a;
+  --text-color-kumo-placeholder: #6e716a;
+}
+
+/* Compact language select. The trigger inherits the page's monospace from
+   Starlight's `button { font: inherit }`, then these sizes match the header. */
+.docs-lang-select {
+  --font-sans: var(--sl-font);
+  display: flex;
+  align-items: center;
+}
+.docs-lang-select > div:first-of-type {
+  gap: 0;
+  width: max-content;
+}
+.docs-lang-select [data-kumo-part='trigger'],
+.docs-lang-select [data-kumo-part='option'],
+.docs-lang-select [data-kumo-part='popup'] {
+  font-family: var(--sl-font);
+  font-size: var(--sl-text-sm);
+  line-height: 1.3;
+}
+.docs-lang-select [data-kumo-part='trigger'] {
+  font-weight: 500;
+  max-width: 12rem;
+}
+
+/* Splash pages have no sidebar, so the mobile menu that normally holds this
+   select never appears. Keep the language select in the header there. */
+@media screen and (max-width: 49.999rem) {
+  :root:not([data-has-sidebar]) .header .right-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  :root:not([data-has-sidebar]) .header .right-group .social-icons,
+  :root:not([data-has-sidebar]) .header .right-group starlight-theme-select {
+    display: none;
+  }
 }

@@ -1,4 +1,6 @@
+import react from '@astrojs/react';
 import starlight from '@astrojs/starlight';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, passthroughImageService } from 'astro/config';
 import starlightLinksValidator from 'starlight-links-validator';
 
@@ -15,6 +17,7 @@ export default defineConfig({
   // The site only ships SVGs, so it needs no native image processor (sharp).
   image: { service: passthroughImageService() },
   vite: {
+    plugins: [tailwindcss()],
     ssr: {
       // satteri loads a platform-specific native binding. Bundling it into the
       // prerender chunk hides that binding from Bun's isolated node_modules.
@@ -22,6 +25,7 @@ export default defineConfig({
     },
   },
   integrations: [
+    react(),
     starlight({
       title: 'Calendarpit',
       // `src/pages/404.astro` renders the 404 page.
@@ -56,7 +60,10 @@ export default defineConfig({
       ],
       customCss: ['./src/styles/theme.css'],
       // The landing pages render their own <h1>.
-      components: { PageTitle: './src/components/PageTitle.astro' },
+      components: {
+        PageTitle: './src/components/PageTitle.astro',
+        LanguageSelect: './src/components/language-select.astro',
+      },
       // English is the root locale, so its URLs carry no prefix.
       defaultLocale: 'root',
       locales: {
