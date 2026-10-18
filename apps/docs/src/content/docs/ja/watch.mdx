@@ -33,7 +33,7 @@ curl -X POST http://127.0.0.1:4173/calendar/v3/calendars/primary/events/watch \
 
 `events.watch` が成功すると `200` が返ります。レスポンスには `kind: "api#channel"`、`id`、`resourceId` (`calendar-<calendarId>`)、`resourceUri` (`<origin>/calendar/v3/calendars/<calendarId>/events`。`<calendarId>` は URL エンコードされます)、`expiration` (ミリ秒の文字列)、`token` (指定した場合のみ) が含まれます。`primary` で登録した場合でも、`<calendarId>` には監視対象カレンダーの実際の ID が入ります。返された `resourceId` は `channels.stop` で使います。登録済みのチャネルをそのまま延長することはできません。延長したいときは新しいチャネルを登録してください。新しい `id` を使うか、古いチャネルを停止してから同じ `id` を使います。
 
-チャネルを停止するには、`id` と `resourceId` だけを含む JSON ボディを `POST /calendar/v3/channels/stop` に送ります。トークンはチャネル作成時と同じ OAuth 接続 (グラント) のもので、イベントかカレンダーリストを読み取れるスコープが必要です。ボディにほかのフィールドがあると `400 unsupportedFeature` になります。成功すると `204` が返り、待機中や送信中の配信は中止されます。`id` が存在しない場合、`resourceId` が一致しない場合、別の接続のトークンを使った場合は、どれも `404 notFound` になります。
+チャネルを停止するには、`id` と `resourceId` だけを含む JSON ボディを `POST /calendar/v3/channels/stop` に送ります。トークンはチャネル作成時と同じ OAuth 接続 (グラント) のもので、イベントかカレンダーリストを読み取れるスコープが必要です。ボディにほかのフィールドがあると `400 unsupportedFeature` になります。成功すると `204` が返り、待機中や送信中の配信は中止されます。`id` が存在しない場合、`resourceId` が一致しない場合、別の接続のトークンを使った場合は、どれも `404 notFound` になります。期限切れだけでは `404` にはなりません。同じ接続と一致する `resourceId` で停止する場合、期限切れでもまだ削除されていないチャネルには `204` が返ります。削除された後は、その `id` は見つかりません。
 
 ## コールバックに届く内容
 

@@ -33,7 +33,7 @@ Invalid values fail with `400 invalidParameter`. Any other field (such as `param
 
 For `events.watch`, a `200` response returns `kind: "api#channel"`, `id`, `resourceId` (`calendar-<calendarId>`), `resourceUri` (`<origin>/calendar/v3/calendars/<calendarId>/events`, with `<calendarId>` URL-encoded), `expiration` (millisecond string), and `token` (if set). `<calendarId>` is the watched calendar's actual ID, even if you registered with `primary`. Pass the returned `resourceId` to `channels.stop`. Channels cannot be renewed in place; register a new channel (with a new `id`, or the same `id` after stopping the old channel).
 
-To stop a channel, send a JSON body with only `id` and `resourceId` to `POST /calendar/v3/channels/stop` (other body fields fail with `400 unsupportedFeature`). Use a token from the same OAuth connection (grant) that created the channel, with an event-read or calendar-list-read scope. It returns `204` and aborts any queued or in-flight deliveries. An unknown `id`, a mismatched `resourceId`, or a token from another connection returns `404 notFound`.
+To stop a channel, send a JSON body with only `id` and `resourceId` to `POST /calendar/v3/channels/stop` (other body fields fail with `400 unsupportedFeature`). Use a token from the same OAuth connection (grant) that created the channel, with an event-read or calendar-list-read scope. It returns `204` and aborts any queued or in-flight deliveries. An unknown `id`, a mismatched `resourceId`, or a token from another connection returns `404 notFound`. Expiration alone does not cause `404`: a matching channel that has expired but has not yet been pruned still returns `204`. After pruning, its `id` is no longer found.
 
 ## What your callback receives
 
