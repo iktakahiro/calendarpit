@@ -28,6 +28,9 @@ env:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      # GitHub only exposes draft releases to callers with repository write access.
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
