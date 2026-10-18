@@ -4,7 +4,7 @@ A local calendar service for development and repeatable tests. Build calendar
 integrations without a real Google account, provider credentials, or an external
 database.
 
-**Status: local MVP implemented.** Includes user/calendar/event management,
+**Status: the documented scope is implemented locally.** Includes user/calendar/event management,
 Google-compatible event APIs and free/busy, local OAuth, watch notifications,
 fixture/reset controls, and masked request history. Compatibility is intentionally
 limited; unsupported features return explicit errors. See
