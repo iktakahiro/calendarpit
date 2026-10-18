@@ -29,29 +29,6 @@ Google アカウント、Google Cloud プロジェクト、外部データベー
 
 CLI は実行ディレクトリ内の `.calendarpit/calendarpit.sqlite` にデータを保存します。Docker はマウントしたボリュームに保存します。一時的なテストには、CLI で `--database :memory:`、Docker で `-e CALENDARPIT_DATABASE=:memory:` を指定してください。[ストレージと再起動](/calendarpit/ja/storage/)も参照してください。
 
-## ヘルスエンドポイントを確認する
-
-```sh
-curl http://127.0.0.1:4173/__calendarpit/health
-```
-
-```json
-{
-  "name": "Calendarpit",
-  "version": "0.9.0",
-  "stage": "preview",
-  "storage": "sqlite",
-  "capabilities": {
-    "calendar": true,
-    "oauth": true,
-    "watch": true,
-    "fixtures": true
-  }
-}
-```
-
-0.9.0 はプレビュー版です。対応範囲はドキュメントに記載されていますが、1.0 までは API が変更される可能性があります。
-
 ## アプリを接続する
 
 [アプリを接続する](/calendarpit/ja/connect/)に従って、SDK と OAuth フローの接続先を Calendarpit に変更します。[fixture](/calendarpit/ja/fixtures/)でローカルのクライアント認証情報と、完全一致するコールバック URI を登録してください。組み込みの `sample-app` / `local-sample-secret` は公開されているテスト用の値で、コールバックは `http://127.0.0.1:4175/callback` です。
