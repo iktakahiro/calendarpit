@@ -5,9 +5,9 @@ description: Calendarpit のローカル OAuth 2.0 認可コードフロー、�
 
 import { TabItem, Tabs } from '@astrojs/starlight/components';
 
-Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれており、Google Cloud プロジェクトや実際の Google アカウントなしでアプリをテストできます。認可時には、ローカルの同意画面のドロップダウンからテストユーザーを選択します。パスワードは入力しません。
+Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれており、Google Cloud プロジェクトや実際の Google アカウントなしでお使いのアプリをテストできます。認可時には、ローカルの同意画面のドロップダウンからテストユーザーを選択します。パスワードは入力しません。
 
-フローを開始する前に、アプリの OAuth クライアントと Google Calendar SDK の接続先を `http://127.0.0.1:4173` に向けてください。エンドポイントの設定方法は、[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
+フローを開始する前に、お使いのアプリの OAuth クライアントと Google Calendar SDK の接続先を `http://127.0.0.1:4173` に設定してください。エンドポイントの設定方法は、[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
 
 ## エンドポイント
 
@@ -20,7 +20,7 @@ Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれてお
 | `GET`    | `/userinfo`                                   | 認可されたテストユーザーのプロフィールクレームを返します                                                                                                                             |
 | `POST`   | `/__calendarpit/connections/{grantId}/revoke` | 管理 API から接続を失効させます（`204`。管理 API のリクエスト規則が適用されます。詳細は[テスト制御 API](/calendarpit/ja/test-control/)を参照してください）                           |
 
-ルーティングされるのは上記のパスのみです。`/oauth2/...` 配下の Google エンドポイント（`/oauth2/v4/token` や `/oauth2/v3/userinfo` など）や、`/oauth/*` に対する誤った HTTP メソッドは、ステータス `501` と `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}` を返します。
+ルーティングされるのは上記のパスのみです。`/oauth2/...` 配下の Google エンドポイント（`/oauth2/v4/token` や `/oauth2/v3/userinfo` など）や、`/oauth/*` に対する未対応の HTTP メソッドは、ステータス `501` と `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}` を返します。
 
 ## 認可コードフロー
 
@@ -54,7 +54,7 @@ Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれてお
 
 ## HTTP リクエスト例
 
-`PIT_CLIENT_ID`、`PIT_CLIENT_SECRET`、`PIT_REDIRECT_URI`、`PIT_CODE` にクライアントの値とコールバックで受け取った認可コードを、`PIT_REFRESH_TOKEN` と `CALENDARPIT_ACCESS_TOKEN` に交換時に取得した `refresh_token` と `access_token` を設定してください（これらはこの例でのみ使用するシェル変数です）。PKCE を使用した場合は、コード交換時に `--data-urlencode "code_verifier=$PIT_VERIFIER"` も渡してください。Profile のリクエストには、`openid`、`email`、`profile`、`userinfo.*` のいずれかのスコープが必要です。
+この例ではクライアントの値とトークンをシェル変数で渡します。`PIT_CLIENT_ID`、`PIT_CLIENT_SECRET`、`PIT_REDIRECT_URI` にクライアントの値を、`PIT_CODE` にコールバックで受け取った認可コードを設定します。トークン交換の後、`PIT_REFRESH_TOKEN` に返された `refresh_token` を、`CALENDARPIT_ACCESS_TOKEN` に `access_token` を設定します。PKCE を使用した場合は、コード交換時に `--data-urlencode "code_verifier=$PIT_VERIFIER"` も渡してください。Profile のリクエストには、`openid`、`email`、`profile`、`userinfo.*` のいずれかのスコープが必要です。
 
 <Tabs>
 
@@ -113,13 +113,13 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 ### 有効期限と永続化
 
-| 対象                 | 有効期限                                                                   | 1 回限り | SQLite 使用時の再起動後の永続化 |
-| -------------------- | -------------------------------------------------------------------------- | -------- | ------------------------------- |
-| 保留中の同意 nonce   | 5 分（保留数の上限は 1,000 件。超過時は `429 rateLimitExceeded`）          | はい     | いいえ                          |
-| 認可コード           | 60 秒（`client_id` と `redirect_uri` に紐づく）                            | はい     | いいえ                          |
-| アクセストークン     | 1 時間（`expires_in: 3600`）                                               | いいえ   | はい（元の有効期限を維持）      |
-| リフレッシュトークン | 失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで無期限 | いいえ   | はい                            |
-| 接続（grant）        | 失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで有効   | いいえ   | はい                            |
+| 対象                 | 有効期限                                                                                 | 1 回限り | 再起動後の保持（SQLite）   |
+| -------------------- | ---------------------------------------------------------------------------------------- | -------- | -------------------------- |
+| 保留中の同意 nonce   | 5 分（保留数の上限は 1,000 件。超過時は `429 rateLimitExceeded`）                        | はい     | いいえ                     |
+| 認可コード           | 60 秒（`client_id` と `redirect_uri` に紐づく）                                          | はい     | いいえ                     |
+| アクセストークン     | 1 時間（`expires_in: 3600`）                                                             | いいえ   | はい（元の有効期限を維持） |
+| リフレッシュトークン | 有効期限なし（失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで有効） | いいえ   | はい                       |
+| 接続（grant）        | 失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで有効                 | いいえ   | はい                       |
 
 `:memory:` モードでは、プロセスが終了するとすべての OAuth の状態が失われます。詳細は[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。
 

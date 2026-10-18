@@ -9,7 +9,7 @@ Calendarpit は、実際の Google アカウントや Google Cloud プロジェ�
 
 - **実行環境と状態管理**: 単一の Bun プロセスが、デフォルトで `http://127.0.0.1:4173` に API、OAuth フロー、管理画面を提供します。ストレージには SQLite または `:memory:` を使用します（[起動と設定](/calendarpit/ja/running/)、[ストレージと再起動](/calendarpit/ja/storage/)）。
 - **テストユーザーとカレンダー**: パスワード不要のテストユーザーがカレンダーを所有します。各カレンダーは IANA タイムゾーンを持ち、プライマリカレンダーには `primary` でアクセスできます。カレンダー情報は `calendars.get` で読み取り、ユーザーごとのカレンダーリストは `calendarList`（`list`、`get`、`insert`、`patch`、`update`、`delete`）で管理します。また、ユーザーごとのリスト設定（`summaryOverride`、`colorId` または `colorRgbFormat` によるカスタム RGB、`hidden`、`selected`、`defaultReminders`、`notificationSettings`、プライマリ以外の所有カレンダーのリストからの削除・復元）に対応しています。
-- **イベントと空き状況**: イベントの CRUD（`list`、`get`、`insert`、`update`、`patch`、`delete`、`instances`）、例外（個別に変更された回）を含む繰り返しイベント（`RRULE` / `EXRULE` / `RDATE` / `EXDATE` のサブセット。`COUNT` または `UNTIL` のない繰り返しの系列を含むカレンダーを一覧取得・展開する際、`timeMin` または `singleEvents=true` を指定する場合は `timeMax` が必須です）、サマータイム（DST）を考慮した `[start, end)` 区間、ETag、拡張プロパティ、ローカルでの招待と出欠回答（RSVP）、リマインダーの保存、擬似的な `hangoutsMeet` リンク、`freebusy.query` に対応しています（[Calendar API の互換性](/calendarpit/ja/compatibility/)、[イベント、繰り返し、時刻の扱い](/calendarpit/ja/recurrence/)）。
+- **イベントと空き状況**: イベントの CRUD（`list`、`get`、`insert`、`update`、`patch`、`delete`、`instances`）、例外（個別に変更された回）を含む繰り返しイベント（`RRULE` / `EXRULE` / `RDATE` / `EXDATE` のサブセット。`COUNT` または `UNTIL` のない繰り返しの系列を含むカレンダーを一覧取得・展開する際、`timeMin` または `singleEvents=true` を指定する場合は `timeMax` が必須です）、夏時間（DST）を考慮した `[start, end)` 区間、ETag、拡張プロパティ、ローカルでの招待と出欠回答（RSVP）、リマインダーの保存、擬似的な `hangoutsMeet` リンク、`freebusy.query` に対応しています（[Calendar API の互換性](/calendarpit/ja/compatibility/)、[イベント、繰り返し、時刻の扱い](/calendarpit/ja/recurrence/)）。
 - **OAuth**: テストユーザーを選択できるローカル同意画面、承認と拒否、`state` の保持、`redirect_uri` の完全一致チェック、認可コード交換、`S256` PKCE、スコープ検証、リフレッシュトークン、`/userinfo`、トークン失効に対応しています（[ローカル OAuth](/calendarpit/ja/oauth/)）。
 - **差分同期**: `events.list` での `nextSyncToken` と `syncToken`、ページネーション中の固定スナップショット、`status: "cancelled"` の削除済みレコード、`410 fullSyncRequired` レスポンスに対応しています（[差分同期](/calendarpit/ja/sync/)）。
 - **Watch**: `events.watch`、`calendarList.watch`、`channels.stop`、`sync` および `exists` Webhook、コールバック先のホスト許可リスト、最大 3 回の配信試行、チャネルの有効期限、`POST /__calendarpit/deliveries/drain` に対応しています（[watch 通知](/calendarpit/ja/watch/)）。
@@ -26,7 +26,7 @@ Calendarpit は、実際の Google アカウントや Google Cloud プロジェ�
 ## 対象外の機能
 
 - **ACL、共有カレンダー、委任**: テストユーザーは自身が所有するカレンダー（`accessRole: "owner"`）にのみアクセスできます。すべての `acl.*` メソッドは `501 unsupportedFeature` を返します。`calendarList.insert` は、`calendarList.delete` でリストから外された所有カレンダーの復元のみを行います。新しいカレンダーの作成や他ユーザーのカレンダーの購読は行わず、対象カレンダー（`primary` を含む）がすでにリストにある場合は `409 duplicate` を返します。
-- **ユーザー設定、ACL・設定の watch、CalendarList の同期トークン**: `calendarList.watch` は所有ユーザーのカレンダーリストに対して実装されています（`params` オブジェクトが指定された場合は `400 unsupportedFeature` で拒否します。保存されているリスト設定を変更する書き込みや、管理 API によるそのユーザーのカレンダーの作成・更新・削除が行われた場合にのみ `exists` を送信します）。ACL や設定に対する watch 購読（`acl.watch`、`settings.watch`）およびすべての `settings.*` メソッドは未対応です（`501 unsupportedFeature`）。`calendarList.list` は `nextSyncToken` を発行せず、`syncToken` の指定は `400 unsupportedFeature` で拒否します（`showDeleted=true` を指定した場合、`calendarList.delete` で外されたエントリは保存された設定を保持します。一方、管理 API で削除されたカレンダーの削除済みレコードはデフォルト設定を表示し、プライマリ状態で削除された場合は `primary: true` を保持します）。
+- **ユーザー設定、ACL・ユーザー設定の watch、カレンダーリストの同期トークン**: `calendarList.watch` は所有ユーザーのカレンダーリストに対して実装されています（`params` オブジェクトが指定された場合は `400 unsupportedFeature` で拒否します。保存されているリスト設定を変更する書き込みや、管理 API によるそのユーザーのカレンダーの作成・更新・削除が行われた場合にのみ `exists` を送信します）。ACL やユーザー設定に対する watch 購読（`acl.watch`、`settings.watch`）およびすべての `settings.*` メソッドは未対応です（`501 unsupportedFeature`）。`calendarList.list` は `nextSyncToken` を発行せず、`syncToken` の指定は `400 unsupportedFeature` で拒否します（`showDeleted=true` を指定した場合、`calendarList.delete` で外されたエントリは保存された設定を保持します。一方、管理 API で削除されたカレンダーの削除済みレコードはデフォルト設定を表示し、削除時にプライマリカレンダーだった場合は `primary: true` を保持します）。
 - **カレンダーの書き込み、カラー定義、`events.import` / `quickAdd` / `move`**: `calendars.insert`、`update`、`patch`、`delete`、`clear`、`transferOwnership`、`colors.get`、および `events.import`、`quickAdd`、`move` は実装されていません（カレンダーの作成・変更・削除は管理画面または管理 API から行います。詳細は[Calendar API の互換性](/calendarpit/ja/compatibility/)を参照してください）。
 - **実際の招待メール・リマインダーメールの送信**: `sendUpdates` はメールを送信せず、通知の意図を `/__calendarpit/state` に記録します。イベントのリマインダーや、`calendarList` の `defaultReminders` および `notificationSettings`（重複する通知 `type` 値は `400 invalidParameter` で拒否されます）は保存されますが、通知の発火やメール送信は行いません。
 - **実際の Google Meet 会議**: 会議作成リクエストは再現可能な `https://meet.calendarpit.invalid/<id>` の URL を生成しますが、実際のオンライン会議は作成しません。
@@ -44,7 +44,7 @@ Calendarpit では、次のような E2E の連携ワークフローを再現で
 4. イベントを更新・削除し、`exists` 通知を受信して状態を再取得します。
 5. `channels.stop` で watch チャネルを停止し、それ以降の変更が配信されないことを確認します。
 6. 接続を失効させ、OAuth フローで再接続します。
-7. 同意画面で拒否を選択し、既存のトークンを失わずに `state` が保持されることを確認します。
+7. 同意画面で拒否を選択し、`state` が保持され、既存のトークンが失われないことを確認します。
 8. `POST /__calendarpit/reset` でリセットし、同じフィクスチャと ID で一連のフローを繰り返し実行します。
 9. `events.list` でフル同期のスナップショットを取得し、その後 `syncToken` を使って変更差分や `status: "cancelled"` の削除済みレコードを取得します。
 10. 終日イベント（`dateTime: null` を含む）、繰り返しイベントの例外、ローカルでの出欠回答（RSVP）、擬似的な会議リンクの動作を検証します。
