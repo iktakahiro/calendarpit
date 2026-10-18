@@ -5,9 +5,9 @@ description: Calendarpit のローカル OAuth 2.0 認可コードフロー、�
 
 import { TabItem, Tabs } from '@astrojs/starlight/components';
 
-Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれており、Google Cloud プロジェクトや実際の Google アカウントなしでお使いのアプリをテストできます。認可時には、ローカルの同意画面のドロップダウンからテストユーザーを選択します。パスワードは入力しません。
+Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれており、Google Cloud プロジェクトや本物の Google アカウントなしでアプリをテストできます。認可時には、ローカルの同意画面のドロップダウンからテストユーザーを選択します。パスワードの入力は不要です。
 
-フローを開始する前に、お使いのアプリの OAuth クライアントと Google Calendar SDK の接続先を `http://127.0.0.1:4173` に設定してください。エンドポイントの設定方法は、[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
+フローを開始する前に、アプリの OAuth クライアントと Google Calendar SDK の接続先を `http://127.0.0.1:4173` に設定してください。エンドポイントの設定方法は、[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
 
 ## エンドポイント
 
@@ -24,10 +24,10 @@ Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれてお
 
 ## 認可コードフロー
 
-1. **フィクスチャに OAuth クライアントを登録します。** 起動時フィクスチャの `clients` 配列に、`id`、`secret`、`redirectUris` を持つエントリを追加します。各リダイレクト URI は、フラグメントや userinfo を含まない `http:` または `https:` の絶対 URL である必要があります。起動時フィクスチャがシードされるのは、新規データベースまたは `:memory:` セッションの場合のみです。既存のデータベースファイルを使用している場合は、`POST /__calendarpit/fixtures` でフィクスチャを読み込む（次のリセットまでワークスペースのデータを置き換えます）か、新しいデータベースで起動してください。詳細は[フィクスチャ](/calendarpit/ja/fixtures/)および[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。デフォルトのフィクスチャ（`--config` も `CALENDARPIT_CONFIG` も指定しない場合に使用されます）には、ID が `sample-app`、シークレットが `local-sample-secret`、リダイレクト URI が `http://127.0.0.1:4175/callback` のクライアントが含まれています。
-2. **ブラウザを `GET /oauth/authorize` へ遷移させます。** `http://127.0.0.1:4173/oauth/authorize` に、以下のクエリパラメータを URL エンコードして付与します。
-   - `client_id`（必須）: 登録済みのクライアント ID（未登録の ID は `400 invalid_client` を返します）。
-   - `redirect_uri`（必須）: コールバック URL。クライアントの `redirectUris` のいずれかと文字列として完全一致する必要があります（ループバックポートのワイルドカードや末尾スラッシュの正規化は行われません。不一致の場合は `400 invalid_request` を返します）。
+1. **フィクスチャに OAuth クライアントを登録します。** 起動時フィクスチャの `clients` 配列に、`id`、`secret`、`redirectUris` を持つエントリを追加します。各リダイレクト URI は、フラグメントや userinfo を含まない `http:` または `https:` の絶対 URL である必要があります。起動時フィクスチャが適用されるのは、新規データベースまたは `:memory:` セッションのみです。既存のデータベースファイルを使用している場合は、`POST /__calendarpit/fixtures` でフィクスチャを読み込む（次のリセットまでワークスペースのデータを置き換えます）か、新しいデータベースで起動してください。詳細は[フィクスチャ](/calendarpit/ja/fixtures/)および[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。デフォルトのフィクスチャ（`--config` も `CALENDARPIT_CONFIG` も指定しない場合に使用されます）には、ID が `sample-app`、シークレットが `local-sample-secret`、リダイレクト URI が `http://127.0.0.1:4175/callback` のクライアントが含まれています。
+2. **ブラウザを `GET /oauth/authorize` へリダイレクトします。** `http://127.0.0.1:4173/oauth/authorize` に、以下のクエリパラメータを URL エンコードして付与します。
+   - `client_id`（必須）: 登録済みのクライアント ID（未登録の ID を指定すると `400 invalid_client` を返します）。
+   - `redirect_uri`（必須）: コールバック URL。クライアントの `redirectUris` のいずれかと文字列として完全一致する必要があります（ループバックポートのワイルドカードや末尾スラッシュの正規化は行いません。不一致の場合は `400 invalid_request` を返します）。
    - `response_type`（必須）: `code` を指定します。
    - `scope`（必須）: 対応しているスコープをスペース区切りで指定します（[スコープ](#スコープ)を参照）。
    - `state`（任意）: ユーザーのブラウザセッションに紐づくランダムな値です。指定した場合、リダイレクト時にそのまま返されます。
@@ -156,15 +156,15 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 `GET /oauth/authorize` でのバリデーションエラーは、`redirect_uri` へリダイレクトせず、ブラウザに直接ステータス `400` の JSON レスポンス（`{"error": "<reason>", "error_description": "<message>"}`）を返します。
 
-- **未登録の `client_id`** は `400 invalid_client`（"Unknown client."）を返します。
-- **未登録の `redirect_uri`**（クライアントの `redirectUris` のいずれとも文字列として完全一致しないもの）は `400 invalid_request`（"Unregistered redirect URI."）を返します。
-- **未知の認可パラメータ**（`nonce`、`login_hint`、`hd`、`request`、`request_uri`、`enable_granular_consent` など）は `400 unsupported_feature` を返します。
-- **非対話型の同意**（`prompt=none`、またはステップ 2 に記載された 4 つ以外の `prompt` 値）は `400 unsupported_feature` を返します。
-- **増分認可（Incremental authorization）**（`include_granted_scopes=true`）は `400 unsupported_feature` を返します。
-- **その他のレスポンスタイプ**（`response_type=code` 以外）は `400 unsupported_response_type` を返します。
-- **PKCE の `plain` メソッド**は `400 invalid_request` を返します。
-- **一覧にないスコープ**（`calendar.events.owned`、`calendar.app.created`、`calendar.settings.readonly`、`calendar.acls`、または書き込みスコープの `calendar.calendars` など）は `400 invalid_scope` を返します。
-- **`POST /oauth/token` でのその他の grant type** は（クライアント認証の成功後に）`400 unsupported_grant_type` を返します。
-- **API キー（`key=` クエリパラメータ）** は API リクエストのシステムパラメータとして受け付けられますが、Bearer トークン認証の代わりにはなりません。
+- **未登録の `client_id`**: `400 invalid_client`（`"Unknown client."`）を返します。
+- **未登録の `redirect_uri`**（クライアントの `redirectUris` のいずれとも文字列として完全一致しないもの）: `400 invalid_request`（`"Unregistered redirect URI."`）を返します。
+- **未知の認可パラメータ**（`nonce`、`login_hint`、`hd`、`request`、`request_uri`、`enable_granular_consent` など）: `400 unsupported_feature` を返します。
+- **非対話型の同意**（`prompt=none`、またはステップ 2 に記載された 4 つ以外の `prompt` 値）: `400 unsupported_feature` を返します。
+- **増分認可（Incremental authorization）**（`include_granted_scopes=true`）: `400 unsupported_feature` を返します。
+- **その他のレスポンスタイプ**（`response_type=code` 以外）: `400 unsupported_response_type` を返します。
+- **PKCE の `plain` メソッド**: `400 invalid_request` を返します。
+- **一覧にないスコープ**（`calendar.events.owned`、`calendar.app.created`、`calendar.settings.readonly`、`calendar.acls`、または書き込みスコープの `calendar.calendars` など）: `400 invalid_scope` を返します。
+- **`POST /oauth/token` での未対応の grant type**: クライアント認証の成功後に `400 unsupported_grant_type` を返します。
+- **API キー（`key=` クエリパラメータ）**: API リクエストのシステムパラメータとして受け付けられますが、Bearer トークン認証の代わりにはなりません。
 
 未対応の Google 機能の一覧については、[対応範囲と制限](/calendarpit/ja/scope/)を参照してください。

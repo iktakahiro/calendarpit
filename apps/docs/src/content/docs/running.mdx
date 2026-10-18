@@ -72,7 +72,7 @@ Command-line flags take precedence over environment variables.
 ### Loopback binding and working directory
 
 - **Loopback by default**: Calendarpit binds to `127.0.0.1` unless you pass `--host` or `CALENDARPIT_HOST`. The admin UI and [test control API](/calendarpit/test-control/) have no authentication, so binding to `0.0.0.0` exposes them to other machines on your network.
-- **Relative paths**: With Homebrew, and standalone executables, paths in `--database` and `--config` (or their environment variables) resolve from the directory where you start Calendarpit. Run it from your project directory or use absolute paths. Docker uses paths inside the container; mount host files before referencing them. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
+- **Relative paths**: With Homebrew and standalone executables, paths in `--database` and `--config` (or their environment variables) resolve from the directory where you start Calendarpit. Run it from your project directory or use absolute paths. Docker uses paths inside the container; mount host files before referencing them. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
 
 ## Admin UI
 
