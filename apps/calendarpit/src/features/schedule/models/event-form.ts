@@ -17,14 +17,22 @@ export type EventFormValues = {
   extendedProperties: string;
 };
 
+/** Returns a local `YYYY-MM-DDTHH:mm` one hour later, rolling over midnight. */
+function addHour(local: string) {
+  const value = new Date(`${local}:00Z`);
+  value.setUTCHours(value.getUTCHours() + 1);
+  return value.toISOString().slice(0, 16);
+}
+
 /**
- * Returns form values for editing `event`, or a 10:00–11:00 event on `date`
- * for a new one.
+ * Returns form values for editing `event`, or for a new one: an hour from
+ * `at`, or 10:00–11:00 on `date` when the editor was opened without a time.
  */
 export function eventFormValues(
   calendar: Calendar,
   date: string,
   event?: CalendarEvent,
+  at?: string,
 ): EventFormValues {
   const local = (value: CalendarEvent['start'] | undefined, fallback: string) =>
     value?.date ??
@@ -34,8 +42,8 @@ export function eventFormValues(
     description: event?.description ?? '',
     location: event?.location ?? '',
     allDay: !!event?.start.date,
-    start: local(event?.start, `${date}T10:00`),
-    end: local(event?.end, `${date}T11:00`),
+    start: local(event?.start, at ?? `${date}T10:00`),
+    end: local(event?.end, at ? addHour(at) : `${date}T11:00`),
     transparency: event?.transparency ?? 'opaque',
     extendedProperties: JSON.stringify(
       event?.extendedProperties ?? {},

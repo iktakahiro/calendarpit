@@ -22,13 +22,28 @@ function Schedule() {
       selection={selection}
       date={search.date ?? defaultDate}
       editing={search.event}
+      at={search.at}
+      view={search.view ?? 'day'}
       showDate={(date) =>
         navigate({
-          search: (previous) => ({ ...previous, date, event: undefined }),
+          search: (previous) => ({
+            ...previous,
+            date,
+            event: undefined,
+            at: undefined,
+          }),
         })
       }
-      edit={(event) =>
-        navigate({ search: (previous) => ({ ...previous, event }) })
+      edit={(event, at) =>
+        navigate({ search: (previous) => ({ ...previous, event, at }) })
+      }
+      showView={(view) =>
+        navigate({
+          search: (previous) => ({
+            ...previous,
+            view: view === 'week' ? 'week' : undefined,
+          }),
+        })
       }
       openSettings={() =>
         navigate({

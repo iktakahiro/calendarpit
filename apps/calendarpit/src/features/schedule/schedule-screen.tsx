@@ -1,11 +1,13 @@
 import type { Snapshot } from '@calendarpit/server';
 import { Button } from '@cloudflare/kumo/components/button';
-import { Input } from '@cloudflare/kumo/components/input';
+import { ButtonGroup } from '@cloudflare/kumo/components/button-group';
 import { Icon } from '../../components/icon';
 import { useNow } from '../../lib/use-now';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import type { Selection } from '../workspace/models/selection';
+import { DateField } from './components/date-field';
 import { DayView } from './components/day-view';
+import { WeekView } from './components/week-view';
 import { EventEditor } from './components/event-editor';
 import { useDeleteEvent } from './hooks/use-event-mutations';
 import { shiftDate, today } from './models/dates';
@@ -17,8 +19,11 @@ export function ScheduleScreen({
   selection,
   date,
   editing,
+  at,
+  view,
   showDate,
   edit,
+  showView,
   openSettings,
 }: {
   snapshot: Snapshot;
@@ -26,10 +31,16 @@ export function ScheduleScreen({
   date: string;
   /** Event open in the editor: an event ID, `new`, or `undefined`. */
   editing?: string;
+  /** Local start a new event takes from the week grid. */
+  at?: string;
+  /** Shown layout. The day track is the default. */
+  view: 'day' | 'week';
   /** Shows another date and closes the editor. */
   showDate: (date: string) => void;
   /** Opens the editor for an event ID or `new`, or closes it. */
-  edit: (event?: string) => void;
+  edit: (event?: string, at?: string) => void;
+  /** Switches between the day track and the week grid. */
+  showView: (view: 'day' | 'week') => void;
   openSettings: () => void;
 }) {
   const busy = useWorkspaceBusy();
@@ -39,6 +50,7 @@ export function ScheduleScreen({
   const events = calendar
     ? eventsOn(snapshot.events, calendar.id, calendar.timeZone, date)
     : [];
+  const weekEvents = calendar ? snapshot.events : [];
   const editedEvent =
     editing && editing !== 'new'
       ? snapshot.events.find(
@@ -57,15 +69,7 @@ export function ScheduleScreen({
             icon={<Icon name='chevronLeft' />}
             onClick={() => showDate(shiftDate(date, -1))}
           />
-          <Input
-            aria-label='Schedule date'
-            type='date'
-            value={date}
-            required
-            onChange={(e) => {
-              if (e.target.value) showDate(e.target.value);
-            }}
-          />
+          <DateField date={date} showDate={showDate} />
           <Button
             shape='square'
             aria-label='Next day'
@@ -79,6 +83,22 @@ export function ScheduleScreen({
         >
           Today
         </Button>
+        <ButtonGroup aria-label='Calendar view'>
+          <Button
+            variant={view === 'day' ? 'primary' : 'secondary'}
+            aria-pressed={view === 'day'}
+            onClick={() => showView('day')}
+          >
+            Day
+          </Button>
+          <Button
+            variant={view === 'week' ? 'primary' : 'secondary'}
+            aria-pressed={view === 'week'}
+            onClick={() => showView('week')}
+          >
+            Week
+          </Button>
+        </ButtonGroup>
         <span className='tz-chip'>{calendar?.timeZone ?? 'No calendar'}</span>
         <Button
           className='toolbar-end'
@@ -91,7 +111,18 @@ export function ScheduleScreen({
         </Button>
       </div>
       <div className={`schedule-layout ${editorOpen ? 'editing' : ''}`}>
-        {calendar ? (
+        {calendar && view === 'week' ? (
+          <WeekView
+            calendar={calendar}
+            date={date}
+            events={weekEvents}
+            editingId={editedEvent?.id}
+            now={now}
+            open={(event) => edit(event.id)}
+            create={(at) => edit('new', at)}
+            showDate={(day) => showDate(day)}
+          />
+        ) : calendar ? (
           <DayView
             calendar={calendar}
             date={date}
@@ -135,10 +166,11 @@ export function ScheduleScreen({
         )}
         {editorOpen && calendar && (
           <EventEditor
-            key={`${calendar.id}:${editing}`}
+            key={`${calendar.id}:${editing}:${at ?? ''}`}
             calendar={calendar}
             event={editedEvent}
             date={date}
+            at={editing === 'new' ? at : undefined}
             close={() => edit(undefined)}
           />
         )}
