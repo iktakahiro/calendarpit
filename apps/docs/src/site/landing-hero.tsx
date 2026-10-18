@@ -11,6 +11,11 @@ export function LandingHero({ page }: { page: PageMetadata }) {
     <header className='landing-hero'>
       <div className='hero-grid' aria-hidden='true' />
       <div className='hero-copy'>
+        <p className='eyebrow'>
+          {japanese
+            ? 'カレンダー連携アプリ・AI エージェントの開発に'
+            : 'For calendar apps and AI agents'}
+        </p>
         <h1>
           {before}
           <span className='hero-accent'>Google Calendar API</span>
