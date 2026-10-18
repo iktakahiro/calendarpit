@@ -1,0 +1,117 @@
+---
+title: 起動と設定
+description: Calendarpit の起動方法、コマンドラインオプション、環境変数、Docker での実行、管理画面のリファレンスです。
+---
+
+Calendarpit は単一の Bun プロセスとして動作し、Google Calendar API v3 のサブセット、ローカル OAuth エンドポイント、テスト制御 API、管理画面を 1 つのオリジン（デフォルトは `http://127.0.0.1:4173`）から提供します。
+
+Calendarpit はまだ npm パッケージ、Docker Hub イメージ、リリースバイナリとしては公開されていません。利用するにはリポジトリをクローンし、Bun 1.4.3 で依存関係をインストールしてください。
+
+```sh
+git clone https://github.com/iktakahiro/calendarpit.git
+cd calendarpit
+bun install --frozen-lockfile
+```
+
+## Calendarpit の起動方法
+
+### 開発サーバー
+
+デフォルトのアドレス（`http://127.0.0.1:4173`）でローカルサーバーを起動したいときは、`bun run dev` を使います。
+
+```sh
+bun run dev
+CALENDARPIT_DATABASE=:memory: bun run dev
+```
+
+`bun run dev` は常に `127.0.0.1:4173` にバインドし、ポートが使用中であればエラーで終了します。コマンドラインフラグや `CALENDARPIT_HOST`、`CALENDARPIT_PORT` は `bun run dev` には適用されません。引き継がれる環境変数は `CALENDARPIT_DATABASE`、`CALENDARPIT_CONFIG`、`CALENDARPIT_WATCH_HOSTS` のみです。
+
+### ビルド済みサーバー
+
+ローカルスクリプトや CI で CLI フラグ、任意のポート、または OS による空きポートの自動割り当て（`--port 0`）を使いたいときは、`bun run build` と `bun run start` を使います。`build` の前に `start` を実行すると、`Calendarpit: Build the application first with "bun run build".` を出力して終了します。
+
+CLI フラグは `--` の後に渡すか、Bun で CLI エントリポイントを直接実行してください。
+
+```sh
+bun run build
+bun run start -- --port 0 --database :memory:
+bun apps/calendarpit/bin/calendarpit.ts serve --port 4173
+```
+
+ビルド済みサーバーが起動すると、ストレージモードと確定した各 URL が出力されます。
+
+```text
+Calendarpit data: :memory:
+
+Calendarpit v0.1.0
+Data   :memory:
+Admin  http://127.0.0.1:38425/
+API    http://127.0.0.1:38425/calendar/v3
+Health http://127.0.0.1:38425/__calendarpit/health
+```
+
+### 単体実行ファイル
+
+`bun run build:binary` を実行すると、`apps/calendarpit/dist/bin/calendarpit`（Windows では `.exe` 付き）に単体実行ファイルがコンパイルされます。このファイルは、同じマシン上の別のディレクトリやテストランナーにそのままコピーして使えます。
+
+```sh
+bun run build:binary
+./apps/calendarpit/dist/bin/calendarpit serve --port 4173 --database :memory:
+```
+
+単体実行ファイルには、サーバー本体、クライアント用の JavaScript と CSS アセット、アイコン、および Bun ランタイムが埋め込まれています。実行時に `node_modules` や別のアセットディレクトリは必要ありません。コンパイルは実行したホストのプラットフォーム向けにのみ行われます。
+
+### Docker
+
+リポジトリには `Dockerfile` が含まれていますが、コンテナのビルドおよび起動の検証は現時点では未完了です。
+
+```sh
+docker build -t calendarpit:local .
+docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
+```
+
+コンテナ内では非 root ユーザーとして `calendarpit serve --host 0.0.0.0 --port 4173` が実行され、SQLite データは `/data/calendarpit.sqlite` に保存されます。`-p 127.0.0.1:4173:4173` を指定することで、ホスト側ではループバックのみにポートを公開できます。
+
+`calendarpit:local` の後に引数を渡すと、コンテナのデフォルト `CMD`（`serve --host 0.0.0.0 --port 4173`）が置き換わります。置き換えた引数に `--host 0.0.0.0` が含まれていない場合（かつ `CALENDARPIT_HOST=0.0.0.0` も設定されていない場合）、Calendarpit はコンテナ内のループバック（`127.0.0.1`）にフォールバックするため、ホストから接続できなくなります。設定を変更するときは `-e` で環境変数（例: `-e CALENDARPIT_DATABASE=:memory:`）を渡すか、CLI フラグを渡す際に `--host 0.0.0.0`（または `-e CALENDARPIT_HOST=0.0.0.0`）を併せて指定してください。
+
+## コマンドラインオプションと環境変数
+
+CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマンドは省略可能です。未知のコマンド、未知のフラグ、または無効なオプション値を渡すと、`stderr` にエラーを出力して終了コード `1` で終了します。
+
+コマンドラインフラグは環境変数より優先されます。
+
+| CLI オプション | 環境変数 | デフォルト | 説明 |
+| --- | --- | --- | --- |
+| `--host <host>` | `CALENDARPIT_HOST` | `127.0.0.1` | バインドするアドレスです。ループバック以外のアドレス（`0.0.0.0`、`::`）を使う場合は明示的に指定する必要があります。 |
+| `-p`, `--port <n>` | `CALENDARPIT_PORT` | `4173` | リッスンするポート番号（`0`〜`65535`）です。`0` を指定すると OS が空きポートを割り当て、起動時の出力にポート番号が表示されます。`bun run sample:dev` も併用する場合は `4175` を避けてください。 |
+| `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite データベースファイルのパス、または使い捨てのインメモリセッションを使う場合は `:memory:` を指定します。詳しくは[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。 |
+| `--config <path>` | `CALENDARPIT_CONFIG` | 組み込みフィクスチャ | 起動時フィクスチャの JSON ファイルパスです。ファイルが存在し、有効な JSON である必要があります。新規データベースまたは `:memory:` セッションの初期データとして使用され、既存の SQLite ファイルを開くときはエラーを出さずに無視されます。詳しくは[フィクスチャ](/calendarpit/ja/fixtures/)を参照してください。 |
+| `-h`, `--help` | — | — | ヘルプを表示して終了します。ビルド前でも動作します。 |
+| `-v`, `--version` | — | — | `0.1.0` を表示して終了します。ビルド前でも動作します。 |
+
+### その他の環境変数
+
+| 環境変数 | デフォルト | 説明 |
+| --- | --- | --- |
+| `CALENDARPIT_WATCH_HOSTS` | ループバックのみ | `events.watch` の Webhook 送信先として追加で許可するホスト名をカンマ区切りで指定します（例: Docker 内で実行する場合の `host.docker.internal`）。環境変数のみで、対応する CLI フラグはありません。詳しくは[Watch 通知](/calendarpit/ja/watch/)を参照してください。 |
+
+### ループバックへのバインドと作業ディレクトリ
+
+- **デフォルトはループバック**: `--host` または `CALENDARPIT_HOST` を指定しない限り、Calendarpit は `127.0.0.1` にバインドします。管理画面と[テスト制御 API](/calendarpit/ja/test-control/) には認証がないため、`0.0.0.0` にバインドすると同じネットワーク上の他のマシンからアクセス可能になります。
+- **ワークスペーススクリプトでの相対パス**: `bun run dev` と `bun run start` は、`apps/calendarpit` を作業ディレクトリとして実行されます。そのため、`--database`、`CALENDARPIT_DATABASE`、`--config`、`CALENDARPIT_CONFIG` に指定した相対パスは `apps/calendarpit` を基準に解決されます（デフォルトの SQLite パスは `apps/calendarpit/.calendarpit/calendarpit.sqlite` になります）。CLI エントリポイントを直接実行した場合は、現在のディレクトリを基準に解決されます。リポジトリルートからワークスペースコマンドを実行するときは、`"$PWD/fixtures/default.json"` のように絶対パスを使用してください。起動時のよくあるエラーについては[トラブルシューティング](/calendarpit/ja/troubleshooting/)を参照してください。
+
+## 管理画面
+
+管理画面は API と同じオリジンのルート（デフォルトは `http://127.0.0.1:4173/`）で提供されます。2 秒ごとに `GET /__calendarpit/state` とリクエスト履歴をポーリングするため、お使いのアプリが行った変更は自動的に画面へ反映されます。左側のナビゲーションから、表示対象のテストユーザーとカレンダー（`?user=<id>&calendar=<id>`）の切り替えや、現在のストレージが `SQLite` か `In-memory` かの確認ができます。
+
+管理画面は Google Fonts（`fonts.googleapis.com` および `fonts.gstatic.com`）から Roboto Mono フォントを読み込みますが、オフライン時はシステムフォントにフォールバックします。Calendar API と OAuth の処理が Google に通信することはなく、インターネット接続も不要です。
+
+| ルート | セクション | 用途 |
+| --- | --- | --- |
+| `/` | **Schedule** | 保存されているイベントを日表示または週表示で確認します（デフォルトの日付は `2026-10-19`）。イベントの作成、編集、削除（件名、終日イベントの切り替え、開始・終了日時、busy/free 状態、場所、説明、拡張プロパティ JSON）を行えます。繰り返しの系列は最初の 1 回分のみ表示され、展開はされません。エディタでイベントを保存すると、フォームに表示されている項目でイベントが置き換えられます。そのため、Calendar API 経由で設定した参加者、リマインダー、色などの項目は削除され、繰り返しイベントは `recurrence` を失います。それらの項目を持つイベントを編集するときは Calendar API を使用してください。 |
+| `/users` | **Users** | テストユーザーの一覧表示、作成、編集、削除を行います。ユーザーを削除すると、そのユーザーのカレンダーとイベントも削除され、OAuth 認可も取り消されます（関連する watch チャネルも停止します）。 |
+| `/calendars` | **Calendars** | 選択中のテストユーザーのカレンダーを一覧表示、作成、編集、削除します。IANA タイムゾーン（デフォルトは `Asia/Tokyo`）の設定や、プライマリカレンダーの選択も行えます。 |
+| `/connections` | **Connections** | テストユーザーと OAuth クライアントごとの有効および失効済みの OAuth 認可を確認し、有効な認可を取り消します（関連する watch チャネルも停止します）。詳しくは[ローカル OAuth](/calendarpit/ja/oauth/)を参照してください。 |
+| `/watch` | **Watch** | 有効な watch チャネルと Webhook の配信ログを読み取り専用で確認します。詳しくは[Watch 通知](/calendarpit/ja/watch/)を参照してください。 |
+| `/history` | **API history** | 直近 200 件の Calendar API と OAuth の通信履歴（認証情報はマスク済み）を確認、テキストや HTTP `>= 400` エラーのみで絞り込み、または消去します。 |
+| `/settings` | **Settings** | テーマの切り替え（**Appearance**）、ストレージパスの確認、フィクスチャ JSON ファイルの読み込み、ワークスペースのリセット基準（起動時の状態）へのリセット、現在の状態 JSON の確認（**Test data**）、登録済み OAuth クライアントとリダイレクト URI の確認（**OAuth clients**）を行います。 |

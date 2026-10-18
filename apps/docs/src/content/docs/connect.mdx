@@ -46,7 +46,7 @@ Calendarpit checks `client_id` and `redirect_uri` at the authorization endpoint,
 }
 ```
 
-A fixture replaces the whole workspace. Include `users` (and `calendars`) next to `clients`, and keep the `sample-app` entry if you still use the sample app. A startup fixture applies only to a new database or a `:memory:` session. To change a running or persisted workspace, load the fixture with `POST /__calendarpit/fixtures` or start with a new database; see [Fixtures](/calendarpit/fixtures/).
+A fixture replaces the whole workspace. Include `users` (and `calendars`) next to `clients`, and keep the `sample-app` entry if you still use the sample app. A startup fixture applies only to a new database or a `:memory:` session. To change a running or persisted workspace, load the fixture with `POST /__calendarpit/fixtures` or start with a new database. A reset restores the startup fixture, not a fixture loaded through the API. To keep your client across resets, pass it as the startup fixture (`--config` or `CALENDARPIT_CONFIG`) of a new database or `:memory:` session, or load it again after each reset; see [Fixtures](/calendarpit/fixtures/).
 
 - `redirectUris` must contain your app's exact callback URL. Calendarpit matches `redirect_uri` by exact string equality, without port wildcards or trailing-slash normalization.
 - `secret` is required. Your app must send it as `client_secret` (or HTTP Basic) on every `/oauth/token` request, including PKCE flows.
@@ -92,11 +92,13 @@ const { data } = await api.freebusy.query({
 console.log(data.calendars?.primary?.busy);
 ```
 
-`/userinfo` requires the `email` or `profile` scope, and refresh tokens are issued only with `access_type=offline`. When credentials are set with `auth.setCredentials`, token refresh requests from `OAuth2Client` also use the configured local `oauth2TokenUrl`. `OAuth2Client` helpers such as `getTokenInfo` and `verifyIdToken` still call Google. Calendarpit has no equivalent and issues no ID tokens, so do not call them against the local provider. For Python, Go, and other languages, see [SDK examples](/calendarpit/sdks/).
+Authorize the grant with scopes that cover all three calls in this example, such as `auth.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/calendar', 'email', 'profile'] })`. Narrower scopes such as `calendar.events` or `calendar.freebusy` do not cover `calendarList.list` (which requires `calendar`, `calendar.readonly`, `calendar.calendarlist`, or `calendar.calendarlist.readonly`). `/userinfo` requires `openid`, `email`, `profile`, or a `userinfo.*` scope; it returns `email` only with an email scope and `name` only with a profile scope. Refresh tokens are issued only with `access_type=offline`; see [Local OAuth](/calendarpit/oauth/) for the full scope list.
+
+When credentials are set with `auth.setCredentials`, token refresh requests from `OAuth2Client` also use the configured local `oauth2TokenUrl`. Unless you also override `tokenInfoUrl` and the certificate URLs (as the sample app does), `OAuth2Client` helpers such as `getTokenInfo` and `verifyIdToken` still call Google. Calendarpit has no equivalent and issues no ID tokens, so do not call them against the local provider. For Python, Go, and other languages, see [SDK examples](/calendarpit/sdks/).
 
 ## Reference sample app
 
-The repository includes a sample app that connects to Calendarpit with `@googleapis/calendar` and `google-auth-library`. Run Calendarpit and the sample app in separate terminals:
+The repository includes a sample app that connects to Calendarpit with `@googleapis/calendar` and `google-auth-library`. After cloning the repository and installing dependencies (see [Quick start](/calendarpit/quick-start/)), run Calendarpit and the sample app in separate terminals:
 
 ```sh
 bun run dev

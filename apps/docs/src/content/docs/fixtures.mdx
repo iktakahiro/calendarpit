@@ -27,9 +27,9 @@ Calendarpit reads the `--config` or `CALENDARPIT_CONFIG` path relative to the pr
 A startup fixture seeds only a **new, empty** database:
 
 - In `--database :memory:` mode, the database is new on every process start, so the fixture always applies.
-- When a SQLite file already contains saved data, Calendarpit does not apply the fixture and prints no warning. It loads the saved data and the original reset baseline. The path you pass must still point to a readable JSON file, or startup fails. Its contents are not validated in this case. See [Storage and restarts](/calendarpit/storage/) for details.
+- When a SQLite file already contains saved data, Calendarpit does not apply the fixture and prints no warning. It loads the saved data (including per-user calendar-list settings and deleted-calendar tombstones) and the original reset baseline. The path you pass must still point to a readable JSON file, or startup fails. Its contents are not validated in this case. See [Storage and restarts](/calendarpit/storage/) for details.
 
-To load a different fixture at runtime or reset back to the startup baseline between tests, use `POST /__calendarpit/fixtures` or `POST /__calendarpit/reset`. Loading a fixture clears OAuth tokens and other runtime state; reset still restores the startup fixture. See [Test control API](/calendarpit/test-control/).
+To load a different fixture at runtime or reset back to the startup baseline between tests, use `POST /__calendarpit/fixtures` or `POST /__calendarpit/reset`. Both clear OAuth grants and tokens, per-user calendar-list settings, deleted-calendar tombstones, watch channels, deliveries, request history, sync tokens, and notifications; reset still restores the startup fixture (returning default calendar-list entries with their startup etags). `GET /__calendarpit/state` omits client secrets, calendar-list settings, and tombstones, and cannot be reloaded as a fixture. See [Test control API](/calendarpit/test-control/).
 
 ## Root structure and example
 
@@ -102,6 +102,12 @@ Defines calendars owned by fixture users. Every user that owns calendars must ha
 | `summary` | Required | — | Nonempty string up to 10,000 characters. |
 | `timeZone` | Optional | `"UTC"` | Valid IANA time zone name (else `"Invalid IANA time zone."`). |
 | `primary` | Optional | `false` | Boolean (else `"primary must be boolean."`). |
+
+Seeded calendars start on their owner's calendar list with default settings (`selected: true`, `colorId: "1"`). When you later modify calendars or users through the management API (see [Test control API](/calendarpit/test-control/)):
+
+- Deleting a primary calendar selects the first remaining owned calendar that is still on the calendar list, or the first remaining owned calendar when every remaining calendar was removed from the list. The chosen calendar is put back on the list if needed, keeping its other list settings.
+- Setting `"primary": true` on another calendar transfers the flag atomically and puts that calendar back on the calendar list with its other settings kept.
+- Deleting a calendar drops its list settings and records a deleted-calendar tombstone (`deleted: true` with default list settings when `showDeleted=true`). A deleted primary calendar's tombstone keeps `primary: true`. Recreating a calendar with a previously deleted ID clears that tombstone and any saved list settings. Deleting a user revokes their OAuth grants (stopping their watch channels) and removes their calendars, events, and list settings without adding tombstones.
 
 ### `events`
 

@@ -1,0 +1,143 @@
+---
+title: アプリを接続する
+description: お使いのアプリの OAuth クライアントと Google Calendar SDK クライアントの接続先を Calendarpit に変更する方法を説明します。本番の Google 設定にも切り替えられるようにしておきます。
+---
+
+## プロバイダーの切り替えを追加する
+
+Calendarpit を起動しても、Google 宛ての通信が横取りされることはありません。ローカル開発や自動テストで Calendarpit を使うには、OAuth クライアントと Google Calendar SDK クライアントを作成するコードに、プロバイダーを切り替える仕組みを追加します。
+
+`CALENDARPIT_URL` のような環境変数名は、お使いのアプリ側で決める名前です。Google SDK が `CALENDARPIT_URL` を自動で読み込むことはありません。アプリの初期化コードで設定を読み込み、ローカルの URL を SDK に渡す必要があります。
+
+認証情報はプロバイダーごとに分けて管理してください。
+
+- Calendarpit のアクセストークンとリフレッシュトークンは、ローカルのプロバイダーでだけ使います。
+- 本物の Google のクライアントシークレットとトークンは、Google 用の設定に置きます。本物の Google の認証情報をフィクスチャに入れないでください。
+
+## すべてのプロバイダーエンドポイントを上書きする
+
+Calendar API の URL だけを変えても足りません。OAuth のエンドポイントが既定のままだと、ブラウザのリダイレクト、トークン交換、トークン更新は Google に送られます。次の 5 つのエンドポイントをまとめて上書きしてください。
+
+| 用途                             | ローカルのエンドポイント                |
+| -------------------------------- | --------------------------------------- |
+| 認可画面                         | `http://127.0.0.1:4173/oauth/authorize` |
+| 認可コードの交換とトークンの更新 | `http://127.0.0.1:4173/oauth/token`     |
+| ユーザープロフィール             | `http://127.0.0.1:4173/userinfo`        |
+| Calendar API のルート            | `http://127.0.0.1:4173/`                |
+| トークンの取り消し               | `http://127.0.0.1:4173/oauth/revoke`    |
+
+JavaScript の Calendar SDK (`@googleapis/calendar`) は、`rootUrl` の後ろに `/calendar/v3/...` を付け足します。`/calendar/v3` を二重に含めないでください。Python、Go、.NET では、`/calendar/v3/` を含むサービスの完全な URL を指定します。Java では、ルート URL とサービスパスを別々に設定します。詳しくは [SDK の例](/calendarpit/ja/sdks/) を参照してください。
+
+watch のコールバック先アドレスは、通信の向きが逆です。Calendarpit からお使いのアプリに送られます (例: `http://127.0.0.1:4175/notifications`)。Calendarpit が許可するコールバック先のホストは、ループバック (`127.0.0.1`、`localhost`、`[::1]`) だけです。ほかのホストを使う場合は、`CALENDARPIT_WATCH_HOSTS` に列挙します。詳しくは [watch 通知](/calendarpit/ja/watch/) を参照してください。
+
+## テスト用の OAuth クライアントを登録する
+
+Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` を確認します。`/oauth/token` では `client_id`、`client_secret`、(認可コードの交換時は) `redirect_uri` を確認します。フィクスチャの `clients` 配列にお使いのアプリを登録してください。
+
+```json
+{
+  "clients": [
+    {
+      "id": "my-app",
+      "secret": "local-test-secret",
+      "redirectUris": ["http://127.0.0.1:3000/auth/google/callback"]
+    }
+  ]
+}
+```
+
+フィクスチャはワークスペース全体を置き換えます。`clients` と一緒に `users` (と `calendars`) も含めてください。サンプルアプリを引き続き使う場合は、`sample-app` のエントリも残します。
+
+起動時フィクスチャが適用されるのは、新しいデータベースか `:memory:` セッションだけです。実行中のワークスペースや保存済みのワークスペースを変更するには、`POST /__calendarpit/fixtures` でフィクスチャを読み込むか、新しいデータベースで起動します。リセットで戻るのは起動時フィクスチャの状態です。API で読み込んだフィクスチャには戻りません。リセット後もクライアントを残すには、新しいデータベースか `:memory:` セッションの起動時フィクスチャ (`--config` または `CALENDARPIT_CONFIG`) として渡すか、リセットのたびに読み込み直します。詳しくは [フィクスチャ](/calendarpit/ja/fixtures/) を参照してください。
+
+- `redirectUris` には、お使いのアプリのコールバック URL を正確に書きます。Calendarpit は `redirect_uri` を文字列の完全一致で照合します。ポートのワイルドカードや末尾スラッシュの正規化はありません。
+- `secret` は必須です。アプリは PKCE フローも含め、すべての `/oauth/token` リクエストでこの値を `client_secret` (または HTTP Basic) として送る必要があります。
+
+組み込みの既定フィクスチャには、ローカルテスト用の OAuth クライアントが 1 つ登録されています。
+
+- クライアント ID: `sample-app`
+- クライアントシークレット: `local-sample-secret` (公開されているローカルテスト用の値)
+- リダイレクト URI: `http://127.0.0.1:4175/callback`
+
+認可コード、トークンの更新、`/userinfo`、取り消しまでの一連のフローは、[ローカル OAuth](/calendarpit/ja/oauth/) を参照してください。
+
+## JavaScript の OAuth クライアントと Calendar クライアント
+
+`@googleapis/calendar` と `google-auth-library` を使う場合は、`OAuth2Client` に `endpoints` を、Calendar クライアントに `rootUrl` を設定します。
+
+```ts
+import { calendar } from '@googleapis/calendar';
+import { OAuth2Client } from 'google-auth-library';
+
+const origin = 'http://127.0.0.1:4173';
+const auth = new OAuth2Client({
+  clientId: 'sample-app',
+  clientSecret: 'local-sample-secret',
+  redirectUri: 'http://127.0.0.1:4175/callback',
+  endpoints: {
+    oauth2AuthBaseUrl: `${origin}/oauth/authorize`,
+    oauth2TokenUrl: `${origin}/oauth/token`,
+    oauth2RevokeUrl: `${origin}/oauth/revoke`,
+  },
+});
+const api = calendar({ version: 'v3', auth, rootUrl: origin });
+// コールバックの後: auth.setCredentials((await auth.getToken(code)).tokens)
+const profile = await auth.request({ url: `${origin}/userinfo` });
+const calendars = await api.calendarList.list();
+const { data } = await api.freebusy.query({
+  requestBody: {
+    timeMin: '2026-10-19T00:00:00+09:00',
+    timeMax: '2026-10-20T00:00:00+09:00',
+    items: [{ id: 'primary' }],
+  },
+});
+console.log(data.calendars?.primary?.busy);
+```
+
+この例の 3 つの呼び出しをすべてカバーするスコープで認可してください。たとえば `auth.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/calendar', 'email', 'profile'] })` のように指定します。
+
+- `calendar.events` や `calendar.freebusy` のような狭いスコープでは、`calendarList.list` を呼び出せません。`calendarList.list` には `calendar`、`calendar.readonly`、`calendar.calendarlist`、`calendar.calendarlist.readonly` のいずれかが必要です。
+- `/userinfo` には、`openid`、`email`、`profile`、または `userinfo.*` のスコープが必要です。`email` はメールのスコープがある場合だけ、`name` はプロフィールのスコープがある場合だけ返ります。
+- リフレッシュトークンは、`access_type=offline` を指定した場合だけ発行されます。
+
+スコープの一覧は [ローカル OAuth](/calendarpit/ja/oauth/) を参照してください。
+
+`auth.setCredentials` で認証情報を設定すると、`OAuth2Client` のトークン更新リクエストも、設定したローカルの `oauth2TokenUrl` に送られます。一方、`getTokenInfo` や `verifyIdToken` などの `OAuth2Client` のヘルパーは、`tokenInfoUrl` と証明書の URL も上書きしない限り Google を呼び出します (サンプルアプリはこれらも上書きしています)。Calendarpit にはこれらに相当する機能がなく、ID トークンも発行しません。ローカルのプロバイダーに対してこれらのヘルパーを呼び出さないでください。Python、Go などほかの言語については、[SDK の例](/calendarpit/ja/sdks/) を参照してください。
+
+## 参考実装のサンプルアプリ
+
+リポジトリには、`@googleapis/calendar` と `google-auth-library` を使って Calendarpit に接続するサンプルアプリが含まれています。リポジトリをクローンして依存関係をインストールしたら ([クイックスタート](/calendarpit/ja/quick-start/) を参照)、Calendarpit とサンプルアプリを別々のターミナルで起動します。
+
+```sh
+bun run dev
+bun run sample:dev
+```
+
+Calendarpit は `http://127.0.0.1:4173` で、サンプルアプリは `http://127.0.0.1:4175` で動きます。サンプルアプリは、接続を 1 つだけ扱うローカル用のデモです。お使いのアプリに組み込むときに参考になる、次の 2 つの実装を含んでいます。
+
+- **state Cookie の検証**: OAuth の `state` パラメーターを、有効期間 5 分の HttpOnly Cookie (`sample_state`) に保存します。認可コードを交換する前に、`/callback` でこの値を検証します。
+- **ループバック限定の送信ガード**: SDK から送るリクエストのうち、宛先ホストが `127.0.0.1`、`localhost`、`[::1]` 以外のものをブロックします。HTTP リダイレクトも拒否します。これにより、本物の Google のサーバーに誤ってリクエストを送ることを防ぎます。
+
+サンプルアプリは次の環境変数を使います。
+
+| 環境変数               | 既定値                               |
+| ---------------------- | ------------------------------------ |
+| `CALENDARPIT_URL`      | `http://127.0.0.1:4173`              |
+| `SAMPLE_PORT`          | `4175`                               |
+| `SAMPLE_CLIENT_ID`     | `sample-app`                         |
+| `SAMPLE_CLIENT_SECRET` | `local-sample-secret`                |
+| `AUTHORIZATION_URL`    | `${CALENDARPIT_URL}/oauth/authorize` |
+| `TOKEN_URL`            | `${CALENDARPIT_URL}/oauth/token`     |
+| `USERINFO_URL`         | `${CALENDARPIT_URL}/userinfo`        |
+| `CALENDAR_API_URL`     | `${CALENDARPIT_URL}`                 |
+
+サンプルアプリは、取り消し URL を `${CALENDARPIT_URL}/oauth/revoke` に、リダイレクト URI を `http://127.0.0.1:<SAMPLE_PORT>/callback` に設定します。組み込みの `sample-app` クライアントに登録されているのはポート `4175` だけです。そのため `SAMPLE_PORT` を変更する場合は、フィクスチャでクライアントの `redirectUris` も更新してください。
+
+## お使いのアプリのチェックリスト
+
+お使いのアプリで Calendarpit との連携を保守するときは、次の点を確認してください。
+
+- **すべてのエンドポイントの上書き**: 認可、トークン交換、トークン更新、ユーザープロフィール、Calendar API の呼び出し、トークンの取り消しが、すべてローカルのエンドポイントを使っていること。
+- **コールバックに到達できること**: ブラウザからアプリの OAuth `redirect_uri` に到達できること。また、Calendarpit からアプリの watch 用 Webhook アドレスに到達できること。Webhook のホストがループバックでない場合は、`CALENDARPIT_WATCH_HOSTS` を設定します。
+- **アプリ全体のフロー**: ログイン、イベントの読み書き、watch 通知、トークン更新、取り消し、ワークスペースのリセットを通して、UI とバックグラウンドワーカーをテストすること。
+- **アプリ固有のフィクスチャ**: アプリ固有のフィクスチャや E2E テストのシナリオを、お使いのアプリのリポジトリで管理すること。

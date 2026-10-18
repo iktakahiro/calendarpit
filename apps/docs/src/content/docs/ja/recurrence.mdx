@@ -1,0 +1,46 @@
+---
+title: イベント、繰り返し、時刻の扱い
+description: Calendarpit における繰り返しイベントの展開、招待や会議のローカルシミュレーション、タイムゾーン・夏時間 (DST)・busy 区間の扱いについて説明します。
+---
+
+Calendarpit は、繰り返しの系列の展開、ローカルのテストユーザー間での招待の同期、および時間範囲や busy 区間の計算をすべてローカルで処理します。対応しているエンドポイントとフィールドの一覧については、[Calendar API の互換性](/calendarpit/ja/compatibility/)を参照してください。
+
+## 繰り返しイベント
+
+`events.list` では、デフォルトの `singleEvents=false` を指定すると繰り返しの親イベント (マスター) と保存済みの例外 (個別に変更された回) を返し、`singleEvents=true` を指定すると各回のイベントを展開して返します。
+
+`GET /calendar/v3/calendars/{calendarId}/events/{eventId}/instances` は、単一の繰り返しの系列について展開された各回のインスタンスを常に返します (`singleEvents=false` の場合、`showDeleted` を指定しなくてもキャンセル済みの例外が含まれます)。このエンドポイントは `events.list` のパラメーター (`timeMin`、`timeMax`、`showDeleted`、`maxResults`、`pageToken`、`timeZone` など) に加えて `originalStart` を受け付けます。`syncToken` は受け付けず、レスポンスに `nextSyncToken` は含まれません。
+
+各インスタンスには `recurringEventId`、`originalStartTime`、および再現可能なルールで決まる ID (時刻指定イベントは UTC の `<seriesId>_<YYYYMMDDTHHMMSSZ>`、終日イベントは `<seriesId>_<YYYYMMDD>`) が付与されます。`/events/{instanceId}` に対して、`GET` は例外が保存されていなくても該当する回のインスタンスを返し、`PUT` と `PATCH` はその回を例外として保存し、`DELETE` はキャンセル済みの例外として保存します。親イベントを更新すると各インスタンスも更新され、新しいルールで生成されなくなった保存済みの例外はキャンセルされます。親イベントを削除すると、その例外もすべてキャンセルされます。`singleEvents=true` の場合、[差分同期](/calendarpit/ja/sync/)では削除された回が `cancelled` として返されます。`freebusy.query` でも同じ展開ロジックが使われます。
+
+### ルール、制限、夏時間 (DST)
+
+`recurrence` には `RRULE`、`EXRULE`、`RDATE`、`EXDATE` の行を 1〜20 行指定できます (空配列を指定すると繰り返しなしの通常イベントとして保存されます)。これ以外の行 (`DTSTART` など)、`FREQ` の欠落や日単位未満の指定 (`HOURLY`、`MINUTELY`、`SECONDLY`)、下表にない大文字のルール要素 (`BYHOUR` など)、およびルール要素の重複は `400 unsupportedFeature` を返します。構文エラー、不正な値や組み合わせ、行数の超過は `400 invalidParameter` を返します。
+
+| 項目 | 対応している動作 |
+| --- | --- |
+| `FREQ` | `DAILY`、`WEEKLY`、`MONTHLY`、`YEARLY` に対応しています。 |
+| ルール要素 | `INTERVAL` (1–10000)、`COUNT` (1–10000) または `UNTIL` (両方の同時指定は不可)、`BYDAY` (`MO`–`SU`、`MONTHLY`/`YEARLY` では `±1`–`5` の指定が可能)、`BYMONTHDAY` (`±1`–`31`)、`BYMONTH` (`1`–`12`)、`BYSETPOS` (`±1`–`366`)、`WKST` に対応しています。 |
+| タイムゾーンと `UNTIL` | 時刻指定の繰り返しの系列には `start.timeZone` が必須です。時刻指定の `UNTIL` は UTC (`...Z`) で指定する必要があります。終日イベントの `UNTIL` は日付形式で指定します。 |
+| `RDATE` / `EXDATE` | 時刻指定の繰り返しの系列では `;TZID=<zone>` を指定できます。終日イベントの繰り返しの系列では `;VALUE=DATE` が必須です。 |
+| 展開の上限 | 1 回の展開につき最大 10,000 インスタンス (リクエストの期間内、または `timeMax` がない場合は系列全体)、また終了条件のある系列を `timeMax` なし (`timeMin` と `timeMax` なし) で展開する場合は `DTSTART` から最大 100 年 (366×100 日) までです (超過時は `400 unsupportedFeature` を返します)。終了条件のない系列 (`COUNT`/`UNTIL` なし) を展開する場合 (`singleEvents=true`) や、`events.list` に `timeMin` を渡す場合は `timeMax` が必須です。1 つでも上限を超える系列があると、一覧取得や `freeBusy` のリクエスト全体が失敗します。削除済みの系列も対象に含まれるため、`timeMax` を指定するか状態をリセットしてください。 |
+| 夏時間 (DST) | ルールは `start.timeZone` における現地時刻 (壁時計の時刻) を維持します。夏時間開始時のスキップにより存在しない現地時刻が発生する場合、展開処理がその回に到達した時点で `400 unsupportedFeature` を返します (`instances`、`singleEvents=true` または `timeMin`/`timeMax` を指定した `events.list`、スキップ前後約 2 日以内の回のインスタンス ID 指定、および `freeBusy` が該当します)。イベントの作成自体は成功し、展開時にリクエスト全体がエラーになります。夏時間終了時の重複により曖昧になる現地時刻は、移行前の早い方のオフセット (ニューヨークであれば `-04:00` など) を使用します。 |
+
+## 招待、リマインダー、ローカルでの会議データ
+
+Calendarpit が実際にメールを送信したり、Google Meet に通信したりすることはありません。
+
+- **招待:** `attendees` には重複のないメールアドレスを最大 200 件まで指定できます (`displayName`、`optional`、`resource`、`additionalGuests`、`comment`、および `responseStatus` として `needsAction`、`accepted`、`tentative`、`declined` を指定可能です)。プライマリカレンダーを持つ別のローカルのテストユーザーを招待すると、同じ `id` と `iCalUID` を持つイベントのコピーがそのユーザーのプライマリカレンダーに書き込まれます。主催者による更新やキャンセルは各コピーに反映され、[watch 通知](/calendarpit/ja/watch/)が発行されます。参加者を削除すると、そのユーザーのコピーはキャンセルされます。`reminders` と `extendedProperties.private` はコピーごとに独立して保持され、`extendedProperties.shared` は主催者のイベントから同期されます。
+- **出欠回答 (RSVP) と招待された側の編集:** 招待されたユーザーは `PATCH` を使用する必要があります (`PUT` は `403 forbiddenForNonOrganizer` を返します)。編集できるのは、自身の `responseStatus` と `comment` (または自身のエントリのみを含めて `attendeesOmitted: true` を設定すること)、および `reminders`、`colorId`、`transparency`、`extendedProperties` のみです。出欠回答の変更は主催者のイベントと他の参加者のコピーにも反映されます (繰り返しの系列の 1 つのインスタンスに対して出欠回答を行うと、主催者のカレンダーに例外が作成されます)。招待を辞退 (`declined`) すると招待された側のコピーは `transparent` になり、それ以外の `attendees` の変更を行うと `opaque` に戻ります。コピー側で変更した `colorId` と `transparency` は、次回主催者がイベントを更新した際に上書きされます。
+- **ゲスト権限フラグ:** `guestsCanModify` (デフォルト `false`)、`guestsCanInviteOthers` (デフォルト `true`)、`guestsCanSeeOtherGuests` (デフォルト `true`) は真偽値として保存・取得でき、主催者のみが変更できます。これらは値が保存されるだけで、招待されたユーザーが編集できる範囲には影響しません。
+- **`sendUpdates`:** `all` を指定すると、書き込みごとに主催者を除く全参加者 (削除された参加者も含みます。招待されたユーザーによる `REPLY` の場合は主催者が宛先になります) を `recipients` とするレコードが 1 件記録されます。`externalOnly` を指定すると、ローカルのテストユーザーではない宛先のみが記録されます。記録されたエントリ (`REQUEST`、`CANCEL`、または `REPLY`) は、`GET /__calendarpit/state` の `notifications` (最新 200 件。[テスト制御 API](/calendarpit/ja/test-control/) を参照してください) で確認できます。デフォルトの `none` では何も記録されません。どの値を指定しても、ローカルのコピー間の同期は行われます。
+- **リマインダー:** `{ useDefault: boolean, overrides?: [{ method: "email" | "popup", minutes: 0..40320 }] }` の形式で指定します (`useDefault: false` の場合、`overrides` は最大 5 件まで指定可能です)。データは保存されるのみで、実際に通知が発火することはありません。
+- **会議データ (`conferenceData`):** `null` 以外の `conferenceData` を扱うには `?conferenceDataVersion=1` の指定が必要です。`hangoutsMeet` の `createRequest.requestId` を指定すると、再現可能なルールで決まる ID、`hangoutLink`、および `https://meet.calendarpit.invalid/<id>` を指す `video` エントリポイントが生成されます。`conferenceData: null` を指定すると会議データが消去されます。
+
+## 時刻の扱いと FreeBusy
+
+イベントの期間は半開区間 `[start, end)` として扱われ、`end` は `start` より後の時刻である必要があります。一覧取得のフィルターは `start < timeMax` かつ `end > timeMin` で判定されるため、前後に隣接するイベント同士が重複することはありません。
+
+- **終日イベント:** `start.date` と終了日 (その当日は含まない) を表す `end.date` (`YYYY-MM-DD`) は、カレンダーのタイムゾーンにおける 0 時 (深夜 0:00) を基準にします。夏時間の切り替えによる 1 日 23 時間や 25 時間の日の場合も同様です。
+- **時刻指定イベント:** `dateTime` には UTC オフセット (`Z` を含む) または IANA の `timeZone` が必須です。オフセットのない現地時刻が夏時間のスキップ期間または重複期間に該当する場合は `400` を返します。レスポンスの `dateTime` は、リクエストで指定された `timeZone` (未指定時はカレンダーのタイムゾーン) の数値オフセット付きでフォーマットされます。レスポンスの `timeZone` フィールドも、イベントに保存されたタイムゾーンではなく、リクエストで指定されたタイムゾーン (またはカレンダーのタイムゾーン) になります。
+- **FreeBusy (`POST /calendar/v3/freeBusy`):** 最大 50 個のカレンダーを照会し、`timeZone` (デフォルトは `UTC`) でフォーマットされた busy 区間を返します。繰り返しの系列を展開し、`transparent` (予定ありとみなさないイベントや、辞退した招待を含む) および `cancelled` (削除済み) のイベントを除外したうえで、重複または隣接する区間を結合し、`[timeMin, timeMax)` の範囲に切り詰めて返します。存在しないカレンダーや所有していないカレンダーについては、カレンダーごとの `notFound` エラーと `busy: []` を返します。

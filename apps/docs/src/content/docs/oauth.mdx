@@ -135,11 +135,12 @@ Every `GET /oauth/authorize` request must include at least one supported scope. 
 
 | Scope | Allowed operations |
 | --- | --- |
-| `https://www.googleapis.com/auth/calendar` | All supported Calendar API reads and writes (`calendarList.list`, `calendars.get`, `events.*`, `channels.stop`, `freebusy.query`) |
-| `https://www.googleapis.com/auth/calendar.readonly` | `calendarList.list`, `calendars.get`, `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
+| `https://www.googleapis.com/auth/calendar` | All supported Calendar API reads and writes (`calendarList.*`, `calendars.get`, `events.*`, `channels.stop`, `freebusy.query`) |
+| `https://www.googleapis.com/auth/calendar.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `calendars.get`, `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
 | `https://www.googleapis.com/auth/calendar.events` | `events.list`, `events.get`, `events.instances`, `events.insert`, `events.update`, `events.patch`, `events.delete`, `events.watch`, `channels.stop`, `freebusy.query` |
 | `https://www.googleapis.com/auth/calendar.events.readonly` | `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.calendarlist.readonly` | `calendarList.list` |
+| `https://www.googleapis.com/auth/calendar.calendarlist` | `calendarList.list`, `calendarList.get`, `calendarList.insert`, `calendarList.patch`, `calendarList.update`, `calendarList.delete`, `calendarList.watch`, `channels.stop` |
+| `https://www.googleapis.com/auth/calendar.calendarlist.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `channels.stop` |
 | `https://www.googleapis.com/auth/calendar.calendars.readonly` | `calendars.get` |
 | `https://www.googleapis.com/auth/calendar.freebusy` | `freebusy.query` |
 | `https://www.googleapis.com/auth/calendar.events.freebusy` | `freebusy.query` |
@@ -147,7 +148,7 @@ Every `GET /oauth/authorize` request must include at least one supported scope. 
 | `email`, `https://www.googleapis.com/auth/userinfo.email` | `GET /userinfo` — adds `email`, `verified_email: true`, and `email_verified: true` to `{ sub, id }` |
 | `profile`, `https://www.googleapis.com/auth/userinfo.profile` | `GET /userinfo` — adds `name` to `{ sub, id }` |
 
-Missing, expired, or revoked access tokens return `401` (`authError`) with a `WWW-Authenticate: Bearer` header. A valid token without a required scope for the endpoint returns `403` (`insufficientPermissions`). Unlike `/oauth/*` endpoints, `GET /userinfo` and Calendar API endpoints return errors in the Google API error envelope; see [Troubleshooting](/calendarpit/troubleshooting/).
+Missing, expired, or revoked access tokens return `401` (`authError`) with a `WWW-Authenticate: Bearer` header. A valid token without a required scope for the endpoint returns `403` (`insufficientPermissions`). `channels.stop` also requires the token to belong to the same connection (grant) that opened the channel; other connections receive `404` (`notFound`). Unlike `/oauth/*` endpoints, `GET /userinfo` and Calendar API endpoints return errors in the Google API error envelope; see [Troubleshooting](/calendarpit/troubleshooting/).
 
 `openid` only grants access to `GET /userinfo` with `{ sub, id }`. Calendarpit does not return an `id_token` from `/oauth/token`, does not serve `/.well-known/openid-configuration` or JWKS, and does not include `picture`, `given_name`, `family_name`, or `locale` in `/userinfo`.
 
@@ -162,7 +163,7 @@ Validation errors on `GET /oauth/authorize` return a `400` JSON response (`{"err
 - **Incremental authorization** (`include_granted_scopes=true`) returns `400 unsupported_feature`.
 - **Other response types** (anything other than `response_type=code`) return `400 unsupported_response_type`.
 - **PKCE `plain` method** returns `400 invalid_request`.
-- **Unlisted scopes** (such as `calendar.events.owned`, `calendar.app.created`, `calendar.settings.readonly`, `calendar.acls`, or write variants of `calendar.calendarlist` and `calendar.calendars`) return `400 invalid_scope`.
+- **Unlisted scopes** (such as `calendar.events.owned`, `calendar.app.created`, `calendar.settings.readonly`, `calendar.acls`, or the write scope `calendar.calendars`) return `400 invalid_scope`.
 - **Other token grant types** on `POST /oauth/token` return `400 unsupported_grant_type` (after client authentication succeeds).
 - **API keys (`key=` query parameter)** are accepted as a system parameter on API requests but never replace bearer token authentication.
 
