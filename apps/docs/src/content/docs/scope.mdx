@@ -1,10 +1,11 @@
 ---
-title: MVP scope
-description: The product contract and acceptance criteria for the first release.
+title: Product scope
+description: What Calendarpit covers, and what it deliberately leaves out.
 ---
 
-This is the MVP product contract. See [Compatibility](/calendarpit/compatibility/) for the
-implemented subset and [Roadmap](/calendarpit/roadmap/) for integration/release follow-up work.
+This is the product contract: what Calendarpit sets out to do. See
+[Compatibility](/calendarpit/compatibility/) for the implemented subset of the Google
+Calendar API and [Roadmap](/calendarpit/roadmap/) for integration and release follow-up work.
 
 ## Runtime and state
 
@@ -56,7 +57,7 @@ Google login and OIDC compatibility are out of scope.
 
 ## Watch notifications
 
-Event subscriptions and local webhook delivery are part of the MVP. Support
+Event subscriptions and local webhook delivery are in scope. Support
 `events.watch`, `channels.stop`, initial synchronization notifications, event
 change notifications, expiration, and cleanup. See the [Watch design](/calendarpit/watch/).
 Support incremental event synchronization with `showDeleted`, `nextSyncToken`,
@@ -65,10 +66,10 @@ mutations, restart, expiration and reset. See [Incremental sync](/calendarpit/sy
 
 ## Admin UI
 
-Provide user/calendar selection, a daily event list, event editing, connection
+Provide user/calendar selection, a day track and a week grid, event editing, connection
 revocation, and request history. History includes method, path, status, and
 request/response bodies, with credentials masked. Inspect watch channels and
-delivery results. Weekly grids and dragging can wait.
+delivery results. Dragging to move or resize an event can wait.
 
 ## Test control
 

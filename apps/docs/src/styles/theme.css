@@ -1,3 +1,10 @@
+/* Roboto Mono everywhere, matching the admin UI. The font link lives in
+   `astro.config.ts`; these stacks fall back to the system monospace. */
+:root {
+  --sl-font: 'Roboto Mono', ui-monospace, monospace;
+  --sl-font-mono: 'Roboto Mono', ui-monospace, monospace;
+}
+
 /* Calendarpit's terracotta accent, matching the admin UI and consent page. */
 :root {
   --sl-color-accent-low: #3d1a10;

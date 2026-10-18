@@ -9,9 +9,9 @@
 - Keep Google-compatible HTTP behavior separate from the admin UI and the CLI.
 - Use Bun’s built-in SQLite for local persistence by default; support `--database :memory:` for isolated E2E sessions. Do not introduce an external database server. Preserve the saved reset baseline and test restart, token, and watch lifecycles.
 - Do not add Chronock-specific behavior or fixtures. Chronock is an integration consumer.
-- Treat `apps/docs/src/content/docs/mvp.mdx` as the product scope; distinguish implemented behavior from planned behavior.
+- Treat `apps/docs/src/content/docs/scope.mdx` as the product scope; distinguish implemented behavior from planned behavior.
 - Explicitly reject unsupported API features. Never silently degrade a recurring event into a single event.
-- Keep runtime assets local except for the admin UI's Roboto Mono font, which loads from Google Fonts with system-font fallbacks. Calendar and OAuth behavior must not require real Google credentials or network access to Google.
+- Keep runtime assets local except for the Roboto Mono font used by the admin UI and the documentation site, which loads from Google Fonts with system-font fallbacks. Calendar and OAuth behavior must not require real Google credentials or network access to Google.
 - Bind to loopback by default. A non-loopback host must be explicitly configured.
 - Use the 1Password MCP server for any work with 1Password developer environments.
 - Use the built-in in-app browser (`iab`) for browser interaction unless another browser is explicitly requested.
