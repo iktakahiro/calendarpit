@@ -30,46 +30,46 @@ client never mistakes a gap for an empty result. `events.import` and
 `events.quickAdd` share the event path, so an authorized request to them answers
 `405` with `methodNotAllowed`.
 
-| Resource     | Method              | Supported | Notes                                                           |
-| ------------ | ------------------- | :-------: | --------------------------------------------------------------- |
-| Acl          | `delete`            |    ❌     | ACLs and shared-calendar access are not simulated               |
-| Acl          | `get`               |    ❌     |                                                                 |
-| Acl          | `insert`            |    ❌     |                                                                 |
-| Acl          | `list`              |    ❌     |                                                                 |
-| Acl          | `patch`             |    ❌     |                                                                 |
-| Acl          | `update`            |    ❌     |                                                                 |
-| Acl          | `watch`             |    ❌     | Event and calendar-list watches do not cover ACLs               |
-| CalendarList | `list`              |    ✅     | Owned calendars; `minAccessRole`, `showDeleted`, `showHidden`   |
-| CalendarList | `delete`            |    ✅     | Removes a non-primary calendar from the list only               |
-| CalendarList | `get`               |    ✅     | Same entry `list` returns for that calendar                     |
-| CalendarList | `insert`            |    ✅     | Restores an owned calendar removed from the list                |
-| CalendarList | `patch`             |    ✅     | Omitted writable fields are preserved                           |
-| CalendarList | `update`            |    ✅     | `PUT` replaces writable fields                                  |
-| CalendarList | `watch`             |    ✅     | Loopback callbacks when the caller's list changes               |
-| Calendars    | `get`               |    ✅     | Metadata of a calendar the test user owns                       |
-| Calendars    | `clear`             |    ❌     | Reset the workspace instead                                     |
-| Calendars    | `delete`            |    ❌     | Manage calendars through the admin UI or the management API     |
-| Calendars    | `insert`            |    ❌     |                                                                 |
-| Calendars    | `patch`             |    ❌     |                                                                 |
-| Calendars    | `transferOwnership` |    ❌     | One owner per calendar, with no sharing model                   |
-| Calendars    | `update`            |    ❌     |                                                                 |
-| Channels     | `stop`              |    ✅     | Stops an event or calendar-list subscription                    |
-| Colors       | `get`               |    ❌     | Event colors 1–11 and calendar colors 1–24 need no endpoint     |
-| Events       | `list`              |    ✅     | Time bounds, paging, `singleEvents`, sync tokens, filters       |
-| Events       | `get`               |    ✅     | Includes cancelled tombstones                                   |
-| Events       | `insert`            |    ✅     |                                                                 |
-| Events       | `update`            |    ✅     | `PUT` replaces writable fields                                  |
-| Events       | `patch`             |    ✅     | Omitted fields are preserved                                    |
-| Events       | `delete`            |    ✅     | Keeps a `cancelled` record for synchronization                  |
-| Events       | `instances`         |    ✅     | Recurring instances, exceptions and `originalStart`             |
-| Events       | `watch`             |    ✅     | Loopback callbacks with retries and a delivery log              |
-| Events       | `import`            |    ❌     | Create the event with `insert`                                  |
-| Events       | `move`              |    ❌     | Delete and insert across calendars instead                      |
-| Events       | `quickAdd`          |    ❌     | No natural-language parsing                                     |
-| Freebusy     | `query`             |    ✅     | Merged, clipped busy ranges, up to 50 calendars                 |
-| Settings     | `get`               |    ❌     | No per-user Google settings                                     |
-| Settings     | `list`              |    ❌     |                                                                 |
-| Settings     | `watch`             |    ❌     |                                                                 |
+| Resource     | Method              | Supported | Notes                                                         |
+| ------------ | ------------------- | :-------: | ------------------------------------------------------------- |
+| Acl          | `delete`            |    ❌     | ACLs and shared-calendar access are not simulated             |
+| Acl          | `get`               |    ❌     |                                                               |
+| Acl          | `insert`            |    ❌     |                                                               |
+| Acl          | `list`              |    ❌     |                                                               |
+| Acl          | `patch`             |    ❌     |                                                               |
+| Acl          | `update`            |    ❌     |                                                               |
+| Acl          | `watch`             |    ❌     | Event and calendar-list watches do not cover ACLs             |
+| CalendarList | `list`              |    ✅     | Owned calendars; `minAccessRole`, `showDeleted`, `showHidden` |
+| CalendarList | `delete`            |    ✅     | Removes a non-primary calendar from the list only             |
+| CalendarList | `get`               |    ✅     | Same entry `list` returns for that calendar                   |
+| CalendarList | `insert`            |    ✅     | Restores an owned calendar removed from the list              |
+| CalendarList | `patch`             |    ✅     | Omitted writable fields are preserved                         |
+| CalendarList | `update`            |    ✅     | `PUT` replaces writable fields                                |
+| CalendarList | `watch`             |    ✅     | Loopback callbacks when the caller's list changes             |
+| Calendars    | `get`               |    ✅     | Metadata of a calendar the test user owns                     |
+| Calendars    | `clear`             |    ❌     | Reset the workspace instead                                   |
+| Calendars    | `delete`            |    ❌     | Manage calendars through the admin UI or the management API   |
+| Calendars    | `insert`            |    ❌     |                                                               |
+| Calendars    | `patch`             |    ❌     |                                                               |
+| Calendars    | `transferOwnership` |    ❌     | One owner per calendar, with no sharing model                 |
+| Calendars    | `update`            |    ❌     |                                                               |
+| Channels     | `stop`              |    ✅     | Stops an event or calendar-list subscription                  |
+| Colors       | `get`               |    ❌     | Event colors 1–11 and calendar colors 1–24 need no endpoint   |
+| Events       | `list`              |    ✅     | Time bounds, paging, `singleEvents`, sync tokens, filters     |
+| Events       | `get`               |    ✅     | Includes cancelled tombstones                                 |
+| Events       | `insert`            |    ✅     |                                                               |
+| Events       | `update`            |    ✅     | `PUT` replaces writable fields                                |
+| Events       | `patch`             |    ✅     | Omitted fields are preserved                                  |
+| Events       | `delete`            |    ✅     | Keeps a `cancelled` record for synchronization                |
+| Events       | `instances`         |    ✅     | Recurring instances, exceptions and `originalStart`           |
+| Events       | `watch`             |    ✅     | Loopback callbacks with retries and a delivery log            |
+| Events       | `import`            |    ❌     | Create the event with `insert`                                |
+| Events       | `move`              |    ❌     | Delete and insert across calendars instead                    |
+| Events       | `quickAdd`          |    ❌     | No natural-language parsing                                   |
+| Freebusy     | `query`             |    ✅     | Merged, clipped busy ranges, up to 50 calendars               |
+| Settings     | `get`               |    ❌     | No per-user Google settings                                   |
+| Settings     | `list`              |    ❌     |                                                               |
+| Settings     | `watch`             |    ❌     |                                                               |
 
 Supported event fields include `id`, `summary`, `description`, `location`,
 `start`, `end`, `transparency`, `status` (`confirmed`, `tentative`, `cancelled`),
