@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "開発・テスト用のローカル Google Calendar API サーバー | Calendarpit",
-    "description": "Calendarpit は、開発やテスト用のローカル Google Calendar 互換 API および OAuth サーバーです。Google アカウントやネットワーク接続なしで、イベント、繰り返しイベント、差分同期、Webhook、フィクスチャとリセット、管理画面を単一プロセスで実行できます。"
+    "description": "Calendarpit は、開発やテスト用のローカル Google Calendar 互換 API および OAuth サーバーです。npm、Docker、Homebrew から起動し、フィクスチャ、Webhook、管理画面を使ってテストできます。"
   },
   "hero": {
     "eyebrow": "ローカル Google Calendar API",
@@ -86,7 +86,7 @@
     "items": [
       {
         "title": "Calendarpit を起動",
-        "text": "単一の Bun プロセスとして起動し、データを SQLite またはインメモリに保持します。"
+        "text": "npm、Docker、Homebrew の手順から選び、SQLite またはインメモリでローカルサーバーを起動します。"
       },
       {
         "title": "エンドポイントを切り替える",

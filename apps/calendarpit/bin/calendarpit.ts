@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assetPath } from '../src/cli/asset-path';
 import { runCli, type Application } from '../src/cli/runtime';
 
 await runCli(async () => {
@@ -10,6 +11,7 @@ await runCli(async () => {
     throw new Error('Build the application first with "bun run build".');
   }
 
+  // The CLI must apply database and fixture options before the server initializes.
   const { default: server, close } = (await import(
     pathToFileURL(serverPath).href
   )) as {
@@ -22,7 +24,7 @@ await runCli(async () => {
     cwd: clientDirectory,
     onlyFiles: true,
   })) {
-    assets.set(`/${path}`, Bun.file(resolve(clientDirectory, path)));
+    assets.set(assetPath(path), Bun.file(resolve(clientDirectory, path)));
   }
   return { fetch: server.fetch, assets, close };
 });

@@ -9,15 +9,15 @@ Point your app's official Google Calendar SDK client at Calendarpit. You do not 
 
 ## Before you call the SDK
 
-Start Calendarpit (for example with `bun run dev`; see [Run and configure](/calendarpit/running/)). Complete the [local OAuth flow](/calendarpit/oauth/) with the `https://www.googleapis.com/auth/calendar` scope, and add `access_type=offline` if you need a refresh token. Set `CALENDARPIT_ACCESS_TOKEN` in your shell to the resulting access token (valid for one hour). These examples read that variable explicitly; it is not a Google SDK setting.
+Start Calendarpit (for example with `npx @iktakahiro/calendarpit@0.9.0 serve`; see [Run and configure](/calendarpit/running/)), then complete the [local OAuth flow](/calendarpit/oauth/) with the `https://www.googleapis.com/auth/calendar` scope (add `access_type=offline` if you need a refresh token). Set `CALENDARPIT_ACCESS_TOKEN` to the resulting access token (valid for one hour) in your shell. These examples read that variable explicitly; it is not a Google SDK setting.
 
 <Aside>
 
-These examples pass an existing access token to show how to route Calendar API requests to Calendarpit. They do not handle authorization callbacks or automatic token refresh. Refresh tokens through `POST /oauth/token`, then update the client's token or recreate the client. See [Connect your app](/calendarpit/connect/) for the sample app and full OAuth client configuration.
+These snippets pass an existing access token to show how to route Calendar API requests to Calendarpit. They do not handle authorization callbacks or automatic token refresh. Refresh tokens through `POST /oauth/token`, then update the client's token or recreate the client. See [Connect your app](/calendarpit/connect/) for the sample app and full OAuth client configuration.
 
 </Aside>
 
-Install the packages listed in each tab in your project. Calendarpit does not install language runtimes or SDK packages.
+Install the packages listed in each tab in your own project. Calendarpit does not install language runtimes or SDK packages for you.
 
 ## Configure the service URL
 
@@ -31,7 +31,7 @@ Endpoint formats differ across libraries. Preserve trailing slashes where shown.
 | Java                    | `setRootUrl` + `setServicePath`         | `http://127.0.0.1:4173/` + `calendar/v3/` |
 | C# / .NET               | `BaseClientService.Initializer.BaseUri` | `http://127.0.0.1:4173/calendar/v3/`      |
 
-Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client also use that local URL. Calendarpit supports `calendarList` `list`, `get`, `insert`, `patch`, `update`, `delete`, and `watch` with the single-owner limits in [Calendar API compatibility](/calendarpit/compatibility/). Only the operations listed there are supported, even if the SDK exposes additional methods.
+Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client use that local URL too. `calendarList` `list`, `get`, `insert`, `patch`, `update`, `delete`, and `watch` are supported with the single-owner limits in [Calendar API compatibility](/calendarpit/compatibility/). Only the operations listed there are supported, even if the SDK exposes additional methods.
 
 ## List calendars and query FreeBusy
 
@@ -76,7 +76,7 @@ Reference: [Google Calendar Node.js client implementation](https://github.com/go
 </TabItem>
 <TabItem label="Python">
 
-Packages: `google-api-python-client` (2.x) and `google-auth`. Setting `static_discovery=True` uses the bundled discovery document so constructing the client does not fetch discovery metadata from Google. `api_endpoint` includes the `/calendar/v3/` path.
+Packages: `google-api-python-client` (2.x) and `google-auth`. Setting `static_discovery=True` uses the discovery document bundled with the installed library so constructing the client does not fetch discovery metadata from Google. `api_endpoint` includes the `/calendar/v3/` path.
 
 ```python
 import os
@@ -260,7 +260,7 @@ foreach (var interval in result.Calendars["primary"].Busy)
     Console.WriteLine($"{interval.StartRaw} - {interval.EndRaw}");
 ```
 
-`FromAccessToken` does not refresh tokens. Refresh tokens via the [local token endpoint](/calendarpit/oauth/) and recreate the credentials. `BaseUri` configures Calendar API requests only; it does not redirect OAuth helpers.
+`FromAccessToken` does not refresh tokens. Refresh via the [local token endpoint](/calendarpit/oauth/) and recreate the credentials. `BaseUri` configures Calendar API requests only; it does not redirect OAuth helpers.
 
 References: [service base URI](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Services.BaseClientService.Initializer), [access-token credentials](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Auth.OAuth2.GoogleCredential), [FreeBusy request](https://googleapis.dev/dotnet/Google.Apis.Calendar.v3/latest/api/Google.Apis.Calendar.v3.Data.FreeBusyRequest.html).
 
@@ -291,6 +291,6 @@ curl --fail-with-body http://127.0.0.1:4173/calendar/v3/freeBusy \
 
 ## Verification status
 
-Only the Bun/TypeScript sample app in [Connect your app](/calendarpit/connect/) is covered by an automated end-to-end test. The examples on this page, including the TypeScript example, are based on the official client APIs and have not been compiled or run in this repository's CI.
+Only the Bun/TypeScript sample app described in [Connect your app](/calendarpit/connect/) is covered by an automated end-to-end test. The examples on this page, including the TypeScript one, are based on the official client APIs and have not been compiled or run in this repository's CI.
 
 For common configuration and request errors, see [Troubleshooting](/calendarpit/troubleshooting/).

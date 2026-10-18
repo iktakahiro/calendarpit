@@ -98,10 +98,13 @@ After you call `auth.setCredentials`, token refresh requests from `OAuth2Client`
 
 ## Reference sample app
 
-The repository includes a sample app that connects to Calendarpit with `@googleapis/calendar` and `google-auth-library`. After cloning the repository and installing dependencies (see [Quick start](/calendarpit/quick-start/)), run Calendarpit and the sample app in separate terminals:
+The repository includes an optional sample app using `@googleapis/calendar` and `google-auth-library`. It is not bundled with Calendarpit and is not needed to connect your own app. To try it, prepare a source checkout using the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md), then run these commands in separate terminals:
 
 ```sh
-bun run dev
+# Terminal 1: start the packaged server
+npx @iktakahiro/calendarpit@0.9.0 serve
+
+# Terminal 2: from the prepared source checkout
 bun run sample:dev
 ```
 

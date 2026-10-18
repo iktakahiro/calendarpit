@@ -3,76 +3,56 @@ title: 起動と設定
 description: Calendarpit の起動方法、コマンドラインオプション、環境変数、Docker での実行、管理画面のリファレンスです。
 ---
 
-Calendarpit は単一の Bun プロセスとして動作します。Google Calendar API v3 のサブセット、ローカル OAuth エンドポイント、テスト制御 API、管理画面を 1 つのオリジン（デフォルトは `http://127.0.0.1:4173`）から提供します。
-
-Calendarpit はまだ npm パッケージ、Docker Hub イメージ、リリースバイナリとしては公開されていません。利用するにはリポジトリをクローンし、Bun 1.4.3 で依存関係をインストールしてください。
-
-```sh
-git clone https://github.com/iktakahiro/calendarpit.git
-cd calendarpit
-bun install --frozen-lockfile
-```
+Calendarpit は API、OAuth、管理画面を同じオリジンで提供します。必要な環境、対応プラットフォーム、0.9.0 の公開状況は[インストール](/calendarpit/ja/installation/)を参照してください。以下は配布パッケージを使う起動方法です。ソースのクローンやビルドは不要です。
 
 ## Calendarpit の起動方法
 
-### 開発サーバー
+### npm とインストール済みの CLI
 
-デフォルトのアドレス（`http://127.0.0.1:4173`）でローカルサーバーを起動するときは、`bun run dev` を使います。
-
-```sh
-bun run dev
-CALENDARPIT_DATABASE=:memory: bun run dev
-```
-
-`bun run dev` は常に `127.0.0.1:4173` にバインドし、ポートが使用中であればエラーで終了します。コマンドラインフラグや `CALENDARPIT_HOST`、`CALENDARPIT_PORT` は `bun run dev` には適用されません。引き継がれる環境変数は `CALENDARPIT_DATABASE`、`CALENDARPIT_CONFIG`、`CALENDARPIT_WATCH_HOSTS` だけです。
-
-### ビルド済みサーバー
-
-ローカルスクリプトや CI で CLI フラグ、任意のポート、OS による空きポートの自動割り当て（`--port 0`）を使うときは、`bun run build` と `bun run start` を使います。`build` の前に `start` を実行すると、`Calendarpit: Build the application first with "bun run build".` を出力して終了します。
-
-CLI フラグは `--` の後に渡すか、Bun で CLI エントリポイントを直接実行してください。
+Node.js 22 以降で起動します。
 
 ```sh
-bun run build
-bun run start -- --port 0 --database :memory:
-bun apps/calendarpit/bin/calendarpit.ts serve --port 4173
+npx @iktakahiro/calendarpit@0.9.0 serve
 ```
 
-ビルド済みサーバーが起動すると、ストレージモードと、割り当てられたポートを含む各 URL が出力されます。
+オプションはパッケージ名の後に渡します。例: `npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0`。Homebrew でインストールした場合や、単体実行ファイルを `PATH` に配置した場合は、代わりに `calendarpit` を使います。
+
+```sh
+calendarpit serve --port 4173
+calendarpit serve --port 0 --database :memory:
+```
+
+これらは起動方法の選択肢です。同じデータベースファイルを使うサーバーは 1 つだけ起動してください。ポート `0` を指定すると OS が空きポートを割り当てます。実際の URL は起動時の出力で確認できます。
 
 ```text
 Calendarpit data: :memory:
 
-Calendarpit v0.1.0
+Calendarpit v0.9.0
 Data   :memory:
 Admin  http://127.0.0.1:38425/
 API    http://127.0.0.1:38425/calendar/v3
 Health http://127.0.0.1:38425/__calendarpit/health
 ```
 
-### 単体実行ファイル
+配布実行ファイルには、サーバー、管理画面のアセット、Bun ランタイムが含まれています。npm は起動用に Node.js が必要です。Homebrew と単体実行ファイルには Node.js も Bun も不要です。サーバーは Ctrl+C で停止します。
 
-`bun run build:binary` を実行すると、`apps/calendarpit/dist/bin/calendarpit`（Windows では `.exe` 付き）に単体実行ファイルがコンパイルされます。このファイルは、同じマシン上の別のディレクトリやテストランナーにコピーして使えます。
-
-```sh
-bun run build:binary
-./apps/calendarpit/dist/bin/calendarpit serve --port 4173 --database :memory:
-```
-
-単体実行ファイルには、サーバー本体、クライアント用の JavaScript、CSS、ファビコン、Bun ランタイムが埋め込まれています。実行時に `node_modules` や別のアセットディレクトリは必要ありません。コンパイルは実行したホストのプラットフォーム向けにのみ行われます。
-
-### Docker
-
-リポジトリには `Dockerfile` が含まれていますが、コンテナのビルドと起動の検証はまだ終わっていません。
+### Docker と Compose
 
 ```sh
-docker build -t calendarpit:local .
-docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
+docker run --rm \
+  -p 127.0.0.1:4173:4173 \
+  -v calendarpit-data:/data \
+  ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-コンテナ内では、非 root ユーザーとして `calendarpit serve --host 0.0.0.0 --port 4173` が実行され、SQLite データは `/data/calendarpit.sqlite` に保存されます。`-p 127.0.0.1:4173:4173` と指定すると、ホスト側ではループバックにだけポートを公開します。
+コンテナは非 root ユーザーで動作し、`CALENDARPIT_HOST=0.0.0.0` と `CALENDARPIT_PORT=4173` を設定しています。SQLite は `/data/calendarpit.sqlite` に保存されます。ホスト側に公開するポートはループバックに限定しています。環境変数はイメージ名の前に `-e` で指定し、CLI フラグはイメージ名の後に渡します。
 
-`calendarpit:local` の後に引数を渡すと、コンテナのデフォルトの `CMD`（`serve --host 0.0.0.0 --port 4173`）が置き換わります。置き換えた引数に `--host 0.0.0.0` がなく、`CALENDARPIT_HOST=0.0.0.0` も設定されていない場合、Calendarpit はコンテナ内のループバック（`127.0.0.1`）にバインドします。この場合、ホストからは接続できません。設定を変えるときは、`-e` で環境変数（例: `-e CALENDARPIT_DATABASE=:memory:`）を渡してください。CLI フラグを渡すときは、`--host 0.0.0.0`（または `-e CALENDARPIT_HOST=0.0.0.0`）も一緒に指定してください。
+```sh
+docker run --rm -p 127.0.0.1:4173:4173 \
+  ghcr.io/iktakahiro/calendarpit:0.9.0 serve --database :memory:
+```
+
+Compose のサービス定義、ヘルスチェック、ホストとコンテナの接続先は[インストール](/calendarpit/ja/installation/)を参照してください。起動時の設定ファイルをマウントする方法は[フィクスチャ](/calendarpit/ja/fixtures/)で説明しています。ソースからの開発手順は[開発ガイド](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)にあります。
 
 ## コマンドラインオプションと環境変数
 
@@ -83,11 +63,11 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 | CLI オプション      | 環境変数               | デフォルト                        | 説明                                                                                                                                                                                                                                                                                                                |
 | ------------------- | ---------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--host <host>`     | `CALENDARPIT_HOST`     | `127.0.0.1`                       | バインドするアドレスです。ループバック以外のアドレス（`0.0.0.0`、`::`）は明示的に指定する必要があります。                                                                                                                                                                                                           |
-| `-p`, `--port <n>`  | `CALENDARPIT_PORT`     | `4173`                            | リッスンするポート番号（`0`〜`65535`）です。`0` を指定すると OS が空きポートを割り当て、起動時の出力にそのポート番号が表示されます。`bun run sample:dev` を併用する場合は `4175` を避けてください。                                                                                                                 |
+| `-p`, `--port <n>`  | `CALENDARPIT_PORT`     | `4173`                            | リッスンするポート番号（`0`〜`65535`）です。`0` を指定すると OS が空きポートを割り当て、起動時の出力にそのポート番号が表示されます。リファレンスのサンプルアプリも併用する場合は `4175` を避けてください。                                                                                                          |
 | `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite データベースファイルのパスです。使い捨てのインメモリセッションには `:memory:` を指定します。詳しくは[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。                                                                                                                                       |
 | `--config <path>`   | `CALENDARPIT_CONFIG`   | 組み込みフィクスチャ              | 起動時フィクスチャの JSON ファイルのパスです。ファイルが存在し、有効な JSON である必要があります。新規データベースまたは `:memory:` セッションの初期データとして使われます。既存の SQLite ファイルを開くときは、エラーを出さずに無視されます。詳しくは[フィクスチャ](/calendarpit/ja/fixtures/)を参照してください。 |
-| `-h`, `--help`      | —                      | —                                 | ヘルプを表示して終了します。ビルド前でも動作します。                                                                                                                                                                                                                                                                |
-| `-v`, `--version`   | —                      | —                                 | `0.1.0` を表示して終了します。ビルド前でも動作します。                                                                                                                                                                                                                                                              |
+| `-h`, `--help`      | —                      | —                                 | ヘルプを表示して終了します。                                                                                                                                                                                                                                                                                        |
+| `-v`, `--version`   | —                      | —                                 | `0.9.0` を表示して終了します。                                                                                                                                                                                                                                                                                      |
 
 ### その他の環境変数
 
@@ -98,11 +78,11 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 ### ループバックへのバインドと作業ディレクトリ
 
 - **デフォルトはループバック**: `--host` または `CALENDARPIT_HOST` を指定しない限り、Calendarpit は `127.0.0.1` にバインドします。管理画面と[テスト制御 API](/calendarpit/ja/test-control/) には認証がありません。`0.0.0.0` にバインドすると、同じネットワーク上の他のマシンからアクセスできるようになります。
-- **ワークスペーススクリプトでの相対パス**: `bun run dev` と `bun run start` は、`apps/calendarpit` を作業ディレクトリとして実行されます。そのため、`--database`、`CALENDARPIT_DATABASE`、`--config`、`CALENDARPIT_CONFIG` に指定した相対パスは `apps/calendarpit` を基準に解決されます（デフォルトの SQLite パスは `apps/calendarpit/.calendarpit/calendarpit.sqlite` になります）。CLI エントリポイントを直接実行した場合は、現在のディレクトリを基準に解決されます。リポジトリのルートからワークスペースコマンドを実行するときは、`"$PWD/fixtures/default.json"` のような絶対パスを使ってください。起動時のよくあるエラーは[トラブルシューティング](/calendarpit/ja/troubleshooting/)を参照してください。
+- **相対パス**: npm、Homebrew、単体実行ファイルでは、`--database` と `--config`（および対応する環境変数）の相対パスは起動したディレクトリを基準に解決されます。プロジェクトのディレクトリから起動するか、絶対パスを指定してください。Docker ではコンテナ内のパスを使い、ホスト上のファイルをマウントします。起動時のよくあるエラーは[トラブルシューティング](/calendarpit/ja/troubleshooting/)を参照してください。
 
 ## 管理画面
 
-管理画面は、API と同じオリジンのルート（デフォルトは `http://127.0.0.1:4173/`）で提供されます。2 秒ごとに `GET /__calendarpit/state` とリクエスト履歴をポーリングするため、アプリが行った変更は自動で画面に反映されます。左側のナビゲーションでは、表示するテストユーザーとカレンダー（`?user=<id>&calendar=<id>`）を切り替えたり、ストレージが `SQLite` か `In-memory` かを確認したりできます。
+管理画面は、API と同じオリジンのルート（デフォルトは `http://127.0.0.1:4173/`）で提供されます。2 秒ごとに `GET /__calendarpit/state` とリクエスト履歴をポーリングするため、お使いのアプリが行った変更は自動で画面に反映されます。左側のナビゲーションでは、表示するテストユーザーとカレンダー（`?user=<id>&calendar=<id>`）を切り替えたり、ストレージが `SQLite` か `In-memory` かを確認したりできます。
 
 管理画面は Google Fonts（`fonts.googleapis.com` と `fonts.gstatic.com`）から Roboto Mono フォントを読み込みます。オフラインのときはシステムフォントを使います。Calendar API と OAuth の処理は Google に接続せず、インターネット接続も必要ありません。
 

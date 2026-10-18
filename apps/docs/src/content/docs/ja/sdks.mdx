@@ -5,15 +5,15 @@ description: TypeScript、Python、Go、Java、C# の公式 Google Calendar ク�
 
 import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 
-アプリで使う公式 Google Calendar SDK クライアントの接続先を Calendarpit に変更します。Calendarpit 専用の SDK は必要ありません。以下の例では、カレンダーの一覧を取得し、FreeBusy を照会します。
+お使いのアプリの公式 Google Calendar SDK クライアントの接続先を Calendarpit に変更します。Calendarpit 専用の SDK は必要ありません。以下の例では、カレンダーの一覧を取得し、FreeBusy を照会します。
 
 ## SDK を呼び出す前に
 
-Calendarpit を起動します (例: `bun run dev`。[起動と設定](/calendarpit/ja/running/)を参照)。次に、`https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/calendarpit/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。取得したアクセストークン (有効期間は 1 時間) を、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。この変数は各例のコードが明示的に読み取るもので、Google SDK の設定ではありません。
+Calendarpit を起動します (例: `npx @iktakahiro/calendarpit@0.9.0 serve`。[実行と設定](/calendarpit/ja/running/)を参照)。次に、`https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/calendarpit/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。取得したアクセストークン (有効期間は 1 時間) を、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。この変数は各例のコードが明示的に読み取るもので、Google SDK の設定ではありません。
 
 <Aside>
 
-これらのコードは、既存のアクセストークンを渡して Calendar API リクエストを Calendarpit に送る方法を示しています。認可のコールバックやトークンの自動更新は扱いません。トークンは `POST /oauth/token` で更新し、クライアントのトークンを差し替えるか、クライアントを作り直してください。サンプルアプリと OAuth クライアントの設定全体は[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
+これらのコードは、既存のアクセストークンを渡して Calendar API リクエストを Calendarpit に送る方法を示すものです。認可のコールバックやトークンの自動更新は扱いません。トークンは `POST /oauth/token` で更新し、クライアントのトークンを差し替えるか、クライアントを作り直してください。サンプルアプリと OAuth クライアントの設定全体は[アプリの接続](/calendarpit/ja/connect/)を参照してください。
 
 </Aside>
 
@@ -69,7 +69,7 @@ const { data } = await api.freebusy.query({
 console.log(data.calendars?.primary?.busy ?? []);
 ```
 
-このクライアントにはアクセストークンだけを渡しているため、トークンを更新できません。OAuth をすべて設定する場合は、[アプリを接続する](/calendarpit/ja/connect/)にあるローカルの `endpoints` 設定を使ってください。
+アクセストークンだけを渡したこのクライアントは、トークンを更新できません。OAuth をすべて設定する場合は、[アプリの接続](/calendarpit/ja/connect/)にあるローカルの `endpoints` 設定を使ってください。
 
 参考: [Google Calendar Node.js クライアントの実装](https://github.com/googleapis/google-api-nodejs-client/blob/main/src/apis/calendar/v3.ts)
 
@@ -220,7 +220,7 @@ public class CalendarpitExample {
 </TabItem>
 <TabItem label="C#">
 
-NuGet パッケージ: `Google.Apis.Calendar.v3` と `Google.Apis.Auth`。トップレベルステートメントを使うコンソールアプリケーションで実行します。
+NuGet パッケージ: `Google.Apis.Calendar.v3` と `Google.Apis.Auth`。トップレベルステートメントを使うコンソールアプリケーションで使います。
 
 ```csharp
 using System;
@@ -291,6 +291,6 @@ curl --fail-with-body http://127.0.0.1:4173/calendar/v3/freeBusy \
 
 ## 検証状況
 
-自動化された E2E テストの対象は、[アプリを接続する](/calendarpit/ja/connect/)で説明している Bun/TypeScript のサンプルアプリだけです。このページの例は TypeScript の例も含めて公式クライアントの API をもとに書いたもので、このリポジトリの CI ではコンパイルも実行もしていません。
+自動化された E2E テストの対象は、[アプリの接続](/calendarpit/ja/connect/)で説明している Bun/TypeScript のサンプルアプリだけです。このページの例は TypeScript の例も含めて公式クライアントの API をもとに書いたもので、このリポジトリの CI ではコンパイルも実行もしていません。
 
 設定やリクエストでよくあるエラーについては、[トラブルシューティング](/calendarpit/ja/troubleshooting/)を参照してください。

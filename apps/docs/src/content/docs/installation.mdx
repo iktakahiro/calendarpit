@@ -1,0 +1,120 @@
+---
+title: Installation
+description: Install Calendarpit with npm, Docker Compose, Homebrew, or a standalone executable.
+---
+
+:::note[0.9.0 release preparation]
+These are the installation commands prepared for 0.9.0. Registry publication and the Homebrew tap are pending. Until the release is published, use the [source instructions](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md). A prepared workflow does not mean a package is already available.
+:::
+
+Choose npm for a JavaScript/TypeScript project, Docker Compose for an existing container environment, or Homebrew for a local CLI. All distributions include the API, OAuth server, admin UI, and SQLite. None requires Google credentials or a separate database.
+
+## npm and npx
+
+With Node.js 22 or later:
+
+```sh
+npx @iktakahiro/calendarpit@0.9.0 serve
+```
+
+For a project, pin the version and commit your package manager's lockfile:
+
+```sh
+npm install --save-dev --save-exact @iktakahiro/calendarpit@0.9.0
+```
+
+```json
+{
+  "scripts": {
+    "calendar": "calendarpit serve",
+    "calendar:test": "calendarpit serve --database :memory:"
+  }
+}
+```
+
+The npm launcher selects a matching native executable. Bun is embedded; you do not need to install it. Keep optional dependencies enabled. No postinstall script is required. macOS arm64/x64, Linux glibc arm64/x64, and Windows x64 are release targets. Alpine/musl and Windows ARM64 are not supported by these native packages; use Docker on a supported container host.
+
+For Bun users:
+
+```sh
+bunx @iktakahiro/calendarpit@0.9.0 serve
+```
+
+The launcher has a Node shebang, so this command also requires Node.js. Package-manager release-age policies may delay installation of a newly published version; wait for the configured interval rather than disabling the policy.
+
+## Docker
+
+```sh
+docker run --rm \
+  -p 127.0.0.1:4173:4173 \
+  -v calendarpit-data:/data \
+  ghcr.io/iktakahiro/calendarpit:0.9.0
+```
+
+The image targets Linux amd64 and arm64, including Docker on Apple Silicon. It runs as a non-root user and persists SQLite in `/data/calendarpit.sqlite`. Keep the named volume to retain data across container recreation. Use `-e CALENDARPIT_DATABASE=:memory:` for disposable tests. The host port is published only on loopback; the container explicitly binds `0.0.0.0` internally.
+
+## Docker Compose
+
+Add this service and volume to your `compose.yaml`:
+
+```yaml
+services:
+  calendarpit:
+    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    ports:
+      - '127.0.0.1:4173:4173'
+    volumes:
+      - calendarpit-data:/data
+
+volumes:
+  calendarpit-data:
+```
+
+```sh
+docker compose up -d calendarpit
+docker compose logs calendarpit
+docker compose down
+```
+
+`down` preserves the volume; `down -v` deletes its saved data. To wait for Calendarpit in another service, use `depends_on: { calendarpit: { condition: service_healthy } }`. The image includes a health check. If overriding the container port, set `CALENDARPIT_PORT` as well as the port mapping so the health check uses the same port.
+
+### Addresses depend on who makes the request
+
+| Request origin                     | Calendarpit address       |
+| ---------------------------------- | ------------------------- |
+| Browser or app running on the host | `http://127.0.0.1:4173`   |
+| App in the same Compose network    | `http://calendarpit:4173` |
+
+Keep the browser's OAuth authorization URL on the host-accessible address. A containerized backend uses the Compose address for token exchange and Calendar API requests. The OAuth `redirect_uri` must exactly match the fixture's registered URI and be accessible to the browser.
+
+Webhook addresses are resolved by Calendarpit. For a receiver service named `app`, allow `CALENDARPIT_WATCH_HOSTS=app` and register `http://app:<port>/<path>`. To reach a host process, Docker Desktop provides `host.docker.internal`; on Linux Docker Engine add `extra_hosts: ["host.docker.internal:host-gateway"]`. Allow that hostname with `CALENDARPIT_WATCH_HOSTS`. The receiving process must listen on an address reachable from the container. See [Watch notifications](/calendarpit/watch/).
+
+## Homebrew
+
+```sh
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
+```
+
+The tap installs a standalone executable for macOS or Linux. Bun and Node.js are not required. Run it in your project's directory so the default SQLite path belongs to that project. To update:
+
+```sh
+brew update
+brew upgrade iktakahiro/tap/calendarpit
+```
+
+## Standalone download
+
+Download the archive matching your OS and CPU from [GitHub Releases](https://github.com/iktakahiro/calendarpit/releases), together with `SHA256SUMS`. Verify the archive checksum before extracting it. For example, on Apple Silicon:
+
+```sh
+shasum -a 256 calendarpit-0.9.0-darwin-arm64.tar.gz
+tar -xzf calendarpit-0.9.0-darwin-arm64.tar.gz
+./bin/calendarpit serve
+```
+
+Compare the printed hash with the matching line in `SHA256SUMS`. Windows archives contain `bin/calendarpit.exe`. No Bun, Node.js, or asset directory is required.
+
+## Updates and storage
+
+Update the exact npm version or Docker image tag when you choose to upgrade; Homebrew uses `brew upgrade`. Stop Calendarpit and back up its SQLite directory or Docker volume before upgrading. Never run two instances against the same database file. See [Storage and restarts](/calendarpit/storage/) and [Run and configure](/calendarpit/running/).

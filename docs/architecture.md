@@ -131,6 +131,10 @@ assets and runtime. The admin UI loads Roboto Mono from Google Fonts,
 with system-font fallbacks when unavailable. Calendar and OAuth operations remain
 local. Fixture configuration is loaded before server startup.
 
-Docker configuration remains available but its build/startup verification is
-pending. The docs preview and sample are separate development processes. Dependency
+Release packaging wraps the standalone executable in scoped npm platform packages,
+standalone archives, and a Docker image. A small Node-compatible launcher selects
+the matching npm package without installation scripts. Homebrew installs the same
+checksummed archives. Native release jobs validate each OS/CPU before publication;
+container checks cover persistence and isolation. See [Releasing](releasing.md).
+The docs preview and sample remain separate development processes. Dependency
 resolution observes the repository's 48-hour publication interval.

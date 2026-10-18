@@ -12,27 +12,40 @@ limited; unsupported features return explicit errors. See
 
 ## Quick start
 
-Install [Bun](https://bun.sh/) **1.4.3** (also recorded in `.bun-version`), then:
+**0.9.0 distribution is being prepared; the packages, images, and Homebrew tap
+are not published yet.** The following commands are the intended release interface.
+Until publication, use the [development guide](docs/development.md).
+
+With Node.js 22 or later:
 
 ```sh
-bun install --frozen-lockfile
-bun run dev
+npx @iktakahiro/calendarpit@0.9.0 serve
 ```
 
-Open <http://127.0.0.1:4173>. The API and admin UI share the same origin.
-Changes are saved in SQLite by default. No `.env` file or credentials are needed. Documentation runs separately:
+Or Docker:
 
 ```sh
-bun run docs:dev
+docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-Open <http://127.0.0.1:4487/calendarpit/>. The docs are an Astro Starlight site
-with a landing page. Publishing is manual while the custom domain and hosting
-are decided. The docs are separate from the Calendarpit server.
+Or Homebrew after the tap is published:
+
+```sh
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
+```
+
+Open <http://127.0.0.1:4173>. The API, local OAuth, and admin UI share one origin.
+No Google credentials, environment file, or external database is needed.
+See [installation](apps/docs/src/content/docs/installation.mdx) for Compose,
+project dependencies, standalone downloads, networking, and updates.
+
+Contributor setup, including the docs preview, lives in [docs/](docs/README.md).
 
 ## Try a calendar integration
 
-In another terminal:
+From a source checkout prepared using the [development guide](docs/development.md),
+in another terminal:
 
 ```sh
 bun run sample:dev
@@ -48,30 +61,30 @@ The built-in test client is `sample-app` / `local-sample-secret`, with callback
 Calendar API, and revocation endpoints and blocks real Google requests. See
 [Connect your app](apps/docs/src/content/docs/connect.mdx) for consuming-app configuration.
 
-For reproducible custom data in a temporary session:
+Save the JSON example from [Fixtures](apps/docs/src/content/docs/fixtures.mdx) as
+`calendarpit.fixture.json`, then start a temporary session from that directory:
 
 ```sh
-CALENDARPIT_DATABASE=:memory: CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev
+npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --config ./calendarpit.fixture.json
 ```
 
-Use absolute fixture paths with workspace commands. Loading a fixture replaces
+Relative fixture paths resolve from the directory where you start the CLI. Loading a fixture replaces
 current data; reset always restores the startup fixture and clears credentials,
 history and watch state. See [Fixtures](apps/docs/src/content/docs/fixtures.mdx) and [Test control API](apps/docs/src/content/docs/test-control.mdx).
 
 ## Data storage
 
-Normal development and CLI runs save changes to `.calendarpit/calendarpit.sqlite`
-relative to the application's working directory. With `bun run dev` or `bun run start`
-from this repository, that is `apps/calendarpit/.calendarpit/calendarpit.sqlite`.
+npm, Homebrew, and standalone CLI runs save changes to
+`.calendarpit/calendarpit.sqlite` in the directory where you start Calendarpit.
+Run from your project directory, or pass an explicit database path.
 The startup log and **Settings → Test data → Storage** show the actual path.
 
 ```sh
-# Temporary E2E session; no files are written
-CALENDARPIT_DATABASE=:memory: bun run dev
-bun run start -- --database :memory: --port 0
+# Temporary E2E session; no database files are written
+npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0
 
-# Choose a persistent workspace (use an absolute path with workspace scripts)
-bun run start -- --database "$PWD/.calendarpit/manual.sqlite"
+# Choose a persistent workspace
+npx @iktakahiro/calendarpit@0.9.0 serve --database ./.calendarpit/manual.sqlite
 ```
 
 Existing databases reopen their saved data, connections, tokens, watch channels,
@@ -112,7 +125,9 @@ New dependency resolutions require a minimum release age of 48 hours via
 `bunfig.toml`. npm-check-updates uses the matching two-day cooldown in
 `.ncurc.json`. Existing locked versions are not re-evaluated by this policy.
 
-## Commands
+## Contributor commands
+
+These commands require a source checkout and the [development setup](docs/development.md).
 
 | Command                        | Purpose                                                         |
 | ------------------------------ | --------------------------------------------------------------- |
@@ -129,42 +144,57 @@ New dependency resolutions require a minimum release age of 48 hours via
 
 ## CLI and executable
 
-```sh
-bun run build
-bun apps/calendarpit/bin/calendarpit.ts --help
-bun apps/calendarpit/bin/calendarpit.ts serve --port 4173
+After installing with Homebrew or placing a standalone executable on your `PATH`:
 
-bun run build:binary
-./apps/calendarpit/dist/bin/calendarpit --port 4173
+```sh
+calendarpit --help
+calendarpit --version
+calendarpit serve --port 4173 --database :memory:
 ```
 
-The executable embeds the server, client JavaScript/CSS, icons, and Bun
-runtime. It does not need `node_modules` or a separate asset directory at runtime.
-The admin UI loads Roboto Mono from Google Fonts and falls back to
-system fonts when unavailable. Calendar and OAuth operations remain local.
-Compilation currently targets the build host; cross-platform release artifacts
-and package publication are future work. On Windows the output has an `.exe`
-suffix.
+npm/npx, Homebrew, and standalone downloads run the same embedded executable.
+It includes the server, admin UI assets, and Bun runtime. The npm launcher needs
+Node.js 22 or later; Homebrew and standalone executables need no separate runtime.
+Releases target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64.
+See [installation](apps/docs/src/content/docs/installation.mdx) for downloads,
+checksums, and upgrades, and [Run and configure](apps/docs/src/content/docs/running.mdx)
+for all flags and environment variables.
 
 The default bind address is `127.0.0.1`. Use `--host` explicitly to change it.
-`CALENDARPIT_HOST` and `CALENDARPIT_PORT` provide environment defaults; CLI flags
-win. Port `0` requests an available port, which is printed on startup. Source CLI
-execution requires Bun and a completed build; `--help` and `--version` do not.
+CLI flags take precedence over `CALENDARPIT_*` environment variables. Port `0`
+requests an available port, which is printed on startup. The admin UI loads
+Roboto Mono from Google Fonts with system-font fallbacks; Calendar and OAuth
+operations remain local.
 
-## Docker (optional)
+## Docker Compose
 
-Bun is the primary local development workflow. The Dockerfile is included for
-future container use; container build and startup validation are still pending.
+After the image is published, add this service to your project's `compose.yaml`:
 
-```sh
-docker build -t calendarpit:local .
-docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
+```yaml
+services:
+  calendarpit:
+    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    ports:
+      - '127.0.0.1:4173:4173'
+    volumes:
+      - calendarpit-data:/data
+
+volumes:
+  calendarpit-data:
 ```
 
-The container explicitly binds `0.0.0.0` inside its own network namespace; the
-published host port above remains loopback-only. The runtime image runs as a
-non-root user. The named volume preserves `/data/calendarpit.sqlite` across restarts.
-Use `-e CALENDARPIT_DATABASE=:memory:` for a temporary container session.
+```sh
+docker compose up -d calendarpit
+docker compose logs calendarpit
+docker compose down
+```
+
+The container binds `0.0.0.0` internally and runs as a non-root user. The host
+port stays on loopback. The named volume preserves `/data/calendarpit.sqlite`;
+`docker compose down -v` deletes it. Use `CALENDARPIT_DATABASE=:memory:` for
+disposable tests. Browsers use `http://127.0.0.1:4173`; another Compose service
+uses `http://calendarpit:4173`. See [installation](apps/docs/src/content/docs/installation.mdx)
+for OAuth and webhook networking.
 
 ## Development conventions
 
@@ -173,8 +203,7 @@ Keep protocol behavior independent from UI components and application consumers.
 Chronock is the first integration target; it contributes no application-specific
 data or logic to Calendarpit. See [AGENTS.md](AGENTS.md) for repository guidance.
 
-CI runs protocol/CLI tests and the Google SDK HTTP integration test, but does not publish an npm package,
-Docker image, or GitHub release automatically.
-
-Chronock integration and Docker startup validation remain pending. No Chronock
-source code has been changed.
+CI runs protocol/CLI and Google SDK HTTP integration tests. The separate release
+workflow builds and tests distribution artifacts, then publishes version tags
+to npm, GHCR, and GitHub Releases. Homebrew updates require tap credentials.
+See [Releasing](docs/releasing.md) for initial setup and publication status.

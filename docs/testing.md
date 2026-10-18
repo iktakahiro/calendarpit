@@ -17,6 +17,8 @@ runs every workspace's tests through Turborepo.
 | SDK           | The official Google SDK against a running instance                       | `apps/sample`                                             |
 | Browser E2E   | Admin UI flows and OAuth consent                                         | Playwright against an in-memory server                    |
 | Binary smoke  | The compiled executable                                                  | `bun run smoke`                                           |
+| npm smoke     | Offline tarball installation and Node launcher lifecycle                 | `bun run smoke:npm`                                       |
+| Docker smoke  | Non-root runtime, HTTP/UI, volume persistence, reset, memory isolation   | `bun run smoke:docker`                                    |
 
 Most behavior belongs in the cheapest layer that can observe it. Keep HTTP
 contract tests for protocol behavior: response shapes, status codes, and

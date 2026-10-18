@@ -1,104 +1,66 @@
 ---
 title: Quick start
-description: Clone Calendarpit, start the local server, and test a calendar workflow with the included sample app.
+description: Start Calendarpit without cloning a repository and connect your application.
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+## Start Calendarpit
 
-This guide shows how to clone Calendarpit, start the local server, and connect the included sample app.
+The 0.9.0 distributions are being prepared and are not published yet. See [Installation](/calendarpit/installation/) for availability and the source fallback.
 
-## Requirements
+After publication, with Node.js 22 or later:
 
-- Git
-- [Bun](https://bun.sh/) `1.4.3` (the version pinned in `.bun-version`)
+```sh
+npx @iktakahiro/calendarpit@0.9.0 serve
+```
 
-You do not need a Google account, a Google Cloud project, an external database server, a `.env` file, or API credentials.
+Or use Docker:
 
-Calendarpit is not published as an npm package, container image, or release binary yet. You run it directly from a local clone of the repository.
+```sh
+docker run --rm \
+  -p 127.0.0.1:4173:4173 \
+  -v calendarpit-data:/data \
+  ghcr.io/iktakahiro/calendarpit:0.9.0
+```
 
-## Start Calendarpit and the sample app
+No Google account, Google Cloud project, external database, `.env` file, or provider credentials are needed. Both commands start the API, local OAuth server, and admin UI on the same origin. Homebrew, Compose, standalone downloads, and project dependencies are covered in [Installation](/calendarpit/installation/).
 
-<Steps>
+## Open the admin UI
 
-1. **Clone the repository and install dependencies**
+Open `http://127.0.0.1:4173`. The built-in fixture includes test users `alex` and `sam`, three calendars, and a planning event on `2026-10-19`. Changes made through the API appear automatically.
 
-   Clone [https://github.com/iktakahiro/calendarpit](https://github.com/iktakahiro/calendarpit) and install the locked dependencies with Bun:
+The CLI saves data in `.calendarpit/calendarpit.sqlite` under your current directory. Docker saves it in the mounted volume. For disposable tests, pass `--database :memory:` to the CLI or `-e CALENDARPIT_DATABASE=:memory:` to Docker. See [Storage and restarts](/calendarpit/storage/).
 
-   ```sh
-   git clone https://github.com/iktakahiro/calendarpit.git
-   cd calendarpit
-   bun install --frozen-lockfile
-   ```
+## Check the health endpoint
 
-2. **Start Calendarpit**
+```sh
+curl http://127.0.0.1:4173/__calendarpit/health
+```
 
-   Run the local server from the repository root:
+```json
+{
+  "name": "Calendarpit",
+  "version": "0.9.0",
+  "stage": "preview",
+  "storage": "sqlite",
+  "capabilities": {
+    "calendar": true,
+    "oauth": true,
+    "watch": true,
+    "fixtures": true
+  }
+}
+```
 
-   ```sh
-   bun run dev
-   ```
+Version 0.9.0 remains a preview: its supported compatibility scope is documented, and the API may change before 1.0.
 
-   Calendarpit listens at `http://127.0.0.1:4173`. The Google Calendar API v3 endpoints, local OAuth endpoints, management API, and admin UI all share this origin. `bun run dev` always uses port 4173 and exits if the port is taken. To use another port, see [Run and configure](/calendarpit/running/).
+## Connect your app
 
-   By default, Calendarpit saves data to SQLite at `apps/calendarpit/.calendarpit/calendarpit.sqlite` and seeds the built-in startup fixture on first run. For a throwaway in-memory session, run `CALENDARPIT_DATABASE=:memory: bun run dev` instead. See [Storage and restarts](/calendarpit/storage/) for details on how data persists across restarts.
+Follow [Connect your app](/calendarpit/connect/) to point your SDK and OAuth flow at Calendarpit. Use [Fixtures](/calendarpit/fixtures/) to register local client credentials and exact callback URIs. The built-in `sample-app` / `local-sample-secret` credentials are public test values with callback `http://127.0.0.1:4175/callback`.
 
-3. **Check the health endpoint**
+The optional source sample walks through approval, event creation, FreeBusy, watch delivery, and revocation. Its setup is in the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md); the sample is separate from the distributed server.
 
-   In a second terminal, verify that the server is running:
+## Next steps
 
-   ```sh
-   curl http://127.0.0.1:4173/__calendarpit/health
-   ```
-
-   This endpoint returns the server status and active storage mode (`sqlite` or `memory`):
-
-   ```json
-   {
-     "name": "Calendarpit",
-     "version": "0.1.0",
-     "stage": "preview",
-     "storage": "sqlite",
-     "capabilities": {
-       "calendar": true,
-       "oauth": true,
-       "watch": true,
-       "fixtures": true
-     }
-   }
-   ```
-
-4. **Open the admin UI**
-
-   Open `http://127.0.0.1:4173` in your browser. The default startup fixture includes two test users (`alex` and `sam`), three calendars, a "Weekly planning" event on `2026-10-19`, and the `sample-app` OAuth client used by the sample app.
-
-   The Schedule view opens on `2026-10-19` by default. The admin UI polls the server every two seconds, so changes made through the API appear automatically.
-
-5. **Run the sample app**
-
-   In the second terminal, start the included sample app:
-
-   ```sh
-   bun run sample:dev
-   ```
-
-   Open `http://127.0.0.1:4175` in your browser. The sample app uses the official `@googleapis/calendar` and `google-auth-library` packages configured against `http://127.0.0.1:4173`.
-
-   It authenticates using client ID `sample-app` and client secret `local-sample-secret` with the redirect URI `http://127.0.0.1:4175/callback`. These client credentials are public local test values included in the default startup fixture.
-
-6. **Walk through the calendar workflow**
-
-   In the sample app at `http://127.0.0.1:4175`:
-
-   - Click **Connect calendar** to start the OAuth authorization code flow, pick a test user on the consent page, and approve access.
-   - Click **Create event** to create an event on `2026-10-19` and inspect the busy intervals returned by the FreeBusy query, which include the new event.
-   - Click **Start watch** to start a watch channel and receive `events.watch` webhook notifications at `http://127.0.0.1:4175/notifications`. Calendarpit sends a `sync` notification when the channel starts. Update or delete the event you created to trigger another delivery.
-   - Click **Revoke connection** to revoke access and reconnect, or open **API history** and **Watch** in the admin UI at `http://127.0.0.1:4173` to inspect the recorded requests and webhook deliveries.
-
-</Steps>
-
-## What to do next
-
-- [Connect your app](/calendarpit/connect/) — point your own application and Google SDK client at `http://127.0.0.1:4173`.
-- [Fixtures](/calendarpit/fixtures/) — seed your own test users, calendars, events, and OAuth clients from a JSON file.
-- [Test control API](/calendarpit/test-control/) — reset state to the startup baseline, load fixtures, and drain webhook deliveries between tests.
-- [Run and configure](/calendarpit/running/) — configure ports, database paths, and environment variables, or build a standalone executable.
+- [Run and configure](/calendarpit/running/) — ports, fixtures, and environment variables.
+- [Test control API](/calendarpit/test-control/) — reset state and drain deliveries between tests.
+- [Scope and limitations](/calendarpit/scope/) — implemented compatibility and explicit exclusions.
