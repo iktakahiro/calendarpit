@@ -50,7 +50,7 @@ docker compose down
 | ホスト上のブラウザやアプリ          | `http://127.0.0.1:4173`   |
 | 同じ Compose ネットワーク内のアプリ | `http://calendarpit:4173` |
 
-ブラウザで開く OAuth 認可 URL は、ホストからアクセスできるアドレスにしてください。コンテナ内のバックエンドは、トークン交換と Calendar API に Compose のアドレスを使用します。OAuth の `redirect_uri` は fixture に登録した URI と完全一致し、ブラウザからアクセスできる必要があります。
+ブラウザで開く OAuth 認可 URL は、ホストからアクセスできるアドレスにしてください。コンテナ内のバックエンドは、トークン交換と Calendar API に Compose のアドレスを使用します。OAuth の `redirect_uri` はフィクスチャに登録した URI と完全一致し、ブラウザからアクセスできる必要があります。
 
 Webhook のアドレスは Calendarpit 側から解決されます。受信サービスの名前が `app` の場合は、`CALENDARPIT_WATCH_HOSTS=app` を設定して `http://app:<port>/<path>` を登録してください。ホスト上のプロセスには、Docker Desktop の `host.docker.internal` を使用できます。Linux の Docker Engine では `extra_hosts: ["host.docker.internal:host-gateway"]` を追加してください。このホスト名も `CALENDARPIT_WATCH_HOSTS` で許可します。受信プロセスはコンテナから到達可能なアドレスで待ち受ける必要があります。[watch 通知](/calendarpit/ja/watch/)も参照してください。
 
