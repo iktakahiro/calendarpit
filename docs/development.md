@@ -1,7 +1,6 @@
----
-title: Development
-description: Run, validate, and package Calendarpit with Bun.
----
+# Development
+
+Run, validate, and package Calendarpit with Bun.
 
 ## Prerequisites
 
@@ -104,3 +103,22 @@ TanStack Start generates `src/routeTree.gen.ts`. Keep the generated route tree
 with the source so type checking works before the first build. Do not edit it
 manually. Build output, Turbo caches, and generated executable entry files are
 ignored by Git, linting, and formatting.
+
+## Documentation site
+
+`apps/docs` holds the user-facing documentation, an Astro Starlight site. It is
+published in English (the root locale, no URL prefix) and Japanese (`/ja/`).
+Write only user-facing material there. Contributor and maintainer material
+belongs in this `docs/` directory.
+
+- English pages live in `apps/docs/src/content/docs/`. A Japanese page has the
+  same file name under `apps/docs/src/content/docs/ja/`. Keep the structure,
+  headings, and code blocks of both in step; code, commands, paths, and API names
+  are never translated.
+- Sidebar groups and labels are set in `apps/docs/astro.config.ts`; Japanese
+  labels use the `translations` option. Overrides for Starlight's built-in UI
+  strings live in `apps/docs/src/content/i18n/`.
+- The landing page copy for both languages is in
+  `apps/docs/src/components/landing/`.
+- `bun run docs:check` builds both locales and fails on broken internal links
+  and anchors.
