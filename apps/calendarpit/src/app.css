@@ -268,27 +268,15 @@ input[type='time'] {
   padding: 0 6px;
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: block;
   width: fit-content;
   border-radius: 6px;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-.brand-mark {
-  width: 22px;
-  height: 22px;
   color: var(--ink);
 }
-/* The wordmark's closing dot: a square the size of one mark cell. */
-.brand-dot {
-  display: inline-block;
-  width: 0.2em;
-  height: 0.2em;
-  margin-left: 0.07em;
-  background: var(--mark-signal);
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 22px;
 }
 .live {
   display: flex;

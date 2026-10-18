@@ -1,6 +1,7 @@
 import type { Snapshot } from '@calendarpit/server';
 import { Select } from '@cloudflare/kumo/components/select';
-import { BrandMark, Icon } from '../../../components/icon';
+import { BrandLogo } from '../../../components/brand-logo';
+import { Icon } from '../../../components/icon';
 import type { Selection } from '../../workspace/models/selection';
 import { sections, type SectionId } from '../models/sections';
 
@@ -49,11 +50,7 @@ export function Rail({
     <aside className='rail'>
       <div className='rail-head'>
         <a className='brand' href='/'>
-          <BrandMark className='brand-mark' />
-          <span>
-            calendarpit
-            <span className='brand-dot' aria-hidden='true' />
-          </span>
+          <BrandLogo className='brand-logo' />
         </a>
         <p
           className={`live ${status === 'offline' ? 'offline' : status === 'live' ? 'online' : ''}`}
