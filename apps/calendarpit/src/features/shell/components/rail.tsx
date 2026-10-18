@@ -1,4 +1,5 @@
 import type { Snapshot } from '@calendarpit/server';
+import { Select } from '@cloudflare/kumo/components/select';
 import { BrandMark, Icon } from '../../../components/icon';
 import type { Selection } from '../../workspace/models/selection';
 import { sections, type SectionId } from '../models/sections';
@@ -69,37 +70,34 @@ export function Rail({
       </div>
       <div className='rail-context'>
         <div className='rail-field'>
-          <label className='rail-label' htmlFor='user-switch'>
+          <p className='rail-label' id='user-switch-label'>
             Test user
-          </label>
-          <select
-            id='user-switch'
+          </p>
+          <Select
+            aria-labelledby='user-switch-label'
             value={user?.id ?? ''}
-            onChange={(e) => selectUser(e.target.value)}
-          >
-            {snapshot?.users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
+            onValueChange={(id: string | null) => id && selectUser(id)}
+            items={Object.fromEntries(
+              snapshot?.users.map((u) => [u.id, u.name]) ?? [],
+            )}
+          />
           <p className='rail-email'>
             {user?.email ?? 'Create a test user to begin.'}
           </p>
         </div>
-        <label className='rail-field mobile-calendar'>
-          <span className='rail-label'>Calendar</span>
-          <select
+        <div className='rail-field mobile-calendar'>
+          <p className='rail-label' id='calendar-switch-label'>
+            Calendar
+          </p>
+          <Select
+            aria-labelledby='calendar-switch-label'
             value={calendar?.id ?? ''}
-            onChange={(e) => selectCalendar(e.target.value, false)}
-          >
-            {calendars.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.summary}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={(id: string | null) =>
+              id && selectCalendar(id, false)
+            }
+            items={Object.fromEntries(calendars.map((c) => [c.id, c.summary]))}
+          />
+        </div>
         <div className='calendar-list'>
           <p className='rail-label' id='calendar-list-label'>
             Calendars

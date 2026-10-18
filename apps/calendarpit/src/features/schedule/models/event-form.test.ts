@@ -1,10 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import type { Calendar, CalendarEvent } from '@calendarpit/server';
 import {
+  datePart,
   eventFormValues,
+  timePart,
   toEventBody,
   toggleAllDay,
   validateEventForm,
+  withDate,
+  withTime,
   type EventFormValues,
 } from './event-form';
 
@@ -52,14 +56,51 @@ test.each([
   ).toEqual(expected);
 });
 
+describe('date and time halves', () => {
+  test.each([
+    ['2026-10-19T09:15', '2026-10-19', '09:15'],
+    ['2026-10-19', '2026-10-19', ''],
+  ])('splits %p', (value, date, time) => {
+    expect(datePart(value)).toBe(date);
+    expect(timePart(value)).toBe(time);
+  });
+
+  test('a new date keeps the time, and a new time keeps the date', () => {
+    expect(withDate('2026-10-19T09:15', '2026-11-02')).toBe('2026-11-02T09:15');
+    expect(withTime('2026-10-19T09:15', '17:45')).toBe('2026-10-19T17:45');
+  });
+
+  test('an all-day value takes a date but gains no time', () => {
+    expect(withDate('2026-10-19', '2026-11-02')).toBe('2026-11-02');
+  });
+
+  test('clearing the time keeps the date the picker chose', () => {
+    expect(withTime('2026-10-19T09:15', '')).toBe('2026-10-19');
+  });
+
+  test('drops the seconds a time input may append', () => {
+    expect(withTime('2026-10-19T09:15', '17:45:30')).toBe('2026-10-19T17:45');
+  });
+});
+
 describe('validateEventForm', () => {
   test('accepts valid values', () => {
     expect(validateEventForm(values())).toBeUndefined();
   });
 
+  test('accepts dates without times when the event is all-day', () => {
+    expect(
+      validateEventForm(
+        values({ allDay: true, start: '2026-10-19', end: '2026-10-20' }),
+      ),
+    ).toBeUndefined();
+  });
+
   test.each([
     [{ end: '2026-10-19T10:00' }, 'end', 'End must be after start.'],
     [{ end: '' }, 'end', 'Enter an end.'],
+    [{ start: '2026-10-19' }, 'start', 'Enter a start time.'],
+    [{ end: '2026-10-20' }, 'end', 'Enter an end time.'],
     [
       { extendedProperties: '[]' },
       'extendedProperties',

@@ -1,4 +1,5 @@
 import { Button } from '@cloudflare/kumo/components/button';
+import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon } from '../../components/icon';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import type { Selection } from '../workspace/models/selection';
@@ -20,14 +21,17 @@ export function CalendarsScreen({
   const { user, calendars, calendar } = selection;
   if (!user)
     return (
-      <section className='panel empty-state'>
-        <Icon name='persons' />
-        <h2>Create a user first</h2>
-        <p>Every calendar belongs to a test user.</p>
-        <Button onClick={openUsers} icon={<Icon name='plus' />}>
-          Add user
-        </Button>
-      </section>
+      <Empty
+        className='panel empty-state'
+        icon={<Icon name='persons' />}
+        title='Create a user first'
+        description='Every calendar belongs to a test user.'
+        contents={
+          <Button onClick={openUsers} icon={<Icon name='plus' />}>
+            Add user
+          </Button>
+        }
+      />
     );
   const rows = calendars.map((c) => ({
     id: c.id,

@@ -10,11 +10,12 @@ test.describe('schedule', () => {
     await page.getByRole('button', { name: 'New event' }).first().click();
     const editor = page.getByRole('region', { name: 'Event editor' });
     await editor.getByLabel('Summary', { exact: true }).fill('Design review');
-    await editor.getByLabel('Start', { exact: true }).fill('2026-10-19T13:00');
-    await editor.getByLabel('End', { exact: true }).fill('2026-10-19T14:30');
+    // The editor opens on the shown date, so only the times need changing.
+    await editor.getByLabel('Start time', { exact: true }).fill('13:00');
+    await editor.getByLabel('End time', { exact: true }).fill('14:30');
     await editor.getByRole('button', { name: 'Save event' }).click();
 
-    await expect(toast(page)).toHaveText('Event saved.');
+    await expect(toast(page, 'Event saved.')).toBeVisible();
     await expect(editor).toHaveCount(0);
     const agenda = page.getByRole('list').filter({ hasText: 'Design review' });
     await expect(agenda.getByText('1h 30m')).toBeVisible();
@@ -31,24 +32,45 @@ test.describe('schedule', () => {
       page.getByRole('button', { name: /^Design review \(moved\)/ }),
     ).toBeVisible();
 
-    page.once('dialog', (dialog) => void dialog.accept());
     await page
       .getByRole('button', { name: 'Delete Design review (moved)' })
       .click();
-    await expect(toast(page)).toHaveText('Event deleted.');
+    await page
+      .getByRole('alertdialog', { name: 'Delete this event?' })
+      .getByRole('button', { name: 'Delete event' })
+      .click();
+    await expect(toast(page, 'Event deleted.')).toBeVisible();
     await expect(page.getByText('Design review (moved)')).toHaveCount(0);
   });
 
   test('validates the editor before saving', async ({ page }) => {
     await page.goto('/?event=new');
     const editor = page.getByRole('region', { name: 'Event editor' });
-    await editor.getByLabel('End', { exact: true }).fill('2026-10-19T09:00');
+    await editor.getByLabel('End time', { exact: true }).fill('09:00');
     await editor.getByRole('button', { name: 'Save event' }).click();
     await expect(editor.getByRole('alert')).toHaveText(
       'End must be after start.',
     );
-    await editor.getByLabel('End', { exact: true }).fill('2026-10-19T12:00');
+    await editor.getByLabel('End time', { exact: true }).fill('12:00');
     await expect(editor.getByRole('alert')).toHaveCount(0);
+  });
+
+  test('moves an event to another day from the editor calendar', async ({
+    page,
+  }) => {
+    await page.goto('/?date=2026-10-19&event=planning');
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    await editor
+      .getByRole('button', { name: 'Start date: 2026-10-19' })
+      .click();
+    await page.getByRole('button', { name: 'Thursday, October 22' }).click();
+    await expect(
+      editor.getByRole('button', { name: 'Start date: 2026-10-22' }),
+    ).toBeVisible();
+    // The time the event already had survives the new date.
+    await expect(editor.getByLabel('Start time', { exact: true })).toHaveValue(
+      '10:00',
+    );
   });
 
   test('restores the date, calendar, and open event from the URL', async ({

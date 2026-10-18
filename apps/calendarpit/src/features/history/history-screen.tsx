@@ -1,4 +1,6 @@
 import { Button } from '@cloudflare/kumo/components/button';
+import { Collapsible } from '@cloudflare/kumo/components/collapsible';
+import { Empty } from '@cloudflare/kumo/components/empty';
 import { Input } from '@cloudflare/kumo/components/input';
 import { useState } from 'react';
 import { Icon } from '../../components/icon';
@@ -61,8 +63,8 @@ export function HistoryScreen() {
       </p>
       <section className='history-list' aria-label='API requests'>
         {rows.map((row) => (
-          <details key={row.id}>
-            <summary>
+          <Collapsible.Root key={row.id} className='history-row'>
+            <Collapsible.Trigger className='history-summary'>
               <code className={`http-status ${statusClass(row.status)}`}>
                 {row.status}
               </code>
@@ -78,32 +80,37 @@ export function HistoryScreen() {
                   hour12: false,
                 })}
               </time>
-            </summary>
-            <div className='history-detail'>
-              <Payload
-                title='Request'
-                value={{ headers: row.headers, body: row.request }}
-              />
-              <Payload
-                title='Response'
-                value={{ headers: row.responseHeaders, body: row.response }}
-              />
-            </div>
-          </details>
+            </Collapsible.Trigger>
+            <Collapsible.Panel>
+              <div className='history-detail'>
+                <Payload
+                  title='Request'
+                  value={{ headers: row.headers, body: row.request }}
+                />
+                <Payload
+                  title='Response'
+                  value={{ headers: row.responseHeaders, body: row.response }}
+                />
+              </div>
+            </Collapsible.Panel>
+          </Collapsible.Root>
         ))}
         {!history.length && (
-          <div className='empty-state'>
-            <Icon name='code' />
-            <h3>Waiting for your app.</h3>
-            <p>Calendar and OAuth calls appear here as they arrive.</p>
-          </div>
+          <Empty
+            className='empty-state'
+            icon={<Icon name='code' />}
+            title='Waiting for your app.'
+            description='Calendar and OAuth calls appear here as they arrive.'
+          />
         )}
         {history.length > 0 && !rows.length && (
-          <div className='empty-state compact'>
-            <Icon name='magnifier' />
-            <h3>No matching requests</h3>
-            <p>Change the filter to see more of the log.</p>
-          </div>
+          <Empty
+            size='sm'
+            className='empty-state'
+            icon={<Icon name='magnifier' />}
+            title='No matching requests'
+            description='Change the filter to see more of the log.'
+          />
         )}
       </section>
     </>

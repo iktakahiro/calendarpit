@@ -9,12 +9,11 @@ import { useWorkspace } from '../workspace/hooks/use-workspace';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import type { WorkspaceSearch } from '../workspace/models/workspace-search';
 import { Rail, type LiveStatus } from './components/rail';
-import { Toasts } from './components/toasts';
 import { sectionOf, type SectionId } from './models/sections';
 
 /**
  * The admin UI frame around every section: sidebar, section header with a
- * refresh action, loading state, and toasts.
+ * refresh action, and loading state.
  */
 export function WorkspaceShell({
   section,
@@ -116,7 +115,6 @@ export function WorkspaceShell({
           </div>
         )}
       </main>
-      <Toasts />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import type { Snapshot } from '@calendarpit/server';
 import { Badge } from '@cloudflare/kumo/components/badge';
+import { Empty } from '@cloudflare/kumo/components/empty';
+import { Table } from '@cloudflare/kumo/components/table';
 import { Icon } from '../../components/icon';
 import { formatTimestamp } from '../../lib/format';
 
@@ -49,14 +51,13 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
             ))}
           </ul>
         ) : (
-          <div className='empty-state compact'>
-            <Icon name='broadcast' />
-            <h3>No active subscriptions</h3>
-            <p>
-              Channels created with <code>events.watch</code> appear here until
-              they expire or are stopped.
-            </p>
-          </div>
+          <Empty
+            size='sm'
+            className='empty-state'
+            icon={<Icon name='broadcast' />}
+            title='No active subscriptions'
+            description='Channels created with events.watch appear here until they expire or are stopped.'
+          />
         )}
       </section>
       <section className='panel' aria-labelledby='deliveries-title'>
@@ -69,53 +70,55 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
         </header>
         {snapshot.deliveries.length ? (
           <div className='table-wrap'>
-            <table className='data-table'>
-              <thead>
-                <tr>
-                  <th scope='col'>Channel / message</th>
-                  <th scope='col'>State</th>
-                  <th scope='col'>Attempts</th>
-                  <th scope='col'>Time</th>
-                  <th scope='col'>Status</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className='data-table'>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Channel / message</Table.Head>
+                  <Table.Head>State</Table.Head>
+                  <Table.Head>Attempts</Table.Head>
+                  <Table.Head>Time</Table.Head>
+                  <Table.Head>Status</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {snapshot.deliveries
                   .slice()
                   .reverse()
                   .map((d) => (
-                    <tr key={d.id}>
-                      <td>
+                    <Table.Row key={d.id}>
+                      <Table.Cell>
                         <code>
                           {d.channelId} / #{d.messageNumber}
                         </code>
-                      </td>
-                      <td>
+                      </Table.Cell>
+                      <Table.Cell>
                         <code>{d.state}</code>
-                      </td>
-                      <td className='num'>
+                      </Table.Cell>
+                      <Table.Cell className='num'>
                         {d.attempts} {d.attempts === 1 ? 'attempt' : 'attempts'}
-                      </td>
-                      <td className='num'>
+                      </Table.Cell>
+                      <Table.Cell className='num'>
                         <time dateTime={d.time}>{formatTimestamp(d.time)}</time>
-                      </td>
-                      <td>
+                      </Table.Cell>
+                      <Table.Cell>
                         <Badge variant={deliveryBadge[d.status] ?? 'secondary'}>
                           {d.status}
                           {d.httpStatus ? ` · ${d.httpStatus}` : ''}
                         </Badge>
-                      </td>
-                    </tr>
+                      </Table.Cell>
+                    </Table.Row>
                   ))}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           </div>
         ) : (
-          <div className='empty-state compact'>
-            <Icon name='signal' />
-            <h3>No deliveries yet</h3>
-            <p>Notifications will appear here.</p>
-          </div>
+          <Empty
+            size='sm'
+            className='empty-state'
+            icon={<Icon name='signal' />}
+            title='No deliveries yet'
+            description='Notifications will appear here.'
+          />
         )}
       </section>
     </div>

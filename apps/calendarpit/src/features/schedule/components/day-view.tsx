@@ -1,6 +1,8 @@
 import type { Calendar, CalendarEvent } from '@calendarpit/server';
 import { Badge } from '@cloudflare/kumo/components/badge';
 import { Button } from '@cloudflare/kumo/components/button';
+import { Empty } from '@cloudflare/kumo/components/empty';
+import { ConfirmButton } from '../../../components/confirm-button';
 import { Icon } from '../../../components/icon';
 import { longDate } from '../models/dates';
 import {
@@ -190,36 +192,39 @@ export function DayView({
                     {free ? 'Free' : 'Busy'}
                   </Badge>
                 </span>
-                <Button
+                <ConfirmButton
+                  iconOnly
                   variant='ghost'
-                  shape='square'
                   size='sm'
                   className='event-delete'
-                  aria-label={`Delete ${e.summary || e.id}`}
+                  ariaLabel={`Delete ${e.summary || e.id}`}
                   disabled={busy}
                   icon={<Icon name='trash' />}
-                  onClick={() => remove(e)}
+                  title='Delete this event?'
+                  description={`${e.summary || e.id} is removed from ${calendar.summary}. Clients watching this calendar receive a notification.`}
+                  confirmLabel='Delete event'
+                  confirm={() => remove(e)}
                 />
               </li>
             );
           })}
         </ol>
       ) : (
-        <div className='empty-state'>
-          <Icon name='calendar' />
-          <h3>Nothing scheduled</h3>
-          <p>
-            No events on this date. Add one here, or create it from your app
-            through the Calendar API.
-          </p>
-          <Button
-            variant='secondary'
-            icon={<Icon name='plus' />}
-            onClick={create}
-          >
-            New event
-          </Button>
-        </div>
+        <Empty
+          className='empty-state'
+          icon={<Icon name='calendar' />}
+          title='Nothing scheduled'
+          description='No events on this date. Add one here, or create it from your app through the Calendar API.'
+          contents={
+            <Button
+              variant='secondary'
+              icon={<Icon name='plus' />}
+              onClick={create}
+            >
+              New event
+            </Button>
+          }
+        />
       )}
       <footer className='day-footnote'>
         Times shown in <code>{timeZone}</code>. End times are exclusive. Free

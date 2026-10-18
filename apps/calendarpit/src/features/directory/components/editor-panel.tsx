@@ -1,5 +1,6 @@
 import { Button } from '@cloudflare/kumo/components/button';
 import type { ReactNode } from 'react';
+import { ConfirmButton } from '../../../components/confirm-button';
 import { Icon } from '../../../components/icon';
 
 /**
@@ -69,15 +70,14 @@ export function DeleteButton({
   remove: () => void;
 }) {
   return (
-    <Button
-      variant='secondary-destructive'
+    <ConfirmButton
+      label='Delete'
       icon={<Icon name='trash' />}
       disabled={disabled}
-      onClick={() => {
-        if (window.confirm(`Delete this ${noun} and its owned data?`)) remove();
-      }}
-    >
-      Delete
-    </Button>
+      title={`Delete this ${noun}?`}
+      description={`The ${noun} and the data it owns are removed from the workspace. Reset restores the startup fixture.`}
+      confirmLabel={`Delete ${noun}`}
+      confirm={remove}
+    />
   );
 }

@@ -1,3 +1,4 @@
+import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon, type IconName } from '../../../components/icon';
 
 /** One selectable row in a directory list. */
@@ -60,10 +61,12 @@ export function DirectoryList({
           ))}
         </ul>
       ) : (
-        <div className='empty-state compact'>
-          <h3>No {noun}s yet</h3>
-          <p>Add the first {noun} using the form.</p>
-        </div>
+        <Empty
+          size='sm'
+          className='empty-state'
+          title={`No ${noun}s yet`}
+          description={`Add the first ${noun} using the form.`}
+        />
       )}
     </section>
   );
