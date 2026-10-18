@@ -5,8 +5,9 @@ import starlightLinksValidator from 'starlight-links-validator';
 const repository = 'https://github.com/iktakahiro/calendarpit';
 
 /**
- * The Calendarpit documentation site: a landing page plus the developer
- * documentation, published to GitHub Pages under `/calendarpit/`.
+ * The Calendarpit documentation site: a landing page plus the user-facing
+ * documentation in English and Japanese, published to GitHub Pages under
+ * `/calendarpit/`.
  */
 export default defineConfig({
   site: 'https://iktakahiro.github.io',
@@ -23,6 +24,8 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Calendarpit',
+      // `src/pages/404.astro` renders the 404 page.
+      disable404Route: true,
       description:
         'A local Google Calendar–compatible API and OAuth server for development and repeatable tests.',
       favicon: '/favicon.svg',
@@ -52,26 +55,45 @@ export default defineConfig({
         },
       ],
       customCss: ['./src/styles/theme.css'],
+      // The landing pages render their own <h1>.
+      components: { PageTitle: './src/components/PageTitle.astro' },
+      // English is the root locale, so its URLs carry no prefix.
+      defaultLocale: 'root',
+      locales: {
+        root: { label: 'English', lang: 'en' },
+        ja: { label: '日本語', lang: 'ja' },
+      },
       // Fail the build on broken internal links and anchors.
       plugins: [starlightLinksValidator()],
       sidebar: [
         {
           label: 'Getting started',
+          translations: { ja: 'はじめに' },
           items: [
-            { label: 'Overview', link: '/' },
-            'development',
-            'integration',
-            'sdks',
-            'fixtures',
+            { label: 'Overview', translations: { ja: '概要' }, link: '/' },
+            'quick-start',
+            'running',
           ],
         },
         {
-          label: 'Product and protocol',
-          items: ['scope', 'compatibility', 'sync', 'watch'],
+          label: 'Connect your app',
+          translations: { ja: 'アプリとつなぐ' },
+          items: ['connect', 'oauth', 'sdks'],
         },
         {
-          label: 'Engineering',
-          items: ['architecture', 'testing', 'roadmap'],
+          label: 'Test your app',
+          translations: { ja: 'テストに使う' },
+          items: ['fixtures', 'test-control', 'storage'],
+        },
+        {
+          label: 'Calendar API',
+          translations: { ja: 'Calendar API' },
+          items: ['compatibility', 'recurrence', 'sync', 'watch'],
+        },
+        {
+          label: 'Help',
+          translations: { ja: 'ヘルプ' },
+          items: ['scope', 'troubleshooting'],
         },
       ],
     }),
