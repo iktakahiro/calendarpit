@@ -9,8 +9,8 @@ Calendarpit has a local management API under `/__calendarpit`. Use it to seed da
 
 - **Base path:** All management endpoints start with `/__calendarpit` (for example, `http://127.0.0.1:4173/__calendarpit/reset`).
 - **No authentication:** Management endpoints do not use a bearer token. Calendarpit is a local development server and binds to loopback by default. If you bind to a non-loopback address (for example inside a container), anyone who can reach the port can call these endpoints.
-- **`Content-Type: application/json` on writes:** Every request other than `GET` or `HEAD` must send a `Content-Type` header starting with `application/json` (case-sensitive). This includes `DELETE` routes and `POST` controls with no body. Requests without it fail with HTTP `415` (`unsupportedMediaType`). For `POST` controls that take no request body, you can send an empty body or `{}`.
-- **Same-origin check:** A request fails with HTTP `403` (`forbidden`) if it has an `Origin` header that does not match the server origin, or if it has `Sec-Fetch-Site: cross-site`. Non-browser clients such as `curl` and test runners usually omit `Origin`, so they are allowed. `/__calendarpit/health` skips these checks, so `GET` and `HEAD` readiness probes need no extra headers.
+- **`Content-Type: application/json` on writes:** Every request other than `GET` or `HEAD` must send a `Content-Type` header starting with `application/json` (case-sensitive). This includes `DELETE` routes and `POST` controls with no body. Requests without it fail with HTTP `415` (`unsupportedMediaType`). For `POST` controls with no request body, send an empty body or `{}`.
+- **Same-origin check:** A request fails with HTTP `403` (`forbidden`) if its `Origin` header does not match the server origin, or if it has `Sec-Fetch-Site: cross-site`. Non-browser clients such as `curl` and test runners usually omit `Origin`, so they are allowed. `/__calendarpit/health` skips these checks, so `GET` and `HEAD` readiness probes need no extra headers.
 - **Excluded from history:** Requests to `/__calendarpit/*` are not recorded in the protocol request history.
 - **Error format:** Management errors use the Google JSON error envelope with `domain: "calendarpit"`.
 
@@ -36,13 +36,13 @@ All paths below are relative to `/__calendarpit`.
 
 ### Cascades and admin writes
 
-- **User deletion:** Deleting a user revokes their OAuth connections, which stops their watch channels. It also deletes their calendars and events without creating calendar tombstones.
-- **Calendar deletion and primary flag:** A user's first calendar becomes `primary: true` automatically. If you set `primary: true` on another calendar of the same user, the flag moves to that calendar in one step. Unsetting `primary` directly returns `400`. Deleting a calendar does the following:
-  - It deletes the calendar's events and stops its event watch channels.
-  - It records a `calendarList` tombstone with default list settings. Per-user customizations such as `summaryOverride` or `colorId` are dropped.
-  - If the calendar was primary, it makes another of the owner's calendars primary. Calendarpit prefers a calendar that is still on the owner's calendar list.
+- **User deletion:** Deleting a user revokes their OAuth connections and stops their watch channels. It also deletes their calendars and events without creating calendar tombstones.
+- **Calendar deletion and primary flag:** A user's first calendar becomes `primary: true` automatically. Setting `primary: true` on another calendar of the same user moves the flag to that calendar in one step. Unsetting `primary` directly returns `400`. Deleting a calendar:
+  - Deletes the calendar's events and stops its event watch channels.
+  - Records a `calendarList` tombstone with default list settings. Per-user customizations such as `summaryOverride` or `colorId` are dropped.
+  - Makes another of the owner's calendars primary if the deleted calendar was primary. Calendarpit prefers a calendar that is still on the owner's calendar list.
 - **Calendar list notifications:** Admin calendar create (`POST /calendars`), edit (`PATCH /calendars/{id}`), and delete each queue an `exists` notification on the owner's `calendarList.watch` channels. An edit sends a notification even when nothing changes. Expect these extra deliveries if your test counts them.
-- **Admin event writes:** Event writes under `/__calendarpit/calendars/{id}/events` skip invitee restrictions. They do not require `conferenceDataVersion=1`. They can set read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`). Updates keep the stored `organizer`, `creator`, and `iCalUID`. If an event already has `recurringEventId` and `originalStartTime`, updates keep those too.
+- **Admin event writes:** Event writes under `/__calendarpit/calendars/{id}/events` skip invitee restrictions, do not require `conferenceDataVersion=1`, and can set read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`). Updates keep the stored `organizer`, `creator`, and `iCalUID`. If an event already has `recurringEventId` and `originalStartTime`, updates keep those too.
 
 ## Reset vs fixture load
 
@@ -56,11 +56,11 @@ All paths below are relative to `/__calendarpit`.
 
 Validation on `POST /__calendarpit/fixtures` is atomic. If any record is invalid, Calendarpit returns `400` and changes nothing.
 
-Both endpoints stop all active [watch channels](/calendarpit/watch/) and abort their in-flight requests. They also clear the following:
+Both endpoints stop all active [watch channels](/calendarpit/watch/) and abort their in-flight requests. They also clear:
 
 - OAuth connections, access and refresh tokens, authorization codes, and pending consents
 - Request history
-- [Sync tokens](/calendarpit/sync/) and event and calendar list page tokens
+- [Sync tokens](/calendarpit/sync/), plus event and calendar list page tokens
 - Calendar tombstones
 - Per-user calendar list settings: customizations made with `calendarList.insert`/`patch`/`update`, and removals made with `calendarList.delete`
 - Invitation notifications and all delivery log records
@@ -79,9 +79,9 @@ Calendarpit masks credentials in the history:
 
 Use `GET /__calendarpit/state` for inspection only. You cannot load its output back with `POST /__calendarpit/fixtures`:
 
-- It omits client secrets. `clients` contain only `id` and `redirectUris`.
+- It omits client secrets. `clients` entries contain only `id` and `redirectUris`.
 - Channel tokens appear as `"[REDACTED]"`.
-- It has runtime fields (`storage`, `connections`, `channels`, `deliveries`, `notifications`, `revision`). `POST /__calendarpit/fixtures` rejects these with `400` (`unsupportedFeature`).
+- It includes runtime fields (`storage`, `connections`, `channels`, `deliveries`, `notifications`, `revision`), which `POST /__calendarpit/fixtures` rejects with `400` (`unsupportedFeature`).
 - It does not include calendar list settings. Read those with `calendarList.list`/`get`.
 
 Keep your original fixture files for seeding and reloading.
@@ -91,9 +91,9 @@ Keep your original fixture files for seeding and reloading.
 - **Reset before each scenario:** Call `POST /__calendarpit/reset` before each test to restore the startup baseline. To load a specific fixture instead, call `POST /__calendarpit/fixtures`.
 - **Use fixed IDs:** Set explicit `id` values for users, calendars, events, and clients in your fixture file. Calendarpit generates missing IDs once at seed time. In `:memory:` mode, each new server process generates new IDs.
 - **Isolate parallel workers:** Run one Calendarpit process per test worker with `--port 0` and `--database :memory:`. You can also give each worker its own SQLite file.
-- **Read the port from stdout:** With `--port 0`, read the URL from the startup line `Admin  http://127.0.0.1:<port>/`. For example, match it with `/Admin\s+(http:\/\/[^\s]+)/`. Then poll `GET /__calendarpit/health` until it responds before you run tests.
-- **Drain webhook deliveries instead of sleeping:** `POST /__calendarpit/deliveries/drain` waits for the deliveries that are pending when you call it, including their retries. `/reset` aborts webhook requests that are in progress. A receiver may still have received such a request before it was aborted.
-- **Refetch after restarts:** When you test [SQLite restarts](/calendarpit/storage/), deliveries queued before shutdown are marked `cancelled` and are not sent again. Fetch the calendar state again after the restart.
+- **Read the port from stdout:** With `--port 0`, read the URL from the startup line `Admin  http://127.0.0.1:<port>/`. For example, match it with `/Admin\s+(http:\/\/[^\s]+)/`. Then poll `GET /__calendarpit/health` until it responds before running tests.
+- **Drain webhook deliveries instead of sleeping:** `POST /__calendarpit/deliveries/drain` waits for the deliveries pending when you call it, including their retries. `/reset` aborts in-progress webhook requests, though a receiver may still receive a request before it is aborted.
+- **Refetch after restarts:** When testing [SQLite restarts](/calendarpit/storage/), deliveries queued before shutdown are marked `cancelled` and are not sent again. Refetch the calendar state after the restart.
 
 ```ts
 const baseUrl = 'http://127.0.0.1:4173';
