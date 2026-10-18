@@ -1,6 +1,6 @@
 ---
 title: Implementation roadmap
-description: Implemented MVP workflows and remaining integration and release work.
+description: Implemented workflows and remaining integration and release work.
 ---
 
 ## Implemented
@@ -15,7 +15,7 @@ description: Implemented MVP workflows and remaining integration and release wor
 - Local approval/denial, code exchange, S256 PKCE, refresh and revocation.
 - Event watch registration/stop, initial sync, bounded delivery retries,
   expiration and cancellation on reset/revocation.
-- Admin event editor, user/calendar settings, connection controls, history,
+- Admin day track and week grid, event editor, user/calendar settings, connection controls, history,
   channel/delivery inspection and fixture controls.
 - Official Google SDK sample with local-only HTTP integration tests, including
   reset/repeat, denial, revocation/reconnection, busy intervals and watch delivery.
@@ -32,9 +32,9 @@ Validate the existing Docker configuration, automate builds for supported
 platforms, and decide npm/package and image publication. No registry publication
 or GitHub release is performed automatically by the current CI.
 
-## Outside the MVP
+## Out of scope
 
 ACLs, shared-calendar access, real email/reminder delivery, real Meet generation,
 full OIDC, other providers and production Google synchronization remain excluded.
 The admin editor remains focused on basic event fields; advanced recurrence and
-invitation scenarios use API requests or fixtures. Weekly grids and drag editing can follow the initial daily UI.
+invitation scenarios use API requests or fixtures. Dragging to move or resize an event can follow the day and week views.

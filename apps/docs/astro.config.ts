@@ -29,6 +29,28 @@ export default defineConfig({
       logo: { src: './src/assets/logo.svg', alt: '' },
       social: [{ icon: 'github', label: 'GitHub', href: repository }],
       editLink: { baseUrl: `${repository}/edit/main/apps/docs/` },
+      // The admin UI's typeface, so the site and the product read as one.
+      head: [
+        {
+          tag: 'link',
+          attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'preconnect',
+            href: 'https://fonts.gstatic.com',
+            crossorigin: true,
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'stylesheet',
+            href: 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400..600&display=swap',
+          },
+        },
+      ],
       customCss: ['./src/styles/theme.css'],
       // Fail the build on broken internal links and anchors.
       plugins: [starlightLinksValidator()],
@@ -45,7 +67,7 @@ export default defineConfig({
         },
         {
           label: 'Product and protocol',
-          items: ['mvp', 'compatibility', 'sync', 'watch'],
+          items: ['scope', 'compatibility', 'sync', 'watch'],
         },
         {
           label: 'Engineering',
