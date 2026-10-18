@@ -48,8 +48,8 @@ export function updateUser(
 }
 
 /**
- * Deletes a user with their calendars and events, and revokes their grants
- * (which also stops their watch channels).
+ * Deletes a user with their calendars, events, and calendar-list settings,
+ * and revokes their grants (which also stops their watch channels).
  */
 export function deleteUser(workspace: Workspace, existing: User) {
   for (const g of workspace.grants.values())
@@ -62,6 +62,9 @@ export function deleteUser(workspace: Workspace, existing: User) {
   );
   workspace.data.calendars = workspace.data.calendars.filter(
     (c) => c.userId !== existing.id,
+  );
+  workspace.calendarListEntries = workspace.calendarListEntries.filter(
+    (entry) => entry.userId !== existing.id,
   );
   workspace.data.users = workspace.data.users.filter((u) => u !== existing);
   workspace.touch();

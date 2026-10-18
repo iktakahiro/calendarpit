@@ -33,7 +33,7 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
                     <code>{c.id}</code>
                   </strong>
                   <p className='data-sub route'>
-                    <code>{c.calendarId}</code>
+                    <code>{c.calendarId ?? 'calendar list'}</code>
                     <span className='arrow' aria-hidden='true'>
                       →
                     </span>
@@ -56,7 +56,7 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
             className='empty-state'
             icon={<Icon name='broadcast' />}
             title='No active subscriptions'
-            description='Channels created with events.watch appear here until they expire or are stopped.'
+            description='Channels created with events.watch or calendarList.watch appear here until they expire or are stopped.'
           />
         )}
       </section>

@@ -122,6 +122,23 @@ test('Google SDK: approve → select → watch → CRUD/busy → stop → revoke
         showDeleted: false,
       });
       expect(listed.data.items).toHaveLength(2);
+      const got = await sample.sdk.calendarList.get({ calendarId: 'primary' });
+      expect(got.data.id).toBe('alex-work');
+      expect(got.data.accessRole).toBe('owner');
+      const patched = await sample.sdk.calendarList.patch({
+        calendarId: 'alex-personal',
+        requestBody: { summaryOverride: 'Home' },
+      });
+      expect(patched.data.summary).toBe('Personal');
+      expect(patched.data.summaryOverride).toBe('Home');
+      await sample.sdk.calendarList.delete({ calendarId: 'alex-personal' });
+      expect(
+        (await sample.sdk.calendarList.list({ showDeleted: false })).data.items,
+      ).toHaveLength(1);
+      await sample.sdk.calendarList.insert({
+        requestBody: { id: 'alex-personal', selected: true },
+      });
+      expect((await sample.sdk.calendarList.list()).data.items).toHaveLength(2);
       const allDay = await sample.sdk.events.insert({
         calendarId: 'primary',
         sendUpdates: 'all',

@@ -111,3 +111,68 @@ test('deleting the primary calendar promotes the next and keeps a tombstone', ()
   );
   expect(workspace.deletedCalendars.map((c) => c.id)).toEqual(['alex-work']);
 });
+
+function removedPersonal() {
+  return {
+    userId: 'alex',
+    calendarId: 'alex-personal',
+    colorId: '14',
+    hidden: false,
+    selected: false,
+    defaultReminders: [],
+    removed: true,
+    summaryOverride: 'Home',
+  };
+}
+
+test('deleting the primary restores a removed calendar when none stay listed', () => {
+  const { workspace } = testWorkspace();
+  workspace.calendarListEntries.push(removedPersonal());
+  deleteCalendar(workspace, findCalendar(workspace, 'alex-work'));
+  expect(findCalendar(workspace, 'primary', 'alex').id).toBe('alex-personal');
+  expect(
+    workspace.calendarListEntries.find(
+      (entry) => entry.calendarId === 'alex-personal',
+    ),
+  ).toMatchObject({
+    removed: false,
+    summaryOverride: 'Home',
+    colorId: '14',
+    selected: false,
+  });
+});
+
+test('deleting the primary prefers a calendar that is still listed', () => {
+  const { workspace } = testWorkspace();
+  workspace.calendarListEntries.push(removedPersonal());
+  saveCalendar(workspace, {
+    id: 'alex-extra',
+    userId: 'alex',
+    summary: 'Extra',
+    timeZone: 'Asia/Tokyo',
+  });
+  deleteCalendar(workspace, findCalendar(workspace, 'alex-work'));
+  expect(primaryOf(workspace, 'alex').map((c) => c.id)).toEqual(['alex-extra']);
+  expect(
+    workspace.calendarListEntries.find(
+      (entry) => entry.calendarId === 'alex-personal',
+    )?.removed,
+  ).toBe(true);
+});
+
+test('setting primary restores that calendar to the list', () => {
+  const { workspace } = testWorkspace();
+  workspace.calendarListEntries.push(removedPersonal());
+  saveCalendar(
+    workspace,
+    { primary: true },
+    findCalendar(workspace, 'alex-personal'),
+  );
+  expect(findCalendar(workspace, 'primary', 'alex').id).toBe('alex-personal');
+  expect(findCalendar(workspace, 'alex-work').primary).toBe(false);
+  expect(
+    workspace.calendarListEntries.find(
+      (entry) => entry.calendarId === 'alex-personal',
+    ),
+  ).toMatchObject({ removed: false, summaryOverride: 'Home' });
+});
