@@ -3,7 +3,7 @@ title: イベント、繰り返し、時刻の扱い
 description: Calendarpit における繰り返しイベントの展開、招待や会議のローカルシミュレーション、タイムゾーン・夏時間（DST）・busy 区間の扱いについて説明します。
 ---
 
-Calendarpit は、繰り返しの系列の展開、ローカルのテストユーザー間での招待の同期、時間範囲や busy 区間の計算をすべてローカルで処理します。対応しているエンドポイントとフィールドの一覧は、[Calendar API の互換性](/calendarpit/ja/compatibility/)を参照してください。
+Calendarpit は、繰り返しの系列の展開、ローカルのテストユーザー間での招待の同期、時間範囲や busy 区間の計算をすべてローカルで処理します。対応しているエンドポイントとフィールドの一覧は、[Calendar API の互換性](/ja/compatibility/)を参照してください。
 
 ## 繰り返しイベント
 
@@ -11,7 +11,7 @@ Calendarpit は、繰り返しの系列の展開、ローカルのテストユ�
 
 `GET /calendar/v3/calendars/{calendarId}/events/{eventId}/instances` は、単一の繰り返しの系列を展開した各回のインスタンスを常に返します（`singleEvents=false` の場合、`showDeleted` を指定しなくてもキャンセル済みの例外が含まれます）。このエンドポイントは `events.list` のパラメータ（`timeMin`、`timeMax`、`showDeleted`、`maxResults`、`pageToken`、`timeZone` など）に加えて `originalStart` を受け付けます。`syncToken` を指定するとエラーになり、レスポンスに `nextSyncToken` は含まれません。
 
-各インスタンスには `recurringEventId`、`originalStartTime`、再現可能な ID（時刻指定イベントは UTC の `<seriesId>_<YYYYMMDDTHHMMSSZ>`、終日イベントは `<seriesId>_<YYYYMMDD>`）が付与されます。`/events/{instanceId}` では、`GET` は例外が保存されていなくても該当する回のインスタンスを返し、`PUT` と `PATCH` はその回を例外として保存し、`DELETE` はキャンセル済みの例外として保存します。親イベントを更新すると各インスタンスも更新され、新しいルールで生成されなくなった保存済みの例外はキャンセルされます。親イベントを削除すると、その例外もすべてキャンセルされます。`singleEvents=true` の場合、[差分同期](/calendarpit/ja/sync/)では存在しなくなった回が `cancelled` として返されます。`freebusy.query` でも同じ展開ロジックが使われます。
+各インスタンスには `recurringEventId`、`originalStartTime`、再現可能な ID（時刻指定イベントは UTC の `<seriesId>_<YYYYMMDDTHHMMSSZ>`、終日イベントは `<seriesId>_<YYYYMMDD>`）が付与されます。`/events/{instanceId}` では、`GET` は例外が保存されていなくても該当する回のインスタンスを返し、`PUT` と `PATCH` はその回を例外として保存し、`DELETE` はキャンセル済みの例外として保存します。親イベントを更新すると各インスタンスも更新され、新しいルールで生成されなくなった保存済みの例外はキャンセルされます。親イベントを削除すると、その例外もすべてキャンセルされます。`singleEvents=true` の場合、[差分同期](/ja/sync/)では存在しなくなった回が `cancelled` として返されます。`freebusy.query` でも同じ展開ロジックが使われます。
 
 ### ルール、制限、夏時間（DST）
 
@@ -30,10 +30,10 @@ Calendarpit は、繰り返しの系列の展開、ローカルのテストユ�
 
 Calendarpit が実際にメールを送信したり、Google Meet と通信したりすることはありません。
 
-- **招待:** `attendees` には重複のないメールアドレスを最大 200 件まで指定できます（`displayName`、`optional`、`resource`、`additionalGuests`、`comment`、および `responseStatus` として `needsAction`、`accepted`、`tentative`、`declined` を指定できます）。プライマリカレンダーを持つ別のローカルのテストユーザーを招待すると、同じ `id` と `iCalUID` を持つイベントのコピーがそのユーザーのプライマリカレンダーに書き込まれます。主催者による更新やキャンセルは各コピーに反映され、[watch 通知](/calendarpit/ja/watch/)が発行されます。参加者を削除すると、そのユーザーのコピーはキャンセルされます。`reminders` と `extendedProperties.private` はコピーごとに独立して保持され、`extendedProperties.shared` は主催者のイベントから同期されます。
+- **招待:** `attendees` には重複のないメールアドレスを最大 200 件まで指定できます（`displayName`、`optional`、`resource`、`additionalGuests`、`comment`、および `responseStatus` として `needsAction`、`accepted`、`tentative`、`declined` を指定できます）。プライマリカレンダーを持つ別のローカルのテストユーザーを招待すると、同じ `id` と `iCalUID` を持つイベントのコピーがそのユーザーのプライマリカレンダーに書き込まれます。主催者による更新やキャンセルは各コピーに反映され、[watch 通知](/ja/watch/)が発行されます。参加者を削除すると、そのユーザーのコピーはキャンセルされます。`reminders` と `extendedProperties.private` はコピーごとに独立して保持され、`extendedProperties.shared` は主催者のイベントから同期されます。
 - **出欠回答（RSVP）と招待された側の編集:** 招待されたユーザーは `PATCH` を使用する必要があります（`PUT` は `403 forbiddenForNonOrganizer` を返します）。編集できるのは、自身の `responseStatus` と `comment`（または自身のエントリのみを含めた `attendeesOmitted: true` の設定）、`reminders`、`colorId`、`transparency`、`extendedProperties` のみです。出欠回答の変更は主催者のイベントと他の参加者のコピーにも反映されます（繰り返しの系列の 1 つのインスタンスに出欠回答すると、主催者のカレンダーに例外が作成されます）。招待を辞退（`declined`）すると招待された側のコピーは `transparent` になり、それ以外の `attendees` の変更では `opaque` に戻ります。コピー側で変更した `colorId` と `transparency` は、次回主催者がイベントを更新した際に上書きされます。
 - **ゲスト権限フラグ:** `guestsCanModify`（デフォルト `false`）、`guestsCanInviteOthers`（デフォルト `true`）、`guestsCanSeeOtherGuests`（デフォルト `true`）は真偽値として保存・取得でき、主催者のみが変更できます。これらは値が保存されるだけで、招待されたユーザーが編集できる範囲には影響しません。
-- **`sendUpdates`:** `all` を指定すると、書き込みごとに主催者を除く全参加者（削除された参加者も含みます。招待されたユーザーによる `REPLY` の場合は主催者が宛先になります）を `recipients` とするレコードが 1 件記録されます。`externalOnly` を指定すると、ローカルのテストユーザーではない宛先のみが記録されます。記録されたレコード（`REQUEST`、`CANCEL`、または `REPLY`）は、`GET /__calendarpit/state` の `notifications`（最新 200 件。[テスト制御 API](/calendarpit/ja/test-control/)を参照してください）で確認できます。デフォルトの `none` では何も記録されません。どの値を指定しても、ローカルのコピー間の同期は行われます。
+- **`sendUpdates`:** `all` を指定すると、書き込みごとに主催者を除く全参加者（削除された参加者も含みます。招待されたユーザーによる `REPLY` の場合は主催者が宛先になります）を `recipients` とするレコードが 1 件記録されます。`externalOnly` を指定すると、ローカルのテストユーザーではない宛先のみが記録されます。記録されたレコード（`REQUEST`、`CANCEL`、または `REPLY`）は、`GET /__calendarpit/state` の `notifications`（最新 200 件。[テスト制御 API](/ja/test-control/)を参照してください）で確認できます。デフォルトの `none` では何も記録されません。どの値を指定しても、ローカルのコピー間の同期は行われます。
 - **リマインダー:** `{ useDefault: boolean, overrides?: [{ method: "email" | "popup", minutes: 0..40320 }] }` の形式で指定します（`useDefault: false` の場合、`overrides` は最大 5 件まで指定できます）。データは保存されるのみで、リマインダーが通知されることはありません。
 - **会議データ（`conferenceData`）:** `null` 以外の `conferenceData` を扱うには `?conferenceDataVersion=1` の指定が必要です。`hangoutsMeet` の `createRequest.requestId` を指定すると、再現可能な ID、`hangoutLink`、`https://meet.calendarpit.invalid/<id>` を指す `video` エントリポイントが生成されます。`conferenceData: null` を指定すると会議データが消去されます。
 

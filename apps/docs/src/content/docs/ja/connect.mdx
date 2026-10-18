@@ -26,9 +26,9 @@ Calendar API の URL を変更するだけでは不十分です。OAuth のエ�
 | Calendar API のルート            | `http://127.0.0.1:4173/`                |
 | トークンの取り消し               | `http://127.0.0.1:4173/oauth/revoke`    |
 
-JavaScript の Calendar SDK（`@googleapis/calendar`）は、`rootUrl` の末尾に `/calendar/v3/...` を付与します。`rootUrl` に `/calendar/v3` を含めないでください。Python、Go、.NET では、`/calendar/v3/` を含むサービス URL 全体を指定します。Java では、ルート URL とサービスパスを別々に設定します。詳しくは[SDK の使用例](/calendarpit/ja/sdks/)を参照してください。
+JavaScript の Calendar SDK（`@googleapis/calendar`）は、`rootUrl` の末尾に `/calendar/v3/...` を付与します。`rootUrl` に `/calendar/v3` を含めないでください。Python、Go、.NET では、`/calendar/v3/` を含むサービス URL 全体を指定します。Java では、ルート URL とサービスパスを別々に設定します。詳しくは[SDK の使用例](/ja/sdks/)を参照してください。
 
-watch のコールバック先アドレスは通信の向きが逆になり、Calendarpit からアプリ側へ送信されます（例: `http://127.0.0.1:4175/notifications`）。デフォルトで許可されるコールバック先のホストはループバック（`127.0.0.1`、`localhost`、`[::1]`）のみです。それ以外のホストを使う場合は、`CALENDARPIT_WATCH_HOSTS` で指定してください。詳しくは[watch 通知](/calendarpit/ja/watch/)を参照してください。
+watch のコールバック先アドレスは通信の向きが逆になり、Calendarpit からアプリ側へ送信されます（例: `http://127.0.0.1:4175/notifications`）。デフォルトで許可されるコールバック先のホストはループバック（`127.0.0.1`、`localhost`、`[::1]`）のみです。それ以外のホストを使う場合は、`CALENDARPIT_WATCH_HOSTS` で指定してください。詳しくは[watch 通知](/ja/watch/)を参照してください。
 
 ## テスト用の OAuth クライアントを登録する
 
@@ -48,7 +48,7 @@ Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` 
 
 フィクスチャはワークスペース全体を置き換えるため、`clients` とあわせて `users`（および `calendars`）も含めてください。サンプルアプリも併用する場合は、`sample-app` のエントリも残します。
 
-起動時フィクスチャが適用されるのは、新規データベースまたは `:memory:` セッションのみです。実行中または保存済みのワークスペースを変更するには、`POST /__calendarpit/fixtures` でフィクスチャを読み込むか、新しいデータベースで起動してください。なお、ワークスペースをリセットすると API で読み込んだフィクスチャではなく、起動時フィクスチャの状態に戻ります。リセット後もクライアント定義を維持するには、新規データベースまたは `:memory:` セッションの起動時フィクスチャ（`--config` または `CALENDARPIT_CONFIG`）として渡すか、リセット後に再度読み込んでください。詳しくは[フィクスチャ](/calendarpit/ja/fixtures/)を参照してください。
+起動時フィクスチャが適用されるのは、新規データベースまたは `:memory:` セッションのみです。実行中または保存済みのワークスペースを変更するには、`POST /__calendarpit/fixtures` でフィクスチャを読み込むか、新しいデータベースで起動してください。なお、ワークスペースをリセットすると API で読み込んだフィクスチャではなく、起動時フィクスチャの状態に戻ります。リセット後もクライアント定義を維持するには、新規データベースまたは `:memory:` セッションの起動時フィクスチャ（`--config` または `CALENDARPIT_CONFIG`）として渡すか、リセット後に再度読み込んでください。詳しくは[フィクスチャ](/ja/fixtures/)を参照してください。
 
 - `redirectUris` には、アプリのコールバック URL を正確に指定します。Calendarpit は `redirect_uri` を文字列の完全一致で照合します。ポートのワイルドカードや末尾スラッシュの正規化は行いません。
 - `secret` は必須です。PKCE フローを含め、すべての `/oauth/token` リクエストでこの値を `client_secret`（または HTTP Basic 認証）として送信する必要があります。
@@ -59,7 +59,7 @@ Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` 
 - クライアントシークレット: `local-sample-secret`（公開されているローカルテスト用の値）
 - リダイレクト URI: `http://127.0.0.1:4175/callback`
 
-認可コード、トークン更新、`/userinfo`、取り消しまでの一連のフローは、[ローカル OAuth](/calendarpit/ja/oauth/)を参照してください。
+認可コード、トークン更新、`/userinfo`、取り消しまでの一連のフローは、[ローカル OAuth](/ja/oauth/)を参照してください。
 
 ## JavaScript の OAuth クライアントと Calendar クライアント
 
@@ -100,9 +100,9 @@ console.log(data.calendars?.primary?.busy);
 - `/userinfo` には、`openid`、`email`、`profile`、または `userinfo.*` のスコープが必要です。`email` はメールスコープがある場合のみ、`name` はプロフィールスコープがある場合のみ返されます。
 - リフレッシュトークンは、`access_type=offline` を指定した場合のみ発行されます。
 
-スコープの一覧は[ローカル OAuth](/calendarpit/ja/oauth/)を参照してください。
+スコープの一覧は[ローカル OAuth](/ja/oauth/)を参照してください。
 
-`auth.setCredentials` で認証情報を設定すると、`OAuth2Client` によるトークン更新リクエストもローカルの `oauth2TokenUrl` に送られます。一方、`getTokenInfo` や `verifyIdToken` などの `OAuth2Client` のヘルパーは、`tokenInfoUrl` と証明書 URL も上書きしない限り Google へ通信します（サンプルアプリではこれらも上書きしています）。Calendarpit には対応するエンドポイントがなく、ID トークンも発行しないため、ローカルプロバイダーに対してこれらのヘルパーは呼び出さないでください。Python や Go など他の言語については、[SDK の使用例](/calendarpit/ja/sdks/)を参照してください。
+`auth.setCredentials` で認証情報を設定すると、`OAuth2Client` によるトークン更新リクエストもローカルの `oauth2TokenUrl` に送られます。一方、`getTokenInfo` や `verifyIdToken` などの `OAuth2Client` のヘルパーは、`tokenInfoUrl` と証明書 URL も上書きしない限り Google へ通信します（サンプルアプリではこれらも上書きしています）。Calendarpit には対応するエンドポイントがなく、ID トークンも発行しないため、ローカルプロバイダーに対してこれらのヘルパーは呼び出さないでください。Python や Go など他の言語については、[SDK の使用例](/ja/sdks/)を参照してください。
 
 ## 参考実装のサンプルアプリ
 

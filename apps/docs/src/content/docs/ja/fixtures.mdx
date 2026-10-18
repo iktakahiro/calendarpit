@@ -11,7 +11,7 @@ description: JSON のフィクスチャファイルで、テストユーザー�
 
 フィクスチャファイルのパスは、CLI フラグ `--config` または環境変数 `CALENDARPIT_CONFIG` で指定します。どちらも指定しない場合、Calendarpit は組み込みのデフォルトフィクスチャを読み込みます。内容はリポジトリの `fixtures/default.json` と同じです。ユーザー `alex` と `sam`、カレンダー `alex-work`、`alex-personal`、`sam-work`、イベント `planning` 1 件、OAuth クライアント `sample-app` が含まれます。
 
-下の JSON の例を `calendarpit.fixture.json` として保存し、テスト用に編集してください。[インストール](/calendarpit/ja/installation/)の公開状況と必要な環境を確認してから、ファイルを保存したディレクトリで起動します。
+下の JSON の例を `calendarpit.fixture.json` として保存し、テスト用に編集してください。[インストール](/ja/installation/)の公開状況と必要な環境を確認してから、ファイルを保存したディレクトリで起動します。
 
 ```sh
 calendarpit serve \
@@ -30,14 +30,14 @@ docker run --rm -p 127.0.0.1:4173:4173 \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixtures/startup.json:ro` を追加し、`environment` に `CALENDARPIT_CONFIG: /fixtures/startup.json` を設定します。ホスト上のファイルはコンテナの非 root ユーザーが読み取れる必要があります。起動オプションは[起動と設定](/calendarpit/ja/running/)を参照してください。
+Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixtures/startup.json:ro` を追加し、`environment` に `CALENDARPIT_CONFIG: /fixtures/startup.json` を設定します。ホスト上のファイルはコンテナの非 root ユーザーが読み取れる必要があります。起動オプションは[起動と設定](/ja/running/)を参照してください。
 
 起動時フィクスチャが投入されるのは、**新しい空の**データベースだけです。
 
 - `--database :memory:` モードでは、プロセスを起動するたびにデータベースが新しくなります。そのため、フィクスチャは毎回適用されます。
-- SQLite ファイルに保存済みのデータがある場合、Calendarpit はフィクスチャを適用せず、警告も表示しません。保存済みのデータ（ユーザーごとのカレンダーリスト設定や、カレンダーの削除済みレコードを含む）と、最初のリセット基準を読み込みます。この場合でも、指定するパスは読み取り可能な JSON ファイルを指している必要があります。そうでない場合は起動に失敗します。ファイルの内容は検証されません。詳しくは[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。
+- SQLite ファイルに保存済みのデータがある場合、Calendarpit はフィクスチャを適用せず、警告も表示しません。保存済みのデータ（ユーザーごとのカレンダーリスト設定や、カレンダーの削除済みレコードを含む）と、最初のリセット基準を読み込みます。この場合でも、指定するパスは読み取り可能な JSON ファイルを指している必要があります。そうでない場合は起動に失敗します。ファイルの内容は検証されません。詳しくは[ストレージと再起動](/ja/storage/)を参照してください。
 
-実行中に別のフィクスチャを読み込むには `POST /__calendarpit/fixtures` を使います。テストの合間にリセット基準（起動時の状態）へ戻すには `POST /__calendarpit/reset` を使います。どちらも、OAuth の接続（grant）とトークン、ユーザーごとのカレンダーリスト設定、削除済みレコード、watch チャネル、配信、リクエスト履歴、同期トークン、通知を消去します。リセットでは起動時フィクスチャが復元されます。カレンダーリストのエントリは、起動時の etag を持つデフォルトの状態に戻ります。`GET /__calendarpit/state` の結果には、クライアントシークレット、カレンダーリスト設定、削除済みレコードは含まれません。また、この結果をフィクスチャとして読み込み直すことはできません。詳しくは[テスト制御 API](/calendarpit/ja/test-control/)を参照してください。
+実行中に別のフィクスチャを読み込むには `POST /__calendarpit/fixtures` を使います。テストの合間にリセット基準（起動時の状態）へ戻すには `POST /__calendarpit/reset` を使います。どちらも、OAuth の接続（grant）とトークン、ユーザーごとのカレンダーリスト設定、削除済みレコード、watch チャネル、配信、リクエスト履歴、同期トークン、通知を消去します。リセットでは起動時フィクスチャが復元されます。カレンダーリストのエントリは、起動時の etag を持つデフォルトの状態に戻ります。`GET /__calendarpit/state` の結果には、クライアントシークレット、カレンダーリスト設定、削除済みレコードは含まれません。また、この結果をフィクスチャとして読み込み直すことはできません。詳しくは[テスト制御 API](/ja/test-control/)を参照してください。
 
 ## ルート構造と例
 
@@ -114,7 +114,7 @@ Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixt
 | `timeZone` | 任意 | `"UTC"`         | 有効な IANA タイムゾーン名（違反時は `"Invalid IANA time zone."`）。               |
 | `primary`  | 任意 | `false`         | 真偽値（違反時は `"primary must be boolean."`）。                                  |
 
-投入されたカレンダーは、デフォルト設定（`selected: true`、`colorId: "1"`）で所有者のカレンダーリストに入ります。あとで管理 API でカレンダーやユーザーを変更したときの動作は次のとおりです（[テスト制御 API](/calendarpit/ja/test-control/)を参照）。
+投入されたカレンダーは、デフォルト設定（`selected: true`、`colorId: "1"`）で所有者のカレンダーリストに入ります。あとで管理 API でカレンダーやユーザーを変更したときの動作は次のとおりです（[テスト制御 API](/ja/test-control/)を参照）。
 
 - プライマリカレンダーを削除すると、残りの所有カレンダーのうち、カレンダーリストに残っている最初のものが新しいプライマリに選ばれます。残りのカレンダーがすべてリストから外されている場合は、残りの所有カレンダーの最初のものが選ばれます。選ばれたカレンダーは必要に応じてリストに戻され、その他のリスト設定は保持されます。
 - 別のカレンダーに `"primary": true` を設定すると、フラグがアトミックに移ります。そのカレンダーはカレンダーリストに戻され、その他の設定は保持されます。
@@ -123,7 +123,7 @@ Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixt
 
 ### `events`
 
-初期イベントを定義します。フィクスチャのイベントでは Calendar API と同じイベントフィールドを使えます。値の検証も Calendar API と同じです（[Calendar API の互換性](/calendarpit/ja/compatibility/)と[イベント、繰り返し、時刻の扱い](/calendarpit/ja/recurrence/)を参照）。これに加えて `calendarId` を指定します。
+初期イベントを定義します。フィクスチャのイベントでは Calendar API と同じイベントフィールドを使えます。値の検証も Calendar API と同じです（[Calendar API の互換性](/ja/compatibility/)と[イベント、繰り返し、時刻の扱い](/ja/recurrence/)を参照）。これに加えて `calendarId` を指定します。
 
 - 読み取り専用フィールド（`organizer`、`creator`、`iCalUID`、`recurringEventId`、`originalStartTime`）も設定できます。
 - `conferenceData` には `conferenceDataVersion` は不要です。
@@ -141,7 +141,7 @@ Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixt
 
 ### `clients`
 
-[ローカル OAuth](/calendarpit/ja/oauth/)で使う OAuth クライアントを定義します。クライアントごとの `scopes` フィールドはありません。どのクライアントも、対応しているすべてのスコープを要求できます。
+[ローカル OAuth](/ja/oauth/)で使う OAuth クライアントを定義します。クライアントごとの `scopes` フィールドはありません。どのクライアントも、対応しているすべてのスコープを要求できます。
 
 | フィールド     | 必須 | デフォルト      | ルール                                                                                                                                                        |
 | -------------- | ---- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |

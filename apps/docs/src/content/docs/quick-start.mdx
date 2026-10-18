@@ -21,13 +21,13 @@ docker run --rm \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-No Google account, Google Cloud project, external database, `.env` file, or provider credentials are needed. Both commands start the API, local OAuth server, and admin UI on the same origin. Compose and standalone downloads are covered in [Installation](/calendarpit/installation/).
+No Google account, Google Cloud project, external database, `.env` file, or provider credentials are needed. Both commands start the API, local OAuth server, and admin UI on the same origin. Compose and standalone downloads are covered in [Installation](/installation/).
 
 ## Open the admin UI
 
 Open `http://127.0.0.1:4173`. The built-in fixture includes test users `alex` and `sam`, three calendars, and a planning event on `2026-10-19`. Changes made through the API appear automatically.
 
-The CLI saves data in `.calendarpit/calendarpit.sqlite` under your current directory. Docker saves it in the mounted volume. For disposable tests, pass `--database :memory:` to the CLI or `-e CALENDARPIT_DATABASE=:memory:` to Docker. See [Storage and restarts](/calendarpit/storage/).
+The CLI saves data in `.calendarpit/calendarpit.sqlite` under your current directory. Docker saves it in the mounted volume. For disposable tests, pass `--database :memory:` to the CLI or `-e CALENDARPIT_DATABASE=:memory:` to Docker. See [Storage and restarts](/storage/).
 
 ## Check the health endpoint
 
@@ -54,12 +54,12 @@ Version 0.9.0 is a preview. Its supported compatibility scope is documented, and
 
 ## Connect your app
 
-Follow [Connect your app](/calendarpit/connect/) to point your SDK and OAuth flow at Calendarpit. Use [Fixtures](/calendarpit/fixtures/) to register local client credentials and exact callback URIs. The built-in `sample-app` / `local-sample-secret` credentials are public test values with callback `http://127.0.0.1:4175/callback`.
+Follow [Connect your app](/connect/) to point your SDK and OAuth flow at Calendarpit. Use [Fixtures](/fixtures/) to register local client credentials and exact callback URIs. The built-in `sample-app` / `local-sample-secret` credentials are public test values with callback `http://127.0.0.1:4175/callback`.
 
 The optional source sample walks through approval, event creation, FreeBusy, watch delivery, and revocation. See the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md) for setup. The sample is separate from the distributed server.
 
 ## Next steps
 
-- [Run and configure](/calendarpit/running/) — ports, fixtures, and environment variables.
-- [Test control API](/calendarpit/test-control/) — reset state and drain deliveries between tests.
-- [Scope and limitations](/calendarpit/scope/) — implemented compatibility and explicit exclusions.
+- [Run and configure](/running/) — ports, fixtures, and environment variables.
+- [Test control API](/test-control/) — reset state and drain deliveries between tests.
+- [Scope and limitations](/scope/) — implemented compatibility and explicit exclusions.

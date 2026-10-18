@@ -1,0 +1,26 @@
+{
+  "title": "Calendarpit",
+  "pages": [
+    "---はじめに---",
+    "index",
+    "quick-start",
+    "installation",
+    "running",
+    "---アプリとつなぐ---",
+    "connect",
+    "oauth",
+    "sdks",
+    "---テストに使う---",
+    "fixtures",
+    "test-control",
+    "storage",
+    "---Calendar API---",
+    "compatibility",
+    "recurrence",
+    "sync",
+    "watch",
+    "---ヘルプ---",
+    "scope",
+    "troubleshooting"
+  ]
+}

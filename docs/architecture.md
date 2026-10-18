@@ -6,7 +6,7 @@ Workspace boundaries, runtime choices, and distribution.
 | ---------------------------- | -------------------------------------------------------------------------- |
 | `apps/calendarpit`           | React admin UI, TanStack Start adapter, Bun CLI and packaging              |
 | `apps/sample`                | Separate Bun consumer using the official Google SDK; HTTP integration test |
-| `apps/docs`                  | Astro Starlight landing page and documentation, published to GitHub Pages  |
+| `apps/docs`                  | TanStack Start + Fumadocs + MDX, prerendered for static hosting            |
 | `packages/server`            | Isolated state, validation, Google API, OAuth, watch delivery and tests    |
 | `packages/typescript-config` | Shared strict TypeScript configuration                                     |
 

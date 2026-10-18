@@ -3,11 +3,9 @@ title: Local OAuth
 description: Use Calendarpit's local OAuth 2.0 authorization code flow, token endpoints, and supported scopes.
 ---
 
-import { TabItem, Tabs } from '@astrojs/starlight/components';
-
 Calendarpit includes a local OAuth 2.0 authorization server for testing your app without a Google Cloud project or real Google accounts. During authorization, you pick a test user from a dropdown on the local consent page without entering a password.
 
-Point your app's OAuth client and Google Calendar SDK at `http://127.0.0.1:4173` before starting the flow. See [Connect your app](/calendarpit/connect/) for endpoint configuration.
+Point your app's OAuth client and Google Calendar SDK at `http://127.0.0.1:4173` before starting the flow. See [Connect your app](/connect/) for endpoint configuration.
 
 ## Endpoints
 
@@ -18,13 +16,13 @@ Point your app's OAuth client and Google Calendar SDK at `http://127.0.0.1:4173`
 | `POST` | `/oauth/token`                                | Exchange an authorization code or refresh token for an access token                                                                                              |
 | `POST` | `/oauth/revoke`                               | Revoke an access token or refresh token and its connection                                                                                                       |
 | `GET`  | `/userinfo`                                   | Return profile claims for the authorized test user                                                                                                               |
-| `POST` | `/__calendarpit/connections/{grantId}/revoke` | Revoke a connection from the management API (`204`; management API request rules apply; see [Test control API](/calendarpit/test-control/))                      |
+| `POST` | `/__calendarpit/connections/{grantId}/revoke` | Revoke a connection from the management API (`204`; management API request rules apply; see [Test control API](/test-control/))                                  |
 
 Only the paths above are routed. Google endpoints under `/oauth2/...` (such as `/oauth2/v4/token` or `/oauth2/v3/userinfo`) and unsupported HTTP methods on `/oauth/*` return `501` with `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}`.
 
 ## Authorization code flow
 
-1. **Register an OAuth client in your fixture.** Add an entry with `id`, `secret`, and `redirectUris` to the startup fixture's `clients` array. Each redirect URI must be an absolute `http:` or `https:` URL with no fragment or userinfo. The startup fixture seeds only a new database or a `:memory:` session. For an existing database file, load the fixture with `POST /__calendarpit/fixtures` (which replaces workspace data until the next reset) or start with a new database; see [Fixtures](/calendarpit/fixtures/) and [Storage and restarts](/calendarpit/storage/). The default fixture (used when neither `--config` nor `CALENDARPIT_CONFIG` is set) includes the client `sample-app` with secret `local-sample-secret` and redirect URI `http://127.0.0.1:4175/callback`.
+1. **Register an OAuth client in your fixture.** Add an entry with `id`, `secret`, and `redirectUris` to the startup fixture's `clients` array. Each redirect URI must be an absolute `http:` or `https:` URL with no fragment or userinfo. The startup fixture seeds only a new database or a `:memory:` session. For an existing database file, load the fixture with `POST /__calendarpit/fixtures` (which replaces workspace data until the next reset) or start with a new database; see [Fixtures](/fixtures/) and [Storage and restarts](/storage/). The default fixture (used when neither `--config` nor `CALENDARPIT_CONFIG` is set) includes the client `sample-app` with secret `local-sample-secret` and redirect URI `http://127.0.0.1:4175/callback`.
 2. **Send the browser to `GET /oauth/authorize`.** Build a URL at `http://127.0.0.1:4173/oauth/authorize` with URL-encoded query parameters:
    - `client_id` (required): Registered client ID (unknown IDs return `400 invalid_client`).
    - `redirect_uri` (required): Callback URL. Must match one of the client's `redirectUris` by exact string comparison (no loopback port wildcards or trailing-slash normalization; mismatches return `400 invalid_request`).
@@ -50,15 +48,15 @@ Only the paths above are routed. Google endpoints under `/oauth2/...` (such as `
    }
    ```
    `refresh_token` is present only when the authorization request included `access_type=offline`.
-6. **Call the API with the access token.** Pass `Authorization: Bearer <access_token>` on requests to `/calendar/v3/...` and `GET /userinfo`. See [SDK examples](/calendarpit/sdks/).
+6. **Call the API with the access token.** Pass `Authorization: Bearer <access_token>` on requests to `/calendar/v3/...` and `GET /userinfo`. See [SDK examples](/sdks/).
 
 ## HTTP examples
 
 These examples use shell variables for your client values and tokens. Set `PIT_CLIENT_ID`, `PIT_CLIENT_SECRET`, and `PIT_REDIRECT_URI` to your client's values, and set `PIT_CODE` to the code received by its callback. After the token exchange, set `PIT_REFRESH_TOKEN` to the returned `refresh_token` and `CALENDARPIT_ACCESS_TOKEN` to the `access_token`. If you used PKCE, also pass `--data-urlencode "code_verifier=$PIT_VERIFIER"` when exchanging the code. The Profile request requires `openid`, `email`, `profile`, or one of the `userinfo.*` scopes.
 
-<Tabs>
+<Tabs items={["Exchange","Refresh","Profile","Revoke"]}>
 
-<TabItem label="Exchange">
+<Tab value="Exchange" forceMount>
 
 ```sh
 curl --fail-with-body http://127.0.0.1:4173/oauth/token \
@@ -69,8 +67,8 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/token \
   --data-urlencode "code=$PIT_CODE"
 ```
 
-</TabItem>
-<TabItem label="Refresh">
+</Tab>
+<Tab value="Refresh" forceMount>
 
 ```sh
 curl --fail-with-body http://127.0.0.1:4173/oauth/token \
@@ -80,23 +78,23 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/token \
   --data-urlencode "refresh_token=$PIT_REFRESH_TOKEN"
 ```
 
-</TabItem>
-<TabItem label="Profile">
+</Tab>
+<Tab value="Profile" forceMount>
 
 ```sh
 curl --fail-with-body http://127.0.0.1:4173/userinfo \
   -H "Authorization: Bearer $CALENDARPIT_ACCESS_TOKEN"
 ```
 
-</TabItem>
-<TabItem label="Revoke">
+</Tab>
+<Tab value="Revoke" forceMount>
 
 ```sh
 curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
   --data-urlencode "token=$CALENDARPIT_ACCESS_TOKEN"
 ```
 
-</TabItem>
+</Tab>
 
 </Tabs>
 
@@ -121,13 +119,13 @@ Client authentication is required on every `POST /oauth/token` call (`authorizat
 | Refresh token         | No expiry until revoked, user deleted, reset, or fixture load     | No         | Yes                                |
 | Connection (grant)    | Until revoked, user deleted, reset, or fixture load               | No         | Yes                                |
 
-In `:memory:` mode, all OAuth state is lost when the process exits. See [Storage and restarts](/calendarpit/storage/).
+In `:memory:` mode, all OAuth state is lost when the process exits. See [Storage and restarts](/storage/).
 
 ### Refresh and revocation
 
 - **Refresh:** `grant_type=refresh_token` issues a new `access_token` (`expires_in: 3600`). It does not return or rotate the `refresh_token`; your existing refresh token stays valid. If you include `scope` in the refresh request, it must equal the original space-joined scope string exactly or the call fails with `400 invalid_scope`.
 - **Revoke (`POST /oauth/revoke`):** Pass an access token or refresh token in the `token` form field (or `?token=` query parameter). Client authentication is not required. Revoking either token revokes the entire grant, deletes all of its access tokens, refresh tokens, and authorization codes, and stops its watch channels. Passing an unknown token returns `200` with an empty body; a missing or blank `token` returns `400 invalidParameter`.
-- **Other invalidation triggers:** Revoking a connection in the admin UI (`POST /__calendarpit/connections/{grantId}/revoke`) or deleting the test user (`DELETE /__calendarpit/users/{id}`) invalidates the corresponding tokens and stops their watch channels. Calling `POST /__calendarpit/reset` or `POST /__calendarpit/fixtures` deletes all connections, tokens, authorization codes, and pending consents, and stops all watch channels. See [Test control API](/calendarpit/test-control/).
+- **Other invalidation triggers:** Revoking a connection in the admin UI (`POST /__calendarpit/connections/{grantId}/revoke`) or deleting the test user (`DELETE /__calendarpit/users/{id}`) invalidates the corresponding tokens and stops their watch channels. Calling `POST /__calendarpit/reset` or `POST /__calendarpit/fixtures` deletes all connections, tokens, authorization codes, and pending consents, and stops all watch channels. See [Test control API](/test-control/).
 
 ## Scopes
 
@@ -148,7 +146,7 @@ Every `GET /oauth/authorize` request must include at least one supported scope. 
 | `email`, `https://www.googleapis.com/auth/userinfo.email`        | `GET /userinfo` — adds `email`, `verified_email: true`, and `email_verified: true` to `{ sub, id }`                                                                                |
 | `profile`, `https://www.googleapis.com/auth/userinfo.profile`    | `GET /userinfo` — adds `name` to `{ sub, id }`                                                                                                                                     |
 
-Missing, expired, or revoked access tokens return `401` (`authError`) with a `WWW-Authenticate: Bearer` header. A valid token missing a required scope for the endpoint returns `403` (`insufficientPermissions`). `channels.stop` also requires the token to belong to the same connection (grant) that opened the channel; other connections receive `404` (`notFound`). Unlike `/oauth/*` endpoints, `GET /userinfo` and Calendar API endpoints return errors in the Google API error envelope; see [Troubleshooting](/calendarpit/troubleshooting/).
+Missing, expired, or revoked access tokens return `401` (`authError`) with a `WWW-Authenticate: Bearer` header. A valid token missing a required scope for the endpoint returns `403` (`insufficientPermissions`). `channels.stop` also requires the token to belong to the same connection (grant) that opened the channel; other connections receive `404` (`notFound`). Unlike `/oauth/*` endpoints, `GET /userinfo` and Calendar API endpoints return errors in the Google API error envelope; see [Troubleshooting](/troubleshooting/).
 
 `openid` only grants access to `GET /userinfo` with `{ sub, id }`. Calendarpit does not return an `id_token` from `/oauth/token`, does not serve `/.well-known/openid-configuration` or JWKS, and does not include `picture`, `given_name`, `family_name`, or `locale` in `/userinfo`.
 
@@ -167,4 +165,4 @@ Validation errors on `GET /oauth/authorize` return a `400` JSON response (`{"err
 - **Other token grant types** on `POST /oauth/token` return `400 unsupported_grant_type` (after client authentication succeeds).
 - **API keys (`key=` query parameter)** are accepted as a system parameter on API requests but never replace bearer token authentication.
 
-See [Scope and limitations](/calendarpit/scope/) for a summary of all unsupported Google features.
+See [Scope and limitations](/scope/) for a summary of all unsupported Google features.

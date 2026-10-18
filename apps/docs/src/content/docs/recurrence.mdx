@@ -3,7 +3,7 @@ title: Events, recurrence and time
 description: How Calendarpit expands recurring events, simulates invitations and meetings locally, and handles time zones, DST, and free/busy intervals.
 ---
 
-Calendarpit expands recurring series, syncs invitations between local test users, and calculates time ranges and free/busy intervals locally. For supported endpoints and fields, see [Calendar API compatibility](/calendarpit/compatibility/).
+Calendarpit expands recurring series, syncs invitations between local test users, and calculates time ranges and free/busy intervals locally. For supported endpoints and fields, see [Calendar API compatibility](/compatibility/).
 
 ## Recurrence
 
@@ -11,7 +11,7 @@ In `events.list`, `singleEvents=false` (default) returns series masters and stor
 
 `GET /calendar/v3/calendars/{calendarId}/events/{eventId}/instances` always returns expanded occurrences for one series (with `singleEvents=false`, cancelled exceptions appear without `showDeleted`). It accepts the `events.list` parameters (such as `timeMin`, `timeMax`, `showDeleted`, `maxResults`, `pageToken`, and `timeZone`) plus `originalStart`, rejects `syncToken`, and omits `nextSyncToken`.
 
-Each instance carries `recurringEventId`, `originalStartTime`, and a deterministic ID (`<seriesId>_<YYYYMMDDTHHMMSSZ>` in UTC for timed events, or `<seriesId>_<YYYYMMDD>` for all-day events). On `/events/{instanceId}`, `GET` returns the occurrence even if no exception is stored; `PUT` and `PATCH` store it as an exception; `DELETE` stores a cancelled exception. Updating a master updates its instances and cancels stored exceptions the new rule no longer produces; deleting a master cancels its exceptions. With `singleEvents=true`, [incremental sync](/calendarpit/sync/) reports removed occurrences as `cancelled`. `freebusy.query` uses the same expansion.
+Each instance carries `recurringEventId`, `originalStartTime`, and a deterministic ID (`<seriesId>_<YYYYMMDDTHHMMSSZ>` in UTC for timed events, or `<seriesId>_<YYYYMMDD>` for all-day events). On `/events/{instanceId}`, `GET` returns the occurrence even if no exception is stored; `PUT` and `PATCH` store it as an exception; `DELETE` stores a cancelled exception. Updating a master updates its instances and cancels stored exceptions the new rule no longer produces; deleting a master cancels its exceptions. With `singleEvents=true`, [incremental sync](/sync/) reports removed occurrences as `cancelled`. `freebusy.query` uses the same expansion.
 
 ### Rules, limits, and DST
 
@@ -30,10 +30,10 @@ Each instance carries `recurringEventId`, `originalStartTime`, and a determinist
 
 Calendarpit never sends email or calls Google Meet.
 
-- **Invitations:** `attendees` accepts up to 200 unique emails (`displayName`, `optional`, `resource`, `additionalGuests`, `comment`, and `responseStatus`: `needsAction`, `accepted`, `tentative`, `declined`). Inviting a local test user with a primary calendar writes a copy (same `id` and `iCalUID`) to that calendar. Organizer updates and cancellations propagate to copies and trigger [watch notifications](/calendarpit/watch/); removing an attendee cancels their copy. `reminders` and `extendedProperties.private` stay per-copy; `extendedProperties.shared` comes from the organizer.
+- **Invitations:** `attendees` accepts up to 200 unique emails (`displayName`, `optional`, `resource`, `additionalGuests`, `comment`, and `responseStatus`: `needsAction`, `accepted`, `tentative`, `declined`). Inviting a local test user with a primary calendar writes a copy (same `id` and `iCalUID`) to that calendar. Organizer updates and cancellations propagate to copies and trigger [watch notifications](/watch/); removing an attendee cancels their copy. `reminders` and `extendedProperties.private` stay per-copy; `extendedProperties.shared` comes from the organizer.
 - **RSVP and invitee edits:** Invitees must use `PATCH` (`PUT` returns `403 forbiddenForNonOrganizer`) and may only edit their own `responseStatus` and `comment` (or set `attendeesOmitted: true` with only their own entry), plus `reminders`, `colorId`, `transparency`, and `extendedProperties`. RSVP changes update the organizer and other copies (an RSVP to one instance of a series creates an exception in the organizer's calendar). Declining sets the invitee's copy to `transparent` (other `attendees` patches reset it to `opaque`). The next organizer update overwrites `colorId` and `transparency` changes on a copy.
 - **Guest flags:** `guestsCanModify` (`false`), `guestsCanInviteOthers` (`true`), and `guestsCanSeeOtherGuests` (`true`) round-trip as booleans, and only the organizer can change them. They are stored only and do not change what invitees may edit.
-- **`sendUpdates`:** `all` records one entry per write with all attendees except the organizer in `recipients` (including removed attendees; for an invitee's `REPLY`, the recipient is the organizer). `externalOnly` records only recipients who are not local users. Entries (`REQUEST`, `CANCEL`, or `REPLY`) appear in `GET /__calendarpit/state` under `notifications` (last 200; see [Test control API](/calendarpit/test-control/)). `none` (default) records nothing. Local copies sync regardless.
+- **`sendUpdates`:** `all` records one entry per write with all attendees except the organizer in `recipients` (including removed attendees; for an invitee's `REPLY`, the recipient is the organizer). `externalOnly` records only recipients who are not local users. Entries (`REQUEST`, `CANCEL`, or `REPLY`) appear in `GET /__calendarpit/state` under `notifications` (last 200; see [Test control API](/test-control/)). `none` (default) records nothing. Local copies sync regardless.
 - **Reminders:** `{ useDefault: boolean, overrides?: [{ method: "email" | "popup", minutes: 0..40320 }] }` (max 5 overrides when `useDefault: false`). Stored only; never fired.
 - **Conference data:** Non-null `conferenceData` requires `?conferenceDataVersion=1`. A `hangoutsMeet` `createRequest.requestId` generates a deterministic ID, `hangoutLink`, and a `video` entry point at `https://meet.calendarpit.invalid/<id>`. `conferenceData: null` clears it.
 

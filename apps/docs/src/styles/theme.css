@@ -1,115 +1,42 @@
-/* Roboto Mono everywhere, matching the admin UI. The font link lives in
-   `astro.config.ts`; these stacks fall back to the system monospace. Roboto
-   Mono has no Japanese glyphs, so Japanese pages name common system fonts
-   before the generic fallback. */
-:root {
-  --sl-font: 'Roboto Mono', ui-monospace, monospace;
-  --sl-font-mono: 'Roboto Mono', ui-monospace, monospace;
-}
-:root:lang(ja) {
-  --sl-font:
-    'Roboto Mono', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP',
-    'Noto Sans CJK JP', 'Yu Gothic UI', 'Yu Gothic', Meiryo, ui-monospace,
-    monospace;
-  --sl-font-mono:
-    'Roboto Mono', 'Hiragino Sans', 'Noto Sans JP', 'Noto Sans CJK JP',
-    'Yu Gothic UI', Meiryo, ui-monospace, monospace;
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans:
+    'Geist', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Compact type scale. Starlight's defaults are 16px body, 42px page title and
-   a 1.75 line height; the admin UI body is 14px. These values keep the site
-   readable but denser. */
-:root {
-  --sl-text-xs: 0.75rem; /* 12px, was 13px */
-  --sl-text-sm: 0.8125rem; /* 13px, was 14px */
-  --sl-text-base: 0.875rem; /* 14px, was 16px; sidebar group labels */
-  --sl-text-body: 0.875rem; /* 14px, was 16px */
-  --sl-text-body-sm: 0.75rem; /* 12px, was 13px */
-  --sl-text-code: 0.8125rem; /* 13px, was 14px */
-  --sl-text-code-sm: 0.75rem; /* 12px, was 13px */
-  --sl-text-h1: 1.625rem; /* 26px, was 35px (42px from 800px wide) */
-  --sl-text-h2: 1.25rem; /* 20px, was 29px (35px) */
-  --sl-text-h3: 1.0625rem; /* 17px, was 24px (29px) */
-  --sl-text-h4: 0.9375rem; /* 15px, was 20px (24px) */
-  --sl-text-h5: 0.875rem; /* 14px, was 18px */
-  --sl-line-height: 1.65; /* was 1.75 */
-  --sl-content-gap-y: 0.75rem; /* was 1rem */
-  --sl-nav-height: 3.25rem; /* was 3.5rem (4rem) */
-  --sl-sidebar-width: 16rem; /* was 18.75rem */
-  --sl-content-width: 50rem; /* was 45rem */
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  letter-spacing: -0.04em;
 }
-:root:lang(ja) {
-  --sl-line-height: 1.85;
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  transform: translateY(-200%);
+  background: var(--color-fd-background);
+  padding: 0.75rem;
 }
-@media (min-width: 50em) {
-  :root {
-    --sl-nav-height: 3.5rem;
-    --sl-text-h1: 1.75rem; /* 28px, was 42px */
-    --sl-text-h2: 1.375rem; /* 22px, was 35px */
-    --sl-text-h3: 1.125rem; /* 18px, was 29px */
-    --sl-text-h4: 1rem; /* 16px, was 24px */
-  }
+.skip-link:focus {
+  transform: translateY(0);
 }
-
-/* Calendarpit's palette, taken from the admin UI: warm paper, near-black ink
-   and an orange signal color. Accent text keeps at least 4.5:1 contrast. */
-:root {
-  --sl-color-accent-low: #412a21;
-  --sl-color-accent: #ff8d57;
-  --sl-color-accent-high: #ffac82;
-  --sl-color-bg: #161719;
-  --sl-color-bg-nav: #1c1d20;
-  --sl-color-bg-sidebar: #1c1d20;
-  --sl-color-hairline-light: #2b2c30;
-  --sl-color-hairline: #38393c;
-  --sl-color-hairline-shade: #1c1d20;
-  --sl-color-bg-inline-code: #2b2c30;
+.not-found {
+  max-width: 800px;
+  margin: 5rem auto;
+  padding: 1.5rem;
 }
-:root[data-theme='light'] {
-  --sl-color-accent-low: #fcece3;
-  --sl-color-accent: #ad3b0d;
-  --sl-color-accent-high: #6e2308;
-  --sl-color-bg: #f2f1ec;
-  --sl-color-bg-nav: #f8f7f3;
-  --sl-color-bg-sidebar: #f8f7f3;
-  --sl-color-hairline-light: #e2e0d8;
-  --sl-color-hairline: #cbc8be;
-  --sl-color-hairline-shade: #e2e0d8;
-  --sl-color-bg-inline-code: #e9e7e0;
+.not-found h1 {
+  font-size: 2.5rem;
+  margin-block: 1.5rem;
 }
-
-/* Starlight sets no explicit body size: content inherits the browser's 16px.
-   Apply the compact body size to the whole page. */
-body {
-  font-size: var(--sl-text-body);
-}
-:where(.sl-markdown-content) :not(pre) > code {
-  padding: 0.1rem 0.3rem;
-}
-
-/* Denser sidebar and tables. */
-.sidebar-content {
-  gap: 0.75rem;
-}
-:where(.sl-markdown-content) table {
-  font-size: var(--sl-text-code);
-}
-:where(.sl-markdown-content) :is(th, td) {
-  padding: 0.35rem 0.75rem;
-}
-
-/* Starlight sizes the language select for a proportional font ("7em"); Roboto
-   Mono is wider and clipped "English". */
-starlight-lang-select label {
-  --sl-select-width: 8em !important;
-}
-
-/* Buttons and cards in the admin UI's shape: 8px corners, and the accent
-   color for every card icon instead of Starlight's rotating hues. */
-.sl-link-button {
-  border-radius: 8px;
-}
-.card {
-  --sl-card-border: var(--sl-color-accent);
-  --sl-card-bg: var(--sl-color-accent-low);
+.not-found p {
+  margin-block: 1.5rem;
 }

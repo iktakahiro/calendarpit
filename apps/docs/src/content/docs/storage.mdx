@@ -9,7 +9,7 @@ Calendarpit stores workspace state in a local SQLite file by default, or in memo
 
 With Homebrew or a standalone executable, the default file is `.calendarpit/calendarpit.sqlite` in the directory where you start Calendarpit. Run it from your project directory to keep that project's data together.
 
-Use `--database <path>` or `CALENDARPIT_DATABASE` to choose a file or `:memory:`. CLI flags override environment variables. Check prerequisites and publication status in [Installation](/calendarpit/installation/).
+Use `--database <path>` or `CALENDARPIT_DATABASE` to choose a file or `:memory:`. CLI flags override environment variables. Check prerequisites and publication status in [Installation](/installation/).
 
 ```sh
 # Temporary E2E session; no database files are written
@@ -21,7 +21,7 @@ calendarpit serve --database ./.calendarpit/manual.sqlite
 
 - **SQLite file (default):** Saves changes after each request that modifies state and after each webhook delivery finishes. Relative paths resolve against the working directory.
 - **In-memory (`:memory:`):** Writes no database or lock files. All state is discarded when the process exits.
-- **Docker:** The image sets `CALENDARPIT_DATABASE=/data/calendarpit.sqlite`. Mount a named volume with `-v calendarpit-data:/data` to retain data when the container is removed and re-created. Pass `-e CALENDARPIT_DATABASE=:memory:` for a temporary session. The [Compose example](/calendarpit/installation/) also uses a named volume: `docker compose down` preserves data, while `docker compose down -v` deletes it.
+- **Docker:** The image sets `CALENDARPIT_DATABASE=/data/calendarpit.sqlite`. Mount a named volume with `-v calendarpit-data:/data` to retain data when the container is removed and re-created. Pass `-e CALENDARPIT_DATABASE=:memory:` for a temporary session. The [Compose example](/installation/) also uses a named volume: `docker compose down` preserves data, while `docker compose down -v` deletes it.
 
 Check the active storage mode and path in:
 
@@ -45,16 +45,16 @@ On `SIGINT` or `SIGTERM`, Calendarpit aborts in-flight webhook deliveries, saves
 | Sync tokens, calendar tombstones                                                                 | Restored; cleared by a reset or fixture load                                                                           |
 | Pending consents, authorization codes, page tokens                                               | Discarded (`calendarList` and `events` cursors); restart the flow or list query                                        |
 
-After a restart, refetch calendar state in your app to reconcile [watch notifications](/calendarpit/watch/) interrupted by shutdown.
+After a restart, refetch calendar state in your app to reconcile [watch notifications](/watch/) interrupted by shutdown.
 
 ## Seed baseline, fixtures, and reset
 
-A startup [fixture](/calendarpit/fixtures/) (`--config`, `CALENDARPIT_CONFIG`, or the built-in default) seeds **only a new database**:
+A startup [fixture](/fixtures/) (`--config`, `CALENDARPIT_CONFIG`, or the built-in default) seeds **only a new database**:
 
 - **Existing SQLite file:** Reopens saved data and the original baseline. If `--config` or `CALENDARPIT_CONFIG` is set, the fixture's contents are ignored and do not overwrite the database. The file must still exist and contain valid JSON.
 - **In-memory mode:** Every start is a new database, so the startup fixture is applied and any omitted IDs are regenerated on every start.
-- **Reset (`POST /__calendarpit/reset`):** Restores the original startup baseline even after restarts. It clears connections, tokens, codes, consents, watch channels, calendar-list settings, [sync tokens](/calendarpit/sync/), page tokens, calendar tombstones, request history, notifications, and deliveries, and saves immediately. It does not delete the SQLite file or modify the fixture file.
-- **Load fixture (`POST /__calendarpit/fixtures`):** Replaces current data and clears runtime state **without changing the reset baseline**. Subsequent resets still restore the original seed. See [Test control API](/calendarpit/test-control/).
+- **Reset (`POST /__calendarpit/reset`):** Restores the original startup baseline even after restarts. It clears connections, tokens, codes, consents, watch channels, calendar-list settings, [sync tokens](/sync/), page tokens, calendar tombstones, request history, notifications, and deliveries, and saves immediately. It does not delete the SQLite file or modify the fixture file.
+- **Load fixture (`POST /__calendarpit/fixtures`):** Replaces current data and clears runtime state **without changing the reset baseline**. Subsequent resets still restore the original seed. See [Test control API](/test-control/).
 
 ## Locking, files, and parallel runs
 

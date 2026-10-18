@@ -9,7 +9,7 @@ Calendarpit implements Google Calendar's full and incremental synchronization fl
 
 Every full `events.list` call (not `events.instances`) issues a sync token, whether or not you pass `showDeleted=true`. Follow every `nextPageToken` until the final page. Send the same query parameters with each `pageToken`; changing a parameter returns HTTP `410` (`invalidPageToken`). Calendarpit returns `nextSyncToken` only on the last page, never alongside `nextPageToken`. Save `nextSyncToken` after you process all pages.
 
-Page rows and the sync snapshot are frozen together on the first page. Event writes during pagination appear in the next incremental sync. With `singleEvents=true`, always set `timeMax` on the full sync. A token issued without `timeMax` returns HTTP `400` (`unsupportedFeature`) if the calendar contains an unbounded recurring series (an `RRULE` without `COUNT` or `UNTIL`). A deleted unbounded series still counts because its tombstone stays in the calendar until a reset or fixture load. In that case, run a new full sync with `timeMax`. With `singleEvents=false`, a full `events.list` with `timeMin` and no `timeMax` is also rejected when such a series exists (see [Events, recurrence and time](/calendarpit/recurrence/)). Incremental syncs with `singleEvents=false` are not affected.
+Page rows and the sync snapshot are frozen together on the first page. Event writes during pagination appear in the next incremental sync. With `singleEvents=true`, always set `timeMax` on the full sync. A token issued without `timeMax` returns HTTP `400` (`unsupportedFeature`) if the calendar contains an unbounded recurring series (an `RRULE` without `COUNT` or `UNTIL`). A deleted unbounded series still counts because its tombstone stays in the calendar until a reset or fixture load. In that case, run a new full sync with `timeMax`. With `singleEvents=false`, a full `events.list` with `timeMin` and no `timeMax` is also rejected when such a series exists (see [Events, recurrence and time](/recurrence/)). Incremental syncs with `singleEvents=false` are not affected.
 
 ```ts
 // api is the Google SDK client configured with Calendarpit's rootUrl.
@@ -35,7 +35,7 @@ do {
 
 ## Incremental synchronization
 
-After a [watch notification](/calendarpit/watch/) or on a poll timer, call `events.list` with `syncToken`. You can paginate incremental results with `maxResults` and `pageToken`.
+After a [watch notification](/watch/) or on a poll timer, call `events.list` with `syncToken`. You can paginate incremental results with `maxResults` and `pageToken`.
 
 ```ts
 const previousToken = syncToken;
@@ -81,5 +81,5 @@ Sync tokens are opaque UUIDs bound to the user, calendar, expansion options, and
 | `pageToken` | 1 hour TTL; max 1,000 frozen pages per workspace (oldest evicted first) | In-memory only (lost on restart)                     | HTTP `410` (`invalidPageToken`) |
 
 - **HTTP `410` (`fullSyncRequired`)**: Returned when a `syncToken` is unknown, expired, evicted past the 100-token limit, cleared by a reset or fixture load, or issued for another user or calendar. Each full or incremental `events.list` request without a `pageToken` issues a new token. All users and calendars, including management API event lists, share the 100-token limit. Discard your local synced data for that calendar and run a full sync.
-- **Resets and fixtures**: `POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` clear all sync tokens and page tokens (see [Test control API](/calendarpit/test-control/)). They also revoke all OAuth grants, so clients must reauthorize first.
+- **Resets and fixtures**: `POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` clear all sync tokens and page tokens (see [Test control API](/test-control/)). They also revoke all OAuth grants, so clients must reauthorize first.
 - **Page cursors**: Event `pageToken` cursors are bound to the query parameters and user, and do not survive restarts, resets, or fixture loads. After HTTP `410` (`invalidPageToken`), restart pagination from your `syncToken` or restart the full sync.

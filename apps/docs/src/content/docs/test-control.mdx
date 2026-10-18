@@ -50,17 +50,17 @@ All paths below are relative to `/__calendarpit`.
 
 | Behavior                          | `POST /__calendarpit/reset`        | `POST /__calendarpit/fixtures`                                         |
 | --------------------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
-| Users, calendars, events, clients | Restored from the startup baseline | Replaced by the posted [fixture JSON](/calendarpit/fixtures/)          |
+| Users, calendars, events, clients | Restored from the startup baseline | Replaced by the posted [fixture JSON](/fixtures/)                      |
 | Startup reset baseline            | Unchanged                          | Unchanged (the next `/reset` still restores the original startup seed) |
 | Runtime state                     | Cleared                            | Cleared                                                                |
 
 Validation on `POST /__calendarpit/fixtures` is atomic. If any record is invalid, Calendarpit returns `400` and changes nothing.
 
-Both endpoints stop all active [watch channels](/calendarpit/watch/) and abort their in-flight requests. They also clear:
+Both endpoints stop all active [watch channels](/watch/) and abort their in-flight requests. They also clear:
 
 - OAuth connections, access and refresh tokens, authorization codes, and pending consents
 - Request history
-- [Sync tokens](/calendarpit/sync/), plus event and calendar list page tokens
+- [Sync tokens](/sync/), plus event and calendar list page tokens
 - Calendar tombstones
 - Per-user calendar list settings: customizations made with `calendarList.insert`/`patch`/`update`, and removals made with `calendarList.delete`
 - Invitation notifications and all delivery log records
@@ -93,7 +93,7 @@ Keep your original fixture files for seeding and reloading.
 - **Isolate parallel workers:** Run one Calendarpit process per test worker with `--port 0` and `--database :memory:`. You can also give each worker its own SQLite file.
 - **Read the port from stdout:** With `--port 0`, read the URL from the startup line `Admin  http://127.0.0.1:<port>/`. For example, match it with `/Admin\s+(http:\/\/[^\s]+)/`. Then poll `GET /__calendarpit/health` until it responds before running tests.
 - **Drain webhook deliveries instead of sleeping:** `POST /__calendarpit/deliveries/drain` waits for the deliveries pending when you call it, including their retries. `/reset` aborts in-progress webhook requests, though a receiver may still receive a request before it is aborted.
-- **Refetch after restarts:** When testing [SQLite restarts](/calendarpit/storage/), deliveries queued before shutdown are marked `cancelled` and are not sent again. Refetch the calendar state after the restart.
+- **Refetch after restarts:** When testing [SQLite restarts](/storage/), deliveries queued before shutdown are marked `cancelled` and are not sent again. Refetch the calendar state after the restart.
 
 ```ts
 const baseUrl = 'http://127.0.0.1:4173';

@@ -11,7 +11,7 @@ Setting explicit `id` values in a fixture gives your tests fixed user, calendar,
 
 Pass a fixture file path with the `--config` CLI flag or the `CALENDARPIT_CONFIG` environment variable. If you omit both, Calendarpit loads a built-in default fixture matching `fixtures/default.json` in the repository (users `alex` and `sam`, calendars `alex-work`, `alex-personal`, and `sam-work`, one `planning` event, and the `sample-app` OAuth client).
 
-Save the JSON example below as `calendarpit.fixture.json` and edit it for your test. Check prerequisites and publication status in [Installation](/calendarpit/installation/), then start from the directory containing the file:
+Save the JSON example below as `calendarpit.fixture.json` and edit it for your test. Check prerequisites and publication status in [Installation](/installation/), then start from the directory containing the file:
 
 ```sh
 calendarpit serve \
@@ -30,14 +30,14 @@ docker run --rm -p 127.0.0.1:4173:4173 \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-For Compose, add `./calendarpit.fixture.json:/fixtures/startup.json:ro` to the service's `volumes` and set `CALENDARPIT_CONFIG: /fixtures/startup.json` in `environment`. The host file must be readable by the container's non-root user. See [Run and configure](/calendarpit/running/) for startup options.
+For Compose, add `./calendarpit.fixture.json:/fixtures/startup.json:ro` to the service's `volumes` and set `CALENDARPIT_CONFIG: /fixtures/startup.json` in `environment`. The host file must be readable by the container's non-root user. See [Run and configure](/running/) for startup options.
 
 A startup fixture seeds only a **new, empty** database:
 
 - In `--database :memory:` mode, the database is new on every process start, so the fixture always applies.
-- When a SQLite file already contains saved data, Calendarpit does not apply the fixture and prints no warning. It loads the saved data (including per-user calendar-list settings and deleted-calendar tombstones) and the original reset baseline. The path you pass must still point to a readable JSON file, or startup fails. Its contents are not validated in this case. See [Storage and restarts](/calendarpit/storage/) for details.
+- When a SQLite file already contains saved data, Calendarpit does not apply the fixture and prints no warning. It loads the saved data (including per-user calendar-list settings and deleted-calendar tombstones) and the original reset baseline. The path you pass must still point to a readable JSON file, or startup fails. Its contents are not validated in this case. See [Storage and restarts](/storage/) for details.
 
-To load a different fixture at runtime or reset to the startup baseline between tests, use `POST /__calendarpit/fixtures` or `POST /__calendarpit/reset`. Both clear OAuth grants and tokens, per-user calendar-list settings, deleted-calendar tombstones, watch channels, deliveries, request history, sync tokens, and notifications. Reset restores the startup fixture, including default calendar-list entries with their startup etags. `GET /__calendarpit/state` omits client secrets, calendar-list settings, and tombstones, and cannot be reloaded as a fixture. See [Test control API](/calendarpit/test-control/).
+To load a different fixture at runtime or reset to the startup baseline between tests, use `POST /__calendarpit/fixtures` or `POST /__calendarpit/reset`. Both clear OAuth grants and tokens, per-user calendar-list settings, deleted-calendar tombstones, watch channels, deliveries, request history, sync tokens, and notifications. Reset restores the startup fixture, including default calendar-list entries with their startup etags. `GET /__calendarpit/state` omits client secrets, calendar-list settings, and tombstones, and cannot be reloaded as a fixture. See [Test control API](/test-control/).
 
 ## Root structure and example
 
@@ -111,7 +111,7 @@ Defines calendars owned by fixture users. Every user that owns calendars must ha
 | `timeZone` | Optional | `"UTC"`        | Valid IANA time zone name (else `"Invalid IANA time zone."`).                     |
 | `primary`  | Optional | `false`        | Boolean (else `"primary must be boolean."`).                                      |
 
-Seeded calendars start on their owner's calendar list with default settings (`selected: true`, `colorId: "1"`). When you later modify calendars or users through the management API (see [Test control API](/calendarpit/test-control/)):
+Seeded calendars start on their owner's calendar list with default settings (`selected: true`, `colorId: "1"`). When you later modify calendars or users through the management API (see [Test control API](/test-control/)):
 
 - Deleting a primary calendar makes the first remaining owned calendar on the calendar list the new primary calendar, or the first remaining owned calendar if none are on the list. The new primary calendar is put back on the list if needed, keeping its other list settings.
 - Setting `"primary": true` on another calendar transfers the flag atomically and puts that calendar back on the calendar list, keeping its other list settings.
@@ -119,7 +119,7 @@ Seeded calendars start on their owner's calendar list with default settings (`se
 
 ### `events`
 
-Defines initial events. Fixture events use the Calendar API event fields and validation rules (see [Calendar API compatibility](/calendarpit/compatibility/) and [Events, recurrence and time](/calendarpit/recurrence/)), plus `calendarId`. Read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`) may be set, and `conferenceData` does not require `conferenceDataVersion`. The request-only field `attendeesOmitted` is rejected (`"Unsupported field: attendeesOmitted"`). Seeding does not trigger API insert side effects: attendees do not receive invitation copies in their own calendars, and a `conferenceData.createRequest` does not generate a meeting link.
+Defines initial events. Fixture events use the Calendar API event fields and validation rules (see [Calendar API compatibility](/compatibility/) and [Events, recurrence and time](/recurrence/)), plus `calendarId`. Read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`) may be set, and `conferenceData` does not require `conferenceDataVersion`. The request-only field `attendeesOmitted` is rejected (`"Unsupported field: attendeesOmitted"`). Seeding does not trigger API insert side effects: attendees do not receive invitation copies in their own calendars, and a `conferenceData.createRequest` does not generate a meeting link.
 
 | Field                                                                      | Required | Default                                                                                                                                            | Rules                                                                                                                                                                                                                                                                             |
 | -------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -132,7 +132,7 @@ Defines initial events. Fixture events use the Calendar API event fields and val
 
 ### `clients`
 
-Defines OAuth clients for [Local OAuth](/calendarpit/oauth/). There is no `scopes` field per client; any client may request any supported scope.
+Defines OAuth clients for [Local OAuth](/oauth/). There is no `scopes` field per client; any client may request any supported scope.
 
 | Field          | Required | Default        | Rules                                                                                                                                                     |
 | -------------- | -------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -21,13 +21,13 @@ docker run --rm \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-Google アカウント、Google Cloud プロジェクト、外部データベース、`.env` ファイル、プロバイダーの認証情報は不要です。どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。Compose と単体ダウンロードは[インストール](/calendarpit/ja/installation/)で説明しています。
+Google アカウント、Google Cloud プロジェクト、外部データベース、`.env` ファイル、プロバイダーの認証情報は不要です。どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。Compose と単体ダウンロードは[インストール](/ja/installation/)で説明しています。
 
 ## 管理画面を開く
 
 `http://127.0.0.1:4173` を開きます。組み込みのフィクスチャにはテストユーザー `alex` と `sam`、3 つのカレンダー、`2026-10-19` の planning イベントが含まれます。API 経由の変更も自動で表示されます。
 
-CLI は実行ディレクトリ内の `.calendarpit/calendarpit.sqlite` にデータを保存します。Docker はマウントしたボリュームに保存します。一時的なテストには、CLI で `--database :memory:`、Docker で `-e CALENDARPIT_DATABASE=:memory:` を指定してください。[ストレージと再起動](/calendarpit/ja/storage/)も参照してください。
+CLI は実行ディレクトリ内の `.calendarpit/calendarpit.sqlite` にデータを保存します。Docker はマウントしたボリュームに保存します。一時的なテストには、CLI で `--database :memory:`、Docker で `-e CALENDARPIT_DATABASE=:memory:` を指定してください。[ストレージと再起動](/ja/storage/)も参照してください。
 
 ## ヘルスエンドポイントを確認する
 
@@ -54,12 +54,12 @@ curl http://127.0.0.1:4173/__calendarpit/health
 
 ## アプリを接続する
 
-[アプリを接続する](/calendarpit/ja/connect/)に従って、SDK と OAuth フローの接続先を Calendarpit に変更します。[フィクスチャ](/calendarpit/ja/fixtures/)でローカルのクライアント認証情報と、完全一致するコールバック URI を登録してください。組み込みの `sample-app` / `local-sample-secret` は公開されているテスト用の値で、コールバックは `http://127.0.0.1:4175/callback` です。
+[アプリを接続する](/ja/connect/)に従って、SDK と OAuth フローの接続先を Calendarpit に変更します。[フィクスチャ](/ja/fixtures/)でローカルのクライアント認証情報と、完全一致するコールバック URI を登録してください。組み込みの `sample-app` / `local-sample-secret` は公開されているテスト用の値で、コールバックは `http://127.0.0.1:4175/callback` です。
 
 リポジトリに含まれるサンプルアプリを使うと、認可、イベント作成、FreeBusy、watch 通知、接続の取り消しを一通り試せます。起動方法は[開発ガイド](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)を参照してください（サンプルは配布パッケージとは別のアプリです）。
 
 ## 次のステップ
 
-- [起動と設定](/calendarpit/ja/running/) — ポート、フィクスチャ、環境変数。
-- [テスト制御 API](/calendarpit/ja/test-control/) — 状態のリセットと通知配信の完了待ち。
-- [対応範囲と制限](/calendarpit/ja/scope/) — 実装済みの互換機能と対象外の機能。
+- [起動と設定](/ja/running/) — ポート、フィクスチャ、環境変数。
+- [テスト制御 API](/ja/test-control/) — 状態のリセットと通知配信の完了待ち。
+- [対応範囲と制限](/ja/scope/) — 実装済みの互換機能と対象外の機能。

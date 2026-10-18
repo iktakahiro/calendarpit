@@ -3,18 +3,17 @@ title: SDK examples
 description: Point official Google Calendar clients in TypeScript, Python, Go, Java, and C# at Calendarpit.
 ---
 
-import { TabItem, Tabs } from '@astrojs/starlight/components';
-
 Point your app's official Google Calendar SDK client at Calendarpit. You do not need a Calendarpit-specific SDK. The examples below list calendars and query FreeBusy.
 
 ## Before you call the SDK
 
-Start Calendarpit (for example with `calendarpit serve`; see [Run and configure](/calendarpit/running/)), then complete the [local OAuth flow](/calendarpit/oauth/) with the `https://www.googleapis.com/auth/calendar` scope (add `access_type=offline` if you need a refresh token). Set `CALENDARPIT_ACCESS_TOKEN` in your shell to the resulting access token (valid for one hour). These examples read that variable directly; it is not a Google SDK setting.
+Start Calendarpit (for example with `calendarpit serve`; see [Run and configure](/running/)), then complete the [local OAuth flow](/oauth/) with the `https://www.googleapis.com/auth/calendar` scope (add `access_type=offline` if you need a refresh token). Set `CALENDARPIT_ACCESS_TOKEN` in your shell to the resulting access token (valid for one hour). These examples read that variable directly; it is not a Google SDK setting.
 
-:::note
-These snippets pass an existing access token to show how to route Calendar API requests to Calendarpit. They do not handle authorization callbacks or automatic token refresh. Refresh tokens through `POST /oauth/token`, then update the client's token or recreate the client. See [Connect your app](/calendarpit/connect/) for the sample app and full OAuth client configuration.
-:::
+<Callout>
 
+These snippets pass an existing access token to show how to route Calendar API requests to Calendarpit. They do not handle authorization callbacks or automatic token refresh. Refresh tokens through `POST /oauth/token`, then update the client's token or recreate the client. See [Connect your app](/connect/) for the sample app and full OAuth client configuration.
+
+</Callout>
 Install the packages listed in each tab in your project. Calendarpit does not install language runtimes or SDK packages for you.
 
 ## Configure the service URL
@@ -29,12 +28,12 @@ Endpoint formats differ across libraries. Preserve trailing slashes where shown.
 | Java                    | `setRootUrl` + `setServicePath`         | `http://127.0.0.1:4173/` + `calendar/v3/` |
 | C# / .NET               | `BaseClientService.Initializer.BaseUri` | `http://127.0.0.1:4173/calendar/v3/`      |
 
-Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client also use that local URL. For `calendarList`, `list`, `get`, `insert`, `patch`, `update`, `delete`, and `watch` are supported with the single-owner limits in [Calendar API compatibility](/calendarpit/compatibility/). Only the operations listed there are supported, even if the SDK exposes more methods.
+Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client also use that local URL. For `calendarList`, `list`, `get`, `insert`, `patch`, `update`, `delete`, and `watch` are supported with the single-owner limits in [Calendar API compatibility](/compatibility/). Only the operations listed there are supported, even if the SDK exposes more methods.
 
 ## List calendars and query FreeBusy
 
-<Tabs>
-<TabItem label="TypeScript / JavaScript">
+<Tabs items={["TypeScript / JavaScript","Python","Go","Java","C#","HTTP / curl"]}>
+<Tab value="TypeScript / JavaScript" forceMount>
 
 Packages: `@googleapis/calendar` and `google-auth-library`. Run with Bun, or with Node.js 22 or later as an ES module (`.mjs`). The monolithic `googleapis` package also accepts `google.calendar({ version: 'v3', auth, rootUrl })`.
 
@@ -67,12 +66,12 @@ const { data } = await api.freebusy.query({
 console.log(data.calendars?.primary?.busy ?? []);
 ```
 
-This access-token-only client cannot refresh tokens. For full OAuth setup, use the local `endpoints` configuration shown in [Connect your app](/calendarpit/connect/).
+This access-token-only client cannot refresh tokens. For full OAuth setup, use the local `endpoints` configuration shown in [Connect your app](/connect/).
 
 Reference: [Google Calendar Node.js client implementation](https://github.com/googleapis/google-api-nodejs-client/blob/main/src/apis/calendar/v3.ts).
 
-</TabItem>
-<TabItem label="Python">
+</Tab>
+<Tab value="Python" forceMount>
 
 Packages: `google-api-python-client` (2.x) and `google-auth`. Setting `static_discovery=True` uses the discovery document bundled with the installed library, so building the client does not fetch discovery metadata from Google. `api_endpoint` includes the `/calendar/v3/` path.
 
@@ -103,12 +102,12 @@ with build(
     print(result["calendars"]["primary"]["busy"])
 ```
 
-If you pass a refresh token to `Credentials`, also supply the registered client ID, client secret, and `token_uri="http://127.0.0.1:4173/oauth/token"`. Omit `scopes`, or pass the exact granted scopes in the same order. Configure the authorization, userinfo, and revocation URLs separately in your app's [OAuth flow](/calendarpit/oauth/).
+If you pass a refresh token to `Credentials`, also supply the registered client ID, client secret, and `token_uri="http://127.0.0.1:4173/oauth/token"`. Omit `scopes`, or pass the exact granted scopes in the same order. Configure the authorization, userinfo, and revocation URLs separately in your app's [OAuth flow](/oauth/).
 
 References: [bundled discovery documents](https://googleapis.github.io/google-api-python-client/docs/start.html#building-and-calling-a-service), [endpoint selection](https://github.com/googleapis/google-api-python-client/blob/main/googleapiclient/discovery.py).
 
-</TabItem>
-<TabItem label="Go">
+</Tab>
+<Tab value="Go" forceMount>
 
 Modules: `google.golang.org/api` and `golang.org/x/oauth2`. Supply an explicit token source so the client does not look up Google Application Default Credentials.
 
@@ -165,12 +164,12 @@ func main() {
 }
 ```
 
-`StaticTokenSource` never refreshes tokens. For SDK-managed OAuth, set `oauth2.Config.Endpoint.AuthURL` and `TokenURL` to Calendarpit's [OAuth endpoints](/calendarpit/oauth/) and pass `config.TokenSource(ctx, token)`.
+`StaticTokenSource` never refreshes tokens. For SDK-managed OAuth, set `oauth2.Config.Endpoint.AuthURL` and `TokenURL` to Calendarpit's [OAuth endpoints](/oauth/) and pass `config.TokenSource(ctx, token)`.
 
 References: [Calendar client](https://pkg.go.dev/google.golang.org/api/calendar/v3), [WithEndpoint](https://pkg.go.dev/google.golang.org/api/option#WithEndpoint), [OAuth configuration](https://pkg.go.dev/golang.org/x/oauth2#Config).
 
-</TabItem>
-<TabItem label="Java">
+</Tab>
+<Tab value="Java" forceMount>
 
 Artifacts: `com.google.apis:google-api-services-calendar`, `com.google.http-client:google-http-client`, and `com.google.http-client:google-http-client-gson`. This example uses Java 11 or later.
 
@@ -211,12 +210,12 @@ public class CalendarpitExample {
 }
 ```
 
-The request initializer sets the bearer token header directly. Obtain and refresh tokens using the [local OAuth endpoints](/calendarpit/oauth/). Setting `setRootUrl` does not redirect separate Google authorization helpers.
+The request initializer sets the bearer token header directly. Obtain and refresh tokens using the [local OAuth endpoints](/oauth/). Setting `setRootUrl` does not redirect separate Google authorization helpers.
 
 References: [Calendar builder](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/Calendar.Builder.html), [FreeBusy request](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/model/FreeBusyRequest.html).
 
-</TabItem>
-<TabItem label="C#">
+</Tab>
+<Tab value="C#" forceMount>
 
 NuGet packages: `Google.Apis.Calendar.v3` and `Google.Apis.Auth`. Use this in a console application with top-level statements.
 
@@ -258,12 +257,12 @@ foreach (var interval in result.Calendars["primary"].Busy)
     Console.WriteLine($"{interval.StartRaw} - {interval.EndRaw}");
 ```
 
-`FromAccessToken` does not refresh tokens. Refresh via the [local token endpoint](/calendarpit/oauth/) and recreate the credentials. `BaseUri` configures Calendar API requests only; it does not redirect OAuth helpers.
+`FromAccessToken` does not refresh tokens. Refresh via the [local token endpoint](/oauth/) and recreate the credentials. `BaseUri` configures Calendar API requests only; it does not redirect OAuth helpers.
 
 References: [service base URI](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Services.BaseClientService.Initializer), [access-token credentials](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Auth.OAuth2.GoogleCredential), [FreeBusy request](https://googleapis.dev/dotnet/Google.Apis.Calendar.v3/latest/api/Google.Apis.Calendar.v3.Data.FreeBusyRequest.html).
 
-</TabItem>
-<TabItem label="HTTP / curl">
+</Tab>
+<Tab value="HTTP / curl" forceMount>
 
 You can call the same HTTP endpoints directly from any language.
 
@@ -282,13 +281,13 @@ curl --fail-with-body http://127.0.0.1:4173/calendar/v3/freeBusy \
   }'
 ```
 
-</TabItem>
+</Tab>
 </Tabs>
 
 `primary` resolves to the primary calendar of the authenticated test user. For Alex in the default fixture, this query returns one busy interval from `10:00` to `11:00` on October 19, 2026 in `Asia/Tokyo`. Editing events in the admin UI changes the next FreeBusy response; transparent and cancelled events do not count as busy time.
 
 ## Verification status
 
-Only the Bun/TypeScript sample app in [Connect your app](/calendarpit/connect/) has an automated end-to-end test. The examples on this page, including the TypeScript example, follow the official client APIs and have not been compiled or run in this repository's CI.
+Only the Bun/TypeScript sample app in [Connect your app](/connect/) has an automated end-to-end test. The examples on this page, including the TypeScript example, follow the official client APIs and have not been compiled or run in this repository's CI.
 
-For common configuration and request errors, see [Troubleshooting](/calendarpit/troubleshooting/).
+For common configuration and request errors, see [Troubleshooting](/troubleshooting/).

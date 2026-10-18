@@ -26,9 +26,9 @@ Changing only the Calendar API URL is not enough. If OAuth stays on its default 
 | Calendar API root         | `http://127.0.0.1:4173/`                |
 | Token revocation          | `http://127.0.0.1:4173/oauth/revoke`    |
 
-The JavaScript Calendar SDK (`@googleapis/calendar`) appends `/calendar/v3/...` to `rootUrl`. Do not include `/calendar/v3` twice. Python, Go, and .NET expect the full service URL including `/calendar/v3/`. Java sets the root URL and service path separately. See [SDK examples](/calendarpit/sdks/).
+The JavaScript Calendar SDK (`@googleapis/calendar`) appends `/calendar/v3/...` to `rootUrl`. Do not include `/calendar/v3` twice. Python, Go, and .NET expect the full service URL including `/calendar/v3/`. Java sets the root URL and service path separately. See [SDK examples](/sdks/).
 
-A watch callback address points in the opposite direction: from Calendarpit to your app, such as `http://127.0.0.1:4175/notifications`. Calendarpit allows only loopback callback hosts (`127.0.0.1`, `localhost`, `[::1]`) unless you list extra hosts in `CALENDARPIT_WATCH_HOSTS`; see [Watch notifications](/calendarpit/watch/).
+A watch callback address points in the opposite direction: from Calendarpit to your app, such as `http://127.0.0.1:4175/notifications`. Calendarpit allows only loopback callback hosts (`127.0.0.1`, `localhost`, `[::1]`) unless you list extra hosts in `CALENDARPIT_WATCH_HOSTS`; see [Watch notifications](/watch/).
 
 ## Register a test OAuth client
 
@@ -46,7 +46,7 @@ Calendarpit checks `client_id` and `redirect_uri` at the authorization endpoint,
 }
 ```
 
-A fixture replaces the whole workspace. Include `users` and `calendars` alongside `clients`, and keep the `sample-app` entry if you use the sample app. A startup fixture applies only to a new database or a `:memory:` session. To change a running or persisted workspace, load the fixture with `POST /__calendarpit/fixtures` or start with a new database. A reset restores the startup fixture, not a fixture loaded through the API. To keep your client across resets, pass the fixture at startup (`--config` or `CALENDARPIT_CONFIG`) with a new database or `:memory:` session, or reload it after each reset. See [Fixtures](/calendarpit/fixtures/).
+A fixture replaces the whole workspace. Include `users` and `calendars` alongside `clients`, and keep the `sample-app` entry if you use the sample app. A startup fixture applies only to a new database or a `:memory:` session. To change a running or persisted workspace, load the fixture with `POST /__calendarpit/fixtures` or start with a new database. A reset restores the startup fixture, not a fixture loaded through the API. To keep your client across resets, pass the fixture at startup (`--config` or `CALENDARPIT_CONFIG`) with a new database or `:memory:` session, or reload it after each reset. See [Fixtures](/fixtures/).
 
 - `redirectUris` must contain your app's exact callback URL. Calendarpit matches `redirect_uri` by exact string equality, without port wildcards or trailing-slash normalization.
 - `secret` is required. Your app must send it as `client_secret` (or HTTP Basic) on every `/oauth/token` request, including PKCE flows.
@@ -57,7 +57,7 @@ The built-in default fixture registers one OAuth client for local testing:
 - Client secret: `local-sample-secret` (a public local test value)
 - Redirect URI: `http://127.0.0.1:4175/callback`
 
-For the full authorization code, refresh, `/userinfo`, and revocation flow, see [Local OAuth](/calendarpit/oauth/).
+For the full authorization code, refresh, `/userinfo`, and revocation flow, see [Local OAuth](/oauth/).
 
 ## JavaScript OAuth and Calendar client
 
@@ -92,9 +92,9 @@ const { data } = await api.freebusy.query({
 console.log(data.calendars?.primary?.busy);
 ```
 
-Authorize the grant with scopes that cover all three calls in this example, such as `auth.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/calendar', 'email', 'profile'] })`. Narrower scopes such as `calendar.events` or `calendar.freebusy` do not cover `calendarList.list`, which requires `calendar`, `calendar.readonly`, `calendar.calendarlist`, or `calendar.calendarlist.readonly`. `/userinfo` requires `openid`, `email`, `profile`, or a `userinfo.*` scope. It returns `email` only with an email scope and `name` only with a profile scope. Refresh tokens are issued only with `access_type=offline`. See [Local OAuth](/calendarpit/oauth/) for the full scope list.
+Authorize the grant with scopes that cover all three calls in this example, such as `auth.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/calendar', 'email', 'profile'] })`. Narrower scopes such as `calendar.events` or `calendar.freebusy` do not cover `calendarList.list`, which requires `calendar`, `calendar.readonly`, `calendar.calendarlist`, or `calendar.calendarlist.readonly`. `/userinfo` requires `openid`, `email`, `profile`, or a `userinfo.*` scope. It returns `email` only with an email scope and `name` only with a profile scope. Refresh tokens are issued only with `access_type=offline`. See [Local OAuth](/oauth/) for the full scope list.
 
-After you call `auth.setCredentials`, token refresh requests from `OAuth2Client` also use the local `oauth2TokenUrl`. Unless you also override `tokenInfoUrl` and the certificate URLs as the sample app does, `OAuth2Client` helpers such as `getTokenInfo` and `verifyIdToken` still call Google. Calendarpit does not support these endpoints or issue ID tokens, so do not call those helpers against the local provider. For Python, Go, and other languages, see [SDK examples](/calendarpit/sdks/).
+After you call `auth.setCredentials`, token refresh requests from `OAuth2Client` also use the local `oauth2TokenUrl`. Unless you also override `tokenInfoUrl` and the certificate URLs as the sample app does, `OAuth2Client` helpers such as `getTokenInfo` and `verifyIdToken` still call Google. Calendarpit does not support these endpoints or issue ID tokens, so do not call those helpers against the local provider. For Python, Go, and other languages, see [SDK examples](/sdks/).
 
 ## Reference sample app
 

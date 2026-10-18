@@ -9,7 +9,7 @@ Calendarpit は、デフォルトでワークスペースの状態をローカ�
 
 Homebrew や単体実行ファイルでは、デフォルトで起動したディレクトリ内の `.calendarpit/calendarpit.sqlite` に保存します。プロジェクトのディレクトリから起動すると、プロジェクトごとにデータを保持できます。
 
-保存先や `:memory:` は `--database <path>` または `CALENDARPIT_DATABASE` で指定します。CLI フラグは環境変数より優先されます。[インストール](/calendarpit/ja/installation/)で必要な環境と公開状況を確認してください。
+保存先や `:memory:` は `--database <path>` または `CALENDARPIT_DATABASE` で指定します。CLI フラグは環境変数より優先されます。[インストール](/ja/installation/)で必要な環境と公開状況を確認してください。
 
 ```sh
 # Temporary E2E session; no database files are written
@@ -21,7 +21,7 @@ calendarpit serve --database ./.calendarpit/manual.sqlite
 
 - **SQLite ファイル（デフォルト）:** 状態を変更するリクエストや Webhook の配信が終わるたびに、変更を保存します。相対パスは作業ディレクトリを基準に解決されます。
 - **インメモリ（`:memory:`）:** データベースファイルもロックファイルも書き込みません。プロセスが終了すると、すべての状態が破棄されます。
-- **Docker:** イメージでは `CALENDARPIT_DATABASE=/data/calendarpit.sqlite` が設定されています。`-v calendarpit-data:/data` で名前付きボリュームをマウントすると、コンテナを削除して作り直してもデータが残ります。一時的なセッションには `-e CALENDARPIT_DATABASE=:memory:` を渡します。[Compose の例](/calendarpit/ja/installation/)も名前付きボリュームを使います。`docker compose down` ではデータが残り、`docker compose down -v` では削除されます。
+- **Docker:** イメージでは `CALENDARPIT_DATABASE=/data/calendarpit.sqlite` が設定されています。`-v calendarpit-data:/data` で名前付きボリュームをマウントすると、コンテナを削除して作り直してもデータが残ります。一時的なセッションには `-e CALENDARPIT_DATABASE=:memory:` を渡します。[Compose の例](/ja/installation/)も名前付きボリュームを使います。`docker compose down` ではデータが残り、`docker compose down -v` では削除されます。
 
 使用中のストレージモードとパスは、次の場所で確認できます。
 
@@ -45,16 +45,16 @@ Calendarpit のプロセスは、`SIGINT` または `SIGTERM` を受け取ると
 | 同期トークン、カレンダーの削除済みレコード                                                          | 復元されます。リセットまたはフィクスチャの読み込みで消去されます                                                                         |
 | 保留中の同意、認可コード、ページトークン                                                            | 破棄されます（ページトークンは `calendarList` と `events` のカーソルです）。フローまたは一覧の取得をやり直してください                   |
 
-再起動後は、アプリ側でカレンダーの状態を再取得してください。停止によって中断された[watch 通知](/calendarpit/ja/watch/)の差分を取り込めます。
+再起動後は、アプリ側でカレンダーの状態を再取得してください。停止によって中断された[watch 通知](/ja/watch/)の差分を取り込めます。
 
 ## 初期データ、フィクスチャ、リセット
 
-起動時[フィクスチャ](/calendarpit/ja/fixtures/)（`--config`、`CALENDARPIT_CONFIG`、または組み込みのデフォルト）がデータを投入するのは、**新しいデータベースのときだけ**です。
+起動時[フィクスチャ](/ja/fixtures/)（`--config`、`CALENDARPIT_CONFIG`、または組み込みのデフォルト）がデータを投入するのは、**新しいデータベースのときだけ**です。
 
 - **既存の SQLite ファイル:** 保存済みのデータと、最初のリセット基準を開き直します。`--config` または `CALENDARPIT_CONFIG` を設定していても、フィクスチャの内容は無視され、既存のデータベースは上書きされません。ただし、指定したファイルが存在し、有効な JSON である必要があります。
 - **インメモリモード:** 起動するたびに新しいデータベースになります。そのため、起動時フィクスチャは毎回適用され、省略した ID も毎回生成し直されます。
-- **リセット（`POST /__calendarpit/reset`）:** 再起動をはさんでいても、起動時のリセット基準に戻します。接続、トークン、認可コード、同意、watch チャネル、カレンダーリストの設定、[同期トークン](/calendarpit/ja/sync/)、ページトークン、カレンダーの削除済みレコード、リクエスト履歴、通知、配信を消去し、すぐに保存します。SQLite ファイルを削除したり、フィクスチャのファイルを変更したりはしません。
-- **フィクスチャの読み込み（`POST /__calendarpit/fixtures`）:** 現在のデータを置き換え、実行時の状態を消去します。**リセット基準は変わりません。** その後にリセットしても、最初の初期データに戻ります。詳しくは[テスト制御 API](/calendarpit/ja/test-control/)を参照してください。
+- **リセット（`POST /__calendarpit/reset`）:** 再起動をはさんでいても、起動時のリセット基準に戻します。接続、トークン、認可コード、同意、watch チャネル、カレンダーリストの設定、[同期トークン](/ja/sync/)、ページトークン、カレンダーの削除済みレコード、リクエスト履歴、通知、配信を消去し、すぐに保存します。SQLite ファイルを削除したり、フィクスチャのファイルを変更したりはしません。
+- **フィクスチャの読み込み（`POST /__calendarpit/fixtures`）:** 現在のデータを置き換え、実行時の状態を消去します。**リセット基準は変わりません。** その後にリセットしても、最初の初期データに戻ります。詳しくは[テスト制御 API](/ja/test-control/)を参照してください。
 
 ## ロック、ファイル、並列実行
 

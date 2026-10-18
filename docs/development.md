@@ -31,7 +31,7 @@ such as `CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev` when invok
 them from the repository root.
 
 Run `bun run docs:dev` for the documentation preview at
-`http://127.0.0.1:4487/calendarpit/`. The docs are an Astro Starlight site.
+`http://127.0.0.1:4487/calendarpit/`. The docs use TanStack Start, Fumadocs, and MDX.
 `bun run docs:check` builds it and fails on broken internal links or anchors.
 Publishing is manual for now: `.github/workflows/docs.yml` runs only on demand
 while the custom domain and hosting are decided.
@@ -124,24 +124,56 @@ ignored by Git, linting, and formatting.
 
 ## Documentation site
 
-`apps/docs` holds the user-facing documentation, an Astro Starlight site. It is
-published in English (the root locale, no URL prefix) and Japanese (`/ja/`).
-Write only user-facing material there. Contributor and maintainer material
-belongs in this `docs/` directory.
+`apps/docs` holds the user-facing documentation and landing pages, built with
+TanStack Start, Fumadocs UI, and MDX. Every English and Japanese page is
+prerendered at build time. Deploy only `apps/docs/dist`: it contains HTML,
+CSS, JavaScript, and local assets, with no server bundle, server functions,
+or search service. Search is intentionally disabled, including client search.
+The build-time renderer does not run in production.
 
-- English pages live in `apps/docs/src/content/docs/`. A Japanese page has the
-  same file name under `apps/docs/src/content/docs/ja/`. Keep the structure,
-  headings, and code blocks of both in step; code, commands, paths, and API names
-  are never translated.
-- Sidebar groups and labels are set in `apps/docs/astro.config.ts`; Japanese
-  labels use the `translations` option. Overrides for Starlight's built-in UI
-  strings live in `apps/docs/src/content/i18n/`.
-- Use Starlight's Markdown asides and built-in components (`Tabs`, `Steps`,
-  `CardGrid`, `LinkCard`, `LinkButton`) before writing custom markup, and
-  customize the site through `customCss` and component overrides.
-- The landing page is `index.mdx` in each locale: its `hero` frontmatter and
-  body use Starlight's components. `apps/docs/src/components/Hero.astro`
-  overrides Starlight's hero to add the `eyebrow` label and the routing
-  diagram, whose labels live in `apps/docs/src/components/landing/`.
-- `bun run docs:check` builds both locales and fails on broken internal links
-  and anchors.
+- English pages live in `apps/docs/src/content/docs/`. Japanese pages use the
+  same filename under `ja/`, with identical code blocks. English has no locale
+  prefix; Japanese uses `/ja/`. Contributor material stays in this `docs/` folder.
+- `src/site/source.ts` uses Fumadocs MDX's async macro collection and source
+  loader for schema validation, lazy content, and navigation. Each locale's
+  `meta.json` defines sidebar order and section labels. The official Vite plugin
+  handles compilation and content updates; there is no custom MDX parser/cache.
+- `src/site/i18n.ts` configures the locales. Fumadocs supplies the language menu;
+  `src/site/translations.ts` supplies Japanese UI labels. Add future languages
+  to the locale configuration and translated content, rather than adding toggles.
+- MDX uses the standard Fumadocs `Card`, `Tabs`/`Tab`, `Steps`/`Step`, callouts,
+  and code blocks from `src/site/mdx-components.tsx`. Tabs use `forceMount` to keep
+  inactive examples in generated HTML. Each page has its own JS chunk.
+- Documentation typography, spacing, and colors use the Fumadocs preset. Google
+  Fonts provides Geist for Latin text, Noto Sans JP for Japanese, and Roboto Mono
+  for code, all with system fallbacks. Custom branding and Motion animations are
+  confined to the landing page; motion respects the reduced-motion preference.
+- Each locale's `index.mdx` owns its landing content and hero frontmatter.
+  `src/site/landing-hero.tsx` and `landing-diagram.tsx` render the introduction;
+  diagram labels live in `src/components/landing/`.
+- `bun run docs:check` builds, type-checks, and checks all rendered pages,
+  internal links, anchors, assets, metadata, locale coverage, and code parity.
+  `bun run --cwd apps/docs preview` serves **only static output** at
+  `http://127.0.0.1:4488/calendarpit/`, including a real HTTP 404 for missing pages.
+- TanStack Start generates `src/routeTree.gen.ts`; keep it in source control.
+  The build cleans stale output and removes its temporary server bundle.
+
+### Static hosting
+
+The default `DOCS_BASE_PATH=/calendarpit/` and
+`DOCS_SITE_URL=https://iktakahiro.github.io` preserve the existing GitHub
+Pages URLs. The manual workflow uploads `apps/docs/dist` as before.
+
+For a root-domain deployment, including Cloudflare static hosting, build with:
+
+```sh
+DOCS_BASE_PATH=/ DOCS_SITE_URL=https://docs.example.com bun run docs:check
+```
+
+Replace the example origin with the final public origin. Set the same base path
+when running the static preview. No SSR worker or SPA fallback is needed: every
+page has an `index.html`, and `404.html` handles missing paths. MDX links use
+router paths without a deployment prefix. `SiteLink` adapts Fumadocs links to
+TanStack Router's base path and separate hash property; this small adapter avoids
+duplicated prefixes and preserves in-page anchors on both hosting layouts.
+Turborepo includes both deployment settings in the docs build cache key.

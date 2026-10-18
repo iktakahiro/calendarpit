@@ -52,7 +52,7 @@ docker compose down
 
 Keep the browser's OAuth authorization URL on the host-accessible address. A containerized backend uses the Compose address for token exchange and Calendar API requests. The OAuth `redirect_uri` must exactly match the fixture's registered URI and be accessible to the browser.
 
-Webhook addresses are resolved by Calendarpit. For a receiver service named `app`, allow `CALENDARPIT_WATCH_HOSTS=app` and register `http://app:<port>/<path>`. To reach a host process, Docker Desktop provides `host.docker.internal`; on Linux Docker Engine add `extra_hosts: ["host.docker.internal:host-gateway"]`. Allow that hostname with `CALENDARPIT_WATCH_HOSTS`. The receiving process must listen on an address reachable from the container. See [Watch notifications](/calendarpit/watch/).
+Webhook addresses are resolved by Calendarpit. For a receiver service named `app`, allow `CALENDARPIT_WATCH_HOSTS=app` and register `http://app:<port>/<path>`. To reach a host process, Docker Desktop provides `host.docker.internal`; on Linux Docker Engine add `extra_hosts: ["host.docker.internal:host-gateway"]`. Allow that hostname with `CALENDARPIT_WATCH_HOSTS`. The receiving process must listen on an address reachable from the container. See [Watch notifications](/watch/).
 
 ## Homebrew
 
@@ -82,4 +82,4 @@ Compare the printed hash with the matching line in `SHA256SUMS`. Windows archive
 
 ## Updates and storage
 
-Update the exact Docker image tag when you choose to upgrade; Homebrew uses `brew upgrade`. Stop Calendarpit and back up its SQLite directory or Docker volume before upgrading. Never run two instances against the same database file. See [Storage and restarts](/calendarpit/storage/) and [Run and configure](/calendarpit/running/).
+Update the exact Docker image tag when you choose to upgrade; Homebrew uses `brew upgrade`. Stop Calendarpit and back up its SQLite directory or Docker volume before upgrading. Never run two instances against the same database file. See [Storage and restarts](/storage/) and [Run and configure](/running/).

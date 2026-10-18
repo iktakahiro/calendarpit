@@ -5,7 +5,7 @@ description: Calendarpit が対応する Google Calendar API v3 のメソッド�
 
 ## Calendar API
 
-`/calendar/v3` の対応エンドポイントは、どれも Calendarpit のベアラートークンが必要です（スコープは[ローカル OAuth](/calendarpit/ja/oauth/)を参照してください）。アクセスできるのは、認可したテストユーザーが所有するカレンダーだけです。`primary` は、そのユーザーのプライマリカレンダーを指します。存在しないカレンダー ID や所有していないカレンダー ID には `404`（`notFound`）を返します。ただし `freebusy.query` は `200` のレスポンスを返し、その中でカレンダーごとに `notFound` エラーを示します。
+`/calendar/v3` の対応エンドポイントは、どれも Calendarpit のベアラートークンが必要です（スコープは[ローカル OAuth](/ja/oauth/)を参照してください）。アクセスできるのは、認可したテストユーザーが所有するカレンダーだけです。`primary` は、そのユーザーのプライマリカレンダーを指します。存在しないカレンダー ID や所有していないカレンダー ID には `404`（`notFound`）を返します。ただし `freebusy.query` は `200` のレスポンスを返し、その中でカレンダーごとに `notFound` エラーを示します。
 
 | メソッド                | パス                                                             | 動作                                                                                        |
 | ----------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -72,7 +72,7 @@ description: Calendarpit が対応する Google Calendar API v3 のメソッド�
 
 レスポンスには `organizer`、`creator`、`iCalUID`、`sequence`、`created`、`updated`、引用符付きの `etag` が含まれます。`kind`、`etag`、`created`、`updated`、`calendarId`（`primary` ではなく解決後のカレンダー ID）、`sequence` もリクエストで受け付けます。このため、取得したイベントをそのまま送り返せます。`organizer`、`creator`、`iCalUID`、`recurringEventId`、`originalStartTime` は読み取り専用です。ただし更新時に値が変わっていなければ受け付けます。`events.insert` ではこれらのフィールドを省略してください。Calendarpit が値を設定します。`sequence` は更新のたびに増えます。保存済みイベントへの `GET`、`PUT`、`PATCH`、`DELETE` では `If-Match` を確認します（一致しない場合は `412` `conditionNotMet`）。
 
-`PUT` は書き込み可能フィールドを置き換え、省略した任意フィールドをデフォルトに戻します。`PATCH` は省略したフィールドを保持します。`PATCH` で `start` や `end` のオブジェクトを送ると、保存済みのオブジェクトをまるごと置き換えます（中のフィールドはマージしません）。`extendedProperties` のマップはキー単位でマージします（`null` でキーまたはマップを削除します）。終日イベントの入力では `dateTime: null` と `timeZone: null` を受け付けます。`events.delete` は `204` を返し、`cancelled` の削除済みレコードを残します（すでに cancelled の場合は `410` `deleted`）。`events.get` は削除済みレコードを返します。`freebusy.query` は削除済みレコードを除外します。一覧は `showDeleted=true` か `updatedMin` を指定しない限り除外します（`singleEvents=false` の場合、繰り返しの系列で cancelled になった例外は表示されたままです）。繰り返し、招待、リマインダー、ダミーの Meet リンク、時刻のルールは[イベント、繰り返し、時刻の扱い](/calendarpit/ja/recurrence/)を参照してください。
+`PUT` は書き込み可能フィールドを置き換え、省略した任意フィールドをデフォルトに戻します。`PATCH` は省略したフィールドを保持します。`PATCH` で `start` や `end` のオブジェクトを送ると、保存済みのオブジェクトをまるごと置き換えます（中のフィールドはマージしません）。`extendedProperties` のマップはキー単位でマージします（`null` でキーまたはマップを削除します）。終日イベントの入力では `dateTime: null` と `timeZone: null` を受け付けます。`events.delete` は `204` を返し、`cancelled` の削除済みレコードを残します（すでに cancelled の場合は `410` `deleted`）。`events.get` は削除済みレコードを返します。`freebusy.query` は削除済みレコードを除外します。一覧は `showDeleted=true` か `updatedMin` を指定しない限り除外します（`singleEvents=false` の場合、繰り返しの系列で cancelled になった例外は表示されたままです）。繰り返し、招待、リマインダー、ダミーの Meet リンク、時刻のルールは[イベント、繰り返し、時刻の扱い](/ja/recurrence/)を参照してください。
 
 ## カレンダーリスト
 
@@ -118,7 +118,7 @@ description: Calendarpit が対応する Google Calendar API v3 のメソッド�
 
 ### watch
 
-- `calendarList.watch` は、ループバックの許可リスト、配信ログ、`channels.stop` エンドポイントを `events.watch` と共有します（[watch 通知](/calendarpit/ja/watch/)を参照してください）。
+- `calendarList.watch` は、ループバックの許可リスト、配信ログ、`channels.stop` エンドポイントを `events.watch` と共有します（[watch 通知](/ja/watch/)を参照してください）。
 - 開始時に `sync` を送ります。その後、リストへの書き込みで保存済みの設定が変わったとき、または管理 API でユーザーのカレンダーを作成、更新、削除したときに `exists` を送ります。イベントへの書き込みでは送りません。
 - その他のクエリパラメータ（`syncToken` を含む）や `params`（`params.ttl` など）を指定すると `400`（`unsupportedFeature`）を返します。
 
@@ -128,8 +128,8 @@ description: Calendarpit が対応する Google Calendar API v3 のメソッド�
 
 `events.list` は次のパラメータを受け付けます。`timeMin`、`timeMax`、`maxResults`（1–2500、デフォルト 250）、`pageToken`、`orderBy`（`startTime`、`updated`）、`singleEvents`、`timeZone`、`showDeleted`、`syncToken`、`updatedMin`、`iCalUID`、繰り返し指定できる `privateExtendedProperty=name=value` と `sharedExtendedProperty=name=value` のフィルタ（すべて一致する必要があります）。`orderBy=startTime` には `singleEvents=true` が必要です。`orderBy` を指定しない一覧はイベント ID 順に並びます。`timeMin`、`timeMax`、`updatedMin` には、オフセット付きの RFC 3339 タイムスタンプが必要です。範囲の判定には `start < timeMax` と `end > timeMin` を使います。カレンダーに終了日のない繰り返しの系列がある場合、`singleEvents=true` または `timeMin` を指定した `events.list` には `timeMax` が必要です。その系列への `events.instances` には常に `timeMax` が必要です（`400` `unsupportedFeature`）。
 
-イベント一覧のページングでは、最初のページの時点でスナップショットを固定します。このため、ページ取得の合間に書き込みがあっても項目が抜けません。イベントのページトークンはクエリとユーザーに結び付いています。1 時間で期限が切れ、再起動、リセット、フィクスチャの読み込みで消えます。カレンダーリストのページトークンは、データやカレンダーリストへの書き込みがあると無効になり、保存されません。期限切れや無効なトークンは `410`（`invalidPageToken`）を返します。`syncToken` と `nextSyncToken` は[差分同期](/calendarpit/ja/sync/)を参照してください。
+イベント一覧のページングでは、最初のページの時点でスナップショットを固定します。このため、ページ取得の合間に書き込みがあっても項目が抜けません。イベントのページトークンはクエリとユーザーに結び付いています。1 時間で期限が切れ、再起動、リセット、フィクスチャの読み込みで消えます。カレンダーリストのページトークンは、データやカレンダーリストへの書き込みがあると無効になり、保存されません。期限切れや無効なトークンは `410`（`invalidPageToken`）を返します。`syncToken` と `nextSyncToken` は[差分同期](/ja/sync/)を参照してください。
 
 ## 明示的に除外している機能
 
-ACL、共有カレンダー、委任、カレンダーグループ、カラーパレット（`colors.get`）、ユーザー設定、カレンダーリストの同期トークン、ACL と設定の watch、フリーテキスト検索（`q`）、`eventTypes`、添付ファイル、実際のメール送信、実際の Google Meet の作成、完全な OIDC には対応していません。未知のボディフィールドや未知のクエリパラメータ（`fields` を含む）を指定すると、`/calendar/v3` のすべてのエンドポイントで `400`（`unsupportedFeature`）を返します（クエリ文字列を無視する `channels.stop` を除く）。トランスポート用のパラメータ（`alt=json`、`prettyPrint`、`quotaUser`、`key`）は受け付けますが、API キーは OAuth のベアラートークンの代わりにはなりません。Calendarpit が Google にリクエストを中継したり、Google と同期したりすることはありません。カレンダーの管理とデータのリセットは[テスト制御 API](/calendarpit/ja/test-control/)を、クライアントの接続先を Calendarpit にする方法は[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
+ACL、共有カレンダー、委任、カレンダーグループ、カラーパレット（`colors.get`）、ユーザー設定、カレンダーリストの同期トークン、ACL と設定の watch、フリーテキスト検索（`q`）、`eventTypes`、添付ファイル、実際のメール送信、実際の Google Meet の作成、完全な OIDC には対応していません。未知のボディフィールドや未知のクエリパラメータ（`fields` を含む）を指定すると、`/calendar/v3` のすべてのエンドポイントで `400`（`unsupportedFeature`）を返します（クエリ文字列を無視する `channels.stop` を除く）。トランスポート用のパラメータ（`alt=json`、`prettyPrint`、`quotaUser`、`key`）は受け付けますが、API キーは OAuth のベアラートークンの代わりにはなりません。Calendarpit が Google にリクエストを中継したり、Google と同期したりすることはありません。カレンダーの管理とデータのリセットは[テスト制御 API](/ja/test-control/)を、クライアントの接続先を Calendarpit にする方法は[アプリを接続する](/ja/connect/)を参照してください。
