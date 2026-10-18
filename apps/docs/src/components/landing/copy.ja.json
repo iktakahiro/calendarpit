@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "title": "開発・テスト用のローカル Google Calendar API サーバー | Calendarpit",
+    "description": "Calendarpit は、開発やテスト用のローカル Google Calendar 互換 API および OAuth サーバーです。Google アカウントやネットワーク接続なしで、イベント、繰り返しイベント、差分同期、Webhook、フィクスチャとリセット、管理画面を単一プロセスで実行できます。"
+  },
+  "hero": {
+    "eyebrow": "ローカル Google Calendar API",
+    "title": "テスト用のローカル Google Calendar API",
+    "tagline": "Google Calendar API v3 と OAuth を単一プロセスで提供します。実アカウントや通信なしで開発とテストを行えます。",
+    "primaryCta": "クイックスタート",
+    "secondaryCta": "GitHub で見る"
+  },
+  "diagram": {
+    "caption": "Google SDK はそのまま使い、エンドポイントだけを Calendarpit に向けます。",
+    "yourApp": {
+      "label": "お使いのアプリ",
+      "sub": "SDK + テスト"
+    },
+    "calendarpit": {
+      "label": "Calendarpit",
+      "sub": "ローカルサーバー"
+    },
+    "google": {
+      "label": "Google Calendar",
+      "sub": "接続不要"
+    },
+    "flows": [
+      "OAuth 認可",
+      "イベント",
+      "繰り返しイベント",
+      "FreeBusy",
+      "差分同期",
+      "Webhook"
+    ]
+  },
+  "problem": {
+    "title": "カレンダー連携テストの課題",
+    "before": {
+      "title": "実際の Google を使う場合",
+      "items": [
+        "Google アカウントや Cloud の事前設定が必要",
+        "通信や API クォータの影響を受け、実行が遅い",
+        "他テストでデータが変わり、同じ状態を再現しにくい"
+      ]
+    },
+    "after": {
+      "title": "Calendarpit を使う場合",
+      "items": [
+        "実アカウントや Google への通信なしで動作",
+        "ローカルの単一プロセスで完結し、高速に実行できる",
+        "フィクスチャとリセットで毎回同じ状態から開始"
+      ]
+    }
+  },
+  "capabilities": {
+    "title": "Calendarpit でできること",
+    "items": [
+      {
+        "title": "Calendar API 互換",
+        "text": "カレンダー、イベント、繰り返しイベント、FreeBusy、差分同期を公式 SDK から利用できます。"
+      },
+      {
+        "title": "ローカル OAuth 同意",
+        "text": "同意画面でテストユーザーを選ぶだけで認可が完了し、パスワードや実際の認証情報は不要です。"
+      },
+      {
+        "title": "フィクスチャとリセット",
+        "text": "初期データを投入し、リセットでいつでも起動時の状態に戻して同じテストを繰り返せます。"
+      },
+      {
+        "title": "Watch Webhook",
+        "text": "events.watch の通知をローカルに配信し、配信ログの確認やテストからのドレインが可能です。"
+      },
+      {
+        "title": "管理画面",
+        "text": "ブラウザからユーザーやイベントを編集し、リクエスト履歴や配信状況を確認してデバッグできます。"
+      },
+      {
+        "title": "未対応機能の明示的なエラー",
+        "text": "未対応の機能は静かに無視せず、HTTP 501 (unsupportedFeature) を返します。"
+      }
+    ]
+  },
+  "steps": {
+    "title": "使い方の流れ",
+    "items": [
+      {
+        "title": "Calendarpit を起動",
+        "text": "単一の Bun プロセスとして起動し、データを SQLite またはインメモリに保持します。"
+      },
+      {
+        "title": "エンドポイントを切り替える",
+        "text": "お使いのアプリの Google SDK と OAuth の接続先をローカルに向けます。"
+      },
+      {
+        "title": "再現可能なデータでテストする",
+        "text": "フィクスチャの初期データに対してテストを実行し、必要に応じて状態をリセットして繰り返します。"
+      }
+    ]
+  },
+  "closing": {
+    "title": "ローカルで開発とテストを始める",
+    "text": "Calendarpit は開発とテスト専用のサーバーで、Google Calendar API v3 の定義されたサブセットを提供します。",
+    "cta": "クイックスタート"
+  }
+}
