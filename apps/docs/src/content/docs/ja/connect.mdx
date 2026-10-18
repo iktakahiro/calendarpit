@@ -7,7 +7,7 @@ description: お使いのアプリの OAuth クライアントと Google Calenda
 
 Calendarpit を起動しても、Google 宛ての通信が横取りされることはありません。ローカル開発や自動テストで Calendarpit を使うには、OAuth クライアントと Google Calendar SDK クライアントを作成するコードに、プロバイダーを切り替える仕組みを追加します。
 
-`CALENDARPIT_URL` のような環境変数名は、お使いのアプリ側で決める名前です。Google SDK が `CALENDARPIT_URL` を自動で読み込むことはありません。アプリの初期化コードで設定を読み込み、ローカルの URL を SDK に渡す必要があります。
+`CALENDARPIT_URL` のような環境変数名は、お使いのアプリ側で決めます。Google SDK が `CALENDARPIT_URL` を自動で読み込むことはありません。アプリの初期化コードで設定を読み込み、ローカルの URL を SDK に渡す必要があります。
 
 認証情報はプロバイダーごとに分けて管理してください。
 
@@ -16,7 +16,7 @@ Calendarpit を起動しても、Google 宛ての通信が横取りされるこ�
 
 ## すべてのプロバイダーエンドポイントを上書きする
 
-Calendar API の URL だけを変えても足りません。OAuth のエンドポイントが既定のままだと、ブラウザのリダイレクト、トークン交換、トークン更新は Google に送られます。次の 5 つのエンドポイントをまとめて上書きしてください。
+Calendar API の URL を変えるだけでは足りません。OAuth のエンドポイントが既定のままだと、ブラウザのリダイレクト、トークン交換、トークン更新は Google に送られます。次の 5 つのエンドポイントをすべて上書きしてください。
 
 | 用途                             | ローカルのエンドポイント                |
 | -------------------------------- | --------------------------------------- |
@@ -26,13 +26,13 @@ Calendar API の URL だけを変えても足りません。OAuth のエンド�
 | Calendar API のルート            | `http://127.0.0.1:4173/`                |
 | トークンの取り消し               | `http://127.0.0.1:4173/oauth/revoke`    |
 
-JavaScript の Calendar SDK (`@googleapis/calendar`) は、`rootUrl` の後ろに `/calendar/v3/...` を付け足します。`/calendar/v3` を二重に含めないでください。Python、Go、.NET では、`/calendar/v3/` を含むサービスの完全な URL を指定します。Java では、ルート URL とサービスパスを別々に設定します。詳しくは [SDK の例](/calendarpit/ja/sdks/) を参照してください。
+JavaScript の Calendar SDK (`@googleapis/calendar`) は、`rootUrl` の後ろに `/calendar/v3/...` を付け足します。`/calendar/v3` を二重に含めないでください。Python、Go、.NET では、`/calendar/v3/` を含むサービスの完全な URL を指定します。Java では、ルート URL とサービスパスを別々に設定します。詳しくは [SDK の使用例](/calendarpit/ja/sdks/) を参照してください。
 
 watch のコールバック先アドレスは、通信の向きが逆です。Calendarpit からお使いのアプリに送られます (例: `http://127.0.0.1:4175/notifications`)。Calendarpit が許可するコールバック先のホストは、ループバック (`127.0.0.1`、`localhost`、`[::1]`) だけです。ほかのホストを使う場合は、`CALENDARPIT_WATCH_HOSTS` に列挙します。詳しくは [watch 通知](/calendarpit/ja/watch/) を参照してください。
 
 ## テスト用の OAuth クライアントを登録する
 
-Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` を確認します。`/oauth/token` では `client_id`、`client_secret`、(認可コードの交換時は) `redirect_uri` を確認します。フィクスチャの `clients` 配列にお使いのアプリを登録してください。
+Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` を確認します。`/oauth/token` では `client_id`、`client_secret`、認可コードの交換時は `redirect_uri` を確認します。フィクスチャの `clients` 配列にお使いのアプリを登録してください。
 
 ```json
 {
@@ -48,7 +48,7 @@ Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` 
 
 フィクスチャはワークスペース全体を置き換えます。`clients` と一緒に `users` (と `calendars`) も含めてください。サンプルアプリを引き続き使う場合は、`sample-app` のエントリも残します。
 
-起動時フィクスチャが適用されるのは、新しいデータベースか `:memory:` セッションだけです。実行中のワークスペースや保存済みのワークスペースを変更するには、`POST /__calendarpit/fixtures` でフィクスチャを読み込むか、新しいデータベースで起動します。リセットで戻るのは起動時フィクスチャの状態です。API で読み込んだフィクスチャには戻りません。リセット後もクライアントを残すには、新しいデータベースか `:memory:` セッションの起動時フィクスチャ (`--config` または `CALENDARPIT_CONFIG`) として渡すか、リセットのたびに読み込み直します。詳しくは [フィクスチャ](/calendarpit/ja/fixtures/) を参照してください。
+起動時フィクスチャが適用されるのは、新しいデータベースか `:memory:` セッションだけです。実行中または保存済みのワークスペースを変更するには、`POST /__calendarpit/fixtures` でフィクスチャを読み込むか、新しいデータベースで起動します。リセットすると、API で読み込んだフィクスチャではなく、起動時フィクスチャの状態に戻ります。リセット後もクライアントを残すには、新しいデータベースか `:memory:` セッションの起動時フィクスチャ (`--config` または `CALENDARPIT_CONFIG`) として渡すか、リセットのたびに読み込み直します。詳しくは [フィクスチャ](/calendarpit/ja/fixtures/) を参照してください。
 
 - `redirectUris` には、お使いのアプリのコールバック URL を正確に書きます。Calendarpit は `redirect_uri` を文字列の完全一致で照合します。ポートのワイルドカードや末尾スラッシュの正規化はありません。
 - `secret` は必須です。アプリは PKCE フローも含め、すべての `/oauth/token` リクエストでこの値を `client_secret` (または HTTP Basic) として送る必要があります。
@@ -102,7 +102,7 @@ console.log(data.calendars?.primary?.busy);
 
 スコープの一覧は [ローカル OAuth](/calendarpit/ja/oauth/) を参照してください。
 
-`auth.setCredentials` で認証情報を設定すると、`OAuth2Client` のトークン更新リクエストも、設定したローカルの `oauth2TokenUrl` に送られます。一方、`getTokenInfo` や `verifyIdToken` などの `OAuth2Client` のヘルパーは、`tokenInfoUrl` と証明書の URL も上書きしない限り Google を呼び出します (サンプルアプリはこれらも上書きしています)。Calendarpit にはこれらに相当する機能がなく、ID トークンも発行しません。ローカルのプロバイダーに対してこれらのヘルパーを呼び出さないでください。Python、Go などほかの言語については、[SDK の例](/calendarpit/ja/sdks/) を参照してください。
+`auth.setCredentials` で認証情報を設定すると、`OAuth2Client` のトークン更新リクエストもローカルの `oauth2TokenUrl` に送られます。一方、`getTokenInfo` や `verifyIdToken` などの `OAuth2Client` のヘルパーは、`tokenInfoUrl` と証明書の URL も上書きしない限り Google を呼び出します (サンプルアプリはこれらも上書きしています)。Calendarpit にはこれらに相当する機能がなく、ID トークンも発行しません。ローカルのプロバイダーに対してこれらのヘルパーを呼び出さないでください。Python、Go などほかの言語については、[SDK の使用例](/calendarpit/ja/sdks/) を参照してください。
 
 ## 参考実装のサンプルアプリ
 

@@ -38,7 +38,7 @@ Unrouted endpoints return `501` (`unsupportedFeature`). `calendars.update`, `cal
 | CalendarList | `delete`            |    ✅     | Removes a non-primary calendar from the list only                |
 | CalendarList | `get`               |    ✅     | Same entry `list` returns for that calendar                      |
 | CalendarList | `insert`            |    ✅     | Restores an owned calendar removed from the list                 |
-| CalendarList | `patch`             |    ✅     | Omitted writable fields are preserved                            |
+| CalendarList | `patch`             |    ✅     | Preserves omitted writable fields                                |
 | CalendarList | `update`            |    ✅     | `PUT` replaces writable fields                                   |
 | CalendarList | `watch`             |    ✅     | Loopback callbacks by default when the caller's list changes     |
 | Calendars    | `get`               |    ✅     | Metadata of a calendar the test user owns                        |
@@ -54,7 +54,7 @@ Unrouted endpoints return `501` (`unsupportedFeature`). `calendars.update`, `cal
 | Events       | `get`               |    ✅     | Includes `cancelled` tombstones and recurring instance IDs       |
 | Events       | `insert`            |    ✅     | Returns `200` with the stored event                              |
 | Events       | `update`            |    ✅     | `PUT` replaces writable fields                                   |
-| Events       | `patch`             |    ✅     | Omitted fields are preserved                                     |
+| Events       | `patch`             |    ✅     | Preserves omitted fields                                         |
 | Events       | `delete`            |    ✅     | Keeps a `cancelled` record for synchronization                   |
 | Events       | `instances`         |    ✅     | Recurring instances, exceptions, and `originalStart`             |
 | Events       | `watch`             |    ✅     | Loopback callbacks by default, with retries and a delivery log   |
@@ -70,7 +70,7 @@ Unrouted endpoints return `501` (`unsupportedFeature`). `calendars.update`, `cal
 
 Supported event fields are `id`, `summary`, `description`, `location`, `start`, `end`, `transparency` (`opaque`, `transparent`), `status` (`confirmed`, `tentative`, `cancelled`), `visibility` (`default`, `public`, `private`, `confidential`), `colorId` (`"1"`–`"11"`), `attendees`, `attendeesOmitted`, `guestsCanModify`, `guestsCanInviteOthers`, `guestsCanSeeOtherGuests`, `reminders`, `recurrence`, `conferenceData` (requires `conferenceDataVersion=1`), `hangoutLink`, and `extendedProperties.private` / `extendedProperties.shared` string maps. Write endpoints accept `sendUpdates` (`all`, `externalOnly`, `none`) and `conferenceDataVersion` (`0`, `1`). Event IDs allow `[a-zA-Z0-9@._-]{1,128}` (except `primary`); duplicate IDs return `409` (`duplicate`).
 
-Responses include `organizer`, `creator`, `iCalUID`, `sequence`, `created`, `updated`, and a quoted `etag`. `kind`, `etag`, `created`, `updated`, `calendarId` (the resolved calendar ID, not `primary`), and `sequence` are also accepted, so a fetched event can be sent back unchanged. `organizer`, `creator`, `iCalUID`, `recurringEventId`, and `originalStartTime` are read-only, though unchanged values are accepted on updates. On `events.insert`, omit these fields; they are set by Calendarpit. `sequence` increments on each update. `If-Match` is checked on `GET`, `PUT`, `PATCH`, and `DELETE` of stored events (`412` `conditionNotMet` on mismatch).
+Responses include `organizer`, `creator`, `iCalUID`, `sequence`, `created`, `updated`, and a quoted `etag`. Write requests also accept `kind`, `etag`, `created`, `updated`, `calendarId` (the resolved calendar ID, not `primary`), and `sequence`, so a fetched event can be sent back unchanged. `organizer`, `creator`, `iCalUID`, `recurringEventId`, and `originalStartTime` are read-only, but updates accept unchanged values. On `events.insert`, omit these fields; Calendarpit sets them. `sequence` increments on each update. `If-Match` is checked on `GET`, `PUT`, `PATCH`, and `DELETE` of stored events (`412` `conditionNotMet` on mismatch).
 
 `PUT` replaces writable fields and resets omitted optional fields to defaults; `PATCH` preserves omitted fields. On `PATCH`, a supplied `start` or `end` object replaces the stored object (its fields are not merged), and `extendedProperties` maps merge by key (`null` removes a key or map). All-day inputs accept `dateTime: null` and `timeZone: null`. `events.delete` returns `204` and keeps a `cancelled` tombstone (`410` `deleted` if already cancelled). `events.get` returns tombstones, `freebusy.query` excludes them, and lists exclude them unless `showDeleted=true` or `updatedMin` is set (cancelled exceptions of a series stay visible with `singleEvents=false`). See [Events, recurrence and time](/calendarpit/recurrence/) for recurrence, invitations, reminders, synthetic Meet links, and time rules.
 
@@ -82,7 +82,7 @@ Responses include `organizer`, `creator`, `iCalUID`, `sequence`, `created`, `upd
 - Each owned calendar starts on its owner's list with `accessRole: "owner"`, `selected: true`, `colorId: "1"` (`backgroundColor: "#ac725e"`, `foregroundColor: "#1d1d1d"`), `defaultReminders: []`, `primary`, and `conferenceProperties.allowedConferenceSolutionTypes: ["hangoutsMeet"]`.
 - `hidden` is omitted unless `true`. `summaryOverride` and `notificationSettings` are omitted when empty. `deleted: true` appears only on removed or tombstoned entries.
 - `description` and `location` are omitted and rejected (`400` `unsupportedFeature`).
-- Read-only fields (`kind`, `etag`, `id`, `summary`, `timeZone`, `accessRole`, `primary`, `deleted`, `conferenceProperties`) are accepted on writes only when unchanged (`400` `invalidParameter` on mismatch; `id` accepts `primary` when the path uses `primary`).
+- Writes accept read-only fields (`kind`, `etag`, `id`, `summary`, `timeZone`, `accessRole`, `primary`, `deleted`, `conferenceProperties`) only when unchanged (`400` `invalidParameter` on mismatch; `id` accepts `primary` when the path uses `primary`).
 - `etag` updates when entry settings or the calendar's `summary`, `timeZone`, or `primary` flag changes.
 - `If-Match` is checked on `PATCH`, `PUT`, and `DELETE` (`412` `conditionNotMet`).
 
@@ -97,7 +97,7 @@ Responses include `organizer`, `creator`, `iCalUID`, `sequence`, `created`, `upd
 ### Colors
 
 - `colorId` accepts palette IDs `"1"`–`"24"` (foreground `"#1d1d1d"`; unknown IDs or inherited names like `"constructor"` return `400`).
-- With `colorRgbFormat=true`, every `insert`, `patch`, or `update` must include both `backgroundColor` and `foregroundColor` (`#rrggbb`); otherwise `400`. Any supplied `colorId` is ignored and set to the nearest palette color.
+- With `colorRgbFormat=true`, every `insert`, `patch`, or `update` must include both `backgroundColor` and `foregroundColor` (`#rrggbb`), or it returns `400`. Any supplied `colorId` is ignored and set to the nearest palette color.
 - Without `colorRgbFormat=true`, RGB fields may only repeat the displayed colors. On `PATCH`, repeating the current `colorId` and RGB keeps custom colors. `PUT` and `insert` must send `colorRgbFormat=true` to keep custom RGB colors. A different `colorId` clears custom RGB.
 
 ### Reminders and notifications
@@ -119,7 +119,7 @@ Responses include `organizer`, `creator`, `iCalUID`, `sequence`, `created`, `upd
 ### Watch
 
 - `calendarList.watch` shares the loopback allowlist, delivery log, and `channels.stop` endpoint with `events.watch` (see [Watch notifications](/calendarpit/watch/)).
-- It sends `sync` on open, then `exists` when a list write changes stored settings or the user's calendars are created, updated, or deleted via the management API. Event writes do not trigger it.
+- It sends `sync` on open, then `exists` when a list write changes stored settings or when the management API creates, updates, or deletes the user's calendars. Event writes do not trigger it.
 - Other query parameters (including `syncToken`) and `params` (such as `params.ttl`) return `400` (`unsupportedFeature`).
 
 ## Lists and paging

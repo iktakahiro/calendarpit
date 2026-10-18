@@ -3,13 +3,13 @@ title: 差分同期
 description: フル同期を実行し、nextSyncToken を使ってイベントの変更差分や削除を取得します。
 ---
 
-Calendarpit は、Google Calendar の `events.list` におけるフル同期と差分同期のフローを実装しています。最初にフル同期を実行して `nextSyncToken` を取得し、以降のリクエストでそのトークンを `syncToken` として渡すことで、その時点以降に作成・更新・削除されたイベントのみを取得できます。プロトコルの詳細は Google の[同期ガイド](https://developers.google.com/workspace/calendar/api/guides/sync)および [`events.list` リファレンス](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)を参照してください。
+Calendarpit は、Google Calendar の `events.list` におけるフル同期と差分同期のフローを実装しています。最初にフル同期を実行して `nextSyncToken` を取得し、以降のリクエストでそのトークンを `syncToken` として渡すと、その時点以降に作成・更新・削除されたイベントのみを取得できます。プロトコルの詳細は Google の[同期ガイド](https://developers.google.com/workspace/calendar/api/guides/sync)および [`events.list` リファレンス](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)を参照してください。
 
 ## フル同期
 
-`events.list` によるフル同期（`events.instances` は対象外）では、`showDeleted=true` の指定有無にかかわらず同期トークンが発行されます。最終ページに到達するまで `nextPageToken` をたどってください。各 `pageToken` のリクエストには初回と同じクエリパラメータを渡す必要があり、パラメータを変更すると HTTP `410` (`invalidPageToken`) が返ります。Calendarpit は最終ページでのみ `nextSyncToken` を返し、`nextPageToken` と同時に返すことはありません。全ページの処理が完了した後に `nextSyncToken` を保存してください。
+`events.list` によるフル同期（`events.instances` は対象外）では、`showDeleted=true` の有無にかかわらず同期トークンが発行されます。最終ページまで `nextPageToken` をたどってください。各 `pageToken` のリクエストには初回と同じクエリパラメータを渡す必要があり、パラメータを変更すると HTTP `410` (`invalidPageToken`) が返ります。Calendarpit は最終ページでのみ `nextSyncToken` を返し、`nextPageToken` と同時に返すことはありません。全ページを処理した後に `nextSyncToken` を保存してください。
 
-各ページのレコードと同期用のスナップショットは、最初のページを取得した時点でまとめて固定されます。ページ送りの最中に発生したイベントの書き込みは、次回の差分同期で返されます。`singleEvents=true` を指定する場合は、フル同期で必ず `timeMax` を設定してください。`timeMax` なしで発行されたトークンは、終了条件のない繰り返しの系列（`COUNT` も `UNTIL` もない `RRULE`）がカレンダーに存在すると HTTP `400` (`unsupportedFeature`) を返します。削除された系列であっても、リセットやフィクスチャの読み込みを行うまでは削除済みレコード（`status: cancelled`）としてカレンダーに残るため、同様にエラーの対象となります。この場合は `timeMax` を指定してフル同期をやり直してください。なお、`singleEvents=false` の場合でも、そのような繰り返しの系列が存在する状態で `timeMin` のみを指定し `timeMax` を省略したフル同期の `events.list` は拒否されます（[イベント、繰り返し、日時](/calendarpit/ja/recurrence/)を参照）。`singleEvents=false` での差分同期はこの影響を受けません。
+各ページのレコードと同期用のスナップショットは、最初のページを取得した時点でまとめて固定されます。ページ送りの最中に発生したイベントの書き込みは、次回の差分同期で返されます。`singleEvents=true` を指定する場合は、フル同期で必ず `timeMax` を設定してください。`timeMax` なしで発行されたトークンを使うと、終了条件のない繰り返しの系列（`COUNT` も `UNTIL` もない `RRULE`）がカレンダーにある場合に HTTP `400` (`unsupportedFeature`) が返ります。削除された系列も、リセットやフィクスチャの読み込みを行うまでは削除済みレコード（`status: cancelled`）としてカレンダーに残るため、同様にエラーになります。この場合は `timeMax` を指定してフル同期をやり直してください。なお、`singleEvents=false` の場合でも、そのような繰り返しの系列がある状態で `timeMin` のみを指定し `timeMax` を省略したフル同期の `events.list` は拒否されます（[イベント、繰り返し、時刻の扱い](/calendarpit/ja/recurrence/)を参照）。`singleEvents=false` での差分同期はこの影響を受けません。
 
 ```ts
 // api は Calendarpit の rootUrl を設定した Google SDK クライアントです。
@@ -62,24 +62,24 @@ do {
 
 - **併用できないパラメータ**: `syncToken` は `timeMin`、`timeMax`、`orderBy`、`updatedMin`、`privateExtendedProperty`、`sharedExtendedProperty`、`iCalUID` と同時に指定できません。また、`events.instances` は `syncToken` に対応していません。
 - **削除されたイベント**: `showDeleted=false` は指定しないでください。差分同期には常に削除が含まれます。`showDeleted=true` を指定するか、`showDeleted` を省略してください。
-- **展開オプションの一致**: `singleEvents` と実効的な `timeZone`（`timeZone` パラメータの値、省略時はカレンダーのタイムゾーン）は、初回のフル同期と一致している必要があります。`timeZone` パラメータを明示せずに発行されたトークンは、管理画面や管理 API でカレンダーのタイムゾーンを変更すると無効になります（HTTP `400`）。
+- **展開オプションの一致**: `singleEvents` と適用される `timeZone`（`timeZone` パラメータの値、省略時はカレンダーのタイムゾーン）は、初回のフル同期と一致している必要があります。`timeZone` パラメータを明示せずに発行されたトークンは、管理画面や管理 API でカレンダーのタイムゾーンを変更すると無効になります（HTTP `400`）。
 
 ### 差分の内容と挙動
 
 - **リトライと変更がない場合**: 同期トークンは一度使っても消費されないため、リクエストが失敗した場合は同じ `syncToken` でリトライできます。差分同期を実行するたびに、最終ページで新しい `nextSyncToken` が返されます。変更がない場合でも `items` は `[]` となり、新しい `nextSyncToken` が返されます。
 - **削除済みレコード**: 削除されたイベントは削除済みレコードとして保持され、`status: "cancelled"` で返されます。
 - **フィルタの非適用**: 差分には、初回リクエストで指定した `updatedMin`、拡張プロパティ、`iCalUID` のフィルタは適用されず、カレンダー内で変更されたすべてのイベントが含まれます。
-- **繰り返しの系列の対象期間**: `singleEvents=false` の場合、差分には変更された繰り返しの系列の親イベント、保存された例外（個別に変更された回）、および単発のイベントが含まれます。`singleEvents=true` の場合、繰り返しの系列は初回のフル同期で指定した `timeMin` と `timeMax` の期間内で再展開されます。親イベントを編集するとその期間内のすべてのインスタンスが返され、系列の期間短縮やキャンセルによって除外されたインスタンスは `status: "cancelled"` として返されます。繰り返しではない単発のイベントは、初回の期間外であっても変更があれば返されます。繰り返しの展開期間を移動する場合は、新しくフル同期を実行してください。
+- **繰り返しの系列の対象期間**: `singleEvents=false` の場合、差分には変更された繰り返しの系列の親イベント、保存された例外（個別に変更された回）、および単発のイベントが含まれます。`singleEvents=true` の場合、繰り返しの系列は初回のフル同期で指定した `timeMin` と `timeMax` の期間内で再展開されます。親イベントを編集するとその期間内のすべてのインスタンスが返され、系列の期間短縮やキャンセルで除外されたインスタンスは `status: "cancelled"` として返されます。繰り返しではない単発のイベントは、初回の期間外でも変更があれば返されます。繰り返しの展開期間を移動する場合は、新しくフル同期を実行してください。
 
 ## ライフサイクルと制限
 
-同期トークンは、ユーザー、カレンダー、展開オプション、および初回の対象期間に紐づく不透明な UUID です。
+同期トークンは、ユーザー、カレンダー、展開オプション、初回の対象期間に紐づく不透明な UUID です。
 
 | トークン    | 有効期間と上限                                                        | 永続化                                             | 無効時のエラー                  |
 | ----------- | --------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------- |
 | `syncToken` | TTL 7 日間、ワークスペースあたり最大 100 件（古いものから削除）       | SQLite に保存（`:memory:` モードでは再起動で消失） | HTTP `410` (`fullSyncRequired`) |
 | `pageToken` | TTL 1 時間、ワークスペースあたり最大 1,000 ページ（古いものから削除） | インメモリのみ（再起動で消失）                     | HTTP `410` (`invalidPageToken`) |
 
-- **HTTP `410` (`fullSyncRequired`)**: `syncToken` が不明な場合、有効期限切れの場合、100 件の上限を超えて削除された場合、リセットやフィクスチャの読み込みで消去された場合、または別のユーザーやカレンダー向けに発行されたトークンである場合に返されます。`pageToken` を伴わないフル同期または差分同期の `events.list` リクエストごとに新しいトークンが発行され、上限の 100 件はすべてのユーザーとカレンダー（管理 API でのイベント一覧取得を含む）で共有されます。このエラーが返された場合は、そのカレンダーのローカル同期データを破棄してフル同期をやり直してください。
+- **HTTP `410` (`fullSyncRequired`)**: `syncToken` が不明・期限切れの場合、上限の 100 件を超えて削除された場合、リセットやフィクスチャの読み込みで消去された場合、または別のユーザーやカレンダー向けに発行されたトークンを使った場合に返されます。`pageToken` を指定しないフル同期・差分同期の `events.list` リクエストごとに新しいトークンが発行され、上限の 100 件はすべてのユーザーとカレンダー（管理 API でのイベント一覧取得を含む）で共有されます。このエラーが返された場合は、そのカレンダーのローカル同期データを破棄してフル同期をやり直してください。
 - **リセットとフィクスチャ**: `POST /__calendarpit/reset` および `POST /__calendarpit/fixtures` を実行すると、すべての同期トークンとページトークンが消去されます（[テスト制御 API](/calendarpit/ja/test-control/)を参照）。同時にすべての OAuth 認可も取り消されるため、クライアントは先に再認可を行う必要があります。
 - **ページカーソル**: イベントの `pageToken` カーソルはクエリパラメータと呼び出し元のユーザーに紐づいており、再起動、リセット、フィクスチャの読み込みを行うと失われます。HTTP `410` (`invalidPageToken`) が返された場合は、保持している `syncToken` からページ送りをやり直すか、フル同期を最初からやり直してください。

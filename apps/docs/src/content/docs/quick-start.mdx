@@ -5,7 +5,7 @@ description: Clone Calendarpit, start the local server, and test a calendar work
 
 import { Steps } from '@astrojs/starlight/components';
 
-This guide takes you from a fresh clone of Calendarpit to a running local server and a connected sample app.
+This guide shows how to clone Calendarpit, start the local server, and connect the included sample app.
 
 ## Requirements
 
@@ -75,7 +75,7 @@ Calendarpit is not published as an npm package, container image, or release bina
 
 5. **Run the sample app**
 
-   In your second terminal, start the built-in sample app:
+   In the second terminal, start the included sample app:
 
    ```sh
    bun run sample:dev
@@ -83,7 +83,7 @@ Calendarpit is not published as an npm package, container image, or release bina
 
    Open `http://127.0.0.1:4175` in your browser. The sample app uses the official `@googleapis/calendar` and `google-auth-library` packages configured against `http://127.0.0.1:4173`.
 
-   It authenticates using client ID `sample-app` and client secret `local-sample-secret` with the redirect URI `http://127.0.0.1:4175/callback`. These client credentials are public local test values included in the default fixture.
+   It authenticates using client ID `sample-app` and client secret `local-sample-secret` with the redirect URI `http://127.0.0.1:4175/callback`. These client credentials are public local test values included in the default startup fixture.
 
 6. **Walk through the calendar workflow**
 
@@ -91,7 +91,7 @@ Calendarpit is not published as an npm package, container image, or release bina
 
    - Click **Connect calendar** to start the OAuth authorization code flow, pick a test user on the consent page, and approve access.
    - Click **Create event** to create an event on `2026-10-19` and inspect the busy intervals returned by the FreeBusy query, which include the new event.
-   - Click **Start watch** to start a watch channel and receive `events.watch` webhook notifications at `http://127.0.0.1:4175/notifications`, then update or delete the event you created to trigger a delivery. Calendarpit first sends a `sync` notification when the channel starts.
+   - Click **Start watch** to start a watch channel and receive `events.watch` webhook notifications at `http://127.0.0.1:4175/notifications`. Calendarpit sends a `sync` notification when the channel starts. Update or delete the event you created to trigger another delivery.
    - Click **Revoke connection** to revoke access and reconnect, or open **API history** and **Watch** in the admin UI at `http://127.0.0.1:4173` to inspect the recorded requests and webhook deliveries.
 
 </Steps>
