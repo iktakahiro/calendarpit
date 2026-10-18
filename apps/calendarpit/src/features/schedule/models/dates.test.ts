@@ -1,5 +1,12 @@
 import { expect, test } from 'bun:test';
-import { longDate, shiftDate, shortDate, today } from './dates';
+import {
+  fromPickerDate,
+  longDate,
+  shiftDate,
+  shortDate,
+  today,
+  toPickerDate,
+} from './dates';
 
 test.each([
   ['2026-10-19', 1, '2026-10-20'],
@@ -19,4 +26,10 @@ test('today uses the calendar zone', () => {
 test('formats dates independently of the runtime zone', () => {
   expect(shortDate('2026-10-19T23:30')).toBe('Oct 19');
   expect(longDate('2026-10-19')).toBe('Monday, October 19, 2026');
+});
+
+test('round-trips picker dates in the runtime zone', () => {
+  expect(fromPickerDate(toPickerDate('2026-10-19'))).toBe('2026-10-19');
+  expect(fromPickerDate(toPickerDate('2026-03-08'))).toBe('2026-03-08');
+  expect(fromPickerDate(new Date(2026, 0, 1, 12))).toBe('2026-01-01');
 });
