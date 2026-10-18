@@ -1,12 +1,16 @@
 /** Full Calendar access. Most scope groups below include it. */
 export const calendarScope = 'https://www.googleapis.com/auth/calendar';
 
+/** Write access to the caller's calendar list, without the rest of Calendar. */
+export const calendarListScope = `${calendarScope}.calendarlist`;
+
 /** Every scope a client may request. Others are rejected as `invalid_scope`. */
 export const scopes = [
   calendarScope,
   `${calendarScope}.readonly`,
   `${calendarScope}.events`,
   `${calendarScope}.events.readonly`,
+  calendarListScope,
   `${calendarScope}.calendarlist.readonly`,
   `${calendarScope}.calendars.readonly`,
   `${calendarScope}.freebusy`,
@@ -18,7 +22,7 @@ export const scopes = [
   'https://www.googleapis.com/auth/userinfo.profile',
 ];
 
-/** Scopes that allow reading events and creating watch channels. */
+/** Scopes that allow reading events and creating event watch channels. */
 export const readEvents = [
   calendarScope,
   `${calendarScope}.readonly`,
@@ -36,10 +40,31 @@ export const readCalendars = [
   `${calendarScope}.calendars.readonly`,
 ];
 
-/** Scopes that allow `calendarList.list`. */
+/**
+ * Scopes that allow `calendarList.list`, `calendarList.get`, and
+ * `calendarList.watch`. `calendar.app.created` is not accepted.
+ */
 export const readCalendarList = [
   calendarScope,
   `${calendarScope}.readonly`,
+  calendarListScope,
+  `${calendarScope}.calendarlist.readonly`,
+];
+
+/**
+ * Scopes that allow `calendarList.insert`, `patch`, `update`, and `delete`.
+ * `calendar.app.created` is not accepted.
+ */
+export const writeCalendarList = [calendarScope, calendarListScope];
+
+/**
+ * Scopes that allow `channels.stop` for a channel this grant created. Event
+ * watches use {@link readEvents}; calendar-list watches use
+ * {@link readCalendarList}.
+ */
+export const stopChannels = [
+  ...readEvents,
+  calendarListScope,
   `${calendarScope}.calendarlist.readonly`,
 ];
 

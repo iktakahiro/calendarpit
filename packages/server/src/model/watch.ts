@@ -1,11 +1,18 @@
 /**
- * An active push notification channel created by `events.watch`.
- * `controller` and `tail` exist only at runtime and are not persisted.
+ * An active push notification channel created by `events.watch` or
+ * `calendarList.watch`. `controller` and `tail` exist only at runtime and are
+ * not persisted.
  */
 export type Channel = {
   id: string;
   grantId: string;
-  calendarId: string;
+  /** Calendar watched by `events.watch`. Absent on a calendar-list channel. */
+  calendarId?: string;
+  /**
+   * User whose calendar list is watched by `calendarList.watch`. Absent on an
+   * event channel.
+   */
+  userId?: string;
   resourceId: string;
   resourceUri: string;
   /** Callback URL. Must pass the watch host allowlist. */
