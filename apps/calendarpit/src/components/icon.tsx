@@ -65,37 +65,45 @@ export function Icon({
   return <Component aria-hidden='true' className={`icon ${className ?? ''}`} />;
 }
 
-/** The Calendarpit mark: a day page with one scheduled block. */
+/** Top-left corners of the mark's 3 x 3 grid; the centre cell is left empty. */
+const markCells = [
+  [4, 4],
+  [24, 4],
+  [44, 4],
+  [4, 24],
+  [44, 24],
+  [4, 44],
+  [24, 44],
+  [44, 44],
+] as const;
+
+/**
+ * The Calendarpit mark: a 3 x 3 grid of calendar cells with the centre
+ * missing and the last cell in the signal color. The cells take the current
+ * text color.
+ */
 export function BrandMark({ className }: { className?: string }) {
   return (
     <svg
       aria-hidden='true'
       className={className}
-      viewBox='0 0 40 40'
+      viewBox='4 4 56 56'
       xmlns='http://www.w3.org/2000/svg'
     >
-      <rect width='40' height='40' rx='10' fill='currentColor' />
-      <path
-        d='M10 12.5h20'
-        stroke='var(--mark-paper, #f2f1ec)'
-        strokeWidth='2.5'
-        strokeLinecap='round'
-      />
-      <rect
-        x='10'
-        y='17.5'
-        width='9'
-        height='12.5'
-        rx='2'
-        fill='var(--mark-signal, #e5531a)'
-      />
-      <path
-        d='M23.5 19h6.5M23.5 24h6.5M23.5 29h3.5'
-        stroke='var(--mark-paper, #f2f1ec)'
-        strokeOpacity='.6'
-        strokeWidth='2'
-        strokeLinecap='round'
-      />
+      {markCells.map(([x, y], index) => (
+        <rect
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          width='16'
+          height='16'
+          fill={
+            index === markCells.length - 1
+              ? 'var(--mark-signal, #e5531a)'
+              : 'currentColor'
+          }
+        />
+      ))}
     </svg>
   );
 }

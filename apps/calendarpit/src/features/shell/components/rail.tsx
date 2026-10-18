@@ -50,7 +50,10 @@ export function Rail({
       <div className='rail-head'>
         <a className='brand' href='/'>
           <BrandMark className='brand-mark' />
-          <span>calendarpit</span>
+          <span>
+            calendarpit
+            <span className='brand-dot' aria-hidden='true' />
+          </span>
         </a>
         <p
           className={`live ${status === 'offline' ? 'offline' : status === 'live' ? 'online' : ''}`}

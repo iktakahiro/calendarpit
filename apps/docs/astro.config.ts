@@ -29,7 +29,13 @@ export default defineConfig({
       description:
         'A local Google Calendar–compatible API and OAuth server for development and repeatable tests.',
       favicon: '/favicon.svg',
-      logo: { src: './src/assets/logo.svg', alt: '' },
+      logo: {
+        light: './src/assets/logo-light.svg',
+        dark: './src/assets/logo-dark.svg',
+        alt: 'Calendarpit',
+        // The lockup already spells out the name.
+        replacesTitle: true,
+      },
       social: [{ icon: 'github', label: 'GitHub', href: repository }],
       editLink: { baseUrl: `${repository}/edit/main/apps/docs/` },
       // The admin UI's typeface, so the site and the product read as one.
