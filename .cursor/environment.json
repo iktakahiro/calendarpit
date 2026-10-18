@@ -1,0 +1,3 @@
+{
+  "install": "set -euo pipefail\nversion=\"$(tr -d '[:space:]' < .bun-version)\"\ncurl -fsSL https://bun.sh/install | bash -s \"bun-v${version}\"\nsudo ln -sf \"${HOME}/.bun/bin/bun\" /usr/local/bin/bun\nhash -r\nbun install --frozen-lockfile\nbun run --cwd apps/calendarpit playwright install chromium\n"
+}
