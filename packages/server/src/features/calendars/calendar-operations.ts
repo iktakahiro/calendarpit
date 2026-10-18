@@ -2,7 +2,7 @@ import { fail } from '../../shared/errors';
 import type { Calendar } from '../../model/directory';
 import type { Workspace } from '../../workspace/workspace';
 import { interval } from '../events/event-time';
-import { stopChannel } from '../watch/channel-operations';
+import { notifyCalendarList, stopChannel } from '../watch/channel-operations';
 import { makeCalendar } from './calendar-input';
 
 /**
@@ -73,19 +73,28 @@ export function saveCalendar(
     workspace.deletedCalendars = workspace.deletedCalendars.filter(
       (removed) => removed.id !== c.id,
     );
+    workspace.calendarListEntries = workspace.calendarListEntries.filter(
+      (entry) => entry.calendarId !== c.id,
+    );
     workspace.data.calendars.push(c);
   }
   workspace.touch();
+  notifyCalendarList(workspace, c.userId);
   return { calendar: c, created: !existing };
 }
 
 /**
- * Deletes a calendar with its events and watch channels, and keeps a
- * tombstone for `calendarList` with `showDeleted`. When the primary calendar
- * is deleted, the owner's next calendar becomes primary.
+ * Deletes a calendar with its events and event watch channels, and keeps a
+ * tombstone for `calendarList` with `showDeleted`. Per-user list settings for
+ * that calendar are dropped. Calendar-list channels for the owner are
+ * notified. When the primary calendar is deleted, the owner's next calendar
+ * becomes primary.
  */
 export function deleteCalendar(workspace: Workspace, existing: Calendar) {
   workspace.deletedCalendars.push(structuredClone(existing));
+  workspace.calendarListEntries = workspace.calendarListEntries.filter(
+    (entry) => entry.calendarId !== existing.id,
+  );
   workspace.data.calendars = workspace.data.calendars.filter(
     (c) => c !== existing,
   );
@@ -101,4 +110,5 @@ export function deleteCalendar(workspace: Workspace, existing: Calendar) {
     if (next) next.primary = true;
   }
   workspace.touch();
+  notifyCalendarList(workspace, existing.userId);
 }

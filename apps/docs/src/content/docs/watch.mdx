@@ -53,6 +53,20 @@ an already-received request cannot be withdrawn from a remote application.
 Expiry is checked before attempts and when channels are inspected or events change.
 Use `POST /__calendarpit/deliveries/drain` to await currently queued work in tests.
 
+## Calendar list
+
+`POST /calendar/v3/users/me/calendarList/watch` uses the same channel rules,
+loopback callbacks, delivery log, and `channels.stop` behavior. The resource is
+the caller's calendar list, not one calendar. The initial message is `sync`;
+`exists` follows a calendar-list write or a calendar create, update, or delete.
+Event edits do not notify it, and it does not notify event channels. Refetch
+with `calendarList.list`. There is no calendar-list sync token. `params.ttl` is
+rejected; set `expiration`.
+
+Read scopes that can call `calendarList.list` can also watch it, including
+`calendar.calendarlist.readonly`. Stopping still requires the connection that
+created the channel.
+
 ## Incremental refresh
 
 After receiving a notification, call `events.list` with the last `nextSyncToken`.

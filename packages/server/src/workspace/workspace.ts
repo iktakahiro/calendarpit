@@ -1,4 +1,5 @@
 import { fail } from '../shared/errors';
+import type { CalendarListSettings } from '../model/calendar-list';
 import type { Calendar } from '../model/directory';
 import type { Fixture } from '../model/fixture';
 import type { History } from '../model/history';
@@ -55,6 +56,7 @@ type SavedState = {
   deliveries: Delivery[];
   syncTokens?: [string, SyncState][];
   deletedCalendars?: Calendar[];
+  calendarListEntries?: CalendarListSettings[];
   notifications?: Notification[];
 };
 
@@ -101,6 +103,11 @@ export class Workspace {
   eventPages = new Map<string, EventPage>();
   /** Tombstones returned by `calendarList` with `showDeleted=true`. */
   deletedCalendars: Calendar[] = [];
+  /**
+   * Per-user calendar-list customizations and removals. Missing records use
+   * the default entry for an owned calendar.
+   */
+  calendarListEntries: CalendarListSettings[] = [];
   notifications: Notification[] = [];
   channels = new Map<string, Channel>();
   deliveries: Delivery[] = [];
@@ -141,6 +148,7 @@ export class Workspace {
         this.history = saved.history.slice(-recordLimit);
         this.syncTokens = new Map(saved.syncTokens ?? []);
         this.deletedCalendars = saved.deletedCalendars ?? [];
+        this.calendarListEntries = saved.calendarListEntries ?? [];
         this.notifications = saved.notifications ?? [];
         // Deliveries never replay after a restart.
         this.deliveries = saved.deliveries.slice(-recordLimit).map((entry) => ({
@@ -195,6 +203,7 @@ export class Workspace {
       deliveries: this.deliveries,
       syncTokens: [...this.syncTokens],
       deletedCalendars: this.deletedCalendars,
+      calendarListEntries: this.calendarListEntries,
       notifications: this.notifications,
     };
     this.persistence.write(state);

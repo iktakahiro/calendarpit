@@ -85,8 +85,8 @@ reset baseline in SQLite so reset stays deterministic after restarting.
 No ACLs, shared-calendar access, delegation, real invitation/reminder emails, real Meet generation,
 full OIDC, Microsoft Graph, CalDAV, or synchronization with real Google.
 Reject unsupported features explicitly; never store a recurring event as a
-single event silently. Calendar-list/ACL/settings watch subscriptions are not
-included in the first event-watch implementation.
+single event silently. `calendarList.watch` is implemented for the owning
+user's list. ACL and settings watch subscriptions remain unsupported.
 
 ## Acceptance criteria
 

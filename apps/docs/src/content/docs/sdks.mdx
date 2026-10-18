@@ -42,7 +42,9 @@ Endpoint formats differ across libraries. Preserve trailing slashes where shown.
 
 Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event
 CRUD and calendar-list calls on the same client use that local service URL too.
-Only [implemented operations](/calendarpit/compatibility/) are supported, even if the SDK
+`calendarList` get, insert, patch, update, delete, and watch are supported with
+the single-owner limits in [Compatibility](/calendarpit/compatibility/). Only
+[implemented operations](/calendarpit/compatibility/) are supported, even if the SDK
 exposes additional methods.
 
 ## List calendars and query FreeBusy

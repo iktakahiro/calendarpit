@@ -5,7 +5,7 @@ import { parseFixture } from './fixture';
 /**
  * Clears everything except calendar data and the startup fixture: grants,
  * tokens, codes, consents, history, sync and page tokens, tombstones,
- * notifications, deliveries, and channels.
+ * notifications, calendar-list settings, deliveries, and channels.
  */
 function clearRuntime(workspace: Workspace) {
   for (const channel of workspace.channels.values())
@@ -19,6 +19,7 @@ function clearRuntime(workspace: Workspace) {
   workspace.syncTokens.clear();
   workspace.eventPages.clear();
   workspace.deletedCalendars = [];
+  workspace.calendarListEntries = [];
   workspace.notifications = [];
   workspace.deliveries = [];
   workspace.touch();

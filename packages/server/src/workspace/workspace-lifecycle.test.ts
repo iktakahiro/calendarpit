@@ -478,3 +478,52 @@ test('restart drops one-use consent, authorization codes and pagination cursors'
     ).status,
   ).toBe(410);
 });
+
+test('calendar-list settings and watches survive restart and reset clears them', async () => {
+  const database = file();
+  const messages: string[] = [];
+  const deliver: WorkspaceOptions['deliver'] = async (_url, init) => {
+    messages.push(new Headers(init.headers).get('X-Goog-Resource-State')!);
+    return new Response(null, { status: 204 });
+  };
+  let current = open(database, { deliver });
+  const { access_token } = await current.authorize();
+  const patched = await current.request(
+    '/calendar/v3/users/me/calendarList/alex-personal',
+    'PATCH',
+    { summaryOverride: 'Home', colorId: '14' },
+    access_token,
+  );
+  expect(patched.status).toBe(200);
+  const before = await patched.json();
+  await current.request(
+    '/calendar/v3/users/me/calendarList/watch',
+    'POST',
+    {
+      id: 'list-watch',
+      type: 'web_hook',
+      address: 'http://127.0.0.1:5555/hook',
+    },
+    access_token,
+  );
+  await current.app.drain();
+  current.app.close();
+  current = open(database, { deliver });
+  const again = await current.request(
+    '/calendar/v3/users/me/calendarList/alex-personal',
+    'GET',
+    undefined,
+    access_token,
+  );
+  expect(await again.json()).toEqual(before);
+  await current.request('/__calendarpit/calendars/alex-personal', 'PATCH', {
+    summary: 'Renamed',
+  });
+  await current.app.drain();
+  expect(messages).toEqual(['sync', 'exists']);
+  await current.request('/__calendarpit/reset', 'POST', {});
+  current.app.close();
+  current = open(database);
+  expect(current.app.workspace.calendarListEntries).toEqual([]);
+  expect(current.app.workspace.channels.size).toBe(0);
+});
