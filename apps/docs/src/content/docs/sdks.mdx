@@ -3,7 +3,7 @@ title: SDK examples
 description: Point official Google Calendar clients in TypeScript, Python, Go, Java, and C# at Calendarpit.
 ---
 
-import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
+import { TabItem, Tabs } from '@astrojs/starlight/components';
 
 Point your app's official Google Calendar SDK client at Calendarpit. You do not need a Calendarpit-specific SDK. The examples below list calendars and query FreeBusy.
 
@@ -11,11 +11,9 @@ Point your app's official Google Calendar SDK client at Calendarpit. You do not 
 
 Start Calendarpit (for example with `calendarpit serve`; see [Run and configure](/calendarpit/running/)), then complete the [local OAuth flow](/calendarpit/oauth/) with the `https://www.googleapis.com/auth/calendar` scope (add `access_type=offline` if you need a refresh token). Set `CALENDARPIT_ACCESS_TOKEN` in your shell to the resulting access token (valid for one hour). These examples read that variable directly; it is not a Google SDK setting.
 
-<Aside>
-
+:::note
 These snippets pass an existing access token to show how to route Calendar API requests to Calendarpit. They do not handle authorization callbacks or automatic token refresh. Refresh tokens through `POST /oauth/token`, then update the client's token or recreate the client. See [Connect your app](/calendarpit/connect/) for the sample app and full OAuth client configuration.
-
-</Aside>
+:::
 
 Install the packages listed in each tab in your project. Calendarpit does not install language runtimes or SDK packages for you.
 

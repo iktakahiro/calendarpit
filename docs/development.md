@@ -136,7 +136,12 @@ belongs in this `docs/` directory.
 - Sidebar groups and labels are set in `apps/docs/astro.config.ts`; Japanese
   labels use the `translations` option. Overrides for Starlight's built-in UI
   strings live in `apps/docs/src/content/i18n/`.
-- The landing page copy for both languages is in
-  `apps/docs/src/components/landing/`.
+- Use Starlight's Markdown asides and built-in components (`Tabs`, `Steps`,
+  `CardGrid`, `LinkCard`, `LinkButton`) before writing custom markup, and
+  customize the site through `customCss` and component overrides.
+- The landing page is `index.mdx` in each locale: its `hero` frontmatter and
+  body use Starlight's components. `apps/docs/src/components/Hero.astro`
+  overrides Starlight's hero to add the `eyebrow` label and the routing
+  diagram, whose labels live in `apps/docs/src/components/landing/`.
 - `bun run docs:check` builds both locales and fails on broken internal links
   and anchors.

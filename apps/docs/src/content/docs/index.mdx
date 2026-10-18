@@ -9,8 +9,141 @@ head:
 editUrl: false
 prev: false
 next: false
+eyebrow: Local API and OAuth server
+hero:
+  title: Run a local Google Calendar API for tests
+  tagline: Calendarpit serves a Google Calendar API v3 subset and local OAuth in one process. Test with no Google account or network access.
+  actions:
+    - text: Get started
+      link: /calendarpit/quick-start/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/iktakahiro/calendarpit
+      icon: external
+      variant: secondary
 ---
 
-import Landing from '../../components/landing/Landing.astro';
+import {
+  Card,
+  CardGrid,
+  Code,
+  LinkButton,
+  LinkCard,
+  Steps,
+  TabItem,
+  Tabs,
+} from '@astrojs/starlight/components';
 
-<Landing locale='en' />
+## Why test against a local server
+
+<CardGrid>
+  <Card title="Testing with real Google" icon="warning">
+
+    - Needs a Google account, Cloud project, and OAuth setup.
+    - Depends on internet access and shared API quotas.
+    - Shared calendar data changes between test runs.
+
+  </Card>
+  <Card title="Testing with Calendarpit" icon="approve-check">
+
+    - Sign in as a local test user with no real credentials.
+    - Runs on 127.0.0.1 in one process with no network access.
+    - Seed data from fixtures and reset state between tests.
+
+  </Card>
+</CardGrid>
+
+## How it works
+
+<Steps>
+
+1. **Start Calendarpit.** One process serves the API, local OAuth, and the admin UI on `http://127.0.0.1:4173`.
+
+   <Tabs syncKey='install'>
+     <TabItem label='Homebrew'>
+       <Code
+         lang='sh'
+         code={`brew install iktakahiro/tap/calendarpit\ncalendarpit serve`}
+       />
+     </TabItem>
+     <TabItem label='Docker'>
+       <Code
+         lang='sh'
+         code='docker run --rm -p 127.0.0.1:4173:4173 ghcr.io/iktakahiro/calendarpit:0.9.0'
+       />
+     </TabItem>
+   </Tabs>
+
+2. **Point your app at it.** Keep your Google SDK and override its OAuth and API endpoints. For example, with `@googleapis/calendar` and `google-auth-library`:
+
+   ```ts
+   const origin = 'http://127.0.0.1:4173';
+   const auth = new OAuth2Client({
+     clientId: 'sample-app',
+     clientSecret: 'local-sample-secret',
+     redirectUri: 'http://127.0.0.1:4175/callback',
+     endpoints: {
+       oauth2AuthBaseUrl: `${origin}/oauth/authorize`,
+       oauth2TokenUrl: `${origin}/oauth/token`,
+     },
+   });
+   const api = calendar({ version: 'v3', auth, rootUrl: origin });
+   ```
+
+   [Connect your app](/calendarpit/connect/) covers every endpoint, and [SDK examples](/calendarpit/sdks/) cover Python, Go, Java, and .NET.
+
+3. **Test with predictable data.** Reset to the startup fixture before each test, and inspect requests in the admin UI.
+
+   ```sh
+   curl -X POST http://127.0.0.1:4173/__calendarpit/reset \
+     -H "Content-Type: application/json" \
+     -d '{}'
+   ```
+
+</Steps>
+
+## What Calendarpit includes
+
+<CardGrid>
+  <LinkCard
+    title='Google Calendar API'
+    description='Calendars, events, recurring events, free/busy, and incremental sync in API v3 shapes.'
+    href='/calendarpit/compatibility/'
+  />
+  <LinkCard
+    title='Local OAuth sign-in'
+    description='Pick a test user on the local consent page to issue and refresh tokens with no passwords.'
+    href='/calendarpit/oauth/'
+  />
+  <LinkCard
+    title='Fixtures and reset'
+    description='Seed users, calendars, events, and clients from a fixture, then reset between test runs.'
+    href='/calendarpit/fixtures/'
+  />
+  <LinkCard
+    title='Watch webhooks'
+    description='Send events.watch notifications to local callbacks, and drain deliveries from tests.'
+    href='/calendarpit/watch/'
+  />
+  <LinkCard
+    title='Admin UI'
+    description='Inspect and edit users, calendars, and events in the browser, and read the request history.'
+    href='/calendarpit/running/#admin-ui'
+  />
+  <LinkCard
+    title='Explicit about gaps'
+    description='Unsupported features fail with HTTP 501 (unsupportedFeature), never a silent wrong answer.'
+    href='/calendarpit/scope/'
+  />
+</CardGrid>
+
+## Start testing with Calendarpit
+
+Calendarpit is built for local development and automated tests only. It implements a defined subset of the Google Calendar API v3 on loopback.
+
+<LinkButton href='/calendarpit/quick-start/' icon='right-arrow'>
+  Quick start
+</LinkButton>
+<LinkButton href='/calendarpit/scope/' variant='secondary'>
+  Scope and limitations
+</LinkButton>
