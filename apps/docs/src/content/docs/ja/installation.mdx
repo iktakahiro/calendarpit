@@ -1,0 +1,120 @@
+---
+title: インストール
+description: npm、Docker Compose、Homebrew、単体実行ファイルで Calendarpit をインストールします。
+---
+
+:::note[0.9.0 のリリース準備中]
+以下は 0.9.0 向けに準備した導入コマンドです。レジストリへの公開と Homebrew Tap の公開は未完了です。公開までは[ソースからの起動手順](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)を使用してください。ワークフローの準備完了は、パッケージの公開完了を意味しません。
+:::
+
+JavaScript／TypeScript プロジェクトには npm、既存のコンテナ環境には Docker Compose、ローカルの CLI には Homebrew が適しています。すべての配布形式に API、OAuth サーバー、管理画面、SQLite が含まれます。Google の認証情報や別のデータベースは不要です。
+
+## npm と npx
+
+Node.js 22 以降で実行します。
+
+```sh
+npx @iktakahiro/calendarpit@0.9.0 serve
+```
+
+プロジェクトで使用する場合はバージョンを固定し、パッケージマネージャーのロックファイルをコミットしてください。
+
+```sh
+npm install --save-dev --save-exact @iktakahiro/calendarpit@0.9.0
+```
+
+```json
+{
+  "scripts": {
+    "calendar": "calendarpit serve",
+    "calendar:test": "calendarpit serve --database :memory:"
+  }
+}
+```
+
+npm の起動コードが環境に合った実行ファイルを選びます。Bun は内蔵されているため、別途インストールする必要はありません。optional dependencies を有効にしてください。postinstall スクリプトは不要です。配布対象は macOS arm64/x64、Linux glibc arm64/x64、Windows x64 です。Alpine/musl と Windows ARM64 向けのネイティブパッケージはありません。対応するコンテナホストで Docker を使用してください。
+
+Bun を使用する場合:
+
+```sh
+bunx @iktakahiro/calendarpit@0.9.0 serve
+```
+
+起動コードは Node の shebang を使用するため、このコマンドでも Node.js が必要です。パッケージマネージャーの公開後待機期間によって、新しいバージョンをすぐにインストールできない場合があります。ポリシーを無効にせず、設定された期間を待ってください。
+
+## Docker
+
+```sh
+docker run --rm \
+  -p 127.0.0.1:4173:4173 \
+  -v calendarpit-data:/data \
+  ghcr.io/iktakahiro/calendarpit:0.9.0
+```
+
+イメージは Linux amd64 と arm64 を対象にしており、Apple Silicon 上の Docker も含みます。非 root ユーザーで動作し、SQLite を `/data/calendarpit.sqlite` に保存します。コンテナを作り直してもデータを残すには、名前付きボリュームを保持してください。一時的なテストには `-e CALENDARPIT_DATABASE=:memory:` を使用します。ホストのポートはループバックだけに公開し、コンテナ内部では明示的に `0.0.0.0` にバインドします。
+
+## Docker Compose
+
+使用中の `compose.yaml` にサービスとボリュームを追加します。
+
+```yaml
+services:
+  calendarpit:
+    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    ports:
+      - '127.0.0.1:4173:4173'
+    volumes:
+      - calendarpit-data:/data
+
+volumes:
+  calendarpit-data:
+```
+
+```sh
+docker compose up -d calendarpit
+docker compose logs calendarpit
+docker compose down
+```
+
+`down` はボリュームを保持し、`down -v` は保存データも削除します。別のサービスで Calendarpit の起動を待つには、`depends_on: { calendarpit: { condition: service_healthy } }` を使用してください。イメージにはヘルスチェックが含まれています。コンテナのポートを変更する場合は、ヘルスチェックも同じポートを使うように、ポートマッピングと `CALENDARPIT_PORT` の両方を設定してください。
+
+### リクエスト元によってアドレスが異なります
+
+| リクエスト元                        | Calendarpit のアドレス    |
+| ----------------------------------- | ------------------------- |
+| ホスト上のブラウザやアプリ          | `http://127.0.0.1:4173`   |
+| 同じ Compose ネットワーク内のアプリ | `http://calendarpit:4173` |
+
+ブラウザで開く OAuth 認可 URL は、ホストからアクセスできるアドレスにしてください。コンテナ内のバックエンドは、トークン交換と Calendar API に Compose のアドレスを使用します。OAuth の `redirect_uri` は fixture に登録した URI と完全一致し、ブラウザからアクセスできる必要があります。
+
+Webhook のアドレスは Calendarpit から解決されます。受信サービスの名前が `app` の場合は、`CALENDARPIT_WATCH_HOSTS=app` を設定して `http://app:<port>/<path>` を登録してください。ホスト上のプロセスには、Docker Desktop の `host.docker.internal` を使用できます。Linux の Docker Engine では `extra_hosts: ["host.docker.internal:host-gateway"]` を追加してください。このホスト名も `CALENDARPIT_WATCH_HOSTS` で許可します。受信プロセスはコンテナから到達可能なアドレスで待ち受ける必要があります。[watch 通知](/calendarpit/ja/watch/)も参照してください。
+
+## Homebrew
+
+```sh
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
+```
+
+Tap は macOS または Linux 用の単体実行ファイルをインストールします。Bun と Node.js は不要です。デフォルトの SQLite ファイルをプロジェクト内に作るため、プロジェクトのディレクトリで起動してください。更新方法:
+
+```sh
+brew update
+brew upgrade iktakahiro/tap/calendarpit
+```
+
+## 単体実行ファイル
+
+[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases) から OS と CPU に合ったアーカイブと `SHA256SUMS` をダウンロードします。展開前にチェックサムを照合してください。Apple Silicon の例:
+
+```sh
+shasum -a 256 calendarpit-0.9.0-darwin-arm64.tar.gz
+tar -xzf calendarpit-0.9.0-darwin-arm64.tar.gz
+./bin/calendarpit serve
+```
+
+表示されたハッシュを `SHA256SUMS` の該当行と照合します。Windows のアーカイブには `bin/calendarpit.exe` が含まれます。Bun、Node.js、別のアセットディレクトリは不要です。
+
+## 更新とデータ保存
+
+更新時は npm の固定バージョンか Docker イメージのタグを変更します。Homebrew では `brew upgrade` を使用します。更新前に Calendarpit を停止し、SQLite のディレクトリか Docker ボリュームをバックアップしてください。同じデータベースファイルを複数のインスタンスで同時に使用しないでください。[データ保存と再起動](/calendarpit/ja/storage/)と[起動と設定](/calendarpit/ja/running/)も参照してください。

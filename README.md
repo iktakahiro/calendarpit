@@ -12,27 +12,40 @@ limited; unsupported features return explicit errors. See
 
 ## Quick start
 
-Install [Bun](https://bun.sh/) **1.4.3** (also recorded in `.bun-version`), then:
+**0.9.0 distribution is being prepared; the packages, images, and Homebrew tap
+are not published yet.** The following commands are the intended release interface.
+Until publication, use the [development guide](docs/development.md).
+
+With Node.js 22 or later:
 
 ```sh
-bun install --frozen-lockfile
-bun run dev
+npx @iktakahiro/calendarpit@0.9.0 serve
 ```
 
-Open <http://127.0.0.1:4173>. The API and admin UI share the same origin.
-Changes are saved in SQLite by default. No `.env` file or credentials are needed. Documentation runs separately:
+Or Docker:
 
 ```sh
-bun run docs:dev
+docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-Open <http://127.0.0.1:4487/calendarpit/>. The docs are an Astro Starlight site
-with a landing page. Publishing is manual while the custom domain and hosting
-are decided. The docs are separate from the Calendarpit server.
+Or Homebrew after the tap is published:
+
+```sh
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
+```
+
+Open <http://127.0.0.1:4173>. The API, local OAuth, and admin UI share one origin.
+No Google credentials, environment file, or external database is needed.
+See [installation](apps/docs/src/content/docs/installation.mdx) for Compose,
+project dependencies, standalone downloads, networking, and updates.
+
+Contributor setup, including the docs preview, lives in [docs/](docs/README.md).
 
 ## Try a calendar integration
 
-In another terminal:
+From a source checkout prepared using the [development guide](docs/development.md),
+in another terminal:
 
 ```sh
 bun run sample:dev
@@ -142,8 +155,8 @@ The executable embeds the server, client JavaScript/CSS, icons, and Bun
 runtime. It does not need `node_modules` or a separate asset directory at runtime.
 The admin UI loads Roboto Mono from Google Fonts and falls back to
 system fonts when unavailable. Calendar and OAuth operations remain local.
-Compilation currently targets the build host; cross-platform release artifacts
-and package publication are future work. On Windows the output has an `.exe`
+Compilation defaults to the build host. The release workflow builds and tests
+macOS arm64/x64, Linux glibc arm64/x64, and Windows x64 artifacts. On Windows the output has an `.exe`
 suffix.
 
 The default bind address is `127.0.0.1`. Use `--host` explicitly to change it.
@@ -153,8 +166,8 @@ execution requires Bun and a completed build; `--help` and `--version` do not.
 
 ## Docker (optional)
 
-Bun is the primary local development workflow. The Dockerfile is included for
-future container use; container build and startup validation are still pending.
+Build a local image from a source checkout, or use the versioned GHCR image
+after publication. The release workflow validates both Linux architectures.
 
 ```sh
 docker build -t calendarpit:local .
@@ -173,8 +186,7 @@ Keep protocol behavior independent from UI components and application consumers.
 Chronock is the first integration target; it contributes no application-specific
 data or logic to Calendarpit. See [AGENTS.md](AGENTS.md) for repository guidance.
 
-CI runs protocol/CLI tests and the Google SDK HTTP integration test, but does not publish an npm package,
-Docker image, or GitHub release automatically.
-
-Chronock integration and Docker startup validation remain pending. No Chronock
-source code has been changed.
+CI runs protocol/CLI and Google SDK HTTP integration tests. The separate release
+workflow builds and tests distribution artifacts, then publishes version tags
+to npm, GHCR, and GitHub Releases. Homebrew updates require tap credentials.
+See [Releasing](docs/releasing.md) for initial setup and publication status.

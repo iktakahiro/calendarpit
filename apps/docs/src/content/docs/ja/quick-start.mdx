@@ -1,104 +1,66 @@
 ---
 title: クイックスタート
-description: Calendarpit をクローンしてローカルサーバーを起動し、付属のサンプルアプリでカレンダーの動作を確認します。
+description: リポジトリをクローンせずに Calendarpit を起動し、アプリを接続します。
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+## Calendarpit を起動する
 
-このガイドでは、Calendarpit のリポジトリをクローンしてローカルサーバーを起動し、付属のサンプルアプリを接続するまでの手順を説明します。
+0.9.0 の配布物は準備中で、まだ公開されていません。公開状況とソースからの起動方法は[インストール](/calendarpit/ja/installation/)を参照してください。
 
-## 必要な環境
+公開後は Node.js 22 以降で実行できます。
 
-- Git
-- [Bun](https://bun.sh/) `1.4.3`（`.bun-version` で指定されているバージョン）
+```sh
+npx @iktakahiro/calendarpit@0.9.0 serve
+```
 
-Google アカウント、Google Cloud プロジェクト、外部のデータベースサーバー、`.env` ファイル、API 認証情報は不要です。
+Docker を使用する場合:
 
-現在、Calendarpit は npm パッケージ、コンテナイメージ、リリースバイナリとしては公開されていません。リポジトリをローカルにクローンして直接実行します。
+```sh
+docker run --rm \
+  -p 127.0.0.1:4173:4173 \
+  -v calendarpit-data:/data \
+  ghcr.io/iktakahiro/calendarpit:0.9.0
+```
 
-## Calendarpit とサンプルアプリを起動する
+Google アカウント、Google Cloud プロジェクト、外部データベース、`.env` ファイル、プロバイダーの認証情報は不要です。どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。Homebrew、Compose、単体ダウンロード、プロジェクトへの追加は[インストール](/calendarpit/ja/installation/)で説明しています。
 
-<Steps>
+## 管理画面を開く
 
-1. **リポジトリをクローンして依存パッケージをインストールする**
+`http://127.0.0.1:4173` を開きます。組み込みの fixture にはテストユーザー `alex` と `sam`、3 つのカレンダー、`2026-10-19` の planning イベントが含まれます。API 経由の変更も自動で表示されます。
 
-   [https://github.com/iktakahiro/calendarpit](https://github.com/iktakahiro/calendarpit) をクローンし、Bun でロックファイルに従って依存パッケージをインストールします。
+CLI は実行ディレクトリ内の `.calendarpit/calendarpit.sqlite` にデータを保存します。Docker はマウントしたボリュームに保存します。一時的なテストには、CLI で `--database :memory:`、Docker で `-e CALENDARPIT_DATABASE=:memory:` を指定してください。[データ保存と再起動](/calendarpit/ja/storage/)も参照してください。
 
-   ```sh
-   git clone https://github.com/iktakahiro/calendarpit.git
-   cd calendarpit
-   bun install --frozen-lockfile
-   ```
+## ヘルスエンドポイントを確認する
 
-2. **Calendarpit を起動する**
+```sh
+curl http://127.0.0.1:4173/__calendarpit/health
+```
 
-   リポジトリのルートディレクトリでローカルサーバーを起動します。
+```json
+{
+  "name": "Calendarpit",
+  "version": "0.9.0",
+  "stage": "preview",
+  "storage": "sqlite",
+  "capabilities": {
+    "calendar": true,
+    "oauth": true,
+    "watch": true,
+    "fixtures": true
+  }
+}
+```
 
-   ```sh
-   bun run dev
-   ```
+0.9.0 はプレビュー版です。対応範囲はドキュメントに記載されていますが、1.0 までは API が変更される可能性があります。
 
-   Calendarpit は `http://127.0.0.1:4173` で待ち受けます。Google Calendar API v3 のエンドポイント、ローカル OAuth のエンドポイント、管理 API、管理画面はすべてこのオリジンを共有します。`bun run dev` は常にポート 4173 を使用し、すでにポートが使用されている場合は終了します。別のポートを使用する方法は[実行と設定](/calendarpit/ja/running/)を参照してください。
+## アプリを接続する
 
-   デフォルトでは、データは `apps/calendarpit/.calendarpit/calendarpit.sqlite` の SQLite ファイルに保存され、初回起動時に組み込みの起動時フィクスチャが投入されます。使い捨てのインメモリセッションとして実行する場合は、代わりに `CALENDARPIT_DATABASE=:memory: bun run dev` を実行してください。再起動時のデータの扱いについては、[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。
+[アプリを接続する](/calendarpit/ja/connect/)に従って、SDK と OAuth フローの接続先を Calendarpit に変更します。[fixture](/calendarpit/ja/fixtures/)でローカルのクライアント認証情報と完全一致するコールバック URI を登録してください。組み込みの `sample-app` / `local-sample-secret` は公開されたテスト用の値で、コールバックは `http://127.0.0.1:4175/callback` です。
 
-3. **ヘルスチェック用エンドポイントを確認する**
+任意のソースサンプルでは、認可、イベント作成、FreeBusy、watch 通知、接続の取り消しを試せます。起動方法は[開発ガイド](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)にあります。サンプルは配布サーバーとは別のアプリです。
 
-   別のターミナルを開き、サーバーが動作していることを確認します。
+## 次のステップ
 
-   ```sh
-   curl http://127.0.0.1:4173/__calendarpit/health
-   ```
-
-   このエンドポイントは、サーバーの状態と現在のストレージモード（`sqlite` または `memory`）を返します。
-
-   ```json
-   {
-     "name": "Calendarpit",
-     "version": "0.1.0",
-     "stage": "preview",
-     "storage": "sqlite",
-     "capabilities": {
-       "calendar": true,
-       "oauth": true,
-       "watch": true,
-       "fixtures": true
-     }
-   }
-   ```
-
-4. **管理画面を開く**
-
-   ブラウザで `http://127.0.0.1:4173` を開きます。デフォルトの起動時フィクスチャには、2 人のテストユーザー（`alex` と `sam`）、3 つのカレンダー、`2026-10-19` のイベント「Weekly planning」、およびサンプルアプリが使用する OAuth クライアント `sample-app` が含まれています。
-
-   Schedule ビューはデフォルトで `2026-10-19` を表示します。管理画面は 2 秒ごとにサーバーをポーリングするため、API 経由で行った変更は自動的に画面へ反映されます。
-
-5. **サンプルアプリを起動する**
-
-   2 つ目のターミナルで、付属のサンプルアプリを起動します。
-
-   ```sh
-   bun run sample:dev
-   ```
-
-   ブラウザで `http://127.0.0.1:4175` を開きます。このサンプルアプリは、公式の `@googleapis/calendar` パッケージと `google-auth-library` パッケージを `http://127.0.0.1:4173` に向けて使用しています。
-
-   認証には、クライアント ID `sample-app`、クライアントシークレット `local-sample-secret`、リダイレクト URI `http://127.0.0.1:4175/callback` を使用します。これらのクライアント認証情報は、デフォルトのフィクスチャに含まれているローカルテスト用の公開値です。
-
-6. **カレンダーの一連の動作を試す**
-
-   `http://127.0.0.1:4175` のサンプルアプリで、以下の操作を試すことができます。
-
-   - **Connect calendar** をクリックして OAuth の認可コードフローを開始し、同意画面でテストユーザーを選択してアクセスを承認します。
-   - **Create event** をクリックして `2026-10-19` にイベントを作成し、FreeBusy クエリが返す busy 区間に新しいイベントが含まれていることを確認します。
-   - **Start watch** をクリックして watch チャネルを開始し、`http://127.0.0.1:4175/notifications` で `events.watch` の Webhook 通知を受け取れるようにします。チャネルの開始時には、まず `sync` 通知が送信されます。その後、作成したイベントを更新または削除すると通知の配信が発生します。
-   - **Revoke connection** をクリックしてアクセス権を取り消してから再接続するか、`http://127.0.0.1:4173` の管理画面で **API history** や **Watch** を開き、記録されたリクエストや Webhook の配信を確認します。
-
-</Steps>
-
-## 次に読むページ
-
-- [お使いのアプリを接続する](/calendarpit/ja/connect/) — お使いのアプリや Google SDK クライアントの接続先を `http://127.0.0.1:4173` に向けます。
-- [フィクスチャ](/calendarpit/ja/fixtures/) — JSON ファイルから独自のテストユーザー、カレンダー、イベント、OAuth クライアントを投入します。
-- [テスト制御 API](/calendarpit/ja/test-control/) — テストの合間に状態をリセット基準（起動時の状態）へリセットしたり、フィクスチャを読み込んだり、Webhook の配信をドレイン（待機して流し切る）したりします。
-- [実行と設定](/calendarpit/ja/running/) — ポート、データベースのパス、環境変数を設定する方法や、単体実行ファイルをビルドする方法を説明します。
+- [起動と設定](/calendarpit/ja/running/) — ポート、fixture、環境変数。
+- [テスト制御 API](/calendarpit/ja/test-control/) — 状態のリセットと通知配信の完了待ち。
+- [対応範囲と制約](/calendarpit/ja/scope/) — 実装済みの互換性と明示的な対象外機能。

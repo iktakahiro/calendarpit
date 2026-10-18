@@ -27,9 +27,10 @@ must be documented and tested instead of silently accepted.
 
 ## Release work
 
-Validate the existing Docker configuration, automate builds for supported
-platforms, and decide npm/package and image publication. No registry publication
-or GitHub release is performed automatically by the current CI.
+The release workflow prepares versioned executables, scoped npm packages, GHCR
+images, checksums, and a Homebrew formula. Initial registry publication and tap
+setup remain pending. Validate all native targets in a dry run before publishing
+0.9.0, then verify installation from each public channel. See [Releasing](releasing.md).
 
 ## Out of scope
 

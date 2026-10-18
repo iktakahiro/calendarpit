@@ -18,7 +18,7 @@ Calendarpit is a local Google Calendar-compatible API and OAuth server for devel
 
 ## Guarantees
 
-- **Loopback by default**: The server binds to `127.0.0.1` unless you set `--host` or `CALENDARPIT_HOST` (the `Dockerfile` default command binds `0.0.0.0` inside the container). Webhook callbacks only target loopback hosts unless you configure `CALENDARPIT_WATCH_HOSTS`.
+- **Loopback by default**: The server binds to `127.0.0.1` unless you set `--host` or `CALENDARPIT_HOST` (the `Dockerfile` explicitly binds `0.0.0.0` inside the container). Webhook callbacks only target loopback hosts unless you configure `CALENDARPIT_WATCH_HOSTS`.
 - **Explicit errors for unsupported features**: Unsupported Calendar API endpoints return `501`, and unsupported query parameters, fields, and recurrence rules return `400`, all with `reason: "unsupportedFeature"` (`events.import` returns `404 notFound`, and `events.quickAdd` returns `400 unsupportedFeature` for its `text` parameter or `404 notFound` without it). OAuth authorization requests with unsupported parameters return `400` with `error: "unsupported_feature"`. Unsupported OAuth endpoints return `501` with `error: "unsupportedFeature"`. Calendarpit rejects an unsupported recurrence rule with `400 unsupportedFeature` instead of storing the event without it.
 - **No real Google calls**: Calendarpit never sends API, OAuth, or webhook requests to Google. (The admin UI loads the Roboto Mono font from Google Fonts with a system-font fallback.)
 - **Deterministic reset**: `POST /__calendarpit/reset` clears tokens, channels, history, calendar-list settings, deleted-calendar tombstones, and edits, restoring the startup fixture with the same IDs and calendar-list ETags. In SQLite mode, the reset baseline, calendar-list settings, and tombstones survive restarts; set fixed IDs in the fixture for IDs that stay stable across `:memory:` restarts.
@@ -51,6 +51,6 @@ Calendarpit reproduces this end-to-end integration workflow (for the Google SDK 
 
 ## Current status
 
-- **Runs from a clone**: No npm package, Docker Hub image, or GitHub release is published yet. Clone the repository and run it with Bun `1.4.3` ([Quick start](/calendarpit/quick-start/)).
-- **Host-platform standalone executable**: `bun run build:binary` builds a standalone executable for the current host platform only.
-- **Unvalidated Docker setup**: A `Dockerfile` exists in the repository, but container build and startup are not validated yet.
+- **0.9.0 distribution preparation**: Packaging is prepared for npm, GHCR, GitHub Releases, and Homebrew. Initial publication is pending; see [Installation](/calendarpit/installation/) for availability.
+- **Standalone executables**: Embed Bun, the API, and the admin UI. Release targets are macOS arm64/x64, Linux glibc arm64/x64, and Windows x64, with native validation required before publication.
+- **Docker**: Configures a non-root user, persistent volume, health check, and memory mode. Release checks cover amd64/arm64 startup and storage lifecycles.

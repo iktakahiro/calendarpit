@@ -1,5 +1,7 @@
-/** Calendarpit's version, reported by the health endpoint and the CLI. */
-export const VERSION = '0.1.0';
+import packageMetadata from '../../../package.json';
+
+/** Calendarpit's package version, reported by the health endpoint and the CLI. */
+export const VERSION = packageMetadata.version;
 
 /**
  * Release stage reported by the health endpoint. `preview` means the documented

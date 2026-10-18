@@ -9,6 +9,8 @@ This version includes the native `bun check` type checker. No external database,
 Google account, secrets, or environment file is needed for local use.
 
 ```sh
+git clone https://github.com/iktakahiro/calendarpit.git
+cd calendarpit
 bun install --frozen-lockfile
 bun run dev
 ```
@@ -86,16 +88,24 @@ The default host is `127.0.0.1` and the default port is `4173`.
 
 ### Optional Docker setup
 
-Use Bun directly for day-to-day development. The Dockerfile is available, but
-container build and startup validation are still pending.
+Use Bun directly for day-to-day development. Build and validate the container with:
 
 ```sh
 docker build -t calendarpit:local .
+bun run smoke:docker
 docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
 ```
 
-The Docker build compiles for the container's platform. Publishing images,
-cross-compiling release binaries, and npm publishing remain release work.
+The Docker build compiles for the container's platform. See [Releasing](releasing.md)
+for cross-platform artifacts, npm, GHCR, and Homebrew publication.
+
+### Optional consumer sample
+
+With Calendarpit running on port 4173, run `bun run sample:dev` from the checkout.
+Open `http://127.0.0.1:4175` and connect a test calendar, create an event, inspect
+FreeBusy, start watch notifications, and revoke/reconnect. The sample uses public
+local test credentials `sample-app` / `local-sample-secret` and callback
+`http://127.0.0.1:4175/callback`. No real Google requests are needed.
 
 ## Generated files
 

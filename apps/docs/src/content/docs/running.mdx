@@ -3,15 +3,7 @@ title: Run and configure
 description: Ways to start Calendarpit, command-line options, environment variables, Docker setup, and the admin UI.
 ---
 
-Calendarpit runs as a single Bun process that serves the Google Calendar API v3 subset, local OAuth endpoints, the test control API, and the admin UI from one origin (`http://127.0.0.1:4173` by default).
-
-Calendarpit is not published as an npm package, Docker Hub image, or release download yet. To use it, clone the repository and install dependencies with Bun 1.4.3:
-
-```sh
-git clone https://github.com/iktakahiro/calendarpit.git
-cd calendarpit
-bun install --frozen-lockfile
-```
+Calendarpit serves the API, OAuth, and admin UI from one origin. See [Installation](/calendarpit/installation/) for npm, Docker Compose, Homebrew, standalone downloads, and publication status. The source commands below require a checkout and dependencies installed using the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md).
 
 ## Ways to run Calendarpit
 
@@ -43,7 +35,7 @@ When the built server starts, it prints the storage mode and the resolved URLs:
 ```text
 Calendarpit data: :memory:
 
-Calendarpit v0.1.0
+Calendarpit v0.9.0
 Data   :memory:
 Admin  http://127.0.0.1:38425/
 API    http://127.0.0.1:38425/calendar/v3
@@ -59,20 +51,18 @@ bun run build:binary
 ./apps/calendarpit/dist/bin/calendarpit serve --port 4173 --database :memory:
 ```
 
-The standalone executable embeds the server, client JavaScript and CSS assets, icons, and the Bun runtime. It does not need `node_modules` or a separate asset directory at runtime. Compilation builds for the host platform only.
+The standalone executable embeds the server, client JavaScript and CSS assets, icons, and the Bun runtime. It does not need `node_modules` or a separate asset directory at runtime. The build defaults to the host platform. Release builds also target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64.
 
 ### Docker
 
-A `Dockerfile` is included in the repository, though container build and startup validation are still pending.
+See [Installation](/calendarpit/installation/) for the published image and Compose configuration. To build from a checkout:
 
 ```sh
 docker build -t calendarpit:local .
 docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
 ```
 
-Inside the container, Calendarpit runs `calendarpit serve --host 0.0.0.0 --port 4173` as a non-root user and stores SQLite data at `/data/calendarpit.sqlite`. Publishing `-p 127.0.0.1:4173:4173` keeps the port on loopback on the host.
-
-Passing arguments after `calendarpit:local` replaces the container's default `CMD` (`serve --host 0.0.0.0 --port 4173`). If the replacement arguments omit `--host 0.0.0.0` (and `CALENDARPIT_HOST=0.0.0.0` is not set), Calendarpit falls back to container loopback (`127.0.0.1`) and becomes unreachable from the host. Pass `-e` environment variables instead (such as `-e CALENDARPIT_DATABASE=:memory:`), or include `--host 0.0.0.0` (or `-e CALENDARPIT_HOST=0.0.0.0`) when supplying CLI flags.
+The container runs as a non-root user with explicit `CALENDARPIT_HOST=0.0.0.0` and `CALENDARPIT_PORT=4173`. These environment defaults remain active when you supply CLI arguments. SQLite is stored at `/data/calendarpit.sqlite`.
 
 ## Command-line options and environment variables
 
@@ -87,7 +77,7 @@ Command-line flags take precedence over environment variables.
 | `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/calendarpit/storage/).                                                                                        |
 | `--config <path>`   | `CALENDARPIT_CONFIG`   | Built-in fixture                  | Path to a JSON startup fixture. The file must exist and contain valid JSON. Seeds a new database or `:memory:` session; silently ignored when opening an existing SQLite file. See [Fixtures](/calendarpit/fixtures/). |
 | `-h`, `--help`      | —                      | —                                 | Print help and exit. Works without a build.                                                                                                                                                                            |
-| `-v`, `--version`   | —                      | —                                 | Print `0.1.0` and exit. Works without a build.                                                                                                                                                                         |
+| `-v`, `--version`   | —                      | —                                 | Print `0.9.0` and exit. Works without a build.                                                                                                                                                                         |
 
 ### Additional environment variables
 

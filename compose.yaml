@@ -1,0 +1,10 @@
+services:
+  calendarpit:
+    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    ports:
+      - '127.0.0.1:4173:4173'
+    volumes:
+      - calendarpit-data:/data
+
+volumes:
+  calendarpit-data:

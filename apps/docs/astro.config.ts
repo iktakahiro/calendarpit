@@ -72,6 +72,7 @@ export default defineConfig({
           items: [
             { label: 'Overview', translations: { ja: '概要' }, link: '/' },
             'quick-start',
+            'installation',
             'running',
           ],
         },

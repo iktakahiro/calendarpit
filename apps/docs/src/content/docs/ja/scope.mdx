@@ -18,7 +18,7 @@ Calendarpit は、実際の Google アカウントや Google Cloud プロジェ�
 
 ## 動作の保証
 
-- **デフォルトでループバックにバインド**: `--host` または `CALENDARPIT_HOST` を指定しない限り、サーバーは `127.0.0.1` にバインドします（`Dockerfile` のデフォルトコマンドはコンテナ内で `0.0.0.0` にバインドします）。Webhook のコールバック先も、`CALENDARPIT_WATCH_HOSTS` を設定しない限りループバックホストのみに制限されます。
+- **デフォルトでループバックにバインド**: `--host` または `CALENDARPIT_HOST` を指定しない限り、サーバーは `127.0.0.1` にバインドします（`Dockerfile` は明示的にコンテナ内で `0.0.0.0` にバインドします）。Webhook のコールバック先も、`CALENDARPIT_WATCH_HOSTS` を設定しない限りループバックホストのみに制限されます。
 - **未対応機能に対する明示的なエラー**: 未対応の Calendar API エンドポイントは `501` を返し、未対応のクエリパラメータ、フィールド、繰り返しルールは `400` を返します。いずれも `reason: "unsupportedFeature"` を含みます（ただし、`events.import` は `404 notFound` を返し、`events.quickAdd` は `text` パラメータがある場合は `400 unsupportedFeature`、ない場合は `404 notFound` を返します）。未対応のパラメータを含む OAuth 認可リクエストは、`error: "unsupported_feature"` を伴う `400` を返します。未対応の OAuth エンドポイントは、`error: "unsupportedFeature"` を伴う `501` を返します。未対応の繰り返しルールが指定された場合、ルールを無視して単発イベントとして保存するのではなく、`400 unsupportedFeature` で拒否します。
 - **Google への通信なし**: Calendarpit が Google に対して API、OAuth、Webhook のリクエストを送信することはありません（管理画面ではシステムフォントへのフォールバック付きで Google Fonts から Roboto Mono フォントを読み込みます）。
 - **再現可能なリセット**: `POST /__calendarpit/reset` は、トークン、watch チャネル、リクエスト履歴、カレンダーリストの設定、削除されたカレンダーの削除済みレコード、および各種変更を消去し、起動時フィクスチャを同じ ID とカレンダーリストの ETag で復元します。SQLite モードでは、リセット基準、カレンダーリストの設定、および削除済みレコードは再起動後も維持されます。`:memory:` モードの再起動をまたいで同じ ID を維持したい場合は、フィクスチャ内で固定 ID を指定してください。
@@ -51,6 +51,6 @@ Calendarpit では、次のような E2E の連携ワークフローを再現で
 
 ## 現在のステータス
 
-- **リポジトリをクローンして実行**: 現時点では、npm パッケージ、Docker Hub イメージ、GitHub リリースのいずれも公開されていません。リポジトリをクローンし、Bun `1.4.3` で実行してください（[クイックスタート](/calendarpit/ja/quick-start/)）。
-- **ホスト環境向けの単体実行ファイル**: `bun run build:binary` は、実行中のホストプラットフォーム向けの単体実行ファイルのみをビルドします。
-- **未検証の Docker 設定**: リポジトリには `Dockerfile` が含まれていますが、コンテナのビルドと起動はまだ検証されていません。
+- **0.9.0 の配布準備**: npm、GHCR、GitHub Releases、Homebrew 向けの配布処理を用意しています。初回公開は未完了です。[インストール](/calendarpit/ja/installation/)の公開状況を確認してください。
+- **単体実行ファイル**: Bun、API、管理画面を内蔵します。配布対象は macOS arm64/x64、Linux glibc arm64/x64、Windows x64 で、公開前に各環境で検証します。
+- **Docker**: 非 root ユーザー、永続ボリューム、ヘルスチェック、メモリモードを設定しています。リリース処理は amd64/arm64 の起動と保存データのライフサイクルを検証します。

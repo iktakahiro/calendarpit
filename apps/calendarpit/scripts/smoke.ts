@@ -2,12 +2,44 @@ import assert from 'node:assert/strict';
 import { chmod, copyFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { releaseVersion } from './release/artifacts';
 
 const root = resolve(import.meta.dir, '..');
 const binaryName = `calendarpit${process.platform === 'win32' ? '.exe' : ''}`;
 const directory = await mkdtemp(join(tmpdir(), 'calendarpit-smoke-'));
 const binary = join(directory, binaryName);
+const override: unknown = process.env.CALENDARPIT_SMOKE_COMMAND
+  ? JSON.parse(process.env.CALENDARPIT_SMOKE_COMMAND)
+  : undefined;
+if (
+  override !== undefined &&
+  (!Array.isArray(override) ||
+    override.length === 0 ||
+    !override.every((item) => typeof item === 'string'))
+) {
+  throw new Error(
+    'CALENDARPIT_SMOKE_COMMAND must be a nonempty JSON array of strings.',
+  );
+}
+const command: string[] =
+  override === undefined ? [binary] : (override as string[]);
 let child: ReturnType<typeof Bun.spawn> | undefined;
+
+async function stop(signal: 'SIGTERM' | 'SIGKILL' = 'SIGTERM') {
+  if (!child || child.exitCode !== null) return;
+  // A launcher and its server form one test process tree. Windows has no POSIX signals.
+  if (override && process.platform === 'win32') {
+    await Bun.spawn(['taskkill', '/PID', String(child.pid), '/T', '/F'], {
+      stdout: 'ignore',
+      stderr: 'ignore',
+    }).exited;
+  } else if (override && signal === 'SIGKILL') {
+    process.kill(-child.pid, signal);
+  } else {
+    child.kill(signal);
+  }
+  await child.exited;
+}
 
 try {
   await copyFile(resolve(root, 'dist/bin', binaryName), binary);
@@ -29,7 +61,7 @@ try {
     origin = undefined;
     child = Bun.spawn(
       [
-        binary,
+        ...command,
         '--config',
         config,
         '--database',
@@ -44,13 +76,16 @@ try {
         stdout: 'pipe',
         stderr: 'inherit',
         env: { ...process.env, NODE_ENV: 'production' },
+        detached: override !== undefined && process.platform !== 'win32',
       },
     );
     const stdout = child.stdout;
     if (typeof stdout === 'number' || !stdout)
       throw new Error('Missing server output.');
     const reader = stdout.getReader();
-    const timeout = setTimeout(() => child?.kill(), 15_000);
+    const timeout = setTimeout(() => {
+      void stop('SIGKILL');
+    }, 15_000);
     let output = '';
     try {
       while (!origin) {
@@ -77,7 +112,9 @@ try {
 
   const health = await request('/__calendarpit/health');
   assert.equal(health.status, 200);
-  assert.equal((await health.json()).stage, 'preview');
+  const status = await health.json();
+  assert.equal(status.stage, 'preview');
+  assert.equal(status.version, releaseVersion);
   const state = await request('/__calendarpit/state');
   assert.equal((await state.json()).users[0].id, 'smoke-user');
   const page = await request('/');
@@ -117,15 +154,13 @@ try {
     });
   assert.equal((await createUser()).status, 201);
   // Kill without cleanup: committed requests must survive and OS locks must release.
-  child!.kill('SIGKILL');
-  await child!.exited;
+  await stop('SIGKILL');
   await start(database);
   assert.equal(
     (await (await request('/__calendarpit/state')).json()).users.length,
     2,
   );
-  child!.kill();
-  await child!.exited;
+  await stop();
   await start(':memory:');
   assert.equal(
     (await (await request('/__calendarpit/health')).json()).storage,
@@ -136,15 +171,13 @@ try {
     1,
   );
   assert.equal((await createUser()).status, 201);
-  child!.kill();
-  await child!.exited;
+  await stop();
   await start(':memory:');
   assert.equal(
     (await (await request('/__calendarpit/state')).json()).users.length,
     1,
   );
-  child!.kill();
-  await child!.exited;
+  await stop();
   await start(database);
   assert.equal(
     (await (await request('/__calendarpit/state')).json()).users.length,
@@ -160,8 +193,7 @@ try {
     ).status,
     200,
   );
-  child!.kill();
-  await child!.exited;
+  await stop();
   await start(database);
   assert.equal(
     (await (await request('/__calendarpit/state')).json()).users.length,
@@ -172,8 +204,7 @@ try {
   );
 } finally {
   if (child) {
-    child.kill();
-    await child.exited;
+    await stop('SIGKILL');
   }
   await rm(directory, { recursive: true, force: true });
 }

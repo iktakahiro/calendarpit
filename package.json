@@ -24,7 +24,11 @@
     "validate": "bun run lint && bun run format && bun run type-check && bun run test",
     "fix": "bun run lint:fix && bun run format:fix",
     "smoke": "bun run --cwd apps/calendarpit smoke",
-    "sample:dev": "bun run --cwd apps/sample dev"
+    "sample:dev": "bun run --cwd apps/sample dev",
+    "release:package": "bun apps/calendarpit/scripts/package-release.ts",
+    "release:assemble": "bun apps/calendarpit/scripts/assemble-release.ts",
+    "smoke:npm": "bun apps/calendarpit/scripts/smoke-npm.ts",
+    "smoke:docker": "bun apps/calendarpit/scripts/smoke-container.ts"
   },
   "devDependencies": {
     "@calendarpit/typescript-config": "workspace:*",
