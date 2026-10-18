@@ -105,7 +105,7 @@ docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:loc
 ```
 
 The Docker build compiles for the container's platform. See [Releasing](releasing.md)
-for cross-platform artifacts, npm, GHCR, and Homebrew publication.
+for cross-platform artifacts, GHCR, and Homebrew publication.
 
 ### Optional consumer sample
 

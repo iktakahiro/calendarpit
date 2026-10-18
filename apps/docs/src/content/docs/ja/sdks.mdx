@@ -9,7 +9,7 @@ import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 
 ## SDK を呼び出す前に
 
-Calendarpit を起動します (例: `npx @iktakahiro/calendarpit@0.9.0 serve`。[実行と設定](/calendarpit/ja/running/)を参照)。次に、`https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/calendarpit/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。取得したアクセストークン (有効期間は 1 時間) を、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。この変数は各例のコードが明示的に読み取るもので、Google SDK の設定ではありません。
+Calendarpit を起動します (例: `calendarpit serve`。[実行と設定](/calendarpit/ja/running/)を参照)。次に、`https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/calendarpit/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。取得したアクセストークン (有効期間は 1 時間) を、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。この変数は各例のコードが明示的に読み取るもので、Google SDK の設定ではありません。
 
 <Aside>
 

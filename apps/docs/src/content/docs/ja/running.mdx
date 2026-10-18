@@ -7,15 +7,9 @@ Calendarpit は API、OAuth、管理画面を同じオリジンで提供しま�
 
 ## Calendarpit の起動方法
 
-### npm とインストール済みの CLI
+### インストール済みの CLI
 
-Node.js 22 以降で起動します。
-
-```sh
-npx @iktakahiro/calendarpit@0.9.0 serve
-```
-
-オプションはパッケージ名の後に渡します。例: `npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0`。Homebrew でインストールした場合や、単体実行ファイルを `PATH` に配置した場合は、代わりに `calendarpit` を使います。
+Homebrew でインストールするか、単体実行ファイルを `PATH` に配置してから、プロジェクトのディレクトリで起動します。導入方法は[インストール](/calendarpit/ja/installation/)を参照してください。
 
 ```sh
 calendarpit serve --port 4173
@@ -34,7 +28,7 @@ API    http://127.0.0.1:38425/calendar/v3
 Health http://127.0.0.1:38425/__calendarpit/health
 ```
 
-配布実行ファイルには、サーバー、管理画面のアセット（`favicon.svg` を含む）、Bun ランタイムが含まれています。npm は起動用に Node.js が必要です。Homebrew と単体実行ファイルには Node.js も Bun も不要です。サーバーは Ctrl+C で停止します。
+配布実行ファイルには、サーバー、管理画面のアセット（`favicon.svg` を含む）、Bun ランタイムが含まれています。Node.js も Bun も別途インストールする必要はありません。サーバーは Ctrl+C で停止します。
 
 ### Docker と Compose
 
@@ -78,7 +72,7 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 ### ループバックへのバインドと作業ディレクトリ
 
 - **デフォルトはループバック**: `--host` または `CALENDARPIT_HOST` を指定しない限り、Calendarpit は `127.0.0.1` にバインドします。管理画面と[テスト制御 API](/calendarpit/ja/test-control/) には認証がありません。`0.0.0.0` にバインドすると、同じネットワーク上の他のマシンからアクセスできるようになります。
-- **相対パス**: npm、Homebrew、単体実行ファイルでは、`--database` と `--config`（および対応する環境変数）の相対パスは起動したディレクトリを基準に解決されます。プロジェクトのディレクトリから起動するか、絶対パスを指定してください。Docker ではコンテナ内のパスを使い、ホスト上のファイルをマウントします。起動時のよくあるエラーは[トラブルシューティング](/calendarpit/ja/troubleshooting/)を参照してください。
+- **相対パス**: Homebrew、単体実行ファイルでは、`--database` と `--config`（および対応する環境変数）の相対パスは起動したディレクトリを基準に解決されます。プロジェクトのディレクトリから起動するか、絶対パスを指定してください。Docker ではコンテナ内のパスを使い、ホスト上のファイルをマウントします。起動時のよくあるエラーは[トラブルシューティング](/calendarpit/ja/troubleshooting/)を参照してください。
 
 ## 管理画面
 

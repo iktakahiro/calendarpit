@@ -4,9 +4,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   archiveName,
-  npmArchiveName,
-  npmPackageName,
-  packageManifest,
   releaseVersion,
   validateVersion,
   verifyReleaseArtifacts,
@@ -19,32 +16,6 @@ import { releasePlatform, releaseTargets } from './targets';
 test('release tags must match both packages', () => {
   expect(() => validateVersion(`v${releaseVersion}`)).not.toThrow();
   expect(() => validateVersion('v999.0.0')).toThrow('Expected tag');
-});
-
-test('npm installer selects an exact-version executable without install scripts', () => {
-  const manifest = packageManifest();
-  expect(manifest).not.toHaveProperty('scripts');
-  expect(manifest).toHaveProperty(
-    'optionalDependencies',
-    Object.fromEntries(
-      Object.keys(releaseTargets).map((key) => [
-        npmPackageName(releasePlatform(key)),
-        releaseVersion,
-      ]),
-    ),
-  );
-  expect(manifest.name).toBe('@iktakahiro/calendarpit');
-  expect(npmArchiveName('darwin-arm64')).toBe(
-    `iktakahiro-calendarpit-darwin-arm64-${releaseVersion}.tgz`,
-  );
-  expect(packageManifest('linux-x64')).toMatchObject({
-    os: ['linux'],
-    cpu: ['x64'],
-    libc: ['glibc'],
-  });
-  expect(() => releasePlatform('linux-riscv64')).toThrow(
-    'Unsupported platform',
-  );
 });
 
 test('Homebrew cannot point to an archive without its checksum', () => {
@@ -71,7 +42,7 @@ test('publication rejects incomplete or modified releases before publishing', as
     }
     await Bun.write(join(directory, 'SHA256SUMS'), lines.join('\n') + '\n');
     await verifyReleaseArtifacts(directory);
-    await Bun.write(join(directory, npmArchiveName()), 'modified');
+    await Bun.write(join(directory, archiveName('darwin-arm64')), 'modified');
     await expect(verifyReleaseArtifacts(directory)).rejects.toThrow(
       'Missing or invalid release artifact',
     );

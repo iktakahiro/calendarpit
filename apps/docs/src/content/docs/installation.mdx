@@ -1,46 +1,13 @@
 ---
 title: Installation
-description: Install Calendarpit with npm, Docker Compose, Homebrew, or a standalone executable.
+description: Install Calendarpit with Docker Compose, Homebrew, or a standalone executable.
 ---
 
 :::note[0.9.0 release preparation]
 These are the installation commands prepared for 0.9.0. Registry publication and the Homebrew tap are pending. Until the release is published, use the [source instructions](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md). A prepared workflow does not mean a package is already available.
 :::
 
-Choose npm for a JavaScript/TypeScript project, Docker Compose for an existing container environment, or Homebrew for a local CLI. All distributions include the API, OAuth server, admin UI, and SQLite. None requires Google credentials or a separate database.
-
-## npm and npx
-
-With Node.js 22 or later:
-
-```sh
-npx @iktakahiro/calendarpit@0.9.0 serve
-```
-
-For a project, pin the version and commit your package manager's lockfile:
-
-```sh
-npm install --save-dev --save-exact @iktakahiro/calendarpit@0.9.0
-```
-
-```json
-{
-  "scripts": {
-    "calendar": "calendarpit serve",
-    "calendar:test": "calendarpit serve --database :memory:"
-  }
-}
-```
-
-The npm launcher selects a matching native executable. Bun is embedded; you do not need to install it. Keep optional dependencies enabled. No postinstall script is required. macOS arm64/x64, Linux glibc arm64/x64, and Windows x64 are release targets. Alpine/musl and Windows ARM64 are not supported by these native packages; use Docker on a supported container host.
-
-For Bun users:
-
-```sh
-bunx @iktakahiro/calendarpit@0.9.0 serve
-```
-
-The launcher has a Node shebang, so this command also requires Node.js. Package-manager release-age policies may delay installation of a newly published version; wait for the configured interval rather than disabling the policy.
+Use Docker Compose for a container environment or Homebrew for a local CLI. Both include the API, OAuth server, admin UI, and SQLite. Neither requires Bun, Node.js, Google credentials, or a separate database. Calendarpit is not distributed through npm.
 
 ## Docker
 
@@ -117,4 +84,4 @@ Compare the printed hash with the matching line in `SHA256SUMS`. Windows archive
 
 ## Updates and storage
 
-Update the exact npm version or Docker image tag when you choose to upgrade; Homebrew uses `brew upgrade`. Stop Calendarpit and back up its SQLite directory or Docker volume before upgrading. Never run two instances against the same database file. See [Storage and restarts](/calendarpit/storage/) and [Run and configure](/calendarpit/running/).
+Update the exact Docker image tag when you choose to upgrade; Homebrew uses `brew upgrade`. Stop Calendarpit and back up its SQLite directory or Docker volume before upgrading. Never run two instances against the same database file. See [Storage and restarts](/calendarpit/storage/) and [Run and configure](/calendarpit/running/).

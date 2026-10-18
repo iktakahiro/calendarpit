@@ -1,46 +1,13 @@
 ---
 title: インストール
-description: npm、Docker Compose、Homebrew、単体実行ファイルで Calendarpit をインストールします。
+description: Docker Compose、Homebrew、単体実行ファイルで Calendarpit をインストールします。
 ---
 
 :::note[0.9.0 のリリース準備中]
 以下は 0.9.0 向けに準備した導入コマンドです。レジストリへの公開と Homebrew Tap の公開は未完了です。公開までは[ソースからの起動手順](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)を使用してください。ワークフローの準備完了は、パッケージの公開完了を意味しません。
 :::
 
-JavaScript／TypeScript プロジェクトには npm、既存のコンテナ環境には Docker Compose、ローカルの CLI には Homebrew が適しています。すべての配布形式に API、OAuth サーバー、管理画面、SQLite が含まれます。Google の認証情報や別のデータベースは不要です。
-
-## npm と npx
-
-Node.js 22 以降で実行します。
-
-```sh
-npx @iktakahiro/calendarpit@0.9.0 serve
-```
-
-プロジェクトで使用する場合はバージョンを固定し、パッケージマネージャーのロックファイルをコミットしてください。
-
-```sh
-npm install --save-dev --save-exact @iktakahiro/calendarpit@0.9.0
-```
-
-```json
-{
-  "scripts": {
-    "calendar": "calendarpit serve",
-    "calendar:test": "calendarpit serve --database :memory:"
-  }
-}
-```
-
-npm の起動コードが環境に合った実行ファイルを選びます。Bun は内蔵されているため、別途インストールする必要はありません。optional dependencies を有効にしてください。postinstall スクリプトは不要です。配布対象は macOS arm64/x64、Linux glibc arm64/x64、Windows x64 です。Alpine/musl と Windows ARM64 向けのネイティブパッケージはありません。対応するコンテナホストで Docker を使用してください。
-
-Bun を使用する場合:
-
-```sh
-bunx @iktakahiro/calendarpit@0.9.0 serve
-```
-
-起動コードは Node の shebang を使用するため、このコマンドでも Node.js が必要です。パッケージマネージャーの公開後待機期間によって、新しいバージョンをすぐにインストールできない場合があります。ポリシーを無効にせず、設定された期間を待ってください。
+コンテナ環境には Docker Compose、ローカルの CLI には Homebrew を使えます。どちらも API、OAuth サーバー、管理画面、SQLite を含みます。Bun、Node.js、Google の認証情報、別のデータベースは不要です。npm では配布していません。
 
 ## Docker
 
@@ -117,4 +84,4 @@ tar -xzf calendarpit-0.9.0-darwin-arm64.tar.gz
 
 ## 更新とデータ保存
 
-更新時は npm の固定バージョンか Docker イメージのタグを変更します。Homebrew では `brew upgrade` を使用します。更新前に Calendarpit を停止し、SQLite のディレクトリか Docker ボリュームをバックアップしてください。同じデータベースファイルを複数のインスタンスで同時に使用しないでください。[データ保存と再起動](/calendarpit/ja/storage/)と[起動と設定](/calendarpit/ja/running/)も参照してください。
+更新時は Docker イメージのタグを変更します。Homebrew では `brew upgrade` を使用します。更新前に Calendarpit を停止し、SQLite のディレクトリか Docker ボリュームをバックアップしてください。同じデータベースファイルを複数のインスタンスで同時に使用しないでください。[データ保存と再起動](/calendarpit/ja/storage/)と[起動と設定](/calendarpit/ja/running/)も参照してください。

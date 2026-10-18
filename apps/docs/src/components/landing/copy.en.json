@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Calendarpit: Local Google Calendar API for tests",
-    "description": "Calendarpit is a local Google Calendar API v3 and OAuth server for development and tests. Run it with npm, Docker, or Homebrew, with fixtures, webhooks, and an admin UI."
+    "description": "Calendarpit is a local Google Calendar API v3 and OAuth server for development and tests. Run it with Docker or Homebrew, with fixtures, webhooks, and an admin UI."
   },
   "hero": {
     "eyebrow": "Local API and OAuth server",
@@ -86,7 +86,7 @@
     "items": [
       {
         "title": "Run Calendarpit locally",
-        "text": "Choose npm, Docker, or Homebrew and start a local server with SQLite or an in-memory database."
+        "text": "Choose Docker or Homebrew and start a local server with SQLite or an in-memory database."
       },
       {
         "title": "Point your app at it",

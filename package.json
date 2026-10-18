@@ -27,7 +27,6 @@
     "sample:dev": "bun run --cwd apps/sample dev",
     "release:package": "bun apps/calendarpit/scripts/package-release.ts",
     "release:assemble": "bun apps/calendarpit/scripts/assemble-release.ts",
-    "smoke:npm": "bun apps/calendarpit/scripts/smoke-npm.ts",
     "smoke:docker": "bun apps/calendarpit/scripts/smoke-container.ts"
   },
   "devDependencies": {

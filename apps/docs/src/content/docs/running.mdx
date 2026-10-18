@@ -7,15 +7,9 @@ Calendarpit serves the API, OAuth, and admin UI from one origin. See [Installati
 
 ## Ways to run Calendarpit
 
-### npm and the installed CLI
+### Installed CLI
 
-Start with Node.js 22 or later:
-
-```sh
-npx @iktakahiro/calendarpit@0.9.0 serve
-```
-
-Pass options directly after the package name, for example `npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0`. If you installed with Homebrew or put a standalone executable on your `PATH`, use `calendarpit` instead:
+Install with Homebrew or place a standalone executable on your `PATH`, then run it from your project directory. See [Installation](/calendarpit/installation/) for setup.
 
 ```sh
 calendarpit serve --port 4173
@@ -34,7 +28,7 @@ API    http://127.0.0.1:38425/calendar/v3
 Health http://127.0.0.1:38425/__calendarpit/health
 ```
 
-The packaged executable includes the server, admin UI assets (including `favicon.svg`), and Bun runtime. npm needs Node.js for its launcher; Homebrew and standalone downloads need neither Node.js nor Bun. Stop the server with Ctrl+C.
+The packaged executable includes the server, admin UI assets (including `favicon.svg`), and Bun runtime. No separate Node.js or Bun installation is required. Stop the server with Ctrl+C.
 
 ### Docker and Compose
 
@@ -78,7 +72,7 @@ Command-line flags take precedence over environment variables.
 ### Loopback binding and working directory
 
 - **Loopback by default**: Calendarpit binds to `127.0.0.1` unless you pass `--host` or `CALENDARPIT_HOST`. The admin UI and [test control API](/calendarpit/test-control/) have no authentication, so binding to `0.0.0.0` exposes them to other machines on your network.
-- **Relative paths**: With npm, Homebrew, and standalone executables, paths in `--database` and `--config` (or their environment variables) resolve from the directory where you start Calendarpit. Run it from your project directory or use absolute paths. Docker uses paths inside the container; mount host files before referencing them. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
+- **Relative paths**: With Homebrew, and standalone executables, paths in `--database` and `--config` (or their environment variables) resolve from the directory where you start Calendarpit. Run it from your project directory or use absolute paths. Docker uses paths inside the container; mount host files before referencing them. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
 
 ## Admin UI
 
