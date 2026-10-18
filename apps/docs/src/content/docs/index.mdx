@@ -1,94 +1,16 @@
 ---
-title: Local Google Calendar API for tests
-description: Develop calendar integrations locally, with predictable state and no real Google account.
+title: 'Calendarpit: Local Google Calendar API for tests'
+description: 'Calendarpit is a local Google Calendar API v3 and OAuth server for development and tests. Run one Bun process with fixtures, webhooks, and an admin UI.'
 template: splash
-hero:
-  title: Test calendar integrations without a Google account
-  tagline: A local Google Calendar–compatible API and OAuth server, with an admin UI, fixtures, and webhooks. One Bun process, no real accounts, no network.
-  image:
-    file: ../../assets/logo.svg
-    alt: ''
-  actions:
-    - text: Get started
-      link: /calendarpit/development/
-      icon: right-arrow
-    - text: View on GitHub
-      link: https://github.com/iktakahiro/calendarpit
-      icon: external
-      variant: minimal
+# Use the title as is, without the site title suffix.
+head:
+  - tag: title
+    content: 'Calendarpit: Local Google Calendar API for tests'
+editUrl: false
+prev: false
+next: false
 ---
 
-import { Card, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+import Landing from '../../components/landing/Landing.astro';
 
-## What you get
-
-<CardGrid>
-  <Card title='Google-compatible API' icon='seti:json'>
-    Point the official Google SDKs at `http://127.0.0.1:4173`. Calendars,
-    events, recurring series, instances, sync tokens, free/busy, and watch
-    channels follow the Calendar API v3 shapes.
-  </Card>
-  <Card title='Local OAuth consent' icon='padlock'>
-    The authorization code flow with PKCE, refresh, revocation, and `userinfo`.
-    Pick a test user on the consent page; no passwords and no real Google
-    credentials.
-  </Card>
-  <Card title='Predictable state' icon='setting'>
-    Seed users, calendars, events, and clients from a fixture. Reset restores
-    the startup state. Use `--database :memory:` for isolated E2E runs.
-  </Card>
-  <Card title='Webhooks you can watch' icon='rocket'>
-    `events.watch` sends ordered notifications to loopback callbacks, with
-    retries and a delivery log you can drain from tests.
-  </Card>
-  <Card title='An admin UI for debugging' icon='laptop'>
-    Edit users, calendars, and events; inspect connections and deliveries; and
-    read masked request and response history.
-  </Card>
-  <Card title='Explicit about gaps' icon='warning'>
-    Unsupported fields and features fail with an `unsupportedFeature` error. A
-    recurring event is never silently turned into a single event.
-  </Card>
-</CardGrid>
-
-## Try the workflow
-
-<Steps>
-
-1. Run `bun run dev` and open `http://127.0.0.1:4173`.
-2. Run `bun run sample:dev` and open `http://127.0.0.1:4175`.
-3. Connect the sample, choose a local test user, and approve access.
-4. Select a calendar, start a watch, and create an event.
-5. Inspect the event in the admin UI and busy intervals in the sample.
-6. Update or delete the event, revoke access, and reconnect.
-7. Reset to the startup fixture and repeat.
-
-</Steps>
-
-The included Google SDK integration test runs this sequence twice against real
-local HTTP servers and blocks outbound SDK calls to non-loopback hosts.
-
-## Next steps
-
-<CardGrid>
-  <LinkCard
-    title='Development'
-    description='Install, run, validate, and package Calendarpit.'
-    href='/calendarpit/development/'
-  />
-  <LinkCard
-    title='Connect your application'
-    description='Configure OAuth and SDK endpoints for local testing.'
-    href='/calendarpit/integration/'
-  />
-  <LinkCard
-    title='Fixtures and test control'
-    description='Seed data, reset, and drive the workspace from tests.'
-    href='/calendarpit/fixtures/'
-  />
-  <LinkCard
-    title='Compatibility'
-    description='Supported fields, scopes, and explicit errors.'
-    href='/calendarpit/compatibility/'
-  />
-</CardGrid>
+<Landing locale='en' />

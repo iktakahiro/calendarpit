@@ -1,7 +1,6 @@
----
-title: Implementation roadmap
-description: Implemented workflows and remaining integration and release work.
----
+# Implementation roadmap
+
+Implemented workflows and remaining integration and release work.
 
 ## Implemented
 

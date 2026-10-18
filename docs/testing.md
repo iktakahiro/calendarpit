@@ -1,7 +1,6 @@
----
-title: Testing
-description: Test layers, helpers, and conventions for contributors.
----
+# Testing
+
+Test layers, helpers, and conventions for contributors.
 
 All unit and integration tests use Bun's built-in runner (`bun:test`). Tests sit
 next to the code they cover as `*.test.ts` or `*.test.tsx`. `bun run validate`

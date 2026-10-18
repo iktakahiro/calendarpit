@@ -1,76 +1,100 @@
 ---
 title: Watch notifications
-description: Local event subscriptions, lifecycle, and observable webhook delivery.
+description: Register events.watch and calendarList.watch webhook channels, receive local HTTP callbacks, and drain deliveries in tests.
 ---
 
-## Register and stop
+Calendarpit implements `events.watch` and `calendarList.watch` push notifications so you can test webhook handling locally without a public URL or HTTPS tunnel. When watched calendar events or a user's calendar list change, Calendarpit sends an HTTP `POST` request to your callback address.
 
-Use `POST /calendar/v3/calendars/{calendarId}/events/watch` with a unique `id`,
-`type: web_hook`, callback `address`, optional `token`, and optional Unix-millisecond
-`expiration`. The response contains `kind: api#channel`, `id`, `resourceId`,
-`resourceUri`, expiration, and the optional token. IDs are limited to 64 ASCII
-letters/digits/underscores/hyphens. Tokens are limited to 256 characters.
+## Register and stop a channel
 
-Send `id` and `resourceId` to `POST /calendar/v3/channels/stop` using a token from
-the connection that created it. Stop returns 204. Channels default to 24 hours
-and are capped at seven days; register a new channel to renew.
+To watch a calendar's events, send `POST /calendar/v3/calendars/{calendarId}/events/watch` with an OAuth access token that includes an event-read scope (`calendar`, `calendar.readonly`, `calendar.events`, or `calendar.events.readonly`; other scopes fail with `403`). The calendar must be one of the authorized user's calendars (`primary` is allowed); otherwise the request fails with `404 notFound`. To watch the user's calendar list instead, see [Calendar list](#calendar-list).
 
-## Deliveries
+```sh
+curl -X POST http://127.0.0.1:4173/calendar/v3/calendars/primary/events/watch \
+  -H "Authorization: Bearer <access-token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "channel-1",
+    "type": "web_hook",
+    "address": "http://127.0.0.1:3000/webhooks/calendar",
+    "token": "secret-123"
+  }'
+```
 
-Each channel receives an initial `sync` notification (message number 1), followed
-by `exists` after successful event mutations. Notifications are empty POSTs with
-`X-Goog-Channel-ID`, `X-Goog-Resource-ID`, `X-Goog-Resource-URI`,
-`X-Goog-Resource-State`, `X-Goog-Message-Number`, and
-`X-Goog-Channel-Expiration`. The optional channel token is echoed in
-`X-Goog-Channel-Token`. Numbers increase per channel; retries reuse the same number.
-The receiver must refetch events. No event payload is sent.
+Allowed request body fields:
 
-These wire conventions follow the
-[Google Calendar push guide](https://developers.google.com/workspace/calendar/api/guides/push).
-Calendarpit intentionally permits local HTTP callbacks, unlike Google's HTTPS
-requirement. Callback timing may precede the watch response.
+- `id` (required): 1 to 64 ASCII letters, digits, underscores, or hyphens (`^[A-Za-z0-9_-]{1,64}$`). Must be unique across all active event and calendar-list channels in the workspace, or the request fails with `409 duplicate`.
+- `type` (required): Must be `"web_hook"`.
+- `address` (required): Callback URL (`http:` or `https:`).
+- `token` (optional): Non-blank string of up to 256 characters without CR or LF, echoed in `X-Goog-Channel-Token`.
+- `expiration` (optional): Future Unix timestamp in milliseconds (number or numeric string). Defaults to 24 hours from creation and is capped at 7 days. Values beyond 7 days are capped without an error; read the effective value from the response.
 
-## Local delivery policy
+Invalid values fail with `400 invalidParameter`. Any other field (such as `params`, `params.ttl`, or `payload`) or unknown query parameter fails with `400 unsupportedFeature`.
 
-Callbacks allow literal `127.0.0.1`, `[::1]`, and `localhost` by default.
-`localhost` is pinned to `127.0.0.1` for delivery. To reach Docker/service-network
-hosts, explicitly set a comma-separated `CALENDARPIT_WATCH_HOSTS` allowlist on
-the server. Additional hosts may resolve through DNS and should be trusted test
-services. Credentials in URLs, fragments, and redirects are rejected. OAuth
-access tokens are never attached to callbacks.
+For `events.watch`, a `200` response returns `kind: "api#channel"`, `id`, `resourceId` (`calendar-<calendarId>`), `resourceUri` (`<origin>/calendar/v3/calendars/<calendarId>/events`, with `<calendarId>` URL-encoded), `expiration` (millisecond string), and `token` (if set). `<calendarId>` is the watched calendar's actual ID, even when you registered with `primary`. Pass the returned `resourceId` to `channels.stop`. Channels cannot be renewed in place; register a new channel (with a new `id`, or the same `id` after stopping the old channel).
 
-Delivery is serialized per channel and independent of event persistence. There
-are up to three attempts, each with a two-second timeout and a 100 ms retry delay.
-HTTP 200, 201, 202, and 204 indicate success. There is no durable queue or guarantee
-of delivery across process restarts. SQLite restores unexpired subscriptions and
-message counters, while interrupted deliveries are marked cancelled without replay.
-Refetch state after a server restart. Memory mode discards all subscriptions. The admin screen shows the latest 200
-delivery records and their attempt counts/status.
+To stop a channel, send a JSON body with only `id` and `resourceId` to `POST /calendar/v3/channels/stop` using a token from the same OAuth connection (grant) that created the channel, with an event-read or calendar-list-read scope (other body fields fail with `400 unsupportedFeature`). It returns `204` and aborts any queued or in-flight deliveries. An unknown `id`, a mismatched `resourceId`, or a token from another connection returns `404 notFound`.
 
-Stop, expiration, connection revocation, calendar removal, and reset prevent
-future deliveries. Stop/revocation/reset abort in-flight requests and queued work;
-an already-received request cannot be withdrawn from a remote application.
-Expiry is checked before attempts and when channels are inspected or events change.
-Use `POST /__calendarpit/deliveries/drain` to await currently queued work in tests.
+## What your callback receives
+
+Calendarpit queues an initial `sync` notification (message number `1`) before returning the watch response, so the callback can arrive before your caller receives the `200` response. For `events.watch`, Calendarpit then sends an `exists` notification after each committed event write (insert, update, patch, or delete via the Calendar API, management API, or admin UI) on every affected calendar, including attendee copies and organizer RSVP updates. User and calendar metadata edits do not trigger event channel notifications.
+
+Each delivery is an HTTP `POST` to `address` with an **empty body**. Calendarpit never sends resource payloads, `X-Goog-Changed`, or OAuth access tokens to callbacks. When your receiver gets an event notification, call `events.list` with your saved `syncToken` to fetch changes (see [Incremental sync](/calendarpit/sync/)).
+
+| Header                      | Value                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `X-Goog-Channel-ID`         | Channel `id` from registration                                               |
+| `X-Goog-Resource-ID`        | Resource identifier (`calendar-<calendarId>` or `calendarList-<userId>`)     |
+| `X-Goog-Resource-URI`       | Endpoint URL for the watched calendar's events or the user's calendar list   |
+| `X-Goog-Resource-State`     | `sync` on channel creation, `exists` after a watched change                  |
+| `X-Goog-Message-Number`     | Integer starting at `1`, incremented by 1 per notification (reused on retry) |
+| `X-Goog-Channel-Expiration` | Expiration time in RFC 1123 UTC format                                       |
+| `X-Goog-Channel-Token`      | Channel `token`, included only when set at registration                      |
 
 ## Calendar list
 
-`POST /calendar/v3/users/me/calendarList/watch` uses the same channel rules,
-loopback callbacks, delivery log, and `channels.stop` behavior. The resource is
-the caller's calendar list, not one calendar. The initial message is `sync`;
-`exists` follows a calendar-list write or a calendar create, update, or delete.
-Event edits do not notify it, and it does not notify event channels. Refetch
-with `calendarList.list`. There is no calendar-list sync token. `params.ttl` is
-rejected; set `expiration`.
+Send `POST /calendar/v3/users/me/calendarList/watch` with a calendar-list read scope (`calendar`, `calendar.readonly`, `calendar.calendarlist`, or `calendar.calendarlist.readonly`; other scopes fail with `403`). It uses the same request body fields, shared channel ID space, lifetime limits, callback host allowlist, headers, retry policy, delivery log, and `channels.stop` rules as `events.watch`. Any `params` field (including `params.ttl`) or non-system query parameter fails with `400 unsupportedFeature`; set `expiration` instead.
 
-Read scopes that can call `calendarList.list` can also watch it, including
-`calendar.calendarlist.readonly`. Stopping still requires the connection that
-created the channel.
+A `200` response returns `resourceId: "calendarList-<userId>"` and `resourceUri: "<origin>/calendar/v3/users/me/calendarList"`. Stopping the channel requires `POST /calendar/v3/channels/stop` with a token from the same OAuth connection that created it.
 
-## Incremental refresh
+The channel queues an initial `sync` notification (`1`), then sends `exists` when:
 
-After receiving a notification, call `events.list` with the last `nextSyncToken`.
-Process every page, upsert returned events, remove cancelled entries, and only then
-save the final page's next token. HTTP 410 requires a new full synchronization.
-See [Incremental sync](/calendarpit/sync/) for a complete loop. The initial watch notification
-is a signal to fetch state, not an event snapshot.
+- A calendar-list write (`insert`, `patch`, `update`, or `delete`) changes the user's stored list settings.
+- One of the user's own calendars is created, updated (any management `PATCH`, even one that changes nothing), or deleted through the management API or admin UI.
+
+No-op calendar-list writes, event writes, changes to another user's calendars, and user metadata edits do not notify `calendarList.watch` channels, and calendar-list writes do not notify `events.watch` channels. Because calendar lists do not support `syncToken`, refetch with `calendarList.list` when a callback arrives.
+
+## Allowed callback hosts
+
+Unlike Google Calendar, Calendarpit permits plain `http:` callbacks. By default, only `127.0.0.1`, `[::1]`, and `localhost` are allowed (`localhost` delivers to `127.0.0.1`).
+
+To allow other containers or test hosts, set `CALENDARPIT_WATCH_HOSTS` to a comma-separated list of hostnames (for example, `CALENDARPIT_WATCH_HOSTS=app,host.docker.internal`). Each entry must equal the callback URL's hostname exactly: write it in lowercase, without a port, and without wildcards. Use brackets and compressed form for IPv6, for example `[fd00::1]`. URLs with non-HTTP(S) schemes, credentials, non-empty `#fragment` parts, or unallowed hosts are rejected with `400`. The allowlist is checked at registration, before each delivery attempt, and when restoring channels on startup.
+
+## Delivery policy and lifecycle
+
+| Setting                   | Value                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| Attempts per notification | Up to 3 (initial attempt plus 2 retries)                                      |
+| Per-attempt timeout       | 2000 ms                                                                       |
+| Delay between attempts    | 100 ms                                                                        |
+| Success status codes      | `200`, `201`, `202`, `204` (redirects are not followed and count as failures) |
+| Ordering                  | Serialized per channel                                                        |
+| Delivery log              | Latest 200 records (`queued`, `delivered`, `failed`, `cancelled`)             |
+
+A channel stops and any queued or in-flight deliveries are marked `cancelled` when you call `channels.stop`, the channel expires, its OAuth connection is revoked, or its user is deleted. Deleting a calendar stops `events.watch` channels on that calendar, while the owner's `calendarList.watch` channels remain active and receive `exists`. Calling `POST /__calendarpit/reset` or `POST /__calendarpit/fixtures` stops all channels and clears the delivery log (see [Test control API](/calendarpit/test-control/)). Expired channels are pruned lazily when a channel is opened, when event or calendar-list notifications run, or when state is read, allowing their `id` to be reused; deliveries to an expired channel are cancelled.
+
+Calendarpit does not keep a durable delivery queue across restarts. In SQLite mode, unexpired event and calendar-list channels and their message counters resume on restart if their OAuth connection is still valid and their callback host passes the allowlist. Deliveries interrupted by shutdown are marked `cancelled` and are not replayed, and changes made while the server is down produce no notifications. In `:memory:` mode, all channels are lost on restart (see [Storage and restarts](/calendarpit/storage/)).
+
+## Inspect and drain deliveries in tests
+
+The admin UI shows the latest 200 delivery records with their attempt counts, status, and last HTTP status code.
+
+In automated tests, call `POST /__calendarpit/deliveries/drain` with `Content-Type: application/json` to wait for all currently pending deliveries and their retries to finish:
+
+```sh
+curl -X POST http://127.0.0.1:4173/__calendarpit/deliveries/drain \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+The endpoint returns `200` with the full delivery log array. Deliveries queued after the drain call starts are not awaited.

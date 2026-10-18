@@ -1,299 +1,135 @@
 ---
-title: Compatibility
-description: The implemented Google-compatible subset and explicit limitations.
+title: Calendar API compatibility
+description: Reference for the Google Calendar API v3 methods, parameters, and event fields supported by Calendarpit, and what returns an explicit error.
 ---
 
 ## Calendar API
 
-All endpoints require a Calendarpit bearer token. Access is limited to calendars
-owned by the authorized test user. `primary` resolves against that user.
+Every supported `/calendar/v3` endpoint requires a Calendarpit bearer token (see [Local OAuth](/calendarpit/oauth/) for scopes). Access is limited to calendars owned by the authorized test user, and `primary` resolves to that user's primary calendar. Unknown or unowned calendar IDs return `404` (`notFound`); `freebusy.query` instead reports a per-calendar `notFound` error inside a `200` response.
 
-| Method                  | Path                                                             | Behavior                                        |
-| ----------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
-| GET                     | `/calendar/v3/users/me/calendarList`                             | Owned calendars; paging, `showHidden`           |
-| POST                    | `/calendar/v3/users/me/calendarList`                             | Restore an owned calendar to the list           |
-| GET, PUT, PATCH, DELETE | `/calendar/v3/users/me/calendarList/{calendarId}`                | Read, replace, patch, or remove from the list   |
-| POST                    | `/calendar/v3/users/me/calendarList/watch`                       | Subscribe to calendar-list changes              |
-| GET                     | `/calendar/v3/calendars/{calendarId}`                            | Calendar metadata                               |
-| GET, POST               | `/calendar/v3/calendars/{calendarId}/events`                     | List/create events                              |
-| GET, PUT, PATCH, DELETE | `/calendar/v3/calendars/{calendarId}/events/{eventId}`           | Read/replace/patch/delete                       |
-| GET                     | `/calendar/v3/calendars/{calendarId}/events/{eventId}/instances` | Recurring instances and exceptions              |
-| POST                    | `/calendar/v3/freeBusy`                                          | Merged, clipped busy ranges, up to 50 calendars |
-| POST                    | `/calendar/v3/calendars/{calendarId}/events/watch`               | Subscribe to changes                            |
-| POST                    | `/calendar/v3/channels/stop`                                     | Stop a subscription                             |
+| Method                  | Path                                                             | Behavior                                                                                 |
+| ----------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| GET                     | `/calendar/v3/users/me/calendarList`                             | Owned calendars; `maxResults`, `pageToken`, `minAccessRole`, `showDeleted`, `showHidden` |
+| POST                    | `/calendar/v3/users/me/calendarList`                             | Restore an owned calendar to the list                                                    |
+| GET, PUT, PATCH, DELETE | `/calendar/v3/users/me/calendarList/{calendarId}`                | Read, replace, patch, or remove a calendar-list entry                                    |
+| POST                    | `/calendar/v3/users/me/calendarList/watch`                       | Subscribe to calendar-list changes                                                       |
+| GET                     | `/calendar/v3/calendars/{calendarId}`                            | Calendar metadata (`id`, `summary`, `timeZone`)                                          |
+| GET, POST               | `/calendar/v3/calendars/{calendarId}/events`                     | List or create events                                                                    |
+| GET, PUT, PATCH, DELETE | `/calendar/v3/calendars/{calendarId}/events/{eventId}`           | Read, replace, patch, or delete an event                                                 |
+| GET                     | `/calendar/v3/calendars/{calendarId}/events/{eventId}/instances` | Recurring instances and exceptions                                                       |
+| POST                    | `/calendar/v3/freeBusy`                                          | Merged, clipped busy ranges, up to 50 calendars                                          |
+| POST                    | `/calendar/v3/calendars/{calendarId}/events/watch`               | Subscribe to event changes                                                               |
+| POST                    | `/calendar/v3/channels/stop`                                     | Stop an event or calendar-list watch channel                                             |
 
 ### Method coverage
 
-Every method of the Google Calendar API v3, and whether Calendarpit serves it.
-An unsupported endpoint answers `501` with the `unsupportedFeature` reason, so a
-client never mistakes a gap for an empty result. `events.import` and
-`events.quickAdd` share the event path, so an authorized request to them answers
-`405` with `methodNotAllowed`.
+Unrouted endpoints return `501` (`unsupportedFeature`). `calendars.update`, `calendars.patch`, and `calendars.delete` check the token, scope, and calendar ownership first (`401`, `403`, or `404`), then return `501`. Because `events.import` and `events.quickAdd` share `/events/{eventId}`, `events.import` returns `404` (`notFound`), while `events.quickAdd` returns `400` (`unsupportedFeature`) with `text` or `404` without it. Unsupported HTTP methods on the events collection or an existing event return `405` (`methodNotAllowed`).
 
-| Resource     | Method              | Supported | Notes                                                         |
-| ------------ | ------------------- | :-------: | ------------------------------------------------------------- |
-| Acl          | `delete`            |    ❌     | ACLs and shared-calendar access are not simulated             |
-| Acl          | `get`               |    ❌     |                                                               |
-| Acl          | `insert`            |    ❌     |                                                               |
-| Acl          | `list`              |    ❌     |                                                               |
-| Acl          | `patch`             |    ❌     |                                                               |
-| Acl          | `update`            |    ❌     |                                                               |
-| Acl          | `watch`             |    ❌     | Event and calendar-list watches do not cover ACLs             |
-| CalendarList | `list`              |    ✅     | Owned calendars; `minAccessRole`, `showDeleted`, `showHidden` |
-| CalendarList | `delete`            |    ✅     | Removes a non-primary calendar from the list only             |
-| CalendarList | `get`               |    ✅     | Same entry `list` returns for that calendar                   |
-| CalendarList | `insert`            |    ✅     | Restores an owned calendar removed from the list              |
-| CalendarList | `patch`             |    ✅     | Omitted writable fields are preserved                         |
-| CalendarList | `update`            |    ✅     | `PUT` replaces writable fields                                |
-| CalendarList | `watch`             |    ✅     | Loopback callbacks when the caller's list changes             |
-| Calendars    | `get`               |    ✅     | Metadata of a calendar the test user owns                     |
-| Calendars    | `clear`             |    ❌     | Reset the workspace instead                                   |
-| Calendars    | `delete`            |    ❌     | Manage calendars through the admin UI or the management API   |
-| Calendars    | `insert`            |    ❌     |                                                               |
-| Calendars    | `patch`             |    ❌     |                                                               |
-| Calendars    | `transferOwnership` |    ❌     | One owner per calendar, with no sharing model                 |
-| Calendars    | `update`            |    ❌     |                                                               |
-| Channels     | `stop`              |    ✅     | Stops an event or calendar-list subscription                  |
-| Colors       | `get`               |    ❌     | Event colors 1–11 and calendar colors 1–24 need no endpoint   |
-| Events       | `list`              |    ✅     | Time bounds, paging, `singleEvents`, sync tokens, filters     |
-| Events       | `get`               |    ✅     | Includes cancelled tombstones                                 |
-| Events       | `insert`            |    ✅     |                                                               |
-| Events       | `update`            |    ✅     | `PUT` replaces writable fields                                |
-| Events       | `patch`             |    ✅     | Omitted fields are preserved                                  |
-| Events       | `delete`            |    ✅     | Keeps a `cancelled` record for synchronization                |
-| Events       | `instances`         |    ✅     | Recurring instances, exceptions and `originalStart`           |
-| Events       | `watch`             |    ✅     | Loopback callbacks with retries and a delivery log            |
-| Events       | `import`            |    ❌     | Create the event with `insert`                                |
-| Events       | `move`              |    ❌     | Delete and insert across calendars instead                    |
-| Events       | `quickAdd`          |    ❌     | No natural-language parsing                                   |
-| Freebusy     | `query`             |    ✅     | Merged, clipped busy ranges, up to 50 calendars               |
-| Settings     | `get`               |    ❌     | No per-user Google settings                                   |
-| Settings     | `list`              |    ❌     |                                                               |
-| Settings     | `watch`             |    ❌     |                                                               |
+| Resource     | Method              | Supported | Notes                                                            |
+| ------------ | ------------------- | :-------: | ---------------------------------------------------------------- |
+| Acl          | `delete`            |    ❌     | ACLs and shared-calendar access are not simulated                |
+| Acl          | `get`               |    ❌     |                                                                  |
+| Acl          | `insert`            |    ❌     |                                                                  |
+| Acl          | `list`              |    ❌     |                                                                  |
+| Acl          | `patch`             |    ❌     |                                                                  |
+| Acl          | `update`            |    ❌     |                                                                  |
+| Acl          | `watch`             |    ❌     | Event and calendar-list watches do not cover ACLs                |
+| CalendarList | `list`              |    ✅     | Owned calendars; `minAccessRole`, `showDeleted`, `showHidden`    |
+| CalendarList | `delete`            |    ✅     | Removes a non-primary calendar from the list only                |
+| CalendarList | `get`               |    ✅     | Same entry `list` returns for that calendar                      |
+| CalendarList | `insert`            |    ✅     | Restores an owned calendar removed from the list                 |
+| CalendarList | `patch`             |    ✅     | Omitted writable fields are preserved                            |
+| CalendarList | `update`            |    ✅     | `PUT` replaces writable fields                                   |
+| CalendarList | `watch`             |    ✅     | Loopback callbacks by default when the caller's list changes     |
+| Calendars    | `get`               |    ✅     | Metadata of a calendar the test user owns                        |
+| Calendars    | `clear`             |    ❌     | Delete the events, or reset the workspace to its startup fixture |
+| Calendars    | `delete`            |    ❌     | Manage calendars through the admin UI or the management API      |
+| Calendars    | `insert`            |    ❌     |                                                                  |
+| Calendars    | `patch`             |    ❌     |                                                                  |
+| Calendars    | `transferOwnership` |    ❌     | One owner per calendar, with no sharing model                    |
+| Calendars    | `update`            |    ❌     |                                                                  |
+| Channels     | `stop`              |    ✅     | Stops an event or calendar-list watch channel                    |
+| Colors       | `get`               |    ❌     | Event colors 1–11 and calendar colors 1–24 need no endpoint      |
+| Events       | `list`              |    ✅     | Time bounds, paging, `singleEvents`, sync tokens, filters        |
+| Events       | `get`               |    ✅     | Includes `cancelled` tombstones and recurring instance IDs       |
+| Events       | `insert`            |    ✅     | Returns `200` with the stored event                              |
+| Events       | `update`            |    ✅     | `PUT` replaces writable fields                                   |
+| Events       | `patch`             |    ✅     | Omitted fields are preserved                                     |
+| Events       | `delete`            |    ✅     | Keeps a `cancelled` record for synchronization                   |
+| Events       | `instances`         |    ✅     | Recurring instances, exceptions, and `originalStart`             |
+| Events       | `watch`             |    ✅     | Loopback callbacks by default, with retries and a delivery log   |
+| Events       | `import`            |    ❌     | Create the event with `insert`                                   |
+| Events       | `move`              |    ❌     | Delete and insert across calendars instead                       |
+| Events       | `quickAdd`          |    ❌     | No natural-language parsing                                      |
+| Freebusy     | `query`             |    ✅     | Merged, clipped busy ranges, up to 50 calendars                  |
+| Settings     | `get`               |    ❌     | No per-user Google settings                                      |
+| Settings     | `list`              |    ❌     |                                                                  |
+| Settings     | `watch`             |    ❌     |                                                                  |
 
-Supported event fields include `id`, `summary`, `description`, `location`,
-`start`, `end`, `transparency`, `status` (`confirmed`, `tentative`, `cancelled`),
-`visibility`, `colorId` (1–11), `attendees`, `reminders`, `recurrence`, and
-`extendedProperties.private/shared` string maps. Responses include organizer,
-creator, `iCalUID`, sequence, timestamps and etag. Organizer/creator identity is
-relative to the calendar copy; `self` identifies its owner. Event IDs follow
-Calendarpit's fixture ID rules, broader than Google's base32hex IDs.
-`If-Match` protects individual event mutations.
+## Events
 
-`PUT` replaces writable fields; `PATCH` preserves omitted fields. Extended-property
-maps merge on patch; null removes an entry or map. Start/end objects replace the
-previous object. All-day inputs accept `dateTime: null` and `timeZone: null`.
-Deletion retains a `cancelled` tombstone for synchronization; individual GETs can
-read it. Default lists and free/busy exclude cancelled events.
+Supported event fields are `id`, `summary`, `description`, `location`, `start`, `end`, `transparency` (`opaque`, `transparent`), `status` (`confirmed`, `tentative`, `cancelled`), `visibility` (`default`, `public`, `private`, `confidential`), `colorId` (`"1"`–`"11"`), `attendees`, `attendeesOmitted`, `guestsCanModify`, `guestsCanInviteOthers`, `guestsCanSeeOtherGuests`, `reminders`, `recurrence`, `conferenceData` (requires `conferenceDataVersion=1`), `hangoutLink`, and `extendedProperties.private` / `extendedProperties.shared` string maps. Write endpoints accept `sendUpdates` (`all`, `externalOnly`, `none`) and `conferenceDataVersion` (`0`, `1`). Event IDs allow `[a-zA-Z0-9@._-]{1,128}` (except `primary`); duplicate IDs return `409` (`duplicate`).
 
-Calendar-list entries use `kind: calendar#calendarListEntry`. An owned calendar
-starts on its owner's list with `accessRole: owner`, `selected: true`, palette
-`colorId: "1"`, and an empty `defaultReminders` array. `list` and `get` return
-the same entry. `hidden` is omitted unless it is true. `primary` is always
-present. `conferenceProperties.allowedConferenceSolutionTypes` is
-`["hangoutsMeet"]`, the synthetic conference support. Calendars have no
-description or location, so those fields are omitted and rejected on input.
-`etag` stays the same until the entry or the calendar's summary, time zone, or
-primary flag changes. `If-Match` protects patch, update, and delete.
+Responses include `organizer`, `creator`, `iCalUID`, `sequence`, `created`, `updated`, and a quoted `etag`. `kind`, `etag`, `created`, `updated`, `calendarId` (the resolved calendar ID, not `primary`), and `sequence` are also accepted, so a fetched event can be sent back unchanged. `organizer`, `creator`, `iCalUID`, `recurringEventId`, and `originalStartTime` are read-only, though unchanged values are accepted on updates. On `events.insert`, omit these fields; they are set by Calendarpit. `sequence` increments on each update. `If-Match` is checked on `GET`, `PUT`, `PATCH`, and `DELETE` of stored events (`412` `conditionNotMet` on mismatch).
 
-Per-user settings (`summaryOverride`, `colorId`, `backgroundColor`,
-`foregroundColor`, `hidden`, `selected`, `defaultReminders`, and
-`notificationSettings`) are stored for the owner and survive restart. Reset
-clears them. There is no sharing model: another user's calendar, and an unknown
-id, are `404 notFound` on every calendar-list method.
+`PUT` replaces writable fields and resets omitted optional fields to defaults; `PATCH` preserves omitted fields. On `PATCH`, a supplied `start` or `end` object replaces the stored object (its fields are not merged), and `extendedProperties` maps merge by key (`null` removes a key or map). All-day inputs accept `dateTime: null` and `timeZone: null`. `events.delete` returns `204` and keeps a `cancelled` tombstone (`410` `deleted` if already cancelled). `events.get` returns tombstones, `freebusy.query` excludes them, and lists exclude them unless `showDeleted=true` or `updatedMin` is set (cancelled exceptions of a series stay visible with `singleEvents=false`). See [Events, recurrence and time](/calendarpit/recurrence/) for recurrence, invitations, reminders, synthetic Meet links, and time rules.
 
-`PATCH` preserves omitted writable fields. `null` clears `summaryOverride`,
-`defaultReminders`, and `notificationSettings`. `PUT` and `insert` replace
-writable fields: omitted overrides, reminders, and notifications are cleared,
-`hidden` becomes false, and `selected` becomes false, which is Google's
-documented default. A calendar that has never been written stays
-`selected: true`. `colorId` must be a palette id `1`–`24` (foreground
-`#1d1d1d`). Inherited names such as `constructor` are rejected. `colors.get`
-is not implemented. `backgroundColor` and `foregroundColor` can be written
-only with `colorRgbFormat=true`; both are required. Google's patch and update
-reference says that flag sets `colorId` to the best matching palette color
-automatically, and that `colorId` can be ignored when the RGB fields are used,
-so a supplied `colorId` is ignored. That follows those docs and was not checked
-against a live Google response. Without the flag, RGB fields may only repeat
-the colors already stored. Repeating the current `colorId` with those colors
-is the same echo and does not clear a custom color. A different `colorId`
-selects that palette entry and clears custom RGB. At most five default
-reminders (`email` or `popup`, 0–40320 minutes) and five email notification
-types (`eventCreation`, `eventChange`, `eventCancellation`, `eventResponse`,
-`agenda`) are stored. No reminder or notification email is sent.
-`PATCH {"notificationSettings":{}}` leaves the stored notifications unchanged,
-because the `notifications` array was not specified. Google's patch reference
-says omitted fields stay unchanged and that an array overwrites the previous
-array only when it is specified; `method` and `type` are required only when
-adding a notification. An empty `notifications` array, or
-`notificationSettings: null`, clears them. This was not checked against a live
-Google response. `PUT` still clears notifications when the array is omitted,
-including when the object is `{}`.
+## Calendar list
 
-`minAccessRole` accepts `freeBusyReader`, `reader`, `writer`, and `owner`.
-Every accessible calendar has the owner role, so every valid minimum includes
-it. `showHidden` defaults to false and omits hidden entries from `list`; `get`
-still returns them. `showDeleted=true` includes two kinds of deleted entry:
-a calendar removed from the list, and a calendar deleted through the management
-API. Both use `deleted: true`. `calendarList.delete` removes a non-primary
-owned calendar from the list only. The calendar and its events remain, and
-`get` then returns 404. The primary calendar cannot be removed
-(`403 cannotDeletePrimaryCalendar`). Deleting the primary calendar through the
-management API promotes another calendar that the owner still has on the list. If
-every remaining calendar was removed from the list, the next owned calendar
-becomes primary and is put back on the list, keeping its other list settings.
-Setting `primary: true` through the management API puts that calendar back on
-the list as well, so the primary calendar is never missing from `list` or
-`get`. `calendarList.insert` subscribes by id,
-including `primary`. It restores an owned calendar that was removed, starting
-from the replace defaults plus the body. A calendar already on the list,
-including a hidden one, returns `409 duplicate`; unhide it with patch. Insert
-does not create a calendar. Deleting a calendar through the management API
-still removes the calendar, its events, and its list settings, and keeps the
-tombstone `showDeleted` already returned.
+### Entry shape
 
-`calendarList.watch` uses the same loopback channels, delivery log, and
-`channels.stop` path as `events.watch`. It sends `sync`, then `exists` when
-that user's list changes. Event edits do not notify it. `syncToken` and
-`params.ttl` are rejected; set `expiration` and refetch with `list`. There is
-no calendar-list incremental sync. Pagination is still invalidated by calendar
-and list-entry mutations, and cursors are still lost on restart.
-ACLs and shared-calendar access are not simulated.
+- Calendar-list entries use `kind: "calendar#calendarListEntry"`. `list` and `get` return the same entry shape.
+- Each owned calendar starts on its owner's list with `accessRole: "owner"`, `selected: true`, `colorId: "1"` (`backgroundColor: "#ac725e"`, `foregroundColor: "#1d1d1d"`), `defaultReminders: []`, `primary`, and `conferenceProperties.allowedConferenceSolutionTypes: ["hangoutsMeet"]`.
+- `hidden` is omitted unless `true`. `summaryOverride` and `notificationSettings` are omitted when empty. `deleted: true` appears only on removed or tombstoned entries.
+- `description` and `location` are omitted and rejected (`400` `unsupportedFeature`).
+- Read-only fields (`kind`, `etag`, `id`, `summary`, `timeZone`, `accessRole`, `primary`, `deleted`, `conferenceProperties`) are accepted on writes only when unchanged (`400` `invalidParameter` on mismatch; `id` accepts `primary` when the path uses `primary`).
+- `etag` updates when entry settings or the calendar's `summary`, `timeZone`, or `primary` flag changes.
+- `If-Match` is checked on `PATCH`, `PUT`, and `DELETE` (`412` `conditionNotMet`).
 
-Event lists support `timeMin`, `timeMax`, `maxResults` (1–2500), `pageToken`,
-`singleEvents`, `showDeleted`, `timeZone`, `updatedMin`, `iCalUID`, and repeated
-`privateExtendedProperty=name=value` / `sharedExtendedProperty=name=value` filters.
-Repeated constraints must all match. `orderBy=startTime` requires
-`singleEvents=true`; `orderBy=updated` is also supported. Time bounds are RFC3339
-with offsets; matching uses `start < timeMax` and `end > timeMin`.
+### Writing settings (patch, update, insert)
 
-Event pages capture a snapshot, so writes between pages do not skip results.
-Cursors are query/user-bound, expire after one hour and are lost on restart/reset.
-Calendar-list pagination remains invalidated by calendar mutations.
-See [Incremental sync](/calendarpit/sync/) for `nextSyncToken`, deletions and watch-driven updates.
+- Writable per-user settings (`summaryOverride`, `colorId`, `backgroundColor`, `foregroundColor`, `hidden`, `selected`, `defaultReminders`, `notificationSettings`) persist across SQLite restarts and clear on reset or fixture load.
+- `summaryOverride` requires a non-blank string up to 10,000 characters (`""` returns `400`).
+- `PATCH` preserves omitted writable fields (`null` clears `summaryOverride`, `defaultReminders`, and `notificationSettings`).
+- `PUT` and `insert` (`200`) replace writable fields: omitted overrides, reminders, and notifications are cleared, `hidden` and `selected` reset to `false` (never-written entries stay `selected: true`), and `colorId` resets to `"1"` unless colors are supplied.
+- Unchanged writes return `200` without changing the `etag`, invalidating calendar-list page tokens, or notifying watch channels.
 
-## Recurrence
+### Colors
 
-`singleEvents=false` returns series masters and saved exceptions.
-`singleEvents=true` expands occurrences. `GET .../events/{eventId}/instances`
-accepts time bounds, `showDeleted`, pagination, `timeZone`, and `originalStart`.
-An occurrence has a stable ID, `recurringEventId`, and `originalStartTime`.
-GET/PATCH/PUT/DELETE on that ID reads, overrides or cancels the occurrence.
-Changes to a master update generated instances; deleted/trimmed occurrences produce
-cancellations during incremental synchronization. Free/busy expands the same rules.
+- `colorId` accepts palette IDs `"1"`–`"24"` (foreground `"#1d1d1d"`; unknown IDs or inherited names like `"constructor"` return `400`).
+- With `colorRgbFormat=true`, every `insert`, `patch`, or `update` must include both `backgroundColor` and `foregroundColor` (`#rrggbb`); otherwise `400`. Any supplied `colorId` is ignored and set to the nearest palette color.
+- Without `colorRgbFormat=true`, RGB fields may only repeat the displayed colors. On `PATCH`, repeating the current `colorId` and RGB keeps custom colors. `PUT` and `insert` must send `colorRgbFormat=true` to keep custom RGB colors. A different `colorId` clears custom RGB.
 
-Supported recurrence lines are `RRULE`, `EXRULE`, `RDATE`, and `EXDATE`.
-Rules support DAILY/WEEKLY/MONTHLY/YEARLY with INTERVAL, COUNT or UNTIL,
-BYDAY, BYMONTHDAY, BYMONTH, BYSETPOS and WKST. Timed series require
-`start.timeZone`; UTC UNTIL values are interpreted in that zone. All-day explicit
-dates use `RDATE;VALUE=DATE` / `EXDATE;VALUE=DATE`. Wall-clock time is maintained
-across DST offset changes. An occurrence in a nonexistent local time at a DST
-gap returns an explicit error instead of moving the event silently. Ambiguous fold
-times resolve to the earlier offset. Sub-daily frequencies and unlisted rule parts are rejected.
+### Reminders and notifications
 
-An infinite series requires `timeMax` when expanding. Finite expansion is limited
-to 10,000 instances and 100 years from DTSTART; exceeding limits returns an explicit
-error. Narrow the requested window for larger series. Incremental expanded sync
-retains the initial recurrence window; start a new full sync when moving that window.
+- `defaultReminders` accepts up to 5 `{method: "email" | "popup", minutes: 0–40320}` items.
+- `notificationSettings.notifications` accepts up to 5 `{method: "email", type}` items with unique `type` values (`eventCreation`, `eventChange`, `eventCancellation`, `eventResponse`, `agenda`; duplicate types return `400`).
+- Neither setting sends email.
+- `PATCH {"notificationSettings": {}}` keeps existing notifications, while `[]`, `null`, or `PUT` without `notifications` clears them.
+- Ignoring `colorId` with `colorRgbFormat=true` and preserving notifications on `PATCH {"notificationSettings": {}}` follow Google's reference docs and were not checked against live Google.
 
-## Invitations, reminders and local meetings
+### Delete and insert
 
-Attendees preserve email, display name, optional/resource flags, additional guests,
-comment and responseStatus (`needsAction`, `accepted`, `tentative`, `declined`).
-Inviting another configured test user creates a copy in their primary calendar.
-Private extended properties and reminders remain local to each copy. Organizer
-changes/cancellations update these copies and notify their event watch channels.
-Invitees can PATCH their own response, reminders, transparency, color and extended
-properties; organizer-only shared edits return 403. Use `attendeesOmitted: true`
-with a single own-attendee entry to update a response without replacing other guests.
-RSVP propagates to the organizer's local copy, including a single recurring instance.
-External organizers can be represented in fixtures; no external calendar is contacted.
+- `calendarList.delete` (`204`) removes a non-primary calendar from the caller's list only (`403` `cannotDeletePrimaryCalendar` for the primary calendar; `404` if already removed).
+- The calendar and its events remain accessible to `calendars.get`, `events.*`, `freebusy.query`, and `events.watch`, while `calendarList.get`, `patch`, and `update` return `404`.
+- `calendarList.insert` requires `id` (`400` if missing) and restores a removed owned calendar (`200`). It never creates a calendar, and already-listed calendars (including hidden ones and `primary`) return `409` (`duplicate`; unhide with `patch`).
+- Deleting a primary calendar via the management API promotes the first remaining listed calendar, or restores the first owned calendar to the list with its saved settings if all were removed.
+- Setting `primary: true` via the management API also restores a removed calendar to the list.
 
-Write endpoints accept `sendUpdates=all|externalOnly|none` (default `none`). They
-record notification intent in `/__calendarpit/state.notifications`, capped at 200.
-`all` includes attendees; `externalOnly` includes addresses not registered as local
-test users; `none` records no delivery. These are local REQUEST/CANCEL/REPLY records,
-not email delivery. Local invitation copies synchronize regardless of notification mode.
-Calendarpit does not emulate Google's account discovery or invitation spam policies.
+### Watch
 
-Guest permission fields round-trip as boolean configuration:
-`guestsCanModify` defaults to `false`, while `guestsCanInviteOthers` and
-`guestsCanSeeOtherGuests` default to `true`, matching the
-[event resource defaults](https://developers.google.com/workspace/calendar/api/v3/reference/events).
-PATCH preserves omitted flags; PUT restores omitted flags to their defaults.
-Only the organizer can change these shared fields. They persist across restarts
-and propagate to local invitation copies and recurring instances. Guest editing,
-guest-initiated invitations, and attendee-list filtering based on these flags
-are not simulated; the existing invitee PATCH restrictions still apply.
+- `calendarList.watch` shares the loopback allowlist, delivery log, and `channels.stop` endpoint with `events.watch` (see [Watch notifications](/calendarpit/watch/)).
+- It sends `sync` on open, then `exists` when a list write changes stored settings or the user's calendars are created, updated, or deleted via the management API. Event writes do not trigger it.
+- Other query parameters (including `syncToken`) and `params` (such as `params.ttl`) return `400` (`unsupportedFeature`).
 
-Reminders support `useDefault` and up to five email/popup overrides (0–40320 minutes).
-They round-trip as configuration; there is no reminder scheduler or actual email.
+## Lists and paging
 
-With `conferenceDataVersion=1`, a `conferenceData.createRequest` for `hangoutsMeet`
-returns a successful synthetic conference and video entry point. Reusing a request ID
-produces the same identifier. Its URL uses the reserved `meet.calendarpit.invalid`
-host and cannot join a real meeting. Conference data can be copied or cleared with
-null. A conference payload without version 1 is explicitly rejected. Version 0 is
-accepted for writes that contain no conference data. No Google Meet API is called.
+`calendarList.list` accepts `maxResults`, `pageToken`, `minAccessRole` (`freeBusyReader`, `reader`, `writer`, `owner`), `showDeleted`, and `showHidden`, and returns a collection `etag` (no `nextSyncToken`). All owned calendars have the `owner` role, so every valid `minAccessRole` matches them. `showHidden` defaults to `false` and omits `hidden: true` entries from `list` (`get` still returns them). `showDeleted=true` includes `deleted: true` entries for calendars removed with `calendarList.delete` (keeping their stored settings, even if `hidden: true`) and tombstones of calendars deleted via the management API (using default list settings, and keeping `primary: true` if the deleted calendar was primary).
 
-## Time semantics
+`events.list` accepts `timeMin`, `timeMax`, `maxResults` (1–2500, default 250), `pageToken`, `orderBy` (`startTime`, `updated`), `singleEvents`, `timeZone`, `showDeleted`, `syncToken`, `updatedMin`, `iCalUID`, and repeatable `privateExtendedProperty=name=value` and `sharedExtendedProperty=name=value` filters (all must match). `orderBy=startTime` requires `singleEvents=true`; unordered lists sort by event ID. `timeMin`, `timeMax`, and `updatedMin` require RFC 3339 timestamps with an offset, and matching uses `start < timeMax` and `end > timeMin`. If a calendar has an unbounded recurring series, `events.list` requires `timeMax` whenever `singleEvents=true` or `timeMin` is set, and `events.instances` on that series always requires `timeMax` (`400` `unsupportedFeature`).
 
-Intervals are half-open: `[start, end)`. Start must precede end. All-day end dates
-are exclusive and use the calendar's time zone, including 23/25-hour DST days.
-Timed events may supply an explicit offset, or a local date/time plus IANA zone.
-Ambiguous or nonexistent local times require an explicit offset.
-
-Free/busy ignores free (`transparent`) and cancelled/deleted events, merges
-intersecting or adjacent intervals, and clips to the query range. Unknown or
-unowned calendars produce per-calendar `notFound` errors. A response `timeZone`
-is supported. Calendar groups are not supported.
-
-## OAuth
-
-| Method | Path               | Behavior                                             |
-| ------ | ------------------ | ---------------------------------------------------- |
-| GET    | `/oauth/authorize` | Local consent page with test-user selection          |
-| POST   | `/oauth/authorize` | Consume the one-use consent nonce; approve or deny   |
-| POST   | `/oauth/token`     | Form-encoded code exchange or refresh-token exchange |
-| POST   | `/oauth/revoke`    | Form-encoded token revocation                        |
-| GET    | `/userinfo`        | Authorized test-user ID and scoped email/name claims |
-
-Clients and exact redirect URIs must be registered in a fixture. Consent expires
-after five minutes; authorization codes expire after one minute and are single-use,
-client-bound, and redirect-bound. PKCE S256 is supported. Client authentication
-accepts a form secret or HTTP Basic. Access tokens expire after one hour. Offline
-access issues a refresh token; revocation/reset invalidates the connection's tokens.
-OAuth `state` is preserved on approval and denial. Revocation of an unknown token
-returns success without exposing whether it existed.
-
-Supported scopes are `https://www.googleapis.com/auth/calendar`, and the suffixes
-`.readonly`, `.events`, `.events.readonly`, `.calendarlist`,
-`.calendarlist.readonly`, `.calendars.readonly`, `.freebusy`, and
-`.events.freebusy`. Calendar-list reads and `calendarList.watch` accept
-`calendar`, `calendar.readonly`, `calendar.calendarlist`, and
-`calendar.calendarlist.readonly`. Calendar-list writes accept `calendar` and
-`calendar.calendarlist`. `calendar.app.created` is not accepted. Calendar
-metadata reads, event reads, event writes, and free/busy each enforce their own
-scopes. `channels.stop` accepts an event-read or calendar-list-read scope and
-still requires the connection that created the channel. User-info accepts
-`openid`, `email`, `profile`,
-`https://www.googleapis.com/auth/userinfo.email`, and
-`https://www.googleapis.com/auth/userinfo.profile`; email/name are only returned
-when their corresponding scope was granted. `openid` provides a user identifier
-only: no ID token, discovery document, or full OIDC implementation is provided.
-
-Only interactive consent is supported. `prompt=none`, incremental authorization,
-and unknown authorization parameters return errors. Refresh does not expand or
-change scopes. Reconnect for different permissions.
+Event list pages freeze a snapshot on the first page so writes between pages do not skip items. Event page tokens are query- and user-bound, expire after 1 hour, and clear on restart, reset, or fixture load. Calendar-list page tokens invalidate on any data or calendar-list write and are not persisted. Expired or stale tokens return `410` (`invalidPageToken`). See [Incremental sync](/calendarpit/sync/) for `syncToken` and `nextSyncToken`.
 
 ## Explicit exclusions
 
-ACLs, shared calendars, delegation, real invitation/reminder email delivery, real
-Meet creation, calendar-list sync tokens, `colors.get`, ACL and settings watch,
-full OIDC, and unlisted behavior are unsupported. Unknown request fields/query parameters
-return explicit errors; unsupported API routes return 501. Common transport query
-parameters (`alt=json`, `prettyPrint`, `quotaUser`, `key`) are accepted, but API
-keys never replace bearer authorization. There is no real Google proxy or sync.
-
-See [Test control](/calendarpit/fixtures/) for management endpoints and [Connect your
-application](/calendarpit/integration/) for SDK endpoint configuration.
+ACLs, shared calendars, delegation, calendar groups, color palettes (`colors.get`), user settings, calendar-list sync tokens, ACL and settings watch, free-text search (`q`), `eventTypes`, attachments, real email delivery, real Google Meet creation, and full OIDC are unsupported. Unknown body fields return `400` (`unsupportedFeature`). Unknown query parameters, including `fields`, return `400` (`unsupportedFeature`) on every `/calendar/v3` endpoint except `channels.stop`, which ignores its query string. Transport parameters (`alt=json`, `prettyPrint`, `quotaUser`, `key`) are accepted, but API keys never replace OAuth bearer tokens. Calendarpit never proxies to or syncs with Google. To manage calendars and reset data, see [Test control API](/calendarpit/test-control/); to point a client at Calendarpit, see [Connect your app](/calendarpit/connect/).

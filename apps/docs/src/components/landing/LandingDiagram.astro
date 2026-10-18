@@ -1,0 +1,571 @@
+---
+/**
+ * The landing page's hero diagram: the app sends its Google Calendar traffic
+ * to Calendarpit instead of Google, and Calendarpit sends watch webhooks
+ * back. Labels are HTML so long translations wrap instead of clipping; the
+ * drawings are decorative inline SVG themed through the landing variables.
+ * Google Calendar stays in the picture on its own dashed lane that ends in a
+ * stop mark, so the request lanes visibly pass it by. The layout turns
+ * vertical when the figure is narrower than 34rem.
+ */
+type DiagramCopy = (typeof import('./copy.en.json'))['diagram'];
+
+interface Props {
+  /** Localized diagram copy, in the shape of `copy.en.json#diagram`. */
+  copy: DiagramCopy;
+}
+
+const { copy } = Astro.props;
+
+// Only watch notifications travel from Calendarpit back to the app; they are
+// the last entry of `flows`.
+const flows = copy.flows.map((label, index) => ({
+  label,
+  direction: index === copy.flows.length - 1 ? 'in' : 'out',
+}));
+---
+
+<figure class='diagram'>
+  <div class='stage'>
+    <div class='node app'>
+      <p class='node-label'>{copy.yourApp.label}</p>
+      <p class='node-sub'>{copy.yourApp.sub}</p>
+      <svg
+        class='glyph'
+        viewBox='0 0 160 132'
+        aria-hidden='true'
+        focusable='false'
+      >
+        <rect class='g-panel' x='0.5' y='0.5' width='159' height='131' rx='6' />
+        <path class='g-rule' d='M0.5 20.5h159' />
+        <circle class='g-faint' cx='10' cy='10.5' r='2.5' />
+        <rect class='g-ink' x='17' y='8.5' width='34' height='4' rx='2' />
+        <rect class='g-faint' x='56' y='8.5' width='22' height='4' rx='2' />
+        <path class='g-check' d='M8 32.5l2.5 2.5 5-5' />
+        <rect class='g-ink' x='22' y='30.5' width='54' height='4' rx='2' />
+        <rect class='g-faint' x='81' y='30.5' width='30' height='4' rx='2' />
+        <path class='g-check' d='M8 46.5l2.5 2.5 5-5' />
+        <rect class='g-ink' x='22' y='44.5' width='40' height='4' rx='2' />
+        <rect class='g-faint' x='67' y='44.5' width='44' height='4' rx='2' />
+        <path class='g-check' d='M8 60.5l2.5 2.5 5-5' />
+        <rect class='g-ink' x='22' y='58.5' width='62' height='4' rx='2' />
+        <rect class='g-faint' x='89' y='58.5' width='18' height='4' rx='2' />
+        <path class='g-check' d='M8 74.5l2.5 2.5 5-5' />
+        <rect class='g-ink' x='22' y='72.5' width='48' height='4' rx='2' />
+        <rect class='g-faint' x='75' y='72.5' width='34' height='4' rx='2' />
+        <path class='g-check' d='M8 88.5l2.5 2.5 5-5' />
+        <rect class='g-ink' x='22' y='86.5' width='30' height='4' rx='2' />
+        <rect class='g-faint' x='57' y='86.5' width='52' height='4' rx='2' />
+        <path class='g-check' d='M8 102.5l2.5 2.5 5-5' />
+        <rect class='g-ink' x='22' y='100.5' width='44' height='4' rx='2' />
+        <rect class='g-faint' x='71' y='100.5' width='26' height='4' rx='2' />
+        <path class='g-rule' d='M0.5 114.5h159' />
+        <rect class='g-ink' x='8' y='120.5' width='26' height='4' rx='2' />
+        <rect class='g-faint' x='39' y='120.5' width='40' height='4' rx='2' />
+      </svg>
+    </div>
+
+    <div class='google-lane'>
+      <div class='bypass' aria-hidden='true'>
+        <svg class='bypass-mark' viewBox='0 0 18 18' focusable='false'>
+          <circle cx='9' cy='9' r='9' />
+          <path d='M6 6l6 6M12 6l-6 6' />
+        </svg>
+      </div>
+      <div class='google'>
+        <p class='google-label'>{copy.google.label}</p>
+        <p class='google-sub'>{copy.google.sub}</p>
+      </div>
+    </div>
+
+    <ul class='flows'>
+      {
+        flows.map((flow) => (
+          <li class='flow' data-direction={flow.direction}>
+            <span class='flow-label'>{flow.label}</span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class='node pit'>
+      <div class='pit-head'>
+        <svg
+          class='mark'
+          viewBox='0 0 40 40'
+          aria-hidden='true'
+          focusable='false'
+        >
+          <rect class='mark-tile' width='40' height='40' rx='10' />
+          <path class='mark-line' d='M10 12.5h20' />
+          <rect
+            class='mark-signal'
+            x='10'
+            y='17.5'
+            width='9'
+            height='12.5'
+            rx='2'
+          />
+          <path class='mark-line mark-faint' d='M23.5 19h6.5M23.5 24h6.5M23.5 29h3.5' />
+        </svg>
+        <div>
+          <p class='node-label'>{copy.calendarpit.label}</p>
+          <p class='node-sub'>{copy.calendarpit.sub}</p>
+        </div>
+      </div>
+      <svg
+        class='glyph screen'
+        viewBox='0 0 240 128'
+        aria-hidden='true'
+        focusable='false'
+      >
+        <rect class='g-canvas' x='0.5' y='0.5' width='239' height='127' rx='6' />
+        <path class='g-rail' d='M6.5 0.5H58.5V127.5H6.5a6 6 0 0 1-6-6V6.5a6 6 0 0 1 6-6z' />
+        <path class='g-rule' d='M58.5 0.5v127' />
+        <rect class='g-ink' x='7' y='8' width='8' height='8' rx='2' />
+        <rect class='g-ink' x='19' y='10' width='28' height='4' rx='2' />
+        <rect class='g-faint' x='7' y='25' width='18' height='2.5' rx='1.25' />
+        <rect class='g-card' x='5.5' y='31.5' width='47' height='15' rx='3' />
+        <rect class='g-signal' x='9' y='37' width='4' height='4' rx='1' />
+        <rect class='g-ink' x='16' y='37.5' width='24' height='3' rx='1.5' />
+        <rect class='g-select' x='5' y='54' width='48' height='11' rx='3' />
+        <rect class='g-signal' x='9' y='57.5' width='4' height='4' rx='1' />
+        <rect class='g-paper' x='16' y='58' width='22' height='3' rx='1.5' />
+        <rect class='g-faint' x='9' y='71.5' width='4' height='4' rx='1' />
+        <rect class='g-faint' x='16' y='72' width='18' height='3' rx='1.5' />
+        <rect class='g-faint' x='9' y='83.5' width='4' height='4' rx='1' />
+        <rect class='g-faint' x='16' y='84' width='24' height='3' rx='1.5' />
+        <rect class='g-faint' x='9' y='95.5' width='4' height='4' rx='1' />
+        <rect class='g-faint' x='16' y='96' width='14' height='3' rx='1.5' />
+
+        <rect class='g-signal-ink' x='68' y='10' width='22' height='2.5' rx='1.25' />
+        <rect class='g-ink' x='68' y='17' width='58' height='5' rx='2.5' />
+        <rect class='g-faint' x='68' y='27' width='42' height='2.5' rx='1.25' />
+        <rect class='g-card' x='66.5' y='38.5' width='166' height='72' rx='4' />
+        <rect class='g-ink' x='73' y='45' width='48' height='3.5' rx='1.75' />
+        <rect class='g-faint' x='73' y='52' width='28' height='2.5' rx='1.25' />
+        <rect class='g-track' x='73.5' y='60.5' width='152' height='12' rx='2' />
+        <path
+          class='g-tick'
+          d='M92.5 60.5v12M111.5 60.5v12M130.5 60.5v12M149.5 60.5v12M168.5 60.5v12M187.5 60.5v12M206.5 60.5v12'
+        />
+        <rect class='g-ink' x='134' y='63' width='14' height='7' rx='1.5' />
+        <path class='g-now' d='M172.5 57v18.5' />
+        <circle class='g-signal' cx='172.5' cy='57' r='2.5' />
+        <path class='g-rule' d='M66.5 82.5h166' />
+        <rect class='g-ink' x='73' y='90' width='14' height='3' rx='1.5' />
+        <rect class='g-faint' x='73' y='97' width='14' height='2.5' rx='1.25' />
+        <rect class='g-ink' x='94' y='88' width='1.5' height='14' rx='0.75' />
+        <rect class='g-ink' x='100' y='89.5' width='54' height='3.5' rx='1.75' />
+        <rect class='g-faint' x='100' y='97' width='30' height='2.5' rx='1.25' />
+        <rect class='g-chip' x='204' y='91' width='22' height='8' rx='4' />
+        <rect class='g-faint' x='68' y='117' width='96' height='2.5' rx='1.25' />
+      </svg>
+    </div>
+  </div>
+  <figcaption>{copy.caption}</figcaption>
+</figure>
+
+<style>
+  .diagram {
+    container-type: inline-size;
+    margin: 0;
+  }
+
+  .stage {
+    --head: 7px;
+    --stop: 1.125rem;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'google'
+      'app'
+      'flows'
+      'pit';
+    padding: 1rem;
+    border: 1px solid var(--lp-line);
+    border-radius: 10px;
+    background-color: var(--lp-paper);
+    background-image: radial-gradient(var(--lp-dot) 0.8px, transparent 0.8px);
+    background-size: 18px 18px;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  /* Nodes */
+  .node {
+    position: relative;
+    z-index: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--lp-line-strong);
+    border-radius: 10px;
+    background: var(--lp-surface);
+    box-shadow: var(--lp-shadow-lift);
+  }
+  .app {
+    grid-area: app;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 8.5rem);
+    grid-template-rows: auto 1fr;
+    column-gap: 0.75rem;
+  }
+  .app .glyph {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    margin-top: 0;
+  }
+  .pit {
+    grid-area: pit;
+    display: flex;
+    flex-direction: column;
+  }
+  .node-label {
+    color: var(--lp-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .node-sub {
+    color: var(--lp-muted);
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+  .node-label:lang(ja),
+  .node-sub:lang(ja),
+  .google:lang(ja) {
+    word-break: auto-phrase;
+  }
+  .glyph {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 0.75rem;
+  }
+  .pit-head {
+    display: flex;
+    gap: 0.625rem;
+    align-items: flex-start;
+  }
+  .mark {
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  /* Drawing primitives shared by both glyphs. */
+  .g-panel,
+  .g-canvas {
+    fill: var(--lp-paper);
+    stroke: var(--lp-line);
+  }
+  .g-rail {
+    fill: var(--lp-rail);
+  }
+  .g-card {
+    fill: var(--lp-surface);
+    stroke: var(--lp-line);
+  }
+  .g-track {
+    fill: var(--lp-sunken);
+    stroke: var(--lp-line-strong);
+  }
+  .g-rule,
+  .g-tick {
+    fill: none;
+    stroke: var(--lp-line);
+  }
+  .g-ink,
+  .g-select {
+    fill: var(--lp-ink);
+  }
+  .g-paper {
+    fill: var(--lp-surface);
+  }
+  .g-faint {
+    fill: var(--lp-line-strong);
+  }
+  .g-chip {
+    fill: var(--lp-sunken);
+    stroke: var(--lp-line-strong);
+  }
+  .g-signal {
+    fill: var(--lp-signal);
+  }
+  .g-signal-ink {
+    fill: var(--lp-signal-ink);
+  }
+  .g-now {
+    stroke: var(--lp-signal);
+    stroke-width: 1.5;
+  }
+  .g-check {
+    fill: none;
+    stroke: var(--lp-ink);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mark-tile {
+    fill: var(--lp-ink);
+  }
+  .mark-line {
+    fill: none;
+    stroke: var(--lp-paper);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .mark-faint {
+    stroke-width: 2;
+    stroke-opacity: 0.6;
+  }
+  .mark-signal {
+    fill: var(--lp-signal);
+  }
+
+  /* Google Calendar: a dimmed box at the end of a dashed lane that a stop
+     mark cuts off. Narrow layout: the lane runs up from the app. */
+  .google-lane {
+    grid-area: google;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+  .google {
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
+    padding: 0.375rem 0.75rem 0.4375rem;
+    border: 1px dashed var(--lp-line-strong);
+    border-radius: 8px;
+    background: var(--lp-paper);
+    text-align: center;
+  }
+  .google-label {
+    color: var(--lp-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .google-sub {
+    color: var(--lp-muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .bypass {
+    position: relative;
+    flex: none;
+    width: 0;
+    height: 2.25rem;
+    border-left: 1px dashed var(--lp-muted);
+  }
+  .bypass-mark {
+    position: absolute;
+    top: 0.375rem;
+    left: 0;
+    width: var(--stop);
+    height: var(--stop);
+    translate: calc(-50% - 0.5px) 0;
+  }
+  .bypass-mark circle {
+    fill: var(--lp-muted);
+  }
+  .bypass-mark path {
+    fill: none;
+    stroke: var(--lp-paper);
+    stroke-width: 1.75;
+    stroke-linecap: round;
+  }
+
+  /* Flows, narrow layout: requests ride one rail down to Calendarpit, and
+     webhooks ride a second rail back up to the app, with the label on it. */
+  .flows {
+    grid-area: flows;
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.375rem 1rem;
+    margin: 0;
+    padding: 1.25rem 0.25rem 1.25rem 2.5rem;
+    list-style: none;
+  }
+  .flows::before,
+  .flows::after,
+  .flow::before,
+  .flow::after {
+    content: '';
+    position: absolute;
+  }
+  .flows::before {
+    top: 0;
+    bottom: 0;
+    left: 1.25rem;
+    border-left: 1px solid var(--lp-ink-2);
+  }
+  .flows::after {
+    bottom: 0;
+    left: calc(1.25rem + 0.5px - var(--head) / 2);
+    width: var(--head);
+    height: var(--head);
+    background: var(--lp-ink-2);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+  }
+  .flow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin: 0;
+  }
+  .flow[data-direction='out']::before {
+    top: 50%;
+    left: -1.25rem;
+    width: 1.25rem;
+    border-top: 1px solid var(--lp-ink-2);
+  }
+  .flow[data-direction='in'] {
+    grid-row: 1 / span 5;
+    grid-column: 2;
+    justify-content: center;
+    margin-right: 1rem;
+  }
+  .flow[data-direction='in']::before {
+    top: -1.25rem;
+    bottom: -1.25rem;
+    left: 50%;
+    border-left: 1px solid var(--lp-signal);
+  }
+  .flow[data-direction='in']::after {
+    top: -1.25rem;
+    left: calc(50% + 0.5px - var(--head) / 2);
+    width: var(--head);
+    height: var(--head);
+    background: var(--lp-signal);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
+  .flow-label {
+    position: relative;
+    z-index: 1;
+    padding: 0.0625rem 0.5rem;
+    border: 1px solid var(--lp-line-strong);
+    border-radius: 999px;
+    background: var(--lp-surface);
+    color: var(--lp-ink-2);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .flow[data-direction='in'] .flow-label {
+    border-color: var(--lp-signal-line);
+    background: var(--lp-signal-wash);
+    color: var(--lp-signal-ink);
+  }
+
+  figcaption {
+    margin-top: 0.625rem;
+    color: var(--lp-muted);
+    font-size: 0.75rem;
+    line-height: 1.6;
+  }
+
+  /* Wide layout: the app and Calendarpit side by side with one lane per
+     flow. Google sits on the lane above them, cut off before it is reached,
+     while the request lanes run underneath it straight to Calendarpit. */
+  @container (min-width: 34rem) {
+    .stage {
+      grid-template-columns:
+        minmax(7.5rem, 0.75fr) minmax(11rem, 1.4fr)
+        minmax(9.5rem, 1fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        'app google pit'
+        'app flows pit';
+      padding: 1.25rem;
+    }
+    .app {
+      display: flex;
+      flex-direction: column;
+    }
+    /* Both drawings sit at the bottom of their boxes, so their bottom edges
+       line up whatever the label lengths. */
+    .app > .node-sub,
+    .pit-head {
+      margin-bottom: 0.75rem;
+    }
+    .node > .glyph {
+      margin-top: auto;
+    }
+
+    .google-lane {
+      flex-direction: row;
+      padding: 0.125rem 1rem 0.625rem 0;
+    }
+    .google {
+      flex: none;
+      max-width: calc(100% - 3rem);
+    }
+    .bypass {
+      flex: 1 1 auto;
+      width: auto;
+      height: 0;
+      border-left: 0;
+      border-top: 1px dashed var(--lp-muted);
+    }
+    .bypass-mark {
+      top: 0;
+      right: 0.25rem;
+      left: auto;
+      translate: 0 calc(-50% - 0.5px);
+    }
+
+    .flows {
+      grid-template-columns: none;
+      grid-auto-rows: 1fr;
+      gap: 0;
+      padding: 0;
+    }
+    .flows::before,
+    .flows::after {
+      content: none;
+    }
+    .flow {
+      justify-content: center;
+      min-height: 2.25rem;
+    }
+    .flow[data-direction='out']::before,
+    .flow[data-direction='in']::before {
+      top: 50%;
+      bottom: auto;
+      left: 0;
+      right: 0;
+      width: auto;
+      border-left: 0;
+      border-top: 1px solid var(--lp-ink-2);
+      translate: 0 -0.5px;
+    }
+    .flow[data-direction='in'] {
+      grid-row: auto;
+      grid-column: auto;
+      margin-right: 0;
+    }
+    .flow[data-direction='in']::before {
+      border-top-color: var(--lp-signal);
+    }
+    .flow::after {
+      top: calc(50% - var(--head) / 2);
+      width: var(--head);
+      height: var(--head);
+    }
+    .flow[data-direction='out']::after {
+      right: 0;
+      background: var(--lp-ink-2);
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
+    .flow[data-direction='in']::after {
+      top: calc(50% - var(--head) / 2);
+      left: 0;
+      clip-path: polygon(100% 0, 100% 100%, 0 50%);
+    }
+  }
+</style>

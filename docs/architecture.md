@@ -1,7 +1,6 @@
----
-title: Architecture
-description: Workspace boundaries, runtime choices, and distribution.
----
+# Architecture
+
+Workspace boundaries, runtime choices, and distribution.
 
 | Workspace                    | Responsibility                                                             |
 | ---------------------------- | -------------------------------------------------------------------------- |
