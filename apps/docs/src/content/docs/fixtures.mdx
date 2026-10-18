@@ -85,23 +85,23 @@ Validation is atomic. Every owner and calendar reference must exist in the fixtu
 
 Defines test users that can approve access in the consent page and own calendars.
 
-| Field | Required | Default | Rules |
-| --- | --- | --- | --- |
-| `id` | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `users`. |
-| `name` | Required | — | Nonempty string up to 10,000 characters. |
-| `email` | Required | — | Nonempty string up to 10,000 characters matching `^[^\s@]+@[^\s@]+$` (else `"Invalid email."`). |
+| Field   | Required | Default        | Rules                                                                                           |
+| ------- | -------- | -------------- | ----------------------------------------------------------------------------------------------- |
+| `id`    | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `users`.                   |
+| `name`  | Required | —              | Nonempty string up to 10,000 characters.                                                        |
+| `email` | Required | —              | Nonempty string up to 10,000 characters matching `^[^\s@]+@[^\s@]+$` (else `"Invalid email."`). |
 
 ### `calendars`
 
 Defines calendars owned by fixture users. Every user that owns calendars must have **exactly one** calendar with `"primary": true` (else `"Each user with calendars must have exactly one primary calendar."`). A single calendar without `"primary": true` fails validation. Users without calendars are allowed; for those users, the `primary` calendar alias returns `404`.
 
-| Field | Required | Default | Rules |
-| --- | --- | --- | --- |
-| `id` | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `calendars`. |
-| `userId` | Required | — | Must match a user `id` in `users` (else `"Unknown calendar owner."`). |
-| `summary` | Required | — | Nonempty string up to 10,000 characters. |
-| `timeZone` | Optional | `"UTC"` | Valid IANA time zone name (else `"Invalid IANA time zone."`). |
-| `primary` | Optional | `false` | Boolean (else `"primary must be boolean."`). |
+| Field      | Required | Default        | Rules                                                                             |
+| ---------- | -------- | -------------- | --------------------------------------------------------------------------------- |
+| `id`       | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `calendars`. |
+| `userId`   | Required | —              | Must match a user `id` in `users` (else `"Unknown calendar owner."`).             |
+| `summary`  | Required | —              | Nonempty string up to 10,000 characters.                                          |
+| `timeZone` | Optional | `"UTC"`        | Valid IANA time zone name (else `"Invalid IANA time zone."`).                     |
+| `primary`  | Optional | `false`        | Boolean (else `"primary must be boolean."`).                                      |
 
 Seeded calendars start on their owner's calendar list with default settings (`selected: true`, `colorId: "1"`). When you later modify calendars or users through the management API (see [Test control API](/calendarpit/test-control/)):
 
@@ -113,21 +113,21 @@ Seeded calendars start on their owner's calendar list with default settings (`se
 
 Defines initial events. Fixture events accept the Calendar API event fields and value validation (see [Calendar API compatibility](/calendarpit/compatibility/) and [Events, recurrence and time](/calendarpit/recurrence/)), plus `calendarId`. Read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`) may be set, and `conferenceData` does not need `conferenceDataVersion`. The request-only field `attendeesOmitted` is rejected (`"Unsupported field: attendeesOmitted"`). Seeding does not run the side effects of an API insert: attendees do not receive invitation copies in their own calendars, and a `conferenceData.createRequest` does not generate a meeting link.
 
-| Field | Required | Default | Rules |
-| --- | --- | --- | --- |
-| `calendarId` | Required | — | Must match a calendar `id` in `calendars` (else `"Unknown event calendar."`). |
-| `id` | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique within the calendar. |
-| `start`, `end` | Required | — | Event start and end (`dateTime` or all-day `date`), same rules as the Calendar API. |
+| Field                                                                      | Required | Default                                                                                                                                            | Rules                                                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `calendarId`                                                               | Required | —                                                                                                                                                  | Must match a calendar `id` in `calendars` (else `"Unknown event calendar."`).                                                                                                                                                                                                     |
+| `id`                                                                       | Optional | Generated UUID                                                                                                                                     | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique within the calendar.                                                                                                                                                                                                |
+| `start`, `end`                                                             | Required | —                                                                                                                                                  | Event start and end (`dateTime` or all-day `date`), same rules as the Calendar API.                                                                                                                                                                                               |
 | `organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime` | Optional | Calendar owner (`organizer`, `creator`), `<id>@calendarpit.local` (`iCalUID`), none (`recurringEventId`, `originalStartTime`; set both or neither) | Read-only in normal API requests, but may be set in fixtures (for example, to seed an external organizer or stored recurring exceptions). Setting only one of `recurringEventId` or `originalStartTime` fails with `"Instances require recurringEventId and originalStartTime."`. |
-| `sequence` | Optional | `0` | Non-negative integer (else `"Invalid sequence."`). |
-| `created`, `updated`, `etag` | Ignored | Generated at seed time | Provided values are ignored and generated when the fixture is seeded. |
+| `sequence`                                                                 | Optional | `0`                                                                                                                                                | Non-negative integer (else `"Invalid sequence."`).                                                                                                                                                                                                                                |
+| `created`, `updated`, `etag`                                               | Ignored  | Generated at seed time                                                                                                                             | Provided values are ignored and generated when the fixture is seeded.                                                                                                                                                                                                             |
 
 ### `clients`
 
 Defines OAuth clients for [Local OAuth](/calendarpit/oauth/). There is no `scopes` field per client; any client may request any supported scope.
 
-| Field | Required | Default | Rules |
-| --- | --- | --- | --- |
-| `id` | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `clients`. |
-| `secret` | Required | — | Nonempty string up to 10,000 characters. |
-| `redirectUris` | Required | — | Nonempty array of absolute `http` or `https` URLs (up to 10,000 characters each) without fragments or credentials. Matched exactly at `/oauth/authorize`. |
+| Field          | Required | Default        | Rules                                                                                                                                                     |
+| -------------- | -------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`           | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `clients`.                                                                           |
+| `secret`       | Required | —              | Nonempty string up to 10,000 characters.                                                                                                                  |
+| `redirectUris` | Required | —              | Nonempty array of absolute `http` or `https` URLs (up to 10,000 characters each) without fragments or credentials. Matched exactly at `/oauth/authorize`. |

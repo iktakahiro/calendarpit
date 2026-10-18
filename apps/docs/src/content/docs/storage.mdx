@@ -36,17 +36,17 @@ You can check the active storage mode and path in:
 
 On `SIGINT` or `SIGTERM`, the CLI (`bun run start` or the standalone executable) aborts in-flight webhook deliveries, saves state, and releases the database lock. Reopening an existing SQLite file restores saved data and drops short-lived flow state:
 
-| State | SQLite restart behavior |
-| --- | --- |
-| Users, calendars, events, OAuth clients | Restored, including event IDs, timestamps, and etags |
-| Calendar-list settings (per-user overrides, colors, hidden/selected, reminders, removed entries) | Restored; cleared by a reset or fixture load |
-| Reset baseline (startup fixture) | Original seed retained; the contents of a `--config` or `CALENDARPIT_CONFIG` file are ignored |
-| Connections (grants), access and refresh tokens | Restored; access tokens keep their original expiry, refresh tokens do not expire, and revoked connections stay revoked |
-| Watch channels | Restored if unexpired, the connection is active, and the callback host is still allowed; message numbers are kept |
-| Request history, delivery log, notifications | Latest 200 entries of each restored |
-| Queued or in-flight webhook deliveries | Marked `cancelled`; never replayed automatically |
-| Sync tokens, calendar tombstones | Restored; cleared by a reset or fixture load |
-| Pending consents, authorization codes, page tokens | Discarded (`calendarList` and `events` cursors); restart the flow or list query |
+| State                                                                                            | SQLite restart behavior                                                                                                |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Users, calendars, events, OAuth clients                                                          | Restored, including event IDs, timestamps, and etags                                                                   |
+| Calendar-list settings (per-user overrides, colors, hidden/selected, reminders, removed entries) | Restored; cleared by a reset or fixture load                                                                           |
+| Reset baseline (startup fixture)                                                                 | Original seed retained; the contents of a `--config` or `CALENDARPIT_CONFIG` file are ignored                          |
+| Connections (grants), access and refresh tokens                                                  | Restored; access tokens keep their original expiry, refresh tokens do not expire, and revoked connections stay revoked |
+| Watch channels                                                                                   | Restored if unexpired, the connection is active, and the callback host is still allowed; message numbers are kept      |
+| Request history, delivery log, notifications                                                     | Latest 200 entries of each restored                                                                                    |
+| Queued or in-flight webhook deliveries                                                           | Marked `cancelled`; never replayed automatically                                                                       |
+| Sync tokens, calendar tombstones                                                                 | Restored; cleared by a reset or fixture load                                                                           |
+| Pending consents, authorization codes, page tokens                                               | Discarded (`calendarList` and `events` cursors); restart the flow or list query                                        |
 
 After a restart, refetch calendar state in your app to reconcile [watch notifications](/calendarpit/watch/) interrupted by shutdown.
 

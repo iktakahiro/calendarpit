@@ -75,10 +75,10 @@ Requests that break these rules fail with HTTP `400` (`invalidParameter`):
 
 Sync tokens are opaque UUIDs bound to the user, calendar, expansion options, and initial time window.
 
-| Token | Lifetime and capacity | Persistence | Error when invalid |
-| --- | --- | --- | --- |
-| `syncToken` | 7 days TTL; max 100 per workspace (oldest evicted first) | Stored in SQLite; lost on restart in `:memory:` mode | HTTP `410` (`fullSyncRequired`) |
-| `pageToken` | 1 hour TTL; max 1,000 frozen pages per workspace (oldest evicted first) | In-memory only (lost on restart) | HTTP `410` (`invalidPageToken`) |
+| Token       | Lifetime and capacity                                                   | Persistence                                          | Error when invalid              |
+| ----------- | ----------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------- |
+| `syncToken` | 7 days TTL; max 100 per workspace (oldest evicted first)                | Stored in SQLite; lost on restart in `:memory:` mode | HTTP `410` (`fullSyncRequired`) |
+| `pageToken` | 1 hour TTL; max 1,000 frozen pages per workspace (oldest evicted first) | In-memory only (lost on restart)                     | HTTP `410` (`invalidPageToken`) |
 
 - **HTTP `410` (`fullSyncRequired`)**: Returned when a `syncToken` is unknown, expired, evicted past the 100-token limit, cleared by a reset or fixture load, or issued for another user or calendar. Each full or incremental `events.list` request without a `pageToken` issues a new token, and all users and calendars (including management API event lists) share the 100-token limit. Discard your local synced data for that calendar and run a full sync.
 - **Resets and fixtures**: `POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` clear all sync tokens and page tokens (see [Test control API](/calendarpit/test-control/)). They also revoke all OAuth grants, so clients must reauthorize first.

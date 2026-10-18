@@ -41,15 +41,15 @@ Calendarpit は watch のレスポンスを返す前に、最初の `sync` 通�
 
 配信はどれも `address` への HTTP `POST` で、**ボディは空**です。Calendarpit はリソースの内容、`X-Goog-Changed`、OAuth アクセストークンをコールバックに送りません。イベントの通知を受け取ったら、保存してある `syncToken` を付けて `events.list` を呼び出し、変更を取得してください ([差分同期](/calendarpit/ja/sync/) を参照)。
 
-| ヘッダー | 値 |
-| --- | --- |
-| `X-Goog-Channel-ID` | 登録時のチャネル `id` |
-| `X-Goog-Resource-ID` | リソースの識別子 (`calendar-<calendarId>` または `calendarList-<userId>`) |
-| `X-Goog-Resource-URI` | 監視対象カレンダーのイベント、またはユーザーのカレンダーリストのエンドポイント URL |
-| `X-Goog-Resource-State` | チャネル作成時は `sync`、監視対象が変わったときは `exists` |
-| `X-Goog-Message-Number` | `1` から始まり、通知ごとに 1 ずつ増える整数 (再試行では同じ番号を使います) |
-| `X-Goog-Channel-Expiration` | 有効期限 (RFC 1123 形式、UTC) |
-| `X-Goog-Channel-Token` | チャネルの `token`。登録時に指定した場合のみ付きます |
+| ヘッダー                    | 値                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `X-Goog-Channel-ID`         | 登録時のチャネル `id`                                                              |
+| `X-Goog-Resource-ID`        | リソースの識別子 (`calendar-<calendarId>` または `calendarList-<userId>`)          |
+| `X-Goog-Resource-URI`       | 監視対象カレンダーのイベント、またはユーザーのカレンダーリストのエンドポイント URL |
+| `X-Goog-Resource-State`     | チャネル作成時は `sync`、監視対象が変わったときは `exists`                         |
+| `X-Goog-Message-Number`     | `1` から始まり、通知ごとに 1 ずつ増える整数 (再試行では同じ番号を使います)         |
+| `X-Goog-Channel-Expiration` | 有効期限 (RFC 1123 形式、UTC)                                                      |
+| `X-Goog-Channel-Token`      | チャネルの `token`。登録時に指定した場合のみ付きます                               |
 
 ## カレンダーリスト
 
@@ -72,14 +72,14 @@ Google Calendar と違い、Calendarpit では `http:` のコールバックを�
 
 ## 配信ルールとチャネルの終了
 
-| 項目 | 値 |
-| --- | --- |
-| 1 通知あたりの試行回数 | 最大 3 回 (初回 + 再試行 2 回) |
-| 1 回あたりのタイムアウト | 2000 ms |
-| 試行の間隔 | 100 ms |
+| 項目                         | 値                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------- |
+| 1 通知あたりの試行回数       | 最大 3 回 (初回 + 再試行 2 回)                                          |
+| 1 回あたりのタイムアウト     | 2000 ms                                                                 |
+| 試行の間隔                   | 100 ms                                                                  |
 | 成功とみなすステータスコード | `200`、`201`、`202`、`204` (リダイレクトはたどらず、失敗として扱います) |
-| 順序 | チャネルごとに 1 件ずつ順番に配信 |
-| 配信ログ | 最新 200 件 (`queued`、`delivered`、`failed`、`cancelled`) |
+| 順序                         | チャネルごとに 1 件ずつ順番に配信                                       |
+| 配信ログ                     | 最新 200 件 (`queued`、`delivered`、`failed`、`cancelled`)              |
 
 次の場合はチャネルが停止し、待機中や送信中の配信は `cancelled` になります。`channels.stop` を呼び出したとき、チャネルの有効期限が切れたとき、その OAuth 接続が取り消されたとき、そのユーザーが削除されたときです。カレンダーを削除すると、そのカレンダーの `events.watch` チャネルは停止します。所有者の `calendarList.watch` チャネルは有効なままで、`exists` を受け取ります。`POST /__calendarpit/reset` または `POST /__calendarpit/fixtures` を呼び出すと、すべてのチャネルが停止し、配信ログも消去されます ([テスト制御 API](/calendarpit/ja/test-control/) を参照)。期限切れのチャネルはすぐには削除されず、チャネルの登録時、イベントやカレンダーリストの通知処理時、状態の読み取り時に削除されます。削除されたチャネルの `id` は再利用できます。期限切れのチャネルへの配信はキャンセルされます。
 

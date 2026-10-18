@@ -41,15 +41,15 @@ Calendarpit queues an initial `sync` notification (message number `1`) before re
 
 Each delivery is an HTTP `POST` to `address` with an **empty body**. Calendarpit never sends resource payloads, `X-Goog-Changed`, or OAuth access tokens to callbacks. When your receiver gets an event notification, call `events.list` with your saved `syncToken` to fetch changes (see [Incremental sync](/calendarpit/sync/)).
 
-| Header | Value |
-| --- | --- |
-| `X-Goog-Channel-ID` | Channel `id` from registration |
-| `X-Goog-Resource-ID` | Resource identifier (`calendar-<calendarId>` or `calendarList-<userId>`) |
-| `X-Goog-Resource-URI` | Endpoint URL for the watched calendar's events or the user's calendar list |
-| `X-Goog-Resource-State` | `sync` on channel creation, `exists` after a watched change |
-| `X-Goog-Message-Number` | Integer starting at `1`, incremented by 1 per notification (reused on retry) |
-| `X-Goog-Channel-Expiration` | Expiration time in RFC 1123 UTC format |
-| `X-Goog-Channel-Token` | Channel `token`, included only when set at registration |
+| Header                      | Value                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `X-Goog-Channel-ID`         | Channel `id` from registration                                               |
+| `X-Goog-Resource-ID`        | Resource identifier (`calendar-<calendarId>` or `calendarList-<userId>`)     |
+| `X-Goog-Resource-URI`       | Endpoint URL for the watched calendar's events or the user's calendar list   |
+| `X-Goog-Resource-State`     | `sync` on channel creation, `exists` after a watched change                  |
+| `X-Goog-Message-Number`     | Integer starting at `1`, incremented by 1 per notification (reused on retry) |
+| `X-Goog-Channel-Expiration` | Expiration time in RFC 1123 UTC format                                       |
+| `X-Goog-Channel-Token`      | Channel `token`, included only when set at registration                      |
 
 ## Calendar list
 
@@ -72,14 +72,14 @@ To allow other containers or test hosts, set `CALENDARPIT_WATCH_HOSTS` to a comm
 
 ## Delivery policy and lifecycle
 
-| Setting | Value |
-| --- | --- |
-| Attempts per notification | Up to 3 (initial attempt plus 2 retries) |
-| Per-attempt timeout | 2000 ms |
-| Delay between attempts | 100 ms |
-| Success status codes | `200`, `201`, `202`, `204` (redirects are not followed and count as failures) |
-| Ordering | Serialized per channel |
-| Delivery log | Latest 200 records (`queued`, `delivered`, `failed`, `cancelled`) |
+| Setting                   | Value                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| Attempts per notification | Up to 3 (initial attempt plus 2 retries)                                      |
+| Per-attempt timeout       | 2000 ms                                                                       |
+| Delay between attempts    | 100 ms                                                                        |
+| Success status codes      | `200`, `201`, `202`, `204` (redirects are not followed and count as failures) |
+| Ordering                  | Serialized per channel                                                        |
+| Delivery log              | Latest 200 records (`queued`, `delivered`, `failed`, `cancelled`)             |
 
 A channel stops and any queued or in-flight deliveries are marked `cancelled` when you call `channels.stop`, the channel expires, its OAuth connection is revoked, or its user is deleted. Deleting a calendar stops `events.watch` channels on that calendar, while the owner's `calendarList.watch` channels remain active and receive `exists`. Calling `POST /__calendarpit/reset` or `POST /__calendarpit/fixtures` stops all channels and clears the delivery log (see [Test control API](/calendarpit/test-control/)). Expired channels are pruned lazily when a channel is opened, when event or calendar-list notifications run, or when state is read, allowing their `id` to be reused; deliveries to an expired channel are cancelled.
 

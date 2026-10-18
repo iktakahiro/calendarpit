@@ -18,21 +18,21 @@ Calendarpit has a local management API under `/__calendarpit`. Use it to seed da
 
 All paths below are relative to `/__calendarpit`.
 
-| Method | Path | Behavior |
-| --- | --- | --- |
-| `GET` / `HEAD` | `/health` | Return server `name` (`"Calendarpit"`), `version` (for example `0.1.0`), `stage`, `storage` (`"memory"` or `"sqlite"`), and capability flags (`calendar`, `oauth`, `watch`, `fixtures`). `HEAD` returns an empty `200`. |
-| `GET` | `/state` | Remove expired channels, then return a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, and `revision`. |
-| `POST` | `/fixtures` | Validate and replace users, calendars, events, and clients. Clear runtime state and invalidate connections (`200` snapshot). |
-| `POST` | `/reset` | Restore the startup fixture baseline and clear all runtime state (`200` snapshot). |
-| `GET` / `DELETE` | `/history` | Return (`200`, oldest to newest) or clear (`204`) the latest 200 protocol requests. |
-| `POST` | `/users` | Create a user (`name`, `email`, optional `id`). Returns `201`, or `409 duplicate` if the ID exists. |
-| `PATCH` / `DELETE` | `/users/{id}` | Edit (`name`, `email`; `id` is immutable) or delete (`204`) a user. Deleting a user also deletes the data they own. |
-| `POST` | `/calendars` | Create a calendar (`userId`, `summary`, optional `timeZone`, `primary`, `id`). Returns `201`. |
-| `PATCH` / `DELETE` | `/calendars/{id}` | Edit or delete (`204`) a calendar. `id` and `userId` are immutable. |
-| `GET` / `POST` | `/calendars/{id}/events` | List events or create an event (`200`). Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`. |
-| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | Read, replace, patch, or delete (`204`, keeps a tombstone) an event. |
-| `POST` | `/connections/{id}/revoke` | Revoke the connection's tokens and stop its watch channels (`204`). |
-| `POST` | `/deliveries/drain` | Wait for pending webhook deliveries and their retries to finish, then return the delivery log array (`200`). |
+| Method                             | Path                               | Behavior                                                                                                                                                                                                                |
+| ---------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET` / `HEAD`                     | `/health`                          | Return server `name` (`"Calendarpit"`), `version` (for example `0.1.0`), `stage`, `storage` (`"memory"` or `"sqlite"`), and capability flags (`calendar`, `oauth`, `watch`, `fixtures`). `HEAD` returns an empty `200`. |
+| `GET`                              | `/state`                           | Remove expired channels, then return a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, and `revision`. |
+| `POST`                             | `/fixtures`                        | Validate and replace users, calendars, events, and clients. Clear runtime state and invalidate connections (`200` snapshot).                                                                                            |
+| `POST`                             | `/reset`                           | Restore the startup fixture baseline and clear all runtime state (`200` snapshot).                                                                                                                                      |
+| `GET` / `DELETE`                   | `/history`                         | Return (`200`, oldest to newest) or clear (`204`) the latest 200 protocol requests.                                                                                                                                     |
+| `POST`                             | `/users`                           | Create a user (`name`, `email`, optional `id`). Returns `201`, or `409 duplicate` if the ID exists.                                                                                                                     |
+| `PATCH` / `DELETE`                 | `/users/{id}`                      | Edit (`name`, `email`; `id` is immutable) or delete (`204`) a user. Deleting a user also deletes the data they own.                                                                                                     |
+| `POST`                             | `/calendars`                       | Create a calendar (`userId`, `summary`, optional `timeZone`, `primary`, `id`). Returns `201`.                                                                                                                           |
+| `PATCH` / `DELETE`                 | `/calendars/{id}`                  | Edit or delete (`204`) a calendar. `id` and `userId` are immutable.                                                                                                                                                     |
+| `GET` / `POST`                     | `/calendars/{id}/events`           | List events or create an event (`200`). Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`.                                                                            |
+| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | Read, replace, patch, or delete (`204`, keeps a tombstone) an event.                                                                                                                                                    |
+| `POST`                             | `/connections/{id}/revoke`         | Revoke the connection's tokens and stop its watch channels (`204`).                                                                                                                                                     |
+| `POST`                             | `/deliveries/drain`                | Wait for pending webhook deliveries and their retries to finish, then return the delivery log array (`200`).                                                                                                            |
 
 ### Cascades and admin writes
 
@@ -48,11 +48,11 @@ All paths below are relative to `/__calendarpit`.
 
 `POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` both replace stored data, save it immediately, and clear all runtime state. They load different data:
 
-| Behavior | `POST /__calendarpit/reset` | `POST /__calendarpit/fixtures` |
-| --- | --- | --- |
-| Users, calendars, events, clients | Restored from the startup baseline | Replaced by the posted [fixture JSON](/calendarpit/fixtures/) |
-| Startup reset baseline | Unchanged | Unchanged (the next `/reset` still restores the original startup seed) |
-| Runtime state | Cleared | Cleared |
+| Behavior                          | `POST /__calendarpit/reset`        | `POST /__calendarpit/fixtures`                                         |
+| --------------------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| Users, calendars, events, clients | Restored from the startup baseline | Replaced by the posted [fixture JSON](/calendarpit/fixtures/)          |
+| Startup reset baseline            | Unchanged                          | Unchanged (the next `/reset` still restores the original startup seed) |
+| Runtime state                     | Cleared                            | Cleared                                                                |
 
 Validation on `POST /__calendarpit/fixtures` is atomic. If any record is invalid, Calendarpit returns `400` and changes nothing.
 
@@ -96,14 +96,14 @@ Keep your original fixture files for seeding and reloading.
 - **Refetch after restarts:** When you test [SQLite restarts](/calendarpit/storage/), deliveries queued before shutdown are marked `cancelled` and are not sent again. Fetch the calendar state again after the restart.
 
 ```ts
-const baseUrl = "http://127.0.0.1:4173";
-const jsonHeaders = { "Content-Type": "application/json" };
+const baseUrl = 'http://127.0.0.1:4173';
+const jsonHeaders = { 'Content-Type': 'application/json' };
 
 export async function resetCalendarpit() {
   const res = await fetch(`${baseUrl}/__calendarpit/reset`, {
-    method: "POST",
+    method: 'POST',
     headers: jsonHeaders,
-    body: "{}",
+    body: '{}',
   });
   if (!res.ok) throw new Error(`Reset failed: ${res.status}`);
   return res.json();
@@ -111,9 +111,9 @@ export async function resetCalendarpit() {
 
 export async function drainDeliveries() {
   const res = await fetch(`${baseUrl}/__calendarpit/deliveries/drain`, {
-    method: "POST",
+    method: 'POST',
     headers: jsonHeaders,
-    body: "{}",
+    body: '{}',
   });
   if (!res.ok) throw new Error(`Drain failed: ${res.status}`);
   return res.json();

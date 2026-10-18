@@ -11,14 +11,14 @@ Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれてお
 
 ## エンドポイント
 
-| メソッド | パス | 用途 |
-| --- | --- | --- |
-| `GET` | `/oauth/authorize` | 認可リクエストを検証し、ローカルの HTML 同意画面を表示します |
-| `POST` | `/oauth/authorize` | 同意の選択結果（`approve` または `deny`）を送信し、`redirect_uri` へリダイレクト（`302`）します（同一オリジンのリクエストのみ。クロスサイトリクエストは `403 forbidden` を返します） |
-| `POST` | `/oauth/token` | 認可コードまたはリフレッシュトークンをアクセストークンと交換します |
-| `POST` | `/oauth/revoke` | アクセストークンまたはリフレッシュトークンと、その接続（grant）を失効させます |
-| `GET` | `/userinfo` | 認可されたテストユーザーのプロフィールクレームを返します |
-| `POST` | `/__calendarpit/connections/{grantId}/revoke` | 管理 API から接続を失効させます（`204`。管理 API のリクエスト規則が適用されます。詳細は[テスト制御 API](/calendarpit/ja/test-control/) を参照してください） |
+| メソッド | パス                                          | 用途                                                                                                                                                                                 |
+| -------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET`    | `/oauth/authorize`                            | 認可リクエストを検証し、ローカルの HTML 同意画面を表示します                                                                                                                         |
+| `POST`   | `/oauth/authorize`                            | 同意の選択結果（`approve` または `deny`）を送信し、`redirect_uri` へリダイレクト（`302`）します（同一オリジンのリクエストのみ。クロスサイトリクエストは `403 forbidden` を返します） |
+| `POST`   | `/oauth/token`                                | 認可コードまたはリフレッシュトークンをアクセストークンと交換します                                                                                                                   |
+| `POST`   | `/oauth/revoke`                               | アクセストークンまたはリフレッシュトークンと、その接続（grant）を失効させます                                                                                                        |
+| `GET`    | `/userinfo`                                   | 認可されたテストユーザーのプロフィールクレームを返します                                                                                                                             |
+| `POST`   | `/__calendarpit/connections/{grantId}/revoke` | 管理 API から接続を失効させます（`204`。管理 API のリクエスト規則が適用されます。詳細は[テスト制御 API](/calendarpit/ja/test-control/) を参照してください）                          |
 
 ルーティングされるのは上記のパスのみです。`/oauth2/...` 配下の Google エンドポイント（`/oauth2/v4/token` や `/oauth2/v3/userinfo` など）や、`/oauth/*` に対する誤った HTTP メソッドは、ステータス `501` と `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}` を返します。
 
@@ -113,13 +113,13 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 ### 有効期限と永続化
 
-| 対象 | 有効期限 | 使い切り（単一使用） | SQLite 使用時の再起動後の永続化 |
-| --- | --- | --- | --- |
-| 保留中の同意 nonce | 5 分（保留数の上限は 1,000 件。超過時は `429 rateLimitExceeded`） | はい | いいえ |
-| 認可コード | 60 秒（`client_id` と `redirect_uri` に紐づく） | はい | いいえ |
-| アクセストークン | 1 時間（`expires_in: 3600`） | いいえ | はい（元の有効期限を維持） |
-| リフレッシュトークン | 失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで無期限 | いいえ | はい |
-| 接続（grant） | 失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで有効 | いいえ | はい |
+| 対象                 | 有効期限                                                                   | 使い切り（単一使用） | SQLite 使用時の再起動後の永続化 |
+| -------------------- | -------------------------------------------------------------------------- | -------------------- | ------------------------------- |
+| 保留中の同意 nonce   | 5 分（保留数の上限は 1,000 件。超過時は `429 rateLimitExceeded`）          | はい                 | いいえ                          |
+| 認可コード           | 60 秒（`client_id` と `redirect_uri` に紐づく）                            | はい                 | いいえ                          |
+| アクセストークン     | 1 時間（`expires_in: 3600`）                                               | いいえ               | はい（元の有効期限を維持）      |
+| リフレッシュトークン | 失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで無期限 | いいえ               | はい                            |
+| 接続（grant）        | 失効、テストユーザーの削除、リセット、またはフィクスチャ読み込みまで有効   | いいえ               | はい                            |
 
 `:memory:` モードでは、プロセスが終了するとすべての OAuth の状態が失われます。詳細は[ストレージと再起動](/calendarpit/ja/storage/)を参照してください。
 
@@ -133,20 +133,20 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 すべての `GET /oauth/authorize` リクエストには、対応しているスコープを少なくとも 1 つ含める必要があります。それ以外のスコープを要求すると `400 invalid_scope` を返します。
 
-| スコープ | 許可される操作 |
-| --- | --- |
-| `https://www.googleapis.com/auth/calendar` | 対応しているすべての Calendar API の読み書き（`calendarList.*`, `calendars.get`, `events.*`, `channels.stop`, `freebusy.query`） |
-| `https://www.googleapis.com/auth/calendar.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `calendars.get`, `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.events` | `events.list`, `events.get`, `events.instances`, `events.insert`, `events.update`, `events.patch`, `events.delete`, `events.watch`, `channels.stop`, `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.events.readonly` | `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.calendarlist` | `calendarList.list`, `calendarList.get`, `calendarList.insert`, `calendarList.patch`, `calendarList.update`, `calendarList.delete`, `calendarList.watch`, `channels.stop` |
-| `https://www.googleapis.com/auth/calendar.calendarlist.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `channels.stop` |
-| `https://www.googleapis.com/auth/calendar.calendars.readonly` | `calendars.get` |
-| `https://www.googleapis.com/auth/calendar.freebusy` | `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.events.freebusy` | `freebusy.query` |
-| `openid` | `GET /userinfo` — `{ sub, id }` を返します（どちらもテストユーザー ID が設定されます） |
-| `email`, `https://www.googleapis.com/auth/userinfo.email` | `GET /userinfo` — `{ sub, id }` に加えて `email`、`verified_email: true`、`email_verified: true` を返します |
-| `profile`, `https://www.googleapis.com/auth/userinfo.profile` | `GET /userinfo` — `{ sub, id }` に加えて `name` を返します |
+| スコープ                                                         | 許可される操作                                                                                                                                                                     |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `https://www.googleapis.com/auth/calendar`                       | 対応しているすべての Calendar API の読み書き（`calendarList.*`, `calendars.get`, `events.*`, `channels.stop`, `freebusy.query`）                                                   |
+| `https://www.googleapis.com/auth/calendar.readonly`              | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `calendars.get`, `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
+| `https://www.googleapis.com/auth/calendar.events`                | `events.list`, `events.get`, `events.instances`, `events.insert`, `events.update`, `events.patch`, `events.delete`, `events.watch`, `channels.stop`, `freebusy.query`              |
+| `https://www.googleapis.com/auth/calendar.events.readonly`       | `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query`                                                                                 |
+| `https://www.googleapis.com/auth/calendar.calendarlist`          | `calendarList.list`, `calendarList.get`, `calendarList.insert`, `calendarList.patch`, `calendarList.update`, `calendarList.delete`, `calendarList.watch`, `channels.stop`          |
+| `https://www.googleapis.com/auth/calendar.calendarlist.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `channels.stop`                                                                                                     |
+| `https://www.googleapis.com/auth/calendar.calendars.readonly`    | `calendars.get`                                                                                                                                                                    |
+| `https://www.googleapis.com/auth/calendar.freebusy`              | `freebusy.query`                                                                                                                                                                   |
+| `https://www.googleapis.com/auth/calendar.events.freebusy`       | `freebusy.query`                                                                                                                                                                   |
+| `openid`                                                         | `GET /userinfo` — `{ sub, id }` を返します（どちらもテストユーザー ID が設定されます）                                                                                             |
+| `email`, `https://www.googleapis.com/auth/userinfo.email`        | `GET /userinfo` — `{ sub, id }` に加えて `email`、`verified_email: true`、`email_verified: true` を返します                                                                        |
+| `profile`, `https://www.googleapis.com/auth/userinfo.profile`    | `GET /userinfo` — `{ sub, id }` に加えて `name` を返します                                                                                                                         |
 
 アクセストークンが未指定、期限切れ、または失効している場合は、`WWW-Authenticate: Bearer` ヘッダーとともに `401`（`authError`）を返します。有効なトークンであっても、そのエンドポイントに必要なスコープが含まれていない場合は `403`（`insufficientPermissions`）を返します。また、`channels.stop` ではチャネルを開いた接続（grant）と同じ接続に属するトークンが必要であり、別の接続のトークンでは `404`（`notFound`）が返されます。`/oauth/*` エンドポイントとは異なり、`GET /userinfo` および Calendar API エンドポイントは Google API のエラーエンベロープ形式でエラーを返します。詳細は[トラブルシューティング](/calendarpit/ja/troubleshooting/)を参照してください。
 

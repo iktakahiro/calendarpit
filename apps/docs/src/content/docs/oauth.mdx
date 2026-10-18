@@ -11,14 +11,14 @@ Point your app's OAuth client and Google Calendar SDK at `http://127.0.0.1:4173`
 
 ## Endpoints
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/oauth/authorize` | Validate the authorization request and render the local HTML consent page |
-| `POST` | `/oauth/authorize` | Submit the consent decision (`approve` or `deny`) and redirect (`302`) to `redirect_uri` (same-origin requests only; cross-site requests return `403 forbidden`) |
-| `POST` | `/oauth/token` | Exchange an authorization code or refresh token for an access token |
-| `POST` | `/oauth/revoke` | Revoke an access token or refresh token and its connection |
-| `GET` | `/userinfo` | Return profile claims for the authorized test user |
-| `POST` | `/__calendarpit/connections/{grantId}/revoke` | Revoke a connection from the management API (`204`; management API request rules apply, see [Test control API](/calendarpit/test-control/)) |
+| Method | Path                                          | Purpose                                                                                                                                                          |
+| ------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/oauth/authorize`                            | Validate the authorization request and render the local HTML consent page                                                                                        |
+| `POST` | `/oauth/authorize`                            | Submit the consent decision (`approve` or `deny`) and redirect (`302`) to `redirect_uri` (same-origin requests only; cross-site requests return `403 forbidden`) |
+| `POST` | `/oauth/token`                                | Exchange an authorization code or refresh token for an access token                                                                                              |
+| `POST` | `/oauth/revoke`                               | Revoke an access token or refresh token and its connection                                                                                                       |
+| `GET`  | `/userinfo`                                   | Return profile claims for the authorized test user                                                                                                               |
+| `POST` | `/__calendarpit/connections/{grantId}/revoke` | Revoke a connection from the management API (`204`; management API request rules apply, see [Test control API](/calendarpit/test-control/))                      |
 
 Only the paths above are routed. Google endpoints under `/oauth2/...` (such as `/oauth2/v4/token` or `/oauth2/v3/userinfo`) and wrong HTTP methods on `/oauth/*` return `501` with `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}`.
 
@@ -113,13 +113,13 @@ Client authentication is required on every `POST /oauth/token` call (`authorizat
 
 ### Lifetimes and persistence
 
-| Item | Lifetime | Single use | Persisted in SQLite across restart |
-| --- | --- | --- | --- |
-| Pending consent nonce | 5 minutes (max 1,000 pending; `429 rateLimitExceeded` above that) | Yes | No |
-| Authorization code | 60 seconds (bound to `client_id` and `redirect_uri`) | Yes | No |
-| Access token | 1 hour (`expires_in: 3600`) | No | Yes (with original expiry) |
-| Refresh token | No expiry until revoked, user deleted, reset, or fixture load | No | Yes |
-| Connection (grant) | Until revoked, user deleted, reset, or fixture load | No | Yes |
+| Item                  | Lifetime                                                          | Single use | Persisted in SQLite across restart |
+| --------------------- | ----------------------------------------------------------------- | ---------- | ---------------------------------- |
+| Pending consent nonce | 5 minutes (max 1,000 pending; `429 rateLimitExceeded` above that) | Yes        | No                                 |
+| Authorization code    | 60 seconds (bound to `client_id` and `redirect_uri`)              | Yes        | No                                 |
+| Access token          | 1 hour (`expires_in: 3600`)                                       | No         | Yes (with original expiry)         |
+| Refresh token         | No expiry until revoked, user deleted, reset, or fixture load     | No         | Yes                                |
+| Connection (grant)    | Until revoked, user deleted, reset, or fixture load               | No         | Yes                                |
 
 In `:memory:` mode, all OAuth state is lost when the process exits. See [Storage and restarts](/calendarpit/storage/).
 
@@ -133,20 +133,20 @@ In `:memory:` mode, all OAuth state is lost when the process exits. See [Storage
 
 Every `GET /oauth/authorize` request must include at least one supported scope. Requesting any other scope returns `400 invalid_scope`.
 
-| Scope | Allowed operations |
-| --- | --- |
-| `https://www.googleapis.com/auth/calendar` | All supported Calendar API reads and writes (`calendarList.*`, `calendars.get`, `events.*`, `channels.stop`, `freebusy.query`) |
-| `https://www.googleapis.com/auth/calendar.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `calendars.get`, `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.events` | `events.list`, `events.get`, `events.instances`, `events.insert`, `events.update`, `events.patch`, `events.delete`, `events.watch`, `channels.stop`, `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.events.readonly` | `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.calendarlist` | `calendarList.list`, `calendarList.get`, `calendarList.insert`, `calendarList.patch`, `calendarList.update`, `calendarList.delete`, `calendarList.watch`, `channels.stop` |
-| `https://www.googleapis.com/auth/calendar.calendarlist.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `channels.stop` |
-| `https://www.googleapis.com/auth/calendar.calendars.readonly` | `calendars.get` |
-| `https://www.googleapis.com/auth/calendar.freebusy` | `freebusy.query` |
-| `https://www.googleapis.com/auth/calendar.events.freebusy` | `freebusy.query` |
-| `openid` | `GET /userinfo` — returns `{ sub, id }` (both set to the test user ID) |
-| `email`, `https://www.googleapis.com/auth/userinfo.email` | `GET /userinfo` — adds `email`, `verified_email: true`, and `email_verified: true` to `{ sub, id }` |
-| `profile`, `https://www.googleapis.com/auth/userinfo.profile` | `GET /userinfo` — adds `name` to `{ sub, id }` |
+| Scope                                                            | Allowed operations                                                                                                                                                                 |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `https://www.googleapis.com/auth/calendar`                       | All supported Calendar API reads and writes (`calendarList.*`, `calendars.get`, `events.*`, `channels.stop`, `freebusy.query`)                                                     |
+| `https://www.googleapis.com/auth/calendar.readonly`              | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `calendars.get`, `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query` |
+| `https://www.googleapis.com/auth/calendar.events`                | `events.list`, `events.get`, `events.instances`, `events.insert`, `events.update`, `events.patch`, `events.delete`, `events.watch`, `channels.stop`, `freebusy.query`              |
+| `https://www.googleapis.com/auth/calendar.events.readonly`       | `events.list`, `events.get`, `events.instances`, `events.watch`, `channels.stop`, `freebusy.query`                                                                                 |
+| `https://www.googleapis.com/auth/calendar.calendarlist`          | `calendarList.list`, `calendarList.get`, `calendarList.insert`, `calendarList.patch`, `calendarList.update`, `calendarList.delete`, `calendarList.watch`, `channels.stop`          |
+| `https://www.googleapis.com/auth/calendar.calendarlist.readonly` | `calendarList.list`, `calendarList.get`, `calendarList.watch`, `channels.stop`                                                                                                     |
+| `https://www.googleapis.com/auth/calendar.calendars.readonly`    | `calendars.get`                                                                                                                                                                    |
+| `https://www.googleapis.com/auth/calendar.freebusy`              | `freebusy.query`                                                                                                                                                                   |
+| `https://www.googleapis.com/auth/calendar.events.freebusy`       | `freebusy.query`                                                                                                                                                                   |
+| `openid`                                                         | `GET /userinfo` — returns `{ sub, id }` (both set to the test user ID)                                                                                                             |
+| `email`, `https://www.googleapis.com/auth/userinfo.email`        | `GET /userinfo` — adds `email`, `verified_email: true`, and `email_verified: true` to `{ sub, id }`                                                                                |
+| `profile`, `https://www.googleapis.com/auth/userinfo.profile`    | `GET /userinfo` — adds `name` to `{ sub, id }`                                                                                                                                     |
 
 Missing, expired, or revoked access tokens return `401` (`authError`) with a `WWW-Authenticate: Bearer` header. A valid token without a required scope for the endpoint returns `403` (`insufficientPermissions`). `channels.stop` also requires the token to belong to the same connection (grant) that opened the channel; other connections receive `404` (`notFound`). Unlike `/oauth/*` endpoints, `GET /userinfo` and Calendar API endpoints return errors in the Google API error envelope; see [Troubleshooting](/calendarpit/troubleshooting/).
 

@@ -18,21 +18,21 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 
 次の表のパスは、すべて `/__calendarpit` からの相対パスです。
 
-| メソッド | パス | 動作 |
-| --- | --- | --- |
-| `GET` / `HEAD` | `/health` | サーバーの `name`（`"Calendarpit"`）、`version`（例: `0.1.0`）、`stage`、`storage`（`"memory"` または `"sqlite"`）、機能フラグ（`calendar`、`oauth`、`watch`、`fixtures`）を返します。`HEAD` は空の `200` を返します。 |
-| `GET` | `/state` | 期限切れのチャネルを削除してから、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision` のスナップショットを返します。 |
-| `POST` | `/fixtures` | ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします（`200` でスナップショットを返します）。 |
-| `POST` | `/reset` | 起動時フィクスチャのリセット基準を復元し、ランタイム状態をすべてクリアします（`200` でスナップショットを返します）。 |
-| `GET` / `DELETE` | `/history` | 直近 200 件のプロトコルリクエストを返します（`200`、古い順）。`DELETE` ではクリアします（`204`）。 |
-| `POST` | `/users` | ユーザーを作成します（`name`、`email`、省略可能な `id`）。`201` を返します。ID がすでにある場合は `409 duplicate` を返します。 |
-| `PATCH` / `DELETE` | `/users/{id}` | ユーザーを編集（`name`、`email`。`id` は変更不可）または削除（`204`）します。ユーザーを削除すると、そのユーザーが所有するデータも削除されます。 |
-| `POST` | `/calendars` | カレンダーを作成します（`userId`、`summary`、省略可能な `timeZone`、`primary`、`id`）。`201` を返します。 |
-| `PATCH` / `DELETE` | `/calendars/{id}` | カレンダーを編集または削除（`204`）します。`id` と `userId` は変更できません。 |
-| `GET` / `POST` | `/calendars/{id}/events` | イベントの一覧取得、またはイベントの作成（`200`）を行います。一覧取得では `syncToken` を含む `events.list` のパラメーターを使えます。一覧の各項目には `calendarId` が入ります。 |
-| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | イベントの取得、置き換え、部分更新、削除（`204`。削除済みレコードは残ります）を行います。 |
-| `POST` | `/connections/{id}/revoke` | 接続のトークンを取り消し、その接続の watch チャネルを停止します（`204`）。 |
-| `POST` | `/deliveries/drain` | 待機中の Webhook 配信とそのリトライが終わるまで待ち、配信ログの配列を返します（`200`）。 |
+| メソッド                           | パス                               | 動作                                                                                                                                                                                                                                |
+| ---------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET` / `HEAD`                     | `/health`                          | サーバーの `name`（`"Calendarpit"`）、`version`（例: `0.1.0`）、`stage`、`storage`（`"memory"` または `"sqlite"`）、機能フラグ（`calendar`、`oauth`、`watch`、`fixtures`）を返します。`HEAD` は空の `200` を返します。              |
+| `GET`                              | `/state`                           | 期限切れのチャネルを削除してから、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision` のスナップショットを返します。 |
+| `POST`                             | `/fixtures`                        | ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします（`200` でスナップショットを返します）。                                                                            |
+| `POST`                             | `/reset`                           | 起動時フィクスチャのリセット基準を復元し、ランタイム状態をすべてクリアします（`200` でスナップショットを返します）。                                                                                                                |
+| `GET` / `DELETE`                   | `/history`                         | 直近 200 件のプロトコルリクエストを返します（`200`、古い順）。`DELETE` ではクリアします（`204`）。                                                                                                                                  |
+| `POST`                             | `/users`                           | ユーザーを作成します（`name`、`email`、省略可能な `id`）。`201` を返します。ID がすでにある場合は `409 duplicate` を返します。                                                                                                      |
+| `PATCH` / `DELETE`                 | `/users/{id}`                      | ユーザーを編集（`name`、`email`。`id` は変更不可）または削除（`204`）します。ユーザーを削除すると、そのユーザーが所有するデータも削除されます。                                                                                     |
+| `POST`                             | `/calendars`                       | カレンダーを作成します（`userId`、`summary`、省略可能な `timeZone`、`primary`、`id`）。`201` を返します。                                                                                                                           |
+| `PATCH` / `DELETE`                 | `/calendars/{id}`                  | カレンダーを編集または削除（`204`）します。`id` と `userId` は変更できません。                                                                                                                                                      |
+| `GET` / `POST`                     | `/calendars/{id}/events`           | イベントの一覧取得、またはイベントの作成（`200`）を行います。一覧取得では `syncToken` を含む `events.list` のパラメーターを使えます。一覧の各項目には `calendarId` が入ります。                                                     |
+| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | イベントの取得、置き換え、部分更新、削除（`204`。削除済みレコードは残ります）を行います。                                                                                                                                           |
+| `POST`                             | `/connections/{id}/revoke`         | 接続のトークンを取り消し、その接続の watch チャネルを停止します（`204`）。                                                                                                                                                          |
+| `POST`                             | `/deliveries/drain`                | 待機中の Webhook 配信とそのリトライが終わるまで待ち、配信ログの配列を返します（`200`）。                                                                                                                                            |
 
 ### 連鎖的な削除と管理 API からの書き込み
 
@@ -48,11 +48,11 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 
 `POST /__calendarpit/reset` と `POST /__calendarpit/fixtures` は、どちらも保存データを置き換えてすぐに保存し、ランタイム状態をすべてクリアします。違いは読み込むデータです。
 
-| 項目 | `POST /__calendarpit/reset` | `POST /__calendarpit/fixtures` |
-| --- | --- | --- |
-| ユーザー、カレンダー、イベント、クライアント | 起動時の状態から復元 | 送信した[フィクスチャ JSON](/calendarpit/ja/fixtures/) で置き換え |
-| 起動時のリセット基準 | 変わらない | 変わらない（次の `/reset` では元の起動時のデータが復元されます） |
-| ランタイム状態 | クリア | クリア |
+| 項目                                         | `POST /__calendarpit/reset` | `POST /__calendarpit/fixtures`                                    |
+| -------------------------------------------- | --------------------------- | ----------------------------------------------------------------- |
+| ユーザー、カレンダー、イベント、クライアント | 起動時の状態から復元        | 送信した[フィクスチャ JSON](/calendarpit/ja/fixtures/) で置き換え |
+| 起動時のリセット基準                         | 変わらない                  | 変わらない（次の `/reset` では元の起動時のデータが復元されます）  |
+| ランタイム状態                               | クリア                      | クリア                                                            |
 
 `POST /__calendarpit/fixtures` の検証は、すべて成功するかすべて失敗するかのどちらかです。無効なレコードが 1 件でもあれば、Calendarpit は `400` を返し、何も変更しません。
 
@@ -96,14 +96,14 @@ Calendarpit は、履歴の中の認証情報を次のようにマスクしま�
 - **再起動後は状態を取得し直す:** [SQLite での再起動](/calendarpit/ja/storage/)をテストする場合、停止前にキューに入っていた配信は `cancelled` になり、再送されません。再起動後に、カレンダーの状態をもう一度取得してください。
 
 ```ts
-const baseUrl = "http://127.0.0.1:4173";
-const jsonHeaders = { "Content-Type": "application/json" };
+const baseUrl = 'http://127.0.0.1:4173';
+const jsonHeaders = { 'Content-Type': 'application/json' };
 
 export async function resetCalendarpit() {
   const res = await fetch(`${baseUrl}/__calendarpit/reset`, {
-    method: "POST",
+    method: 'POST',
     headers: jsonHeaders,
-    body: "{}",
+    body: '{}',
   });
   if (!res.ok) throw new Error(`Reset failed: ${res.status}`);
   return res.json();
@@ -111,9 +111,9 @@ export async function resetCalendarpit() {
 
 export async function drainDeliveries() {
   const res = await fetch(`${baseUrl}/__calendarpit/deliveries/drain`, {
-    method: "POST",
+    method: 'POST',
     headers: jsonHeaders,
-    body: "{}",
+    body: '{}',
   });
   if (!res.ok) throw new Error(`Drain failed: ${res.status}`);
   return res.json();
