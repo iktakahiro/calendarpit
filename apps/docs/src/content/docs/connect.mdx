@@ -1,0 +1,133 @@
+---
+title: Connect your app
+description: Point your app's OAuth and Google Calendar SDK clients at Calendarpit while keeping production Google settings switchable.
+---
+
+## Add a provider switch
+
+Starting Calendarpit does not intercept network traffic to Google. To use Calendarpit in local development or automated tests, add a provider switch to the code that creates your OAuth client and Google Calendar SDK client.
+
+Environment variable names such as `CALENDARPIT_URL` are conventions in your app. Google SDKs do not read `CALENDARPIT_URL` automatically. Your initialization code must read your configuration and pass the local URLs to the SDK.
+
+Keep your provider credentials separate:
+
+- Use Calendarpit access tokens and refresh tokens only with the local provider.
+- Keep real Google client secrets and tokens in your Google configuration. Never put real Google credentials in a fixture.
+
+## Override every provider endpoint
+
+Changing only the Calendar API URL is not enough. If OAuth stays on its default endpoints, your app will still send browser redirects, token exchanges, or token refreshes to Google. Override all five endpoints together:
+
+| Purpose                   | Local endpoint                          |
+| ------------------------- | --------------------------------------- |
+| Authorization screen      | `http://127.0.0.1:4173/oauth/authorize` |
+| Code exchange and refresh | `http://127.0.0.1:4173/oauth/token`     |
+| User profile              | `http://127.0.0.1:4173/userinfo`        |
+| Calendar API root         | `http://127.0.0.1:4173/`                |
+| Token revocation          | `http://127.0.0.1:4173/oauth/revoke`    |
+
+The JavaScript Calendar SDK (`@googleapis/calendar`) appends `/calendar/v3/...` to `rootUrl`. Do not include `/calendar/v3` twice. Python, Go, and .NET expect the full service URL including `/calendar/v3/`, while Java sets the root URL and service path separately; see [SDK examples](/calendarpit/sdks/).
+
+A watch callback address points in the opposite direction: from Calendarpit to your app, such as `http://127.0.0.1:4175/notifications`. Calendarpit allows only loopback callback hosts (`127.0.0.1`, `localhost`, `[::1]`) unless you list extra hosts in `CALENDARPIT_WATCH_HOSTS`; see [Watch notifications](/calendarpit/watch/).
+
+## Register a test OAuth client
+
+Calendarpit checks `client_id` and `redirect_uri` at the authorization endpoint, and `client_id`, `client_secret`, and (for code exchange) `redirect_uri` at `/oauth/token`. Register your app in the `clients` array of your fixture:
+
+```json
+{
+  "clients": [
+    {
+      "id": "my-app",
+      "secret": "local-test-secret",
+      "redirectUris": ["http://127.0.0.1:3000/auth/google/callback"]
+    }
+  ]
+}
+```
+
+A fixture replaces the whole workspace. Include `users` (and `calendars`) next to `clients`, and keep the `sample-app` entry if you still use the sample app. A startup fixture applies only to a new database or a `:memory:` session. To change a running or persisted workspace, load the fixture with `POST /__calendarpit/fixtures` or start with a new database; see [Fixtures](/calendarpit/fixtures/).
+
+- `redirectUris` must contain your app's exact callback URL. Calendarpit matches `redirect_uri` by exact string equality, without port wildcards or trailing-slash normalization.
+- `secret` is required. Your app must send it as `client_secret` (or HTTP Basic) on every `/oauth/token` request, including PKCE flows.
+
+The built-in default fixture registers one OAuth client for local testing:
+
+- Client ID: `sample-app`
+- Client secret: `local-sample-secret` (a public local test value)
+- Redirect URI: `http://127.0.0.1:4175/callback`
+
+For the full authorization code, refresh, `/userinfo`, and revocation flow, see [Local OAuth](/calendarpit/oauth/).
+
+## JavaScript OAuth and Calendar client
+
+With `@googleapis/calendar` and `google-auth-library`, configure `endpoints` on `OAuth2Client` and `rootUrl` on the Calendar client:
+
+```ts
+import { calendar } from '@googleapis/calendar';
+import { OAuth2Client } from 'google-auth-library';
+
+const origin = 'http://127.0.0.1:4173';
+const auth = new OAuth2Client({
+  clientId: 'sample-app',
+  clientSecret: 'local-sample-secret',
+  redirectUri: 'http://127.0.0.1:4175/callback',
+  endpoints: {
+    oauth2AuthBaseUrl: `${origin}/oauth/authorize`,
+    oauth2TokenUrl: `${origin}/oauth/token`,
+    oauth2RevokeUrl: `${origin}/oauth/revoke`,
+  },
+});
+const api = calendar({ version: 'v3', auth, rootUrl: origin });
+// After the callback: auth.setCredentials((await auth.getToken(code)).tokens)
+const profile = await auth.request({ url: `${origin}/userinfo` });
+const calendars = await api.calendarList.list();
+const { data } = await api.freebusy.query({
+  requestBody: {
+    timeMin: '2026-10-19T00:00:00+09:00',
+    timeMax: '2026-10-20T00:00:00+09:00',
+    items: [{ id: 'primary' }],
+  },
+});
+console.log(data.calendars?.primary?.busy);
+```
+
+`/userinfo` requires the `email` or `profile` scope, and refresh tokens are issued only with `access_type=offline`. When credentials are set with `auth.setCredentials`, token refresh requests from `OAuth2Client` also use the configured local `oauth2TokenUrl`. `OAuth2Client` helpers such as `getTokenInfo` and `verifyIdToken` still call Google. Calendarpit has no equivalent and issues no ID tokens, so do not call them against the local provider. For Python, Go, and other languages, see [SDK examples](/calendarpit/sdks/).
+
+## Reference sample app
+
+The repository includes a sample app that connects to Calendarpit with `@googleapis/calendar` and `google-auth-library`. Run Calendarpit and the sample app in separate terminals:
+
+```sh
+bun run dev
+bun run sample:dev
+```
+
+Calendarpit runs at `http://127.0.0.1:4173` and the sample app runs at `http://127.0.0.1:4175`. The sample app is a single-connection local demo that demonstrates two patterns useful in your own integration:
+
+- **State cookie verification**: It stores the OAuth `state` parameter in a 5-minute HttpOnly cookie (`sample_state`) and verifies it on `/callback` before exchanging the authorization code.
+- **Loopback-only outbound guard**: It blocks outbound SDK requests to hosts other than `127.0.0.1`, `localhost`, or `[::1]` and rejects HTTP redirects, preventing accidental requests to real Google servers.
+
+The sample app uses these environment variables:
+
+| Environment variable   | Default                              |
+| ---------------------- | ------------------------------------ |
+| `CALENDARPIT_URL`      | `http://127.0.0.1:4173`              |
+| `SAMPLE_PORT`          | `4175`                               |
+| `SAMPLE_CLIENT_ID`     | `sample-app`                         |
+| `SAMPLE_CLIENT_SECRET` | `local-sample-secret`                |
+| `AUTHORIZATION_URL`    | `${CALENDARPIT_URL}/oauth/authorize` |
+| `TOKEN_URL`            | `${CALENDARPIT_URL}/oauth/token`     |
+| `USERINFO_URL`         | `${CALENDARPIT_URL}/userinfo`        |
+| `CALENDAR_API_URL`     | `${CALENDARPIT_URL}`                 |
+
+The sample app sets its revocation URL to `${CALENDARPIT_URL}/oauth/revoke` and its redirect URI to `http://127.0.0.1:<SAMPLE_PORT>/callback`. Because the built-in `sample-app` client only registers port `4175`, changing `SAMPLE_PORT` requires updating the client's `redirectUris` in a fixture.
+
+## Checklist for your app
+
+When maintaining a Calendarpit integration in your app, verify:
+
+- **All endpoint overrides**: Confirm that authorization, token exchange, token refresh, user profile, Calendar API calls, and token revocation all use the local endpoints.
+- **Callback reachability**: Confirm the browser can reach your app's OAuth `redirect_uri`, and Calendarpit can reach your app's watch webhook address (set `CALENDARPIT_WATCH_HOSTS` if the webhook host is not loopback).
+- **Full application flow**: Test your UI and background workers across login, event reads and writes, watch notifications, token refresh, revocation, and workspace reset.
+- **App-specific fixtures**: Keep fixtures and E2E test scenarios specific to your app in your app's own repository.

@@ -1,108 +1,56 @@
 ---
-title: Product scope
-description: What Calendarpit covers, and what it deliberately leaves out.
+title: Scope and limitations
+description: What Calendarpit covers, what it leaves out, and the current project status.
 ---
 
-This is the product contract: what Calendarpit sets out to do. See
-[Compatibility](/calendarpit/compatibility/) for the implemented subset of the Google
-Calendar API and [Roadmap](/calendarpit/roadmap/) for integration and release follow-up work.
+Calendarpit is a local Google Calendar-compatible API and OAuth server for developing and testing your app without a real Google account, Google Cloud project, or network access to Google. It implements the subset of the Google Calendar API v3, OAuth 2.0, incremental sync, and webhook notifications needed for local development, CI, and end-to-end tests.
 
-## Runtime and state
+## What is covered
 
-- One process serves the API and admin UI. Bind to loopback by default.
-- Persist local state with SQLite by default; allow `:memory:` for disposable E2E sessions. No external database server.
-- Distribute a CLI, Docker image, and standalone Bun executables.
-- Print the API and admin URLs when the server starts.
-- Run parallel E2E suites in separate processes on separate ports, using memory mode or distinct database files.
+- **Runtime and state**: One Bun process serves the API, OAuth flow, and admin UI on `http://127.0.0.1:4173` by default, using SQLite or `:memory:` storage ([Run and configure](/calendarpit/running/), [Storage and restarts](/calendarpit/storage/)).
+- **Test users and calendars**: Passwordless test users own calendars, each with an IANA time zone; each user's primary calendar is reachable as `primary`, read via `calendarList.list` and `calendars.get`.
+- **Events and availability**: Event CRUD (`list`, `get`, `insert`, `update`, `patch`, `delete`, `instances`), recurrence (a subset of `RRULE`/`EXRULE`/`RDATE`/`EXDATE`) with exceptions (listing or expanding a calendar that contains a series without `COUNT` or `UNTIL` requires `timeMax` whenever `timeMin` or `singleEvents=true` is used), DST-aware `[start, end)` intervals, ETags, extended properties, local invitations and RSVP, stored reminders, synthetic `hangoutsMeet` links, and `freebusy.query` ([Calendar API compatibility](/calendarpit/compatibility/), [Events, recurrence and time](/calendarpit/recurrence/)).
+- **OAuth**: Local consent page with test-user selector, approval/denial, `state` preservation, exact `redirect_uri` checks, code exchange, `S256` PKCE, scope checks, refresh tokens, `/userinfo`, and revocation ([Local OAuth](/calendarpit/oauth/)).
+- **Incremental sync**: `nextSyncToken` and `syncToken` on `events.list`, frozen paginated snapshots, `status: "cancelled"` tombstones, and `410 fullSyncRequired` responses ([Incremental sync](/calendarpit/sync/)).
+- **Watch**: `events.watch` and `channels.stop`, `sync` and `exists` webhooks, callback host allowlist, up to 3 delivery attempts, channel expiry, and `POST /__calendarpit/deliveries/drain` ([Watch notifications](/calendarpit/watch/)).
+- **Admin UI**: Day and week views, basic event editor, user and calendar management, connection revocation, watch and delivery logs, masked request history, and fixture/reset controls.
+- **Test control**: Startup JSON fixtures with optional fixed IDs and `/__calendarpit/*` management endpoints to inspect state, load fixtures, reset to the baseline, and manage data ([Fixtures](/calendarpit/fixtures/), [Test control API](/calendarpit/test-control/)).
 
-## Test users and calendars
+## Guarantees
 
-Support multiple test users without passwords or real login. Each user can own
-multiple calendars with a name, time zone, and primary flag. Resolve `primary`
-against the authenticated user. Only access to owned calendars is required.
+- **Loopback by default**: The server binds to `127.0.0.1` unless you set `--host` or `CALENDARPIT_HOST` (the `Dockerfile` default command binds `0.0.0.0` inside the container). Webhook callbacks only target loopback hosts unless you configure `CALENDARPIT_WATCH_HOSTS`.
+- **Explicit errors for unsupported features**: Unsupported Calendar API endpoints return `501`, and unsupported query parameters, fields, and recurrence rules return `400`, all with `reason: "unsupportedFeature"` (`events.import` returns `404 notFound`, and `events.quickAdd` returns `400 unsupportedFeature` for its `text` parameter or `404 notFound` without it). OAuth authorization requests with unsupported parameters return `400` with `error: "unsupported_feature"`. Unsupported OAuth endpoints return `501` with `error: "unsupportedFeature"`. Calendarpit rejects an unsupported recurrence rule with `400 unsupportedFeature` instead of storing the event without it.
+- **No real Google calls**: Calendarpit never sends API, OAuth, or webhook requests to Google. (The admin UI loads the Roboto Mono font from Google Fonts with a system-font fallback.)
+- **Deterministic reset**: `POST /__calendarpit/reset` clears tokens, channels, history, and edits, restoring the startup fixture with the same IDs. In SQLite mode, the reset baseline survives restarts; set fixed IDs in the fixture for IDs that stay stable across `:memory:` restarts.
 
-## Events and availability
+## What is out of scope
 
-Support create, read, list, replace, patch, and delete for single timed events and
-all-day events, recurring series and exceptions. Preserve IDs, summary, description, location, start, end, time
-zones, transparency, and application extended properties. Listing supports
-period bounds, pagination, and start-time ordering.
+- **ACLs, shared calendars, and delegation**: Users only access their own calendars (`accessRole: "owner"`). All `acl.*` methods return `501 unsupportedFeature`.
+- **Other CalendarList and Settings methods**: `calendarList.list` is read-only (with `showDeleted=true` tombstones for calendars deleted via the management API or admin UI) and does not issue `nextSyncToken`. Other `calendarList.*` methods and all `settings.*` methods return `501 unsupportedFeature`.
+- **Calendar writes, colors, and `events.import`/`quickAdd`/`move`**: `calendars.insert`, `update`, `patch`, `delete`, and `clear`, `colors.get`, and `events.import`, `quickAdd`, and `move` are not implemented (manage calendars via the admin UI or management API; see [Calendar API compatibility](/calendarpit/compatibility/)).
+- **Real invitation and reminder email**: `sendUpdates` records notification intent in `/__calendarpit/state` instead of sending email. Reminders are stored, but nothing fires.
+- **Real Google Meet**: Conference requests generate deterministic `https://meet.calendarpit.invalid/<id>` URLs without creating real meetings.
+- **Full OIDC**: Passwords, real Google login, `id_token` issuance, and JWKS/discovery endpoints are not supported.
+- **Other protocols and real Google sync**: Microsoft Graph, CalDAV, and syncing with real Google Calendar are excluded.
+- **Dragging events in the admin UI**: Moving or resizing events by dragging is not implemented. The admin views show a recurring series (not its occurrences) only on its start date, plus any stored exceptions on their own dates. The admin editor only covers basic fields; saving an event in the admin editor replaces it with only the basic fields, which removes recurrence (cancelling stored exceptions), attendees (cancelling their invitation copies), reminders, conference data, color, and visibility. Set those fields via the API (fixtures store these fields as-is without creating invitation copies or synthetic meeting links; see [Fixtures](/calendarpit/fixtures/)).
 
-The following rules require explicit tests:
+## A workflow Calendarpit reproduces
 
-- Mutations immediately affect event listing and free/busy responses.
-- Intervals include their start and exclude their end: `[start, end)`.
-- Events ending at 10:00 do not overlap events beginning at 10:00.
-- Interpret all-day dates in the calendar's time zone, including DST boundaries.
-- Exclude transparent (free) and deleted events from busy intervals.
-- Merge overlapping busy intervals and clip them to the query window.
+Calendarpit reproduces this end-to-end integration workflow (for the Google SDK sample flow, see [SDK examples](/calendarpit/sdks/)):
 
-Preserve attendees, invitation responses, organizer/creator identity, reminders,
-visibility, color and tentative status. Simulate local invitation copies and
-notification intent without sending email. Generate synthetic conference information
-without creating real meetings. See [Compatibility](/calendarpit/compatibility/) for the bounded
-recurrence and local simulation contract.
+1. Authorize as a test user on the local consent page and select a calendar.
+2. Register an `events.watch` channel and receive the initial `sync` notification.
+3. Create an event and verify its busy interval with `freebusy.query`.
+4. Update and delete the event, receive `exists` notifications, and refetch state.
+5. Stop the watch channel with `channels.stop` and confirm further changes are not delivered.
+6. Revoke the connection and reconnect through OAuth.
+7. Deny consent and verify that `state` is preserved without losing existing tokens.
+8. Reset with `POST /__calendarpit/reset` and repeat the flow with the same fixtures and IDs.
+9. Fetch a full `events.list` snapshot, then consume changes and `status: "cancelled"` deletions with `syncToken`.
+10. Exercise all-day events (including `dateTime: null`), recurring exceptions, local RSVP, and synthetic meeting links.
 
-## OAuth
+## Current status
 
-Provide local authorization approval and denial with a test-user selector.
-Preserve `state`, validate registered redirect URIs, and issue short-lived,
-single-use authorization codes. Support code exchange, access-token expiration,
-scope checks, refresh tokens, and revocation from the admin UI.
-
-Register test OAuth clients in configuration. The consuming application must be
-able to override authorization, token, user-info, and Calendar API endpoints
-independently. A Google SDK sample will demonstrate all four overrides. Full
-Google login and OIDC compatibility are out of scope.
-
-## Watch notifications
-
-Event subscriptions and local webhook delivery are in scope. Support
-`events.watch`, `channels.stop`, initial synchronization notifications, event
-change notifications, expiration, and cleanup. See the [Watch design](/calendarpit/watch/).
-Support incremental event synchronization with `showDeleted`, `nextSyncToken`,
-paginated snapshots and cancellation tombstones. Test synchronization across
-mutations, restart, expiration and reset. See [Incremental sync](/calendarpit/sync/).
-
-## Admin UI
-
-Provide user/calendar selection, a day track and a week grid, event editing, connection
-revocation, and request history. History includes method, path, status, and
-request/response bodies, with credentials masked. Inspect watch channels and
-delivery results. Dragging to move or resize an event can wait.
-
-## Test control
-
-Configuration defines OAuth clients, users, calendars, and events with optional
-fixed IDs. Management APIs under `/__calendarpit/` load fixtures, reset to the
-initial fixture baseline, export current state, inspect/clear history, and revoke access.
-Reset clears events, tokens, history, watch channels, and pending deliveries
-before restoring the original fixture state. Persist both current data and the original
-reset baseline in SQLite so reset stays deterministic after restarting.
-
-## Exclusions
-
-No ACLs, shared-calendar access, delegation, real invitation/reminder emails, real Meet generation,
-full OIDC, Microsoft Graph, CalDAV, or synchronization with real Google.
-Reject unsupported features explicitly; never store a recurring event as a
-single event silently. Calendar-list/ACL/settings watch subscriptions are not
-included in the first event-watch implementation.
-
-## Acceptance criteria
-
-Using the Google SDK sample, without requests to real Google:
-
-1. Approve authorization and select a calendar.
-2. Register a watch channel and receive its initial notification.
-3. Create an event and verify its busy interval.
-4. Update and delete the event; receive notifications and refetch state.
-5. Stop a watch channel and verify that further changes are not delivered.
-6. Revoke the connection and complete reauthorization.
-7. Handle consent denial without losing `state`.
-8. Reset and repeat the scenario with the same fixtures and IDs.
-9. Fetch a full event snapshot, then consume changes/deletions with sync tokens.
-10. Exercise all-day null fields, recurring exceptions, local RSVP and synthetic meetings.
-
-Also test channel expiration, delivery failures, reset during pending delivery,
-and user isolation. Compatibility means reliably reproducing this supported
-workflow, not implementing the entire Google Calendar API.
+- **Runs from a clone**: No npm package, Docker Hub image, or GitHub release is published yet. Clone the repository and run it with Bun `1.4.3` ([Quick start](/calendarpit/quick-start/)).
+- **Host-platform standalone executable**: `bun run build:binary` builds a standalone executable for the current host platform only.
+- **Unvalidated Docker setup**: A `Dockerfile` exists in the repository, but container build and startup are not validated yet.

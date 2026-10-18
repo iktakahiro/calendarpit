@@ -1,0 +1,117 @@
+---
+title: Run and configure
+description: Ways to start Calendarpit, command-line options, environment variables, Docker setup, and the admin UI.
+---
+
+Calendarpit runs as a single Bun process that serves the Google Calendar API v3 subset, local OAuth endpoints, the test control API, and the admin UI from one origin (`http://127.0.0.1:4173` by default).
+
+Calendarpit is not published as an npm package, Docker Hub image, or release download yet. To use it, clone the repository and install dependencies with Bun 1.4.3:
+
+```sh
+git clone https://github.com/iktakahiro/calendarpit.git
+cd calendarpit
+bun install --frozen-lockfile
+```
+
+## Ways to run Calendarpit
+
+### Development server
+
+Use `bun run dev` when you want a local server on the default address (`http://127.0.0.1:4173`).
+
+```sh
+bun run dev
+CALENDARPIT_DATABASE=:memory: bun run dev
+```
+
+`bun run dev` always binds to `127.0.0.1:4173` with a strict port check. Command-line flags, `CALENDARPIT_HOST`, and `CALENDARPIT_PORT` do not apply to `bun run dev`. Only `CALENDARPIT_DATABASE`, `CALENDARPIT_CONFIG`, and `CALENDARPIT_WATCH_HOSTS` are passed through.
+
+### Built server
+
+Use `bun run build` and `bun run start` when you need CLI flags, a custom port, or an OS-assigned port (`--port 0`) in local scripts or CI. Running `start` before `build` exits with `Calendarpit: Build the application first with "bun run build".`
+
+Pass CLI flags after `--`, or run the CLI entry directly with Bun:
+
+```sh
+bun run build
+bun run start -- --port 0 --database :memory:
+bun apps/calendarpit/bin/calendarpit.ts serve --port 4173
+```
+
+When the built server starts, it prints the storage mode and the resolved URLs:
+
+```text
+Calendarpit data: :memory:
+
+Calendarpit v0.1.0
+Data   :memory:
+Admin  http://127.0.0.1:38425/
+API    http://127.0.0.1:38425/calendar/v3
+Health http://127.0.0.1:38425/__calendarpit/health
+```
+
+### Standalone executable
+
+Use `bun run build:binary` to compile a single executable at `apps/calendarpit/dist/bin/calendarpit` (with `.exe` on Windows). You can copy this file to another directory or test runner on the same machine.
+
+```sh
+bun run build:binary
+./apps/calendarpit/dist/bin/calendarpit serve --port 4173 --database :memory:
+```
+
+The standalone executable embeds the server, client JavaScript and CSS assets, icons, and the Bun runtime. It does not need `node_modules` or a separate asset directory at runtime. Compilation builds for the host platform only.
+
+### Docker
+
+A `Dockerfile` is included in the repository, though container build and startup validation are still pending.
+
+```sh
+docker build -t calendarpit:local .
+docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
+```
+
+Inside the container, Calendarpit runs `calendarpit serve --host 0.0.0.0 --port 4173` as a non-root user and stores SQLite data at `/data/calendarpit.sqlite`. Publishing `-p 127.0.0.1:4173:4173` keeps the port on loopback on the host.
+
+Passing arguments after `calendarpit:local` replaces the container's default `CMD` (`serve --host 0.0.0.0 --port 4173`). If the replacement arguments omit `--host 0.0.0.0` (and `CALENDARPIT_HOST=0.0.0.0` is not set), Calendarpit falls back to container loopback (`127.0.0.1`) and becomes unreachable from the host. Pass `-e` environment variables instead (such as `-e CALENDARPIT_DATABASE=:memory:`), or include `--host 0.0.0.0` (or `-e CALENDARPIT_HOST=0.0.0.0`) when supplying CLI flags.
+
+## Command-line options and environment variables
+
+The CLI syntax is `calendarpit [serve] [options]`. The `serve` subcommand is optional. Unknown commands, unknown flags, or invalid option values print an error to `stderr` and exit with code `1`.
+
+Command-line flags take precedence over environment variables.
+
+| CLI option | Environment variable | Default | Description |
+| --- | --- | --- | --- |
+| `--host <host>` | `CALENDARPIT_HOST` | `127.0.0.1` | Bind address. Non-loopback addresses (`0.0.0.0`, `::`) must be set explicitly. |
+| `-p`, `--port <n>` | `CALENDARPIT_PORT` | `4173` | Listen port (`0`–`65535`). Use `0` to let the OS choose a free port; the assigned port appears in the startup output. Avoid `4175` if you also run `bun run sample:dev`. |
+| `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/calendarpit/storage/). |
+| `--config <path>` | `CALENDARPIT_CONFIG` | Built-in fixture | Path to a JSON startup fixture. The file must exist and contain valid JSON. Seeds a new database or `:memory:` session; silently ignored when opening an existing SQLite file. See [Fixtures](/calendarpit/fixtures/). |
+| `-h`, `--help` | — | — | Print help and exit. Works without a build. |
+| `-v`, `--version` | — | — | Print `0.1.0` and exit. Works without a build. |
+
+### Additional environment variables
+
+| Environment variable | Default | Description |
+| --- | --- | --- |
+| `CALENDARPIT_WATCH_HOSTS` | Loopback only | Comma-separated extra hostnames allowed as `events.watch` webhook targets (for example, `host.docker.internal` when running in Docker). Environment variable only; no CLI flag. See [Watch notifications](/calendarpit/watch/). |
+
+### Loopback binding and working directory
+
+- **Loopback by default**: Calendarpit binds to `127.0.0.1` unless you pass `--host` or `CALENDARPIT_HOST`. The admin UI and [test control API](/calendarpit/test-control/) have no authentication, so binding to `0.0.0.0` exposes them to other machines on your network.
+- **Relative paths in workspace scripts**: `bun run dev` and `bun run start` execute with `apps/calendarpit` as their working directory. Relative paths in `--database`, `CALENDARPIT_DATABASE`, `--config`, and `CALENDARPIT_CONFIG` resolve from `apps/calendarpit` (so the default SQLite path is `apps/calendarpit/.calendarpit/calendarpit.sqlite`). When you run the CLI entry directly, relative paths resolve from your current directory. Use absolute paths such as `"$PWD/fixtures/default.json"` when running workspace commands from the repository root. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
+
+## Admin UI
+
+The admin UI is served at the root of the same origin as the API (`http://127.0.0.1:4173/` by default). It polls `GET /__calendarpit/state` and request history every 2 seconds so changes made by your app appear automatically. Use the left rail to switch the selected test user and calendar (`?user=<id>&calendar=<id>`) and to check whether storage is `SQLite` or `In-memory`.
+
+The admin UI loads the Roboto Mono font from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`) and falls back to system fonts when offline. Calendar API and OAuth operations never contact Google and need no internet access.
+
+| Route | Section | Purpose |
+| --- | --- | --- |
+| `/` | **Schedule** | View stored events in day or week mode (default date `2026-10-19`). Create, edit, and delete events (summary, all-day toggle, start/end, busy/free status, location, description, and extended properties JSON). A recurring series appears once, at its first occurrence, and is not expanded. Saving an event in the editor replaces it with the fields the form shows. Attendees, reminders, colors, and other fields set through the Calendar API are removed, and a recurring event loses its `recurrence`. Use the Calendar API to edit those events. |
+| `/users` | **Users** | List, create, edit, and delete test users. Deleting a user also deletes their calendars and events, and revokes their OAuth connections (which also stops their watch channels). |
+| `/calendars` | **Calendars** | List, create, edit, and delete calendars for the selected test user, set the IANA time zone (default `Asia/Tokyo`), and choose the primary calendar. |
+| `/connections` | **Connections** | Inspect active and revoked OAuth grants by test user and OAuth client, and revoke active grants (which also stops their watch channels). See [Local OAuth](/calendarpit/oauth/). |
+| `/watch` | **Watch** | Read-only view of active watch channels and the webhook delivery log. See [Watch notifications](/calendarpit/watch/). |
+| `/history` | **API history** | Inspect, filter by text or show only HTTP `>= 400` errors, and clear the latest 200 Calendar API and OAuth exchanges with masked credentials. |
+| `/settings` | **Settings** | Switch the theme (**Appearance**), view the storage path, load a fixture JSON file, reset the workspace to its reset baseline, inspect the current state JSON (**Test data**), or view registered OAuth clients and redirect URIs (**OAuth clients**). |

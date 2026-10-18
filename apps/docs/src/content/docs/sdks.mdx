@@ -1,36 +1,27 @@
 ---
 title: SDK examples
-description: Use Google Calendar clients in TypeScript, Python, Go, Java, and C# with Calendarpit.
+description: Point official Google Calendar clients in TypeScript, Python, Go, Java, and C# at Calendarpit.
 ---
 
 import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 
-Keep your application's Google Calendar operations and point its SDK client at
-Calendarpit. The examples below list calendars and call FreeBusy through the
-official Google clients. No Calendarpit-specific SDK is required.
+Point your app's official Google Calendar SDK client at Calendarpit. You do not need a Calendarpit-specific SDK. The examples below list calendars and query FreeBusy.
 
 ## Before you call the SDK
 
-Start Calendarpit with `bun run dev`, then complete [local OAuth](/calendarpit/integration/#complete-local-oauth)
-using the `https://www.googleapis.com/auth/calendar` scope. Set
-`CALENDARPIT_ACCESS_TOKEN` to the resulting access token in your local shell.
-These examples read that variable explicitly; it is not a Google SDK setting.
+Start Calendarpit with `bun run dev`, then complete the [local OAuth flow](/calendarpit/oauth/) with the `https://www.googleapis.com/auth/calendar` scope. Set `CALENDARPIT_ACCESS_TOKEN` to the resulting access token in your shell. These examples read that variable explicitly; it is not a Google SDK setting.
 
 <Aside>
-  These snippets use an already-issued access token to demonstrate Calendar API
-  routing. They do not implement authorization callbacks or automatic refresh.
-  Refresh through Calendarpit's `/oauth/token`, then replace the client's token
-  or recreate the client. The [Bun sample](/calendarpit/integration/)
-  demonstrates the complete authorization, refresh, revocation, and reconnection
-  lifecycle.
+
+These snippets pass an existing access token to show how to route Calendar API requests to Calendarpit. They do not handle authorization callbacks or automatic token refresh. Refresh tokens through `POST /oauth/token`, then update the client's token or recreate the client. See [Connect your app](/calendarpit/connect/) for the sample app and full OAuth client configuration.
+
 </Aside>
 
-Use dependencies pinned in your application's lockfile. Package names are listed
-in each tab; Calendarpit does not install these language runtimes or SDKs for you.
+Install the packages listed in each tab in your own project. Calendarpit does not install language runtimes or SDK packages for you.
 
 ## Configure the service URL
 
-Endpoint formats differ across libraries. Preserve trailing slashes where shown.
+Endpoint formats differ across libraries. Preserve trailing slashes where shown. If Calendarpit runs on another host or port, replace `127.0.0.1:4173` in every value.
 
 | Language                | SDK setting                             | Value                                     |
 | ----------------------- | --------------------------------------- | ----------------------------------------- |
@@ -40,19 +31,14 @@ Endpoint formats differ across libraries. Preserve trailing slashes where shown.
 | Java                    | `setRootUrl` + `setServicePath`         | `http://127.0.0.1:4173/` + `calendar/v3/` |
 | C# / .NET               | `BaseClientService.Initializer.BaseUri` | `http://127.0.0.1:4173/calendar/v3/`      |
 
-Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event
-CRUD and calendar-list calls on the same client use that local service URL too.
-Only [implemented operations](/calendarpit/compatibility/) are supported, even if the SDK
-exposes additional methods.
+Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client use that local URL too. Only the operations listed in [Calendar API compatibility](/calendarpit/compatibility/) are supported, even if the SDK exposes additional methods.
 
 ## List calendars and query FreeBusy
 
 <Tabs>
 <TabItem label="TypeScript / JavaScript">
 
-Packages: `@googleapis/calendar` and `google-auth-library`. Run with Bun; the same
-JavaScript works in a Node.js ESM application. The monolithic `googleapis` package
-also accepts `google.calendar({ version: 'v3', auth, rootUrl })`.
+Packages: `@googleapis/calendar` and `google-auth-library`. Run with Bun, or with Node.js 22 or later as an ES module (`.mjs`). The monolithic `googleapis` package also accepts `google.calendar({ version: 'v3', auth, rootUrl })`.
 
 ```ts
 import { calendar } from '@googleapis/calendar';
@@ -83,20 +69,14 @@ const { data } = await api.freebusy.query({
 console.log(data.calendars?.primary?.busy ?? []);
 ```
 
-This access-token-only client cannot refresh. For full OAuth, use the local
-`endpoints` configuration in [Connect your application](/calendarpit/integration/#javascript-oauth-client).
-The repository's executable sample uses that configuration and blocks outbound
-requests to non-loopback hosts.
+This access-token-only client cannot refresh tokens. For full OAuth setup, use the local `endpoints` configuration shown in [Connect your app](/calendarpit/connect/).
 
 Reference: [Google Calendar Node.js client implementation](https://github.com/googleapis/google-api-nodejs-client/blob/main/src/apis/calendar/v3.ts).
 
 </TabItem>
 <TabItem label="Python">
 
-Packages: `google-api-python-client` (2.x) and `google-auth`.
-`static_discovery=True` uses the discovery document bundled with the installed
-library, so constructing the client does not fetch discovery metadata from Google.
-The endpoint includes the entire Calendar service path.
+Packages: `google-api-python-client` (2.x) and `google-auth`. Setting `static_discovery=True` uses the discovery document bundled with the installed library so constructing the client does not fetch discovery metadata from Google. `api_endpoint` includes the `/calendar/v3/` path.
 
 ```python
 import os
@@ -125,79 +105,76 @@ with build(
     print(result["calendars"]["primary"]["busy"])
 ```
 
-If you later add a refresh token to `Credentials`, also supply the registered
-client ID, client secret, and `token_uri="http://127.0.0.1:4173/oauth/token"`.
-Authorization and user-info URLs still belong to your application's OAuth flow.
+If you pass a refresh token to `Credentials`, also supply the registered client ID, client secret, and `token_uri="http://127.0.0.1:4173/oauth/token"`. Omit `scopes`, or pass the exact granted scopes in the same order. Configure the authorization, userinfo, and revocation URLs separately in your app's [OAuth flow](/calendarpit/oauth/).
 
-References: [bundled discovery documents](https://googleapis.github.io/google-api-python-client/docs/start.html#building-and-calling-a-service),
-[endpoint selection](https://github.com/googleapis/google-api-python-client/blob/main/googleapiclient/discovery.py).
+References: [bundled discovery documents](https://googleapis.github.io/google-api-python-client/docs/start.html#building-and-calling-a-service), [endpoint selection](https://github.com/googleapis/google-api-python-client/blob/main/googleapiclient/discovery.py).
 
 </TabItem>
 <TabItem label="Go">
 
-Modules: `google.golang.org/api` and `golang.org/x/oauth2`.
-Supply an explicit token source so the client does not try to discover Google
-application-default credentials.
+Modules: `google.golang.org/api` and `golang.org/x/oauth2`. Supply an explicit token source so the client does not look up Google Application Default Credentials.
 
 ```go
 package main
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "os"
+	"context"
+	"fmt"
+	"log"
+	"os"
 
-    "golang.org/x/oauth2"
-    "google.golang.org/api/calendar/v3"
-    "google.golang.org/api/option"
+	"golang.org/x/oauth2"
+	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/option"
 )
 
 func main() {
-    token := os.Getenv("CALENDARPIT_ACCESS_TOKEN")
-    if token == "" {
-        log.Fatal("Set CALENDARPIT_ACCESS_TOKEN first.")
-    }
-    api, err := calendar.NewService(context.Background(),
-        option.WithEndpoint("http://127.0.0.1:4173/calendar/v3/"),
-        option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{
-            AccessToken: token,
-            TokenType: "Bearer",
-        })),
-    )
-    if err != nil { log.Fatal(err) }
+	token := os.Getenv("CALENDARPIT_ACCESS_TOKEN")
+	if token == "" {
+		log.Fatal("Set CALENDARPIT_ACCESS_TOKEN first.")
+	}
+	api, err := calendar.NewService(context.Background(),
+		option.WithEndpoint("http://127.0.0.1:4173/calendar/v3/"),
+		option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: token,
+			TokenType:   "Bearer",
+		})),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    calendars, err := api.CalendarList.List().Do()
-    if err != nil { log.Fatal(err) }
-    fmt.Println(calendars.Items)
+	calendars, err := api.CalendarList.List().Do()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, c := range calendars.Items {
+		fmt.Println(c.Id)
+	}
 
-    result, err := api.Freebusy.Query(&calendar.FreeBusyRequest{
-        TimeMin: "2026-10-19T00:00:00+09:00",
-        TimeMax: "2026-10-20T00:00:00+09:00",
-        TimeZone: "Asia/Tokyo",
-        Items: []*calendar.FreeBusyRequestItem{{Id: "primary"}},
-    }).Do()
-    if err != nil { log.Fatal(err) }
-    fmt.Println(result.Calendars["primary"].Busy)
+	result, err := api.Freebusy.Query(&calendar.FreeBusyRequest{
+		TimeMin:  "2026-10-19T00:00:00+09:00",
+		TimeMax:  "2026-10-20T00:00:00+09:00",
+		TimeZone: "Asia/Tokyo",
+		Items:    []*calendar.FreeBusyRequestItem{{Id: "primary"}},
+	}).Do()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, b := range result.Calendars["primary"].Busy {
+		fmt.Println(b.Start, "-", b.End)
+	}
 }
 ```
 
-For SDK-managed OAuth, configure `oauth2.Config.Endpoint.AuthURL` and `TokenURL`
-with Calendarpit's authorization and token URLs, set `AuthStyle` to
-`oauth2.AuthStyleInParams`, and pass `config.TokenSource(ctx, token)` instead of
-`StaticTokenSource`. The static source above intentionally never refreshes.
+`StaticTokenSource` never refreshes tokens. For SDK-managed OAuth, set `oauth2.Config.Endpoint.AuthURL` and `TokenURL` to Calendarpit's [OAuth endpoints](/calendarpit/oauth/) and pass `config.TokenSource(ctx, token)`.
 
-References: [Calendar client](https://pkg.go.dev/google.golang.org/api/calendar/v3),
-[WithEndpoint](https://pkg.go.dev/google.golang.org/api/option#WithEndpoint),
-[OAuth configuration](https://pkg.go.dev/golang.org/x/oauth2#Config).
+References: [Calendar client](https://pkg.go.dev/google.golang.org/api/calendar/v3), [WithEndpoint](https://pkg.go.dev/google.golang.org/api/option#WithEndpoint), [OAuth configuration](https://pkg.go.dev/golang.org/x/oauth2#Config).
 
 </TabItem>
 <TabItem label="Java">
 
-Artifacts: `com.google.apis:google-api-services-calendar`,
-`com.google.http-client:google-http-client`, and
-`com.google.http-client:google-http-client-gson`. Use compatible pinned versions
-in Maven or Gradle. This example uses Java 11 or newer.
+Artifacts: `com.google.apis:google-api-services-calendar`, `com.google.http-client:google-http-client`, and `com.google.http-client:google-http-client-gson`. This example uses Java 11 or newer.
 
 ```java
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -236,18 +213,14 @@ public class CalendarpitExample {
 }
 ```
 
-The request initializer supplies the bearer token without starting another OAuth
-flow. Obtain and refresh it using the [local OAuth endpoints](/calendarpit/integration/#complete-local-oauth).
-Changing `setRootUrl` does not redirect a separate Google authorization helper.
+The request initializer sets the bearer token header directly. Obtain and refresh tokens using the [local OAuth endpoints](/calendarpit/oauth/). Setting `setRootUrl` does not redirect separate Google authorization helpers.
 
-References: [Calendar builder](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/Calendar.Builder.html),
-[FreeBusy request](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/model/FreeBusyRequest.html).
+References: [Calendar builder](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/Calendar.Builder.html), [FreeBusy request](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/model/FreeBusyRequest.html).
 
 </TabItem>
 <TabItem label="C#">
 
-NuGet packages: `Google.Apis.Calendar.v3` and `Google.Apis.Auth`.
-Use this in a console application supporting top-level statements.
+NuGet packages: `Google.Apis.Calendar.v3` and `Google.Apis.Auth`. Use this in a console application with top-level statements.
 
 ```csharp
 using System;
@@ -287,18 +260,14 @@ foreach (var interval in result.Calendars["primary"].Busy)
     Console.WriteLine($"{interval.StartRaw} - {interval.EndRaw}");
 ```
 
-`FromAccessToken` does not refresh tokens. Use the [local token endpoint](/calendarpit/integration/#complete-local-oauth)
-and recreate the credentials after refreshing. `BaseUri` configures Calendar API
-requests only; it does not redirect OAuth helpers.
+`FromAccessToken` does not refresh tokens. Refresh via the [local token endpoint](/calendarpit/oauth/) and recreate the credentials. `BaseUri` configures Calendar API requests only; it does not redirect OAuth helpers.
 
-References: [service base URI](https://cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Services.BaseClientService.Initializer),
-[access-token credentials](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Auth.OAuth2.GoogleCredential),
-[FreeBusy request](https://googleapis.dev/dotnet/Google.Apis.Calendar.v3/latest/api/Google.Apis.Calendar.v3.Data.FreeBusyRequest.html).
+References: [service base URI](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Services.BaseClientService.Initializer), [access-token credentials](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Auth.OAuth2.GoogleCredential), [FreeBusy request](https://googleapis.dev/dotnet/Google.Apis.Calendar.v3/latest/api/Google.Apis.Calendar.v3.Data.FreeBusyRequest.html).
 
 </TabItem>
 <TabItem label="HTTP / curl">
 
-Use the same protocol from any language with an HTTP client.
+You can call the same HTTP endpoints directly from any language.
 
 ```sh
 curl --fail-with-body http://127.0.0.1:4173/calendar/v3/users/me/calendarList \
@@ -318,29 +287,10 @@ curl --fail-with-body http://127.0.0.1:4173/calendar/v3/freeBusy \
 </TabItem>
 </Tabs>
 
-`primary` resolves to the main calendar of the authorized test user. For Alex in
-the default fixture, this query returns a busy interval from 10:00 to 11:00 on
-October 19, 2026 in Asia/Tokyo. Changing events in the admin UI changes the next
-FreeBusy response; free and deleted events do not contribute busy time.
+`primary` resolves to the primary calendar of the authenticated test user. For Alex in the default fixture, this query returns one busy interval from `10:00` to `11:00` on October 19, 2026 in `Asia/Tokyo`. Editing events in the admin UI changes the next FreeBusy response; transparent and cancelled events do not count as busy time.
 
-## Verification and troubleshooting
+## Verification status
 
-The Bun/TypeScript sample has an automated HTTP E2E covering OAuth, calendar
-selection, event CRUD, FreeBusy, watch, refresh, revocation, denial, and reset.
-Python, Go, Java, and C# examples are based on the linked official client APIs;
-they have not yet been compiled or executed in this repository's CI. Treat them
-as integration recipes, not a claim that every SDK version has been certified.
+Among SDK clients, only the TypeScript sample app described in [Connect your app](/calendarpit/connect/) is covered by an automated end-to-end test. The snippets on this page are based on the official client APIs and are not run in CI.
 
-| Symptom                                                   | Check                                                                                           |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| A real Google consent screen appears                      | The application's authorization URL still points to Google.                                     |
-| Refresh contacts Google                                   | Configure the OAuth token endpoint separately from the Calendar service URL.                    |
-| `404` or a repeated `/calendar/v3/` path                  | Compare the SDK's endpoint format with the table above.                                         |
-| `401` after reset or revocation                           | Obtain a new Calendarpit token by authorizing again.                                            |
-| Python fetches discovery from Google                      | Use 2.x and keep `static_discovery=True`; do not set a remote discovery URL.                    |
-| Watch succeeds but the app does not receive notifications | Check the callback's reachability from Calendarpit and the [delivery log](/calendarpit/watch/). |
-
-Inspect **API history** in the admin UI to see the received method, path, status,
-and masked payload. In isolated E2E runs, restrict outbound traffic to your local
-test services so an overlooked default endpoint cannot reach Google. The bundled
-sample already guards its SDK transport this way.
+For common configuration and request errors, see [Troubleshooting](/calendarpit/troubleshooting/).
