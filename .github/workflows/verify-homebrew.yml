@@ -1,0 +1,24 @@
+name: Verify Homebrew publishing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Require the tap credential
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: test -n "$TAP_TOKEN"
+      - uses: actions/checkout@v4
+        with:
+          repository: iktakahiro/homebrew-tap
+          ref: main
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      - name: Verify authenticated push access without changing the tap
+        run: git push --dry-run origin HEAD:main
