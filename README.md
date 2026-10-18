@@ -12,9 +12,8 @@ limited; unsupported features return explicit errors. See
 
 ## Quick start
 
-**0.9.0 distribution is being prepared; the images and Homebrew tap
-are not published yet.** The following commands are the intended release interface.
-Until publication, use the [development guide](docs/development.md).
+Calendarpit **0.9.0** is available through Docker, Homebrew, and
+[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.0).
 
 With Docker:
 
@@ -22,7 +21,7 @@ With Docker:
 docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-Or Homebrew after the tap is published:
+Or Homebrew:
 
 ```sh
 brew install iktakahiro/tap/calendarpit
@@ -162,7 +161,7 @@ operations remain local.
 
 ## Docker Compose
 
-After the image is published, add this service to your project's `compose.yaml`:
+Add this service to your project's `compose.yaml`:
 
 ```yaml
 services:
