@@ -1,6 +1,6 @@
 ---
 title: テスト制御 API
-description: 自動テストの中で、HTTP を使って状態のリセット、フィクスチャの読み込み、リクエスト履歴の確認、Webhook 配信のドレインを行います。
+description: 自動テストの中で、HTTP を使って状態のリセット、Fixture の読み込み、リクエスト履歴の確認、Webhook 配信のドレインを行います。
 ---
 
 Calendarpit には、`/__calendarpit` の下にローカルの管理 API があります。この API で、データの投入、サーバー状態の確認、テストの実行ごとのリセットができます。
@@ -23,7 +23,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 | `GET` / `HEAD`                     | `/health`                          | サーバーの `name`（`"Calendarpit"`）、`version`（例: `0.9.0`）、`stage`、`storage`（`"memory"` または `"sqlite"`）、機能フラグ（`calendar`、`oauth`、`watch`、`fixtures`）を返します。`HEAD` は空の `200` を返します。              |
 | `GET`                              | `/state`                           | 期限切れのチャネルを削除してから、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision` のスナップショットを返します。 |
 | `POST`                             | `/fixtures`                        | ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします（`200` でスナップショットを返します）。                                                                            |
-| `POST`                             | `/reset`                           | 起動時フィクスチャのリセット基準を復元し、ランタイム状態をすべてクリアします（`200` でスナップショットを返します）。                                                                                                                |
+| `POST`                             | `/reset`                           | 起動時 Fixture のリセット基準を復元し、ランタイム状態をすべてクリアします（`200` でスナップショットを返します）。                                                                                                                   |
 | `GET` / `DELETE`                   | `/history`                         | 直近 200 件のプロトコルリクエストを返します（`200`、古い順）。`DELETE` ではクリアします（`204`）。                                                                                                                                  |
 | `POST`                             | `/users`                           | ユーザーを作成します（`name`、`email`、省略可能な `id`）。`201` を返します。ID がすでにある場合は `409 duplicate` を返します。                                                                                                      |
 | `PATCH` / `DELETE`                 | `/users/{id}`                      | ユーザーを編集（`name`、`email`。`id` は変更不可）または削除（`204`）します。ユーザーを削除すると、そのユーザーが所有するデータも削除されます。                                                                                     |
@@ -44,13 +44,13 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - **カレンダーリストの通知:** 管理 API でカレンダーを作成（`POST /calendars`）、編集（`PATCH /calendars/{id}`）、削除すると、そのたびに所有者の `calendarList.watch` チャネル向けの `exists` 通知がキューに入ります。編集では、内容が何も変わらなくても通知が送られます。テストで配信数を数える場合は、この分の配信も考慮してください。
 - **管理 API からのイベント書き込み:** `/__calendarpit/calendars/{id}/events` でのイベントの書き込みには、招待者に関する制限がかかりません。`conferenceDataVersion=1` も不要です。読み取り専用のフィールド（`organizer`、`creator`、`iCalUID`、`recurringEventId`、`originalStartTime`）も設定できます。更新時には、保存済みの `organizer`、`creator`、`iCalUID` が保持されます。イベントにすでに `recurringEventId` と `originalStartTime` がある場合は、それらも更新時に保持されます。
 
-## リセットとフィクスチャ読み込みの違い
+## リセットと Fixture 読み込みの違い
 
 `POST /__calendarpit/reset` と `POST /__calendarpit/fixtures` は、どちらもデータを置き換えてすぐに保存し、ランタイム状態をすべてクリアします。違いは読み込むデータです。
 
 | 項目                                         | `POST /__calendarpit/reset` | `POST /__calendarpit/fixtures`                                   |
 | -------------------------------------------- | --------------------------- | ---------------------------------------------------------------- |
-| ユーザー、カレンダー、イベント、クライアント | 起動時の状態から復元        | 送信した[フィクスチャ JSON](/ja/fixtures/)で置き換え             |
+| ユーザー、カレンダー、イベント、クライアント | 起動時の状態から復元        | 送信した[Fixture JSON](/ja/fixtures/)で置き換え                  |
 | 起動時のリセット基準                         | 変わらない                  | 変わらない（次の `/reset` では元の起動時のデータが復元されます） |
 | ランタイム状態                               | クリア                      | クリア                                                           |
 
@@ -65,7 +65,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - ユーザーごとのカレンダーリスト設定（`calendarList.insert`/`patch`/`update` によるカスタマイズと、`calendarList.delete` による削除）
 - 招待の通知と、すべての配信ログレコード
 
-どちらかを呼び出した後は、古いアクセストークンは `401`（`authError`）、古い同期トークンは `410`（`fullSyncRequired`）で失敗します。リセットしても、SQLite のデータベースファイルは削除されず、ディスク上のフィクスチャファイルも変更されません。
+どちらかを呼び出した後は、古いアクセストークンは `401`（`authError`）、古い同期トークンは `410`（`fullSyncRequired`）で失敗します。リセットしても、SQLite のデータベースファイルは削除されず、ディスク上の Fixture ファイルも変更されません。
 
 ## リクエスト履歴と状態のエクスポート
 
@@ -84,12 +84,12 @@ Calendarpit は、履歴の中の認証情報を次のようにマスクしま�
 - ランタイムのフィールド（`storage`、`connections`、`channels`、`deliveries`、`notifications`、`revision`）が含まれます。`POST /__calendarpit/fixtures` はこれらを `400`（`unsupportedFeature`）で拒否します。
 - カレンダーリストの設定は含まれません。設定は `calendarList.list`/`get` で取得してください。
 
-データの投入や再読み込みには、元のフィクスチャファイルを残しておき、それを使ってください。
+データの投入や再読み込みには、元の Fixture ファイルを残しておき、それを使ってください。
 
 ## 再現可能なテストの書き方
 
-- **シナリオごとにリセットする:** 各テストの前に `POST /__calendarpit/reset` を呼び出して、起動時の状態に戻します。特定のフィクスチャを読み込みたい場合は、代わりに `POST /__calendarpit/fixtures` を呼び出します。
-- **固定の ID を使う:** フィクスチャファイルで、ユーザー、カレンダー、イベント、クライアントに `id` を明示してください。ID がない場合、Calendarpit はデータ投入時に一度だけ ID を生成します。`:memory:` モードでは、サーバープロセスを起動するたびに新しい ID が生成されます。
+- **シナリオごとにリセットする:** 各テストの前に `POST /__calendarpit/reset` を呼び出して、起動時の状態に戻します。特定の Fixture を読み込みたい場合は、代わりに `POST /__calendarpit/fixtures` を呼び出します。
+- **固定の ID を使う:** Fixture ファイルで、ユーザー、カレンダー、イベント、クライアントに `id` を明示してください。ID がない場合、Calendarpit はデータ投入時に一度だけ ID を生成します。`:memory:` モードでは、サーバープロセスを起動するたびに新しい ID が生成されます。
 - **並列ワーカーを分離する:** テストワーカーごとに、`--port 0` と `--database :memory:` を付けて Calendarpit のプロセスを 1 つずつ起動します。ワーカーごとに別の SQLite ファイルを使う方法もあります。
 - **ポートは標準出力から読み取る:** `--port 0` を使う場合は、起動時の行 `Admin  http://127.0.0.1:<port>/` から URL を読み取ります。たとえば `/Admin\s+(http:\/\/[^\s]+)/` でマッチできます。その後、`GET /__calendarpit/health` が応答するまでポーリングしてから、テストを始めてください。
 - **スリープではなく Webhook 配信をドレインする:** `POST /__calendarpit/deliveries/drain` は、呼び出した時点で待機中の配信が、リトライも含めて終わるまで待ちます。`/reset` は送信中の Webhook リクエストを中断します。ただし、中断される前に受信側がそのリクエストを受け取っている場合があります。

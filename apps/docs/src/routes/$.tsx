@@ -36,7 +36,6 @@ export const Route = createFileRoute('/$')({
       title: page.data.title,
       description: page.data.description,
       hero: page.data.hero,
-      eyebrow: page.data.eyebrow,
     };
   },
   head: ({ loaderData: page }) => {

@@ -146,8 +146,8 @@ The build-time renderer does not run in production.
   inactive examples in generated HTML. Each page has its own JS chunk.
 - Documentation typography, spacing, and colors use the Fumadocs preset. Google
   Fonts provides Geist for Latin text, Noto Sans JP for Japanese, and Roboto Mono
-  for code, all with system fallbacks. Custom branding and Motion animations are
-  confined to the landing page; motion respects the reduced-motion preference.
+  for code, all with system fallbacks. Custom branding is confined to the landing
+  page, whose hero and diagram render without an animation library.
 - Each locale's `index.mdx` owns its landing content and hero frontmatter.
   `src/site/landing-hero.tsx` and `landing-diagram.tsx` render the introduction;
   diagram labels live in `src/components/landing/`.

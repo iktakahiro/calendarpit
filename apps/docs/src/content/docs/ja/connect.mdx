@@ -12,7 +12,7 @@ Calendarpit を起動しても、Google 宛ての通信が自動的にインタ�
 認証情報はプロバイダーごとに分けて管理してください。
 
 - Calendarpit のアクセストークンとリフレッシュトークンは、ローカルのプロバイダーでのみ使用します。
-- 本番の Google クライアントシークレットとトークンは、Google 用の設定にのみ保持します。本物の Google 認証情報をフィクスチャに含めないでください。
+- 本番の Google クライアントシークレットとトークンは、Google 用の設定にのみ保持します。本物の Google 認証情報を Fixture に含めないでください。
 
 ## すべてのプロバイダーエンドポイントを上書きする
 
@@ -32,7 +32,7 @@ watch のコールバック先アドレスは通信の向きが逆になり、Ca
 
 ## テスト用の OAuth クライアントを登録する
 
-Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` を検証し、`/oauth/token` で `client_id`、`client_secret`、および認可コード交換時の `redirect_uri` を検証します。フィクスチャの `clients` 配列にアプリを登録してください。
+Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` を検証し、`/oauth/token` で `client_id`、`client_secret`、および認可コード交換時の `redirect_uri` を検証します。Fixture の `clients` 配列にアプリを登録してください。
 
 ```json
 {
@@ -46,14 +46,14 @@ Calendarpit は、認可エンドポイントで `client_id` と `redirect_uri` 
 }
 ```
 
-フィクスチャはワークスペース全体を置き換えるため、`clients` とあわせて `users`（および `calendars`）も含めてください。サンプルアプリも併用する場合は、`sample-app` のエントリも残します。
+Fixture はワークスペース全体を置き換えるため、`clients` とあわせて `users`（および `calendars`）も含めてください。サンプルアプリも併用する場合は、`sample-app` のエントリも残します。
 
-起動時フィクスチャが適用されるのは、新規データベースまたは `:memory:` セッションのみです。実行中または保存済みのワークスペースを変更するには、`POST /__calendarpit/fixtures` でフィクスチャを読み込むか、新しいデータベースで起動してください。なお、ワークスペースをリセットすると API で読み込んだフィクスチャではなく、起動時フィクスチャの状態に戻ります。リセット後もクライアント定義を維持するには、新規データベースまたは `:memory:` セッションの起動時フィクスチャ（`--config` または `CALENDARPIT_CONFIG`）として渡すか、リセット後に再度読み込んでください。詳しくは[フィクスチャ](/ja/fixtures/)を参照してください。
+起動時 Fixture が適用されるのは、新規データベースまたは `:memory:` セッションのみです。実行中または保存済みのワークスペースを変更するには、`POST /__calendarpit/fixtures` で Fixture を読み込むか、新しいデータベースで起動してください。なお、ワークスペースをリセットすると API で読み込んだ Fixture ではなく、起動時 Fixture の状態に戻ります。リセット後もクライアント定義を維持するには、新規データベースまたは `:memory:` セッションの起動時 Fixture（`--config` または `CALENDARPIT_CONFIG`）として渡すか、リセット後に再度読み込んでください。詳しくは[Fixture](/ja/fixtures/)を参照してください。
 
 - `redirectUris` には、アプリのコールバック URL を正確に指定します。Calendarpit は `redirect_uri` を文字列の完全一致で照合します。ポートのワイルドカードや末尾スラッシュの正規化は行いません。
 - `secret` は必須です。PKCE フローを含め、すべての `/oauth/token` リクエストでこの値を `client_secret`（または HTTP Basic 認証）として送信する必要があります。
 
-組み込みのデフォルトフィクスチャには、ローカルテスト用の OAuth クライアントが 1 件登録されています。
+組み込みのデフォルト Fixture には、ローカルテスト用の OAuth クライアントが 1 件登録されています。
 
 - クライアント ID: `sample-app`
 - クライアントシークレット: `local-sample-secret`（公開されているローカルテスト用の値）
@@ -134,7 +134,7 @@ Calendarpit は `http://127.0.0.1:4173`、サンプルアプリは `http://127.0
 | `USERINFO_URL`         | `${CALENDARPIT_URL}/userinfo`        |
 | `CALENDAR_API_URL`     | `${CALENDARPIT_URL}`                 |
 
-サンプルアプリは、取り消し URL を `${CALENDARPIT_URL}/oauth/revoke` に、リダイレクト URI を `http://127.0.0.1:<SAMPLE_PORT>/callback` に設定します。組み込みの `sample-app` クライアントに登録されているのはポート `4175` のみであるため、`SAMPLE_PORT` を変更する場合はフィクスチャの `redirectUris` もあわせて更新してください。
+サンプルアプリは、取り消し URL を `${CALENDARPIT_URL}/oauth/revoke` に、リダイレクト URI を `http://127.0.0.1:<SAMPLE_PORT>/callback` に設定します。組み込みの `sample-app` クライアントに登録されているのはポート `4175` のみであるため、`SAMPLE_PORT` を変更する場合は Fixture の `redirectUris` もあわせて更新してください。
 
 ## 接続設定のチェックリスト
 
@@ -143,4 +143,4 @@ Calendarpit は `http://127.0.0.1:4173`、サンプルアプリは `http://127.0
 - **全エンドポイントの上書き**: 認可、トークン交換、トークン更新、ユーザープロフィール、Calendar API の呼び出し、トークン取り消しが、すべてローカルのエンドポイントに向いていること。
 - **コールバックの到達性**: ブラウザからアプリの OAuth `redirect_uri` にアクセスできること。また、Calendarpit からアプリの watch 用 Webhook アドレスに到達できること（Webhook のホストがループバック以外の場合は `CALENDARPIT_WATCH_HOSTS` を設定します）。
 - **一連のフローの検証**: ログイン、イベントの読み書き、watch 通知、トークン更新、取り消し、ワークスペースのリセットを通じて、UI とバックグラウンドワーカーをテストすること。
-- **アプリ固有のフィクスチャ管理**: アプリ固有のフィクスチャや E2E テストのシナリオは、アプリ側のリポジトリで管理すること。
+- **アプリ固有の Fixture 管理**: アプリ固有の Fixture や E2E テストのシナリオは、アプリ側のリポジトリで管理すること。

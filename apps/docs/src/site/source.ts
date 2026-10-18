@@ -12,7 +12,6 @@ export const docs = defineDocs({
     schema: pageSchema.extend({
       description: z.string().min(1),
       hero: z.object({ title: z.string(), tagline: z.string() }).optional(),
-      eyebrow: z.string().optional(),
     }),
   },
 });
@@ -34,5 +33,5 @@ export const source = loader({
 /** Serializable page metadata passed from the route loader to the renderer. */
 export type PageMetadata = Pick<
   (typeof docs.docs)[number],
-  'title' | 'description' | 'hero' | 'eyebrow'
+  'title' | 'description' | 'hero'
 > & { slug: string };

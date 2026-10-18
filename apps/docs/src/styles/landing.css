@@ -39,6 +39,7 @@
 }
 .hero-copy {
   max-width: 950px;
+  margin-bottom: 3.5rem;
 }
 .eyebrow {
   display: inline-flex;
@@ -50,13 +51,6 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 12%, transparent);
-}
 .landing h1 {
   font-family: var(--font-mono);
   font-size: clamp(2rem, 4.7vw, 3.75rem);
@@ -67,7 +61,7 @@
   text-wrap: balance;
 }
 .hero-accent {
-  display: block;
+  display: inline-block;
   width: fit-content;
   color: var(--color-fd-primary);
 }
@@ -103,6 +97,7 @@
   text-decoration: none !important;
   font-size: 0.875rem;
   font-weight: 500;
+  line-height: 1.5;
   transition:
     box-shadow 200ms,
     background 200ms;
@@ -119,17 +114,6 @@
   color: var(--color-fd-foreground);
   background: var(--color-fd-background);
   border-color: var(--color-fd-border);
-}
-.hero-install {
-  display: flex;
-  gap: 0.75rem;
-  margin-block: 1.5rem 3.5rem;
-  font-size: 0.75rem;
-  overflow-wrap: anywhere;
-  color: var(--color-fd-muted-foreground);
-}
-.hero-install > span {
-  color: var(--color-fd-primary);
 }
 .hero-workbench {
   padding: 0.5rem;
@@ -191,9 +175,6 @@
     var(--color-fd-border)
   );
   box-shadow: 0 8px 30px -20px var(--color-fd-primary);
-}
-.landing-body .site-button {
-  margin: 0.5rem 0.5rem 0 0;
 }
 .site-footer {
   display: flex;

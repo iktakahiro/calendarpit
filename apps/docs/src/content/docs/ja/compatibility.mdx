@@ -25,46 +25,46 @@ description: Calendarpit が対応する Google Calendar API v3 のメソッド�
 
 ルートがないエンドポイントは `501`（`unsupportedFeature`）を返します。`calendars.update`、`calendars.patch`、`calendars.delete` は、先にトークン、スコープ、カレンダーの所有者を確認します（`401`、`403`、`404`）。確認が通ると `501` を返します。`events.import` と `events.quickAdd` はパスが `/events/{eventId}` と重なります。このため `events.import` は `404`（`notFound`）を返します。`events.quickAdd` は、`text` があれば `400`（`unsupportedFeature`）、なければ `404` を返します。イベントのコレクションや既存のイベントに未対応の HTTP メソッドを送ると、`405`（`methodNotAllowed`）を返します。
 
-| リソース     | メソッド            | 対応 | 備考                                                                                   |
-| ------------ | ------------------- | :--: | -------------------------------------------------------------------------------------- |
-| Acl          | `delete`            |  ❌  | ACL と共有カレンダーのアクセスは再現しません                                           |
-| Acl          | `get`               |  ❌  |                                                                                        |
-| Acl          | `insert`            |  ❌  |                                                                                        |
-| Acl          | `list`              |  ❌  |                                                                                        |
-| Acl          | `patch`             |  ❌  |                                                                                        |
-| Acl          | `update`            |  ❌  |                                                                                        |
-| Acl          | `watch`             |  ❌  | イベントとカレンダーリストの watch は ACL を対象にしません                             |
-| CalendarList | `list`              |  ✅  | 所有するカレンダー。`minAccessRole`、`showDeleted`、`showHidden`                       |
-| CalendarList | `delete`            |  ✅  | プライマリ以外のカレンダーをリストから外すだけです                                     |
-| CalendarList | `get`               |  ✅  | そのカレンダーについて `list` が返すものと同じエントリ                                 |
-| CalendarList | `insert`            |  ✅  | リストから外した所有カレンダーを戻します                                               |
-| CalendarList | `patch`             |  ✅  | 省略した書き込み可能フィールドは保持します                                             |
-| CalendarList | `update`            |  ✅  | `PUT` で書き込み可能フィールドを置き換えます                                           |
-| CalendarList | `watch`             |  ✅  | 呼び出し元のリストが変わると通知。コールバック先はデフォルトでループバック             |
-| Calendars    | `get`               |  ✅  | テストユーザーが所有するカレンダーのメタデータ                                         |
-| Calendars    | `clear`             |  ❌  | 代わりにイベントを削除するか、ワークスペースを起動時フィクスチャにリセットしてください |
-| Calendars    | `delete`            |  ❌  | カレンダーは管理画面か管理 API で管理してください                                      |
-| Calendars    | `insert`            |  ❌  |                                                                                        |
-| Calendars    | `patch`             |  ❌  |                                                                                        |
-| Calendars    | `transferOwnership` |  ❌  | 所有者はカレンダーごとに 1 人で、共有の仕組みはありません                              |
-| Calendars    | `update`            |  ❌  |                                                                                        |
-| Channels     | `stop`              |  ✅  | イベントまたはカレンダーリストの watch チャネルを停止します                            |
-| Colors       | `get`               |  ❌  | イベントの色 1–11 とカレンダーの色 1–24 はエンドポイントなしで使えます                 |
-| Events       | `list`              |  ✅  | 時間範囲、ページング、`singleEvents`、同期トークン、フィルタ                           |
-| Events       | `get`               |  ✅  | `cancelled` の削除済みレコードと繰り返しのインスタンス ID も取得できます               |
-| Events       | `insert`            |  ✅  | `200` で保存したイベントを返します                                                     |
-| Events       | `update`            |  ✅  | `PUT` で書き込み可能フィールドを置き換えます                                           |
-| Events       | `patch`             |  ✅  | 省略したフィールドは保持します                                                         |
-| Events       | `delete`            |  ✅  | 同期のために `cancelled` のレコードを残します                                          |
-| Events       | `instances`         |  ✅  | 繰り返しのインスタンス、例外、`originalStart`                                          |
-| Events       | `watch`             |  ✅  | コールバック先はデフォルトでループバック。リトライと配信ログあり                       |
-| Events       | `import`            |  ❌  | `insert` でイベントを作成してください                                                  |
-| Events       | `move`              |  ❌  | カレンダー間の移動は削除と insert で代用してください                                   |
-| Events       | `quickAdd`          |  ❌  | 自然言語の解析はしません                                                               |
-| Freebusy     | `query`             |  ✅  | 結合して期間内に切り詰めた busy 区間。最大 50 カレンダー                               |
-| Settings     | `get`               |  ❌  | ユーザーごとの Google の設定はありません                                               |
-| Settings     | `list`              |  ❌  |                                                                                        |
-| Settings     | `watch`             |  ❌  |                                                                                        |
+| リソース     | メソッド            | 対応 | 備考                                                                                |
+| ------------ | ------------------- | :--: | ----------------------------------------------------------------------------------- |
+| Acl          | `delete`            |  ❌  | ACL と共有カレンダーのアクセスは再現しません                                        |
+| Acl          | `get`               |  ❌  |                                                                                     |
+| Acl          | `insert`            |  ❌  |                                                                                     |
+| Acl          | `list`              |  ❌  |                                                                                     |
+| Acl          | `patch`             |  ❌  |                                                                                     |
+| Acl          | `update`            |  ❌  |                                                                                     |
+| Acl          | `watch`             |  ❌  | イベントとカレンダーリストの watch は ACL を対象にしません                          |
+| CalendarList | `list`              |  ✅  | 所有するカレンダー。`minAccessRole`、`showDeleted`、`showHidden`                    |
+| CalendarList | `delete`            |  ✅  | プライマリ以外のカレンダーをリストから外すだけです                                  |
+| CalendarList | `get`               |  ✅  | そのカレンダーについて `list` が返すものと同じエントリ                              |
+| CalendarList | `insert`            |  ✅  | リストから外した所有カレンダーを戻します                                            |
+| CalendarList | `patch`             |  ✅  | 省略した書き込み可能フィールドは保持します                                          |
+| CalendarList | `update`            |  ✅  | `PUT` で書き込み可能フィールドを置き換えます                                        |
+| CalendarList | `watch`             |  ✅  | 呼び出し元のリストが変わると通知。コールバック先はデフォルトでループバック          |
+| Calendars    | `get`               |  ✅  | テストユーザーが所有するカレンダーのメタデータ                                      |
+| Calendars    | `clear`             |  ❌  | 代わりにイベントを削除するか、ワークスペースを起動時 Fixture にリセットしてください |
+| Calendars    | `delete`            |  ❌  | カレンダーは管理画面か管理 API で管理してください                                   |
+| Calendars    | `insert`            |  ❌  |                                                                                     |
+| Calendars    | `patch`             |  ❌  |                                                                                     |
+| Calendars    | `transferOwnership` |  ❌  | 所有者はカレンダーごとに 1 人で、共有の仕組みはありません                           |
+| Calendars    | `update`            |  ❌  |                                                                                     |
+| Channels     | `stop`              |  ✅  | イベントまたはカレンダーリストの watch チャネルを停止します                         |
+| Colors       | `get`               |  ❌  | イベントの色 1–11 とカレンダーの色 1–24 はエンドポイントなしで使えます              |
+| Events       | `list`              |  ✅  | 時間範囲、ページング、`singleEvents`、同期トークン、フィルタ                        |
+| Events       | `get`               |  ✅  | `cancelled` の削除済みレコードと繰り返しのインスタンス ID も取得できます            |
+| Events       | `insert`            |  ✅  | `200` で保存したイベントを返します                                                  |
+| Events       | `update`            |  ✅  | `PUT` で書き込み可能フィールドを置き換えます                                        |
+| Events       | `patch`             |  ✅  | 省略したフィールドは保持します                                                      |
+| Events       | `delete`            |  ✅  | 同期のために `cancelled` のレコードを残します                                       |
+| Events       | `instances`         |  ✅  | 繰り返しのインスタンス、例外、`originalStart`                                       |
+| Events       | `watch`             |  ✅  | コールバック先はデフォルトでループバック。リトライと配信ログあり                    |
+| Events       | `import`            |  ❌  | `insert` でイベントを作成してください                                               |
+| Events       | `move`              |  ❌  | カレンダー間の移動は削除と insert で代用してください                                |
+| Events       | `quickAdd`          |  ❌  | 自然言語の解析はしません                                                            |
+| Freebusy     | `query`             |  ✅  | 結合して期間内に切り詰めた busy 区間。最大 50 カレンダー                            |
+| Settings     | `get`               |  ❌  | ユーザーごとの Google の設定はありません                                            |
+| Settings     | `list`              |  ❌  |                                                                                     |
+| Settings     | `watch`             |  ❌  |                                                                                     |
 
 ## イベント
 
@@ -88,7 +88,7 @@ description: Calendarpit が対応する Google Calendar API v3 のメソッド�
 
 ### 設定の書き込み（patch、update、insert）
 
-- ユーザーごとの書き込み可能な設定（`summaryOverride`、`colorId`、`backgroundColor`、`foregroundColor`、`hidden`、`selected`、`defaultReminders`、`notificationSettings`）は、SQLite 使用時は再起動後も残ります。リセットやフィクスチャの読み込みで消えます。
+- ユーザーごとの書き込み可能な設定（`summaryOverride`、`colorId`、`backgroundColor`、`foregroundColor`、`hidden`、`selected`、`defaultReminders`、`notificationSettings`）は、SQLite 使用時は再起動後も残ります。リセットや Fixture の読み込みで消えます。
 - `summaryOverride` には、空白だけではない 10,000 文字以内の文字列が必要です（`""` は `400` を返します）。
 - `PATCH` は省略した書き込み可能フィールドを保持します（`null` で `summaryOverride`、`defaultReminders`、`notificationSettings` を消去します）。
 - `PUT` と `insert`（`200`）は書き込み可能フィールドを置き換えます。省略した `summaryOverride`、`defaultReminders`、`notificationSettings` は消去されます。`hidden` と `selected` は `false` に戻ります（一度も書き込んでいないエントリは `selected: true` のままです）。色を指定しない場合、`colorId` は `"1"` に戻ります。
@@ -128,7 +128,7 @@ description: Calendarpit が対応する Google Calendar API v3 のメソッド�
 
 `events.list` は次のパラメータを受け付けます。`timeMin`、`timeMax`、`maxResults`（1–2500、デフォルト 250）、`pageToken`、`orderBy`（`startTime`、`updated`）、`singleEvents`、`timeZone`、`showDeleted`、`syncToken`、`updatedMin`、`iCalUID`、繰り返し指定できる `privateExtendedProperty=name=value` と `sharedExtendedProperty=name=value` のフィルタ（すべて一致する必要があります）。`orderBy=startTime` には `singleEvents=true` が必要です。`orderBy` を指定しない一覧はイベント ID 順に並びます。`timeMin`、`timeMax`、`updatedMin` には、オフセット付きの RFC 3339 タイムスタンプが必要です。範囲の判定には `start < timeMax` と `end > timeMin` を使います。カレンダーに終了日のない繰り返しの系列がある場合、`singleEvents=true` または `timeMin` を指定した `events.list` には `timeMax` が必要です。その系列への `events.instances` には常に `timeMax` が必要です（`400` `unsupportedFeature`）。
 
-イベント一覧のページングでは、最初のページの時点でスナップショットを固定します。このため、ページ取得の合間に書き込みがあっても項目が抜けません。イベントのページトークンはクエリとユーザーに結び付いています。1 時間で期限が切れ、再起動、リセット、フィクスチャの読み込みで消えます。カレンダーリストのページトークンは、データやカレンダーリストへの書き込みがあると無効になり、保存されません。期限切れや無効なトークンは `410`（`invalidPageToken`）を返します。`syncToken` と `nextSyncToken` は[差分同期](/ja/sync/)を参照してください。
+イベント一覧のページングでは、最初のページの時点でスナップショットを固定します。このため、ページ取得の合間に書き込みがあっても項目が抜けません。イベントのページトークンはクエリとユーザーに結び付いています。1 時間で期限が切れ、再起動、リセット、Fixture の読み込みで消えます。カレンダーリストのページトークンは、データやカレンダーリストへの書き込みがあると無効になり、保存されません。期限切れや無効なトークンは `410`（`invalidPageToken`）を返します。`syncToken` と `nextSyncToken` は[差分同期](/ja/sync/)を参照してください。
 
 ## 明示的に除外している機能
 

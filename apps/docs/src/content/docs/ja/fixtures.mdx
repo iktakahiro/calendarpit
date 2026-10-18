@@ -1,15 +1,15 @@
 ---
-title: フィクスチャ
-description: JSON のフィクスチャファイルで、テストユーザー、カレンダー、イベント、OAuth クライアントを定義します。
+title: Fixture
+description: JSON の Fixture ファイルで、テストユーザー、カレンダー、イベント、OAuth クライアントを定義します。
 ---
 
-フィクスチャは、Calendarpit の初期テストデータを定義する JSON ファイルです。テストユーザー、カレンダー、イベント、OAuth クライアントを定義できます。ローカルサーバーやテストスイートを、決まったデータで起動したいときに使います。
+Fixture は、Calendarpit の初期テストデータを定義する JSON ファイルです。テストユーザー、カレンダー、イベント、OAuth クライアントを定義できます。ローカルサーバーやテストスイートを、決まったデータで起動したいときに使います。
 
-フィクスチャで `id` を明示すると、ユーザー ID、カレンダー ID、イベント ID、OAuth クライアント ID が固定されます。テストのアサーションでは、生成された値を問い合わせずに、決まった ID をそのまま検証できます。
+Fixture で `id` を明示すると、ユーザー ID、カレンダー ID、イベント ID、OAuth クライアント ID が固定されます。テストのアサーションでは、生成された値を問い合わせずに、決まった ID をそのまま検証できます。
 
-## 起動時にフィクスチャを読み込む
+## 起動時に Fixture を読み込む
 
-フィクスチャファイルのパスは、CLI フラグ `--config` または環境変数 `CALENDARPIT_CONFIG` で指定します。どちらも指定しない場合、Calendarpit は組み込みのデフォルトフィクスチャを読み込みます。内容はリポジトリの `fixtures/default.json` と同じです。ユーザー `alex` と `sam`、カレンダー `alex-work`、`alex-personal`、`sam-work`、イベント `planning` 1 件、OAuth クライアント `sample-app` が含まれます。
+Fixture ファイルのパスは、CLI フラグ `--config` または環境変数 `CALENDARPIT_CONFIG` で指定します。どちらも指定しない場合、Calendarpit は組み込みのデフォルト Fixture を読み込みます。内容はリポジトリの `fixtures/default.json` と同じです。ユーザー `alex` と `sam`、カレンダー `alex-work`、`alex-personal`、`sam-work`、イベント `planning` 1 件、OAuth クライアント `sample-app` が含まれます。
 
 下の JSON の例を `calendarpit.fixture.json` として保存し、テスト用に編集してください。[インストール](/ja/installation/)の公開状況と必要な環境を確認してから、ファイルを保存したディレクトリで起動します。
 
@@ -32,16 +32,16 @@ docker run --rm -p 127.0.0.1:4173:4173 \
 
 Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixtures/startup.json:ro` を追加し、`environment` に `CALENDARPIT_CONFIG: /fixtures/startup.json` を設定します。ホスト上のファイルはコンテナの非 root ユーザーが読み取れる必要があります。起動オプションは[起動と設定](/ja/running/)を参照してください。
 
-起動時フィクスチャが投入されるのは、**新しい空の**データベースだけです。
+起動時 Fixture が投入されるのは、**新しい空の**データベースだけです。
 
-- `--database :memory:` モードでは、プロセスを起動するたびにデータベースが新しくなります。そのため、フィクスチャは毎回適用されます。
-- SQLite ファイルに保存済みのデータがある場合、Calendarpit はフィクスチャを適用せず、警告も表示しません。保存済みのデータ（ユーザーごとのカレンダーリスト設定や、カレンダーの削除済みレコードを含む）と、最初のリセット基準を読み込みます。この場合でも、指定するパスは読み取り可能な JSON ファイルを指している必要があります。そうでない場合は起動に失敗します。ファイルの内容は検証されません。詳しくは[ストレージと再起動](/ja/storage/)を参照してください。
+- `--database :memory:` モードでは、プロセスを起動するたびにデータベースが新しくなります。そのため、Fixture は毎回適用されます。
+- SQLite ファイルに保存済みのデータがある場合、Calendarpit は Fixture を適用せず、警告も表示しません。保存済みのデータ（ユーザーごとのカレンダーリスト設定や、カレンダーの削除済みレコードを含む）と、最初のリセット基準を読み込みます。この場合でも、指定するパスは読み取り可能な JSON ファイルを指している必要があります。そうでない場合は起動に失敗します。ファイルの内容は検証されません。詳しくは[ストレージと再起動](/ja/storage/)を参照してください。
 
-実行中に別のフィクスチャを読み込むには `POST /__calendarpit/fixtures` を使います。テストの合間にリセット基準（起動時の状態）へ戻すには `POST /__calendarpit/reset` を使います。どちらも、OAuth の接続（grant）とトークン、ユーザーごとのカレンダーリスト設定、削除済みレコード、watch チャネル、配信、リクエスト履歴、同期トークン、通知を消去します。リセットでは起動時フィクスチャが復元されます。カレンダーリストのエントリは、起動時の etag を持つデフォルトの状態に戻ります。`GET /__calendarpit/state` の結果には、クライアントシークレット、カレンダーリスト設定、削除済みレコードは含まれません。また、この結果をフィクスチャとして読み込み直すことはできません。詳しくは[テスト制御 API](/ja/test-control/)を参照してください。
+実行中に別の Fixture を読み込むには `POST /__calendarpit/fixtures` を使います。テストの合間にリセット基準（起動時の状態）へ戻すには `POST /__calendarpit/reset` を使います。どちらも、OAuth の接続（grant）とトークン、ユーザーごとのカレンダーリスト設定、削除済みレコード、watch チャネル、配信、リクエスト履歴、同期トークン、通知を消去します。リセットでは起動時 Fixture が復元されます。カレンダーリストのエントリは、起動時の etag を持つデフォルトの状態に戻ります。`GET /__calendarpit/state` の結果には、クライアントシークレット、カレンダーリスト設定、削除済みレコードは含まれません。また、この結果を Fixture として読み込み直すことはできません。詳しくは[テスト制御 API](/ja/test-control/)を参照してください。
 
 ## ルート構造と例
 
-フィクスチャファイルのルートは JSON オブジェクトである必要があります。使えるキーは `users`、`calendars`、`events`、`clients` の 4 つで、どれも省略できる配列です。空のオブジェクト（`{}`）も有効な空のフィクスチャです。
+Fixture ファイルのルートは JSON オブジェクトである必要があります。使えるキーは `users`、`calendars`、`events`、`clients` の 4 つで、どれも省略できる配列です。空のオブジェクト（`{}`）も有効な空の Fixture です。
 
 キーを指定する場合、値は配列にしてください（違反時は `"<key> must be an array."`）。ルートオブジェクト、またはユーザー、カレンダー、イベント、クライアントの各エントリにそれ以外のキーがあると、検証に失敗します（`"Unsupported field: <key>"`、reason は `unsupportedFeature`）。
 
@@ -85,7 +85,7 @@ Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixt
 - **一意性**: `users`、`calendars`、`clients` の ID は、それぞれの中で一意である必要があります（`"Duplicate fixture ID."`）。イベント ID はカレンダーごとに一意である必要があります（`"Duplicate event ID."`）。カレンダーが違えば、同じイベント ID を使えます。
 - **生成される ID とリセット基準への記録**: `id` を省略すると、Calendarpit は UUID を生成します。生成された ID とイベントの初期メタデータ（`created`、`updated`、`etag`）は、投入時に起動時のリセット基準として記録されます。そのため、`POST /__calendarpit/reset` を何度呼んでも同じデータが再現されます。SQLite では、このリセット基準がプロセスの再起動後も保持されます。`:memory:` モードでは、プロセスを起動するたびに新しい UUID とタイムスタンプが生成されます。
 
-検証はアトミックに行われます。所有者とカレンダーの参照先は、すべてフィクスチャ内に存在している必要があります。ルールに違反すると、Calendarpit は最初のエラーで処理を止めます。
+検証はアトミックに行われます。所有者とカレンダーの参照先は、すべて Fixture 内に存在している必要があります。ルールに違反すると、Calendarpit は最初のエラーで処理を止めます。
 
 - 新しいデータベースで起動したとき: `Calendarpit: <message>` を出力し、終了コード `1` で終了します。
 - `POST /__calendarpit/fixtures` のとき: `400`（`invalidParameter` または `unsupportedFeature`）を返し、既存のデータは変更しません。
@@ -104,7 +104,7 @@ Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixt
 
 ### `calendars`
 
-フィクスチャのユーザーが所有するカレンダーを定義します。カレンダーを所有するユーザーには、`"primary": true` のカレンダーが**ちょうど 1 つ**必要です（違反時は `"Each user with calendars must have exactly one primary calendar."`）。カレンダーが 1 つだけでも、`"primary": true` がなければ検証に失敗します。カレンダーを持たないユーザーも定義できます。そのユーザーでは、`primary` カレンダーエイリアスが `404` を返します。
+Fixture のユーザーが所有するカレンダーを定義します。カレンダーを所有するユーザーには、`"primary": true` のカレンダーが**ちょうど 1 つ**必要です（違反時は `"Each user with calendars must have exactly one primary calendar."`）。カレンダーが 1 つだけでも、`"primary": true` がなければ検証に失敗します。カレンダーを持たないユーザーも定義できます。そのユーザーでは、`primary` カレンダーエイリアスが `404` を返します。
 
 | フィールド | 必須 | デフォルト      | ルール                                                                             |
 | ---------- | ---- | --------------- | ---------------------------------------------------------------------------------- |
@@ -123,21 +123,21 @@ Compose では、サービスの `volumes` に `./calendarpit.fixture.json:/fixt
 
 ### `events`
 
-初期イベントを定義します。フィクスチャのイベントでは Calendar API と同じイベントフィールドを使えます。値の検証も Calendar API と同じです（[Calendar API の互換性](/ja/compatibility/)と[イベント、繰り返し、時刻の扱い](/ja/recurrence/)を参照）。これに加えて `calendarId` を指定します。
+初期イベントを定義します。Fixture のイベントでは Calendar API と同じイベントフィールドを使えます。値の検証も Calendar API と同じです（[Calendar API の互換性](/ja/compatibility/)と[イベント、繰り返し、時刻の扱い](/ja/recurrence/)を参照）。これに加えて `calendarId` を指定します。
 
 - 読み取り専用フィールド（`organizer`、`creator`、`iCalUID`、`recurringEventId`、`originalStartTime`）も設定できます。
 - `conferenceData` には `conferenceDataVersion` は不要です。
 - リクエスト専用フィールドの `attendeesOmitted` は拒否されます（`"Unsupported field: attendeesOmitted"`）。
 - 投入時には、API で挿入したときの副作用は発生しません。参加者のカレンダーに招待のコピーは作られません。`conferenceData.createRequest` があっても会議リンクは生成されません。
 
-| フィールド                                                                 | 必須 | デフォルト                                                                                                                                                               | ルール                                                                                                                                                                                                                                                                                               |
-| -------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `calendarId`                                                               | 必須 | —                                                                                                                                                                        | `calendars` のカレンダー `id` と一致すること（違反時は `"Unknown event calendar."`）。                                                                                                                                                                                                               |
-| `id`                                                                       | 任意 | 生成された UUID                                                                                                                                                          | `[a-zA-Z0-9@._-]` に一致する 1〜128 文字。`primary` は不可。カレンダー内で一意。                                                                                                                                                                                                                     |
-| `start`, `end`                                                             | 必須 | —                                                                                                                                                                        | イベントの開始と終了（`dateTime` または終日イベントの `date`）。ルールは Calendar API と同じ。                                                                                                                                                                                                       |
-| `organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime` | 任意 | カレンダーの所有者（`organizer`、`creator`）、`<id>@calendarpit.local`（`iCalUID`）、なし（`recurringEventId`、`originalStartTime`。両方設定するか、どちらも設定しない） | 通常の API リクエストでは読み取り専用ですが、フィクスチャでは設定できます。たとえば、外部の主催者や、保存済みの繰り返しの例外を投入するときに使います。`recurringEventId` と `originalStartTime` の片方だけを設定すると `"Instances require recurringEventId and originalStartTime."` で失敗します。 |
-| `sequence`                                                                 | 任意 | `0`                                                                                                                                                                      | 0 以上の整数（違反時は `"Invalid sequence."`）。                                                                                                                                                                                                                                                     |
-| `created`, `updated`, `etag`                                               | 無視 | 投入時に生成                                                                                                                                                             | 指定した値は無視され、フィクスチャの投入時に生成されます。                                                                                                                                                                                                                                           |
+| フィールド                                                                 | 必須 | デフォルト                                                                                                                                                               | ルール                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `calendarId`                                                               | 必須 | —                                                                                                                                                                        | `calendars` のカレンダー `id` と一致すること（違反時は `"Unknown event calendar."`）。                                                                                                                                                                                                           |
+| `id`                                                                       | 任意 | 生成された UUID                                                                                                                                                          | `[a-zA-Z0-9@._-]` に一致する 1〜128 文字。`primary` は不可。カレンダー内で一意。                                                                                                                                                                                                                 |
+| `start`, `end`                                                             | 必須 | —                                                                                                                                                                        | イベントの開始と終了（`dateTime` または終日イベントの `date`）。ルールは Calendar API と同じ。                                                                                                                                                                                                   |
+| `organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime` | 任意 | カレンダーの所有者（`organizer`、`creator`）、`<id>@calendarpit.local`（`iCalUID`）、なし（`recurringEventId`、`originalStartTime`。両方設定するか、どちらも設定しない） | 通常の API リクエストでは読み取り専用ですが、Fixture では設定できます。たとえば、外部の主催者や、保存済みの繰り返しの例外を投入するときに使います。`recurringEventId` と `originalStartTime` の片方だけを設定すると `"Instances require recurringEventId and originalStartTime."` で失敗します。 |
+| `sequence`                                                                 | 任意 | `0`                                                                                                                                                                      | 0 以上の整数（違反時は `"Invalid sequence."`）。                                                                                                                                                                                                                                                 |
+| `created`, `updated`, `etag`                                               | 無視 | 投入時に生成                                                                                                                                                             | 指定した値は無視され、Fixture の投入時に生成されます。                                                                                                                                                                                                                                           |
 
 ### `clients`
 

@@ -1,13 +1,12 @@
 ---
 title: Overview
 description: 'Calendarpit is a local Google Calendar API v3 and OAuth server for development and tests. Run it with Docker or Homebrew, with fixtures, webhooks, and an admin UI.'
-eyebrow: Local API and OAuth server
 hero:
-  title: Run a local Google Calendar API for tests
+  title: Google Calendar API on localhost
   tagline: Calendarpit serves a Google Calendar API v3 subset and local OAuth in one process. Test with no Google account or network access.
 ---
 
-## Why test against a local server
+## Why Calendarpit
 
 <Cards>
   <Card title="Testing with real Google">
@@ -32,7 +31,7 @@ hero:
 
 <Step>
 
-### Start Calendarpit.
+### Start Calendarpit
 
 One process serves the API, local OAuth, and the admin UI on `http://127.0.0.1:4173`.
 
@@ -58,7 +57,7 @@ docker run --rm -p 127.0.0.1:4173:4173 ghcr.io/iktakahiro/calendarpit:0.9.0
 
 <Step>
 
-### Point your app at it.
+### Point your app to Calendarpit
 
 Keep your Google SDK and override its OAuth and API endpoints. For example, with `@googleapis/calendar` and `google-auth-library`:
 
@@ -82,7 +81,7 @@ const api = calendar({ version: 'v3', auth, rootUrl: origin });
 
 <Step>
 
-### Test with predictable data.
+### Test with fixtures
 
 Reset to the startup fixture before each test, and inspect requests in the admin UI.
 
@@ -131,13 +130,18 @@ curl -X POST http://127.0.0.1:4173/__calendarpit/reset \
   />
 </Cards>
 
-## Start testing with Calendarpit
+## Start building calendar apps with Calendarpit
 
 Calendarpit is built for local development and automated tests only. It implements a defined subset of the Google Calendar API v3 on loopback.
 
-<Link className='site-button' href='/quick-start/'>
-  Quick start
-</Link>
-<Link className='site-button secondary' href='/scope/'>
-  Scope and limitations
-</Link>
+<div className='hero-actions not-prose'>
+  <Link className='site-button' href='/quick-start/'>
+    Quick start <span aria-hidden='true'>→</span>
+  </Link>
+  <Link
+    className='site-button secondary'
+    href='https://github.com/iktakahiro/calendarpit'
+  >
+    GitHub <span aria-hidden='true'>↗</span>
+  </Link>
+</div>
