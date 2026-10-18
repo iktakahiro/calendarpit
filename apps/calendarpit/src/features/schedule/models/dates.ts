@@ -36,3 +36,31 @@ export function longDate(date: string) {
     timeZone: 'UTC',
   }).format(new Date(`${date}T12:00:00Z`));
 }
+
+/**
+ * Returns `date` (`YYYY-MM-DD`) as a `Date` in the runtime's zone, at noon.
+ * Date pickers compare calendar days in the runtime's zone, and noon keeps the
+ * day stable across clock changes.
+ */
+export function toPickerDate(date: string) {
+  return new Date(
+    Number(date.slice(0, 4)),
+    Number(date.slice(5, 7)) - 1,
+    Number(date.slice(8, 10)),
+    12,
+  );
+}
+
+/** Formats a date picker's `Date` back as `YYYY-MM-DD` in the runtime's zone. */
+export function fromPickerDate(value: Date) {
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+}
+
+/** Formats a date's weekday as `Mon`. */
+export function weekdayLabel(date: string) {
+  return new Intl.DateTimeFormat('en', {
+    weekday: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(`${date}T12:00:00Z`));
+}

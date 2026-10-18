@@ -21,6 +21,7 @@ export function EventEditor({
   calendar,
   event,
   date,
+  at,
   close,
 }: {
   calendar: Calendar;
@@ -28,6 +29,8 @@ export function EventEditor({
   event?: CalendarEvent;
   /** Date a new event starts on. */
   date: string;
+  /** Local start a new event takes from the week grid, `YYYY-MM-DDTHH:mm`. */
+  at?: string;
   close: () => void;
 }) {
   const [submitError, setSubmitError] = useState('');
@@ -39,7 +42,7 @@ export function EventEditor({
     panel.current?.scrollIntoView({ block: 'nearest' });
   }, []);
   const form = useForm({
-    defaultValues: eventFormValues(calendar, date, event),
+    defaultValues: eventFormValues(calendar, date, event, at),
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'change',
