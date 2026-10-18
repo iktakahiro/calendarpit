@@ -5,19 +5,19 @@ description: TypeScript、Python、Go、Java、C# の公式 Google Calendar ク�
 
 import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 
-お使いのアプリの公式 Google Calendar SDK クライアントの接続先を Calendarpit に変更します。Calendarpit 専用の SDK は必要ありません。以下の例では、カレンダーの一覧を取得し、FreeBusy を照会します。
+アプリの公式 Google Calendar SDK クライアントの接続先を Calendarpit に変更します。Calendarpit 専用の SDK は不要です。以下の例では、カレンダーの一覧を取得し、FreeBusy を照会します。
 
 ## SDK を呼び出す前に
 
-Calendarpit を起動します (例: `npx @iktakahiro/calendarpit@0.9.0 serve`。[起動と設定](/calendarpit/ja/running/)を参照)。次に、`https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/calendarpit/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。取得したアクセストークン (有効期間は 1 時間) を、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。この変数は各例のコードが明示的に読み取るもので、Google SDK の設定ではありません。
+Calendarpit を起動します (例: `npx @iktakahiro/calendarpit@0.9.0 serve`。[起動と設定](/calendarpit/ja/running/)を参照)。次に、`https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/calendarpit/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。取得したアクセストークン (有効期間は 1 時間) をシェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。この変数は各例のコードが明示的に読み取るもので、Google SDK の設定ではありません。
 
 <Aside>
 
-これらのコードは、既存のアクセストークンを渡して Calendar API リクエストを Calendarpit に送る方法を示すものです。認可のコールバックやトークンの自動更新は扱いません。トークンは `POST /oauth/token` で更新し、クライアントのトークンを差し替えるか、クライアントを作り直してください。サンプルアプリと OAuth クライアントの設定全体は[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
+これらのコードは、既存のアクセストークンを渡して Calendar API リクエストを Calendarpit に送る方法を示します。認可のコールバックやトークンの自動更新は扱いません。トークンは `POST /oauth/token` で更新し、クライアントのトークンを差し替えるか、クライアントを作り直してください。サンプルアプリと OAuth クライアントの設定全体は[アプリを接続する](/calendarpit/ja/connect/)を参照してください。
 
 </Aside>
 
-各タブに記載したパッケージは、お使いのプロジェクトにインストールしてください。Calendarpit は言語ランタイムや SDK パッケージをインストールしません。
+各タブに記載したパッケージをプロジェクトにインストールしてください。Calendarpit は言語ランタイムや SDK パッケージをインストールしません。
 
 ## サービス URL を設定する
 
@@ -105,7 +105,7 @@ with build(
     print(result["calendars"]["primary"]["busy"])
 ```
 
-`Credentials` にリフレッシュトークンを渡す場合は、登録済みのクライアント ID、クライアントシークレット、`token_uri="http://127.0.0.1:4173/oauth/token"` も指定します。`scopes` は省略するか、許可されたスコープを同じ順序でそのまま渡してください。認可、userinfo、取り消しの URL は、お使いのアプリの [OAuth フロー](/calendarpit/ja/oauth/)で別に設定します。
+`Credentials` にリフレッシュトークンを渡す場合は、登録済みのクライアント ID、クライアントシークレット、`token_uri="http://127.0.0.1:4173/oauth/token"` も指定します。`scopes` は省略するか、許可されたスコープを同じ順序でそのまま渡してください。認可、userinfo、取り消しの URL は、アプリの [OAuth フロー](/calendarpit/ja/oauth/)で別に設定します。
 
 参考: [同梱のディスカバリドキュメント](https://googleapis.github.io/google-api-python-client/docs/start.html#building-and-calling-a-service)、[エンドポイントの選択](https://github.com/googleapis/google-api-python-client/blob/main/googleapiclient/discovery.py)
 

@@ -22,7 +22,7 @@ docker run --rm \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-Google アカウント、Google Cloud プロジェクト、外部データベース、`.env` ファイル、プロバイダーの認証情報は不要です。どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。Homebrew、Compose、単体ダウンロード、プロジェクトへの追加は[インストール](/calendarpit/ja/installation/)で説明しています。
+Google アカウント、Google Cloud プロジェクト、外部データベース、`.env` ファイル、プロバイダーの認証情報は不要です。どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。Homebrew、Compose、単体実行ファイル、プロジェクトへの追加は[インストール](/calendarpit/ja/installation/)で説明しています。
 
 ## 管理画面を開く
 
@@ -55,12 +55,12 @@ curl http://127.0.0.1:4173/__calendarpit/health
 
 ## アプリを接続する
 
-[アプリを接続する](/calendarpit/ja/connect/)に従って、SDK と OAuth フローの接続先を Calendarpit に変更します。[fixture](/calendarpit/ja/fixtures/)でローカルのクライアント認証情報と完全一致するコールバック URI を登録してください。組み込みの `sample-app` / `local-sample-secret` は公開されたテスト用の値で、コールバックは `http://127.0.0.1:4175/callback` です。
+[アプリを接続する](/calendarpit/ja/connect/)に従って、SDK と OAuth フローの接続先を Calendarpit に変更します。[fixture](/calendarpit/ja/fixtures/)でローカルのクライアント認証情報と、完全一致するコールバック URI を登録してください。組み込みの `sample-app` / `local-sample-secret` は公開されているテスト用の値で、コールバックは `http://127.0.0.1:4175/callback` です。
 
-任意のソースサンプルでは、認可、イベント作成、FreeBusy、watch 通知、接続の取り消しを試せます。起動方法は[開発ガイド](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)にあります。サンプルは配布サーバーとは別のアプリです。
+オプションのソースサンプルでは、認可、イベント作成、FreeBusy、watch 通知、接続の取り消しを試せます。起動方法は[開発ガイド](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)を参照してください。サンプルは配布サーバーとは別のアプリです。
 
 ## 次のステップ
 
 - [起動と設定](/calendarpit/ja/running/) — ポート、fixture、環境変数。
 - [テスト制御 API](/calendarpit/ja/test-control/) — 状態のリセットと通知配信の完了待ち。
-- [対応範囲と制限](/calendarpit/ja/scope/) — 実装済みの互換性と明示的な対象外機能。
+- [対応範囲と制限](/calendarpit/ja/scope/) — 実装済みの互換機能と対象外の機能。

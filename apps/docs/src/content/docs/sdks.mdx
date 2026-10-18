@@ -9,7 +9,7 @@ Point your app's official Google Calendar SDK client at Calendarpit. You do not 
 
 ## Before you call the SDK
 
-Start Calendarpit (for example with `npx @iktakahiro/calendarpit@0.9.0 serve`; see [Run and configure](/calendarpit/running/)), then complete the [local OAuth flow](/calendarpit/oauth/) with the `https://www.googleapis.com/auth/calendar` scope (add `access_type=offline` if you need a refresh token). Set `CALENDARPIT_ACCESS_TOKEN` to the resulting access token (valid for one hour) in your shell. These examples read that variable explicitly; it is not a Google SDK setting.
+Start Calendarpit (for example with `npx @iktakahiro/calendarpit@0.9.0 serve`; see [Run and configure](/calendarpit/running/)), then complete the [local OAuth flow](/calendarpit/oauth/) with the `https://www.googleapis.com/auth/calendar` scope (add `access_type=offline` if you need a refresh token). Set `CALENDARPIT_ACCESS_TOKEN` in your shell to the resulting access token (valid for one hour). These examples read that variable directly; it is not a Google SDK setting.
 
 <Aside>
 
@@ -17,7 +17,7 @@ These snippets pass an existing access token to show how to route Calendar API r
 
 </Aside>
 
-Install the packages listed in each tab in your own project. Calendarpit does not install language runtimes or SDK packages for you.
+Install the packages listed in each tab in your project. Calendarpit does not install language runtimes or SDK packages for you.
 
 ## Configure the service URL
 
@@ -31,7 +31,7 @@ Endpoint formats differ across libraries. Preserve trailing slashes where shown.
 | Java                    | `setRootUrl` + `setServicePath`         | `http://127.0.0.1:4173/` + `calendar/v3/` |
 | C# / .NET               | `BaseClientService.Initializer.BaseUri` | `http://127.0.0.1:4173/calendar/v3/`      |
 
-Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client use that local URL too. `calendarList` `list`, `get`, `insert`, `patch`, `update`, `delete`, and `watch` are supported with the single-owner limits in [Calendar API compatibility](/calendarpit/compatibility/). Only the operations listed there are supported, even if the SDK exposes additional methods.
+Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client also use that local URL. For `calendarList`, `list`, `get`, `insert`, `patch`, `update`, `delete`, and `watch` are supported with the single-owner limits in [Calendar API compatibility](/calendarpit/compatibility/). Only the operations listed there are supported, even if the SDK exposes more methods.
 
 ## List calendars and query FreeBusy
 
@@ -76,7 +76,7 @@ Reference: [Google Calendar Node.js client implementation](https://github.com/go
 </TabItem>
 <TabItem label="Python">
 
-Packages: `google-api-python-client` (2.x) and `google-auth`. Setting `static_discovery=True` uses the discovery document bundled with the installed library so constructing the client does not fetch discovery metadata from Google. `api_endpoint` includes the `/calendar/v3/` path.
+Packages: `google-api-python-client` (2.x) and `google-auth`. Setting `static_discovery=True` uses the discovery document bundled with the installed library, so building the client does not fetch discovery metadata from Google. `api_endpoint` includes the `/calendar/v3/` path.
 
 ```python
 import os
@@ -174,7 +174,7 @@ References: [Calendar client](https://pkg.go.dev/google.golang.org/api/calendar/
 </TabItem>
 <TabItem label="Java">
 
-Artifacts: `com.google.apis:google-api-services-calendar`, `com.google.http-client:google-http-client`, and `com.google.http-client:google-http-client-gson`. This example uses Java 11 or newer.
+Artifacts: `com.google.apis:google-api-services-calendar`, `com.google.http-client:google-http-client`, and `com.google.http-client:google-http-client-gson`. This example uses Java 11 or later.
 
 ```java
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -291,6 +291,6 @@ curl --fail-with-body http://127.0.0.1:4173/calendar/v3/freeBusy \
 
 ## Verification status
 
-Only the Bun/TypeScript sample app described in [Connect your app](/calendarpit/connect/) is covered by an automated end-to-end test. The examples on this page, including the TypeScript one, are based on the official client APIs and have not been compiled or run in this repository's CI.
+Only the Bun/TypeScript sample app in [Connect your app](/calendarpit/connect/) has an automated end-to-end test. The examples on this page, including the TypeScript example, follow the official client APIs and have not been compiled or run in this repository's CI.
 
 For common configuration and request errors, see [Troubleshooting](/calendarpit/troubleshooting/).

@@ -7,7 +7,7 @@ Calendarpit stores workspace state in a local SQLite file by default, or in memo
 
 ## Choosing a storage mode
 
-With npm, Homebrew, or a standalone executable, the default file is `.calendarpit/calendarpit.sqlite` inside the directory where you start Calendarpit. Run it from your project directory to keep that project's data together.
+With npm, Homebrew, or a standalone executable, the default file is `.calendarpit/calendarpit.sqlite` in the directory where you start Calendarpit. Run it from your project directory to keep that project's data together.
 
 Use `--database <path>` or `CALENDARPIT_DATABASE` to choose a file or `:memory:`. CLI flags override environment variables. Check prerequisites and publication status in [Installation](/calendarpit/installation/).
 
@@ -23,21 +23,21 @@ npx @iktakahiro/calendarpit@0.9.0 serve --database ./.calendarpit/manual.sqlite
 - **In-memory (`:memory:`):** Writes no database or lock files. All state is discarded when the process exits.
 - **Docker:** The image sets `CALENDARPIT_DATABASE=/data/calendarpit.sqlite`. Mount a named volume with `-v calendarpit-data:/data` to retain data when the container is removed and re-created. Pass `-e CALENDARPIT_DATABASE=:memory:` for a temporary session. The [Compose example](/calendarpit/installation/) also uses a named volume: `docker compose down` preserves data, while `docker compose down -v` deletes it.
 
-You can check the active storage mode and path in:
+Check the active storage mode and path in:
 
-- **Startup log:** The CLI prints `Data   <absolute-path>` (or `Data   :memory:`), and also prints `Calendarpit data: <path or :memory:>` once the server entry loads.
+- **Startup log:** The CLI prints `Data   <absolute-path>` (or `Data   :memory:`), and prints `Calendarpit data: <path or :memory:>` when the server entry loads.
 - **Admin UI:** The sidebar footer shows `SQLite` or `In-memory`; **Settings → Test data** describes the mode and shows the path (or `:memory:`).
 - **Management API:** `GET /__calendarpit/health` returns `storage: "sqlite" | "memory"`, and `GET /__calendarpit/state` returns `storage: { mode, path? }`.
 
 ## What survives a SQLite restart
 
-On `SIGINT` or `SIGTERM`, the Calendarpit process aborts in-flight webhook deliveries, saves state, and releases the database lock. Reopening an existing SQLite file restores saved data and drops short-lived flow state:
+On `SIGINT` or `SIGTERM`, Calendarpit aborts in-flight webhook deliveries, saves state, and releases the database lock. Reopening an existing SQLite file restores saved data and drops short-lived flow state:
 
 | State                                                                                            | SQLite restart behavior                                                                                                |
 | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | Users, calendars, events, OAuth clients                                                          | Restored, including event IDs, timestamps, and etags                                                                   |
 | Calendar-list settings (per-user overrides, colors, hidden/selected, reminders, removed entries) | Restored; cleared by a reset or fixture load                                                                           |
-| Reset baseline (startup fixture)                                                                 | Original seed retained; the contents of a `--config` or `CALENDARPIT_CONFIG` file are ignored                          |
+| Reset baseline (startup fixture)                                                                 | Original seed retained; `--config` and `CALENDARPIT_CONFIG` file contents are ignored                                  |
 | Connections (grants), access and refresh tokens                                                  | Restored; access tokens keep their original expiry, refresh tokens do not expire, and revoked connections stay revoked |
 | Watch channels                                                                                   | Restored if unexpired, the connection is active, and the callback host is still allowed; message numbers are kept      |
 | Request history, delivery log, notifications                                                     | Latest 200 entries of each restored                                                                                    |
@@ -51,8 +51,8 @@ After a restart, refetch calendar state in your app to reconcile [watch notifica
 
 A startup [fixture](/calendarpit/fixtures/) (`--config`, `CALENDARPIT_CONFIG`, or the built-in default) seeds **only a new database**:
 
-- **Existing SQLite file:** Reopens saved data and the original baseline. If `--config` or `CALENDARPIT_CONFIG` is set, the fixture's contents are ignored and do not overwrite an existing database. The file must still exist and contain valid JSON.
-- **In-memory mode:** Every start is a new database, so the startup fixture is applied—and any omitted IDs are regenerated—on every start.
+- **Existing SQLite file:** Reopens saved data and the original baseline. If `--config` or `CALENDARPIT_CONFIG` is set, the fixture's contents are ignored and do not overwrite the database. The file must still exist and contain valid JSON.
+- **In-memory mode:** Every start is a new database, so the startup fixture is applied and any omitted IDs are regenerated on every start.
 - **Reset (`POST /__calendarpit/reset`):** Restores the original startup baseline even after restarts. It clears connections, tokens, codes, consents, watch channels, calendar-list settings, [sync tokens](/calendarpit/sync/), page tokens, calendar tombstones, request history, notifications, and deliveries, and saves immediately. It does not delete the SQLite file or modify the fixture file.
 - **Load fixture (`POST /__calendarpit/fixtures`):** Replaces current data and clears runtime state **without changing the reset baseline**. Subsequent resets still restore the original seed. See [Test control API](/calendarpit/test-control/).
 
@@ -60,4 +60,4 @@ A startup [fixture](/calendarpit/fixtures/) (`--config`, `CALENDARPIT_CONFIG`, o
 
 Only one Calendarpit process can use a SQLite file at a time. Calendarpit holds an exclusive lock on `<db>.lock` while running; a second process on the same file fails at startup with `Database is already in use: <path>. Use a separate path or :memory:.` (the CLI prefixes this with `Calendarpit: `). The OS releases the lock on exit, including after a crash. Give each parallel test worker `--database :memory:` or a separate SQLite file.
 
-SQLite runs in WAL mode. While running, Calendarpit creates `<db>-wal`, `<db>-shm`, `<db>.lock`, and `<db>.lock-journal` sidecar files next to the database. The database, `-wal`, `-shm`, and `.lock` files use mode `0600`, and a database directory that Calendarpit creates gets mode `0700`. Keep sidecar files with the database while running, and stop the server before copying a database file. Because the database contains local test credentials and client secrets, keep it out of Git (in this repository, `.calendarpit/` and the `*.sqlite`, `*.sqlite-wal`, `*.sqlite-shm`, and `*.sqlite.lock` patterns are ignored, while `<db>.lock-journal` is ignored only inside `.calendarpit/`).
+SQLite runs in WAL mode. While running, Calendarpit creates `<db>-wal`, `<db>-shm`, `<db>.lock`, and `<db>.lock-journal` sidecar files next to the database. The database, `-wal`, `-shm`, and `.lock` files use mode `0600`, and any database directory Calendarpit creates uses mode `0700`. Keep sidecar files with the database while running, and stop the server before copying a database file. Because the database contains local test credentials and client secrets, keep it out of Git. In this repository, `.calendarpit/` and the `*.sqlite`, `*.sqlite-wal`, `*.sqlite-shm`, and `*.sqlite.lock` patterns are ignored, while `<db>.lock-journal` is ignored only inside `.calendarpit/`.
