@@ -77,7 +77,7 @@ try {
 
   const health = await request('/__calendarpit/health');
   assert.equal(health.status, 200);
-  assert.equal((await health.json()).stage, 'mvp');
+  assert.equal((await health.json()).stage, 'preview');
   const state = await request('/__calendarpit/state');
   assert.equal((await state.json()).users[0].id, 'smoke-user');
   const page = await request('/');
