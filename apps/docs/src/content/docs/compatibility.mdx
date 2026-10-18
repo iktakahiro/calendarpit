@@ -107,14 +107,28 @@ id, are `404 notFound` on every calendar-list method.
 writable fields: omitted overrides, reminders, and notifications are cleared,
 `hidden` becomes false, and `selected` becomes false, which is Google's
 documented default. A calendar that has never been written stays
-`selected: true`. `colorId` is `1`–`24` and selects Google's calendar palette
-(foreground `#1d1d1d`). `colors.get` is not implemented. `backgroundColor` and
-`foregroundColor` can be written only with `colorRgbFormat=true`; both are
-required, and `colorId` becomes the nearest palette background. Without that
-parameter those fields may only echo the colors already stored. At most five
-default reminders (`email` or `popup`, 0–40320 minutes) and five email
-notification types (`eventCreation`, `eventChange`, `eventCancellation`,
-`eventResponse`, `agenda`) are stored. No reminder or notification email is sent.
+`selected: true`. `colorId` must be a palette id `1`–`24` (foreground
+`#1d1d1d`). Inherited names such as `constructor` are rejected. `colors.get`
+is not implemented. `backgroundColor` and `foregroundColor` can be written
+only with `colorRgbFormat=true`; both are required. Google's patch and update
+reference says that flag sets `colorId` to the best matching palette color
+automatically, and that `colorId` can be ignored when the RGB fields are used,
+so a supplied `colorId` is ignored. That follows those docs and was not checked
+against a live Google response. Without the flag, RGB fields may only repeat
+the colors already stored. Repeating the current `colorId` with those colors
+is the same echo and does not clear a custom color. A different `colorId`
+selects that palette entry and clears custom RGB. At most five default
+reminders (`email` or `popup`, 0–40320 minutes) and five email notification
+types (`eventCreation`, `eventChange`, `eventCancellation`, `eventResponse`,
+`agenda`) are stored. No reminder or notification email is sent.
+`PATCH {"notificationSettings":{}}` leaves the stored notifications unchanged,
+because the `notifications` array was not specified. Google's patch reference
+says omitted fields stay unchanged and that an array overwrites the previous
+array only when it is specified; `method` and `type` are required only when
+adding a notification. An empty `notifications` array, or
+`notificationSettings: null`, clears them. This was not checked against a live
+Google response. `PUT` still clears notifications when the array is omitted,
+including when the object is `{}`.
 
 `minAccessRole` accepts `freeBusyReader`, `reader`, `writer`, and `owner`.
 Every accessible calendar has the owner role, so every valid minimum includes
@@ -124,7 +138,13 @@ a calendar removed from the list, and a calendar deleted through the management
 API. Both use `deleted: true`. `calendarList.delete` removes a non-primary
 owned calendar from the list only. The calendar and its events remain, and
 `get` then returns 404. The primary calendar cannot be removed
-(`403 cannotDeletePrimaryCalendar`). `calendarList.insert` subscribes by id,
+(`403 cannotDeletePrimaryCalendar`). Deleting the primary calendar through the
+management API promotes another calendar that the owner still has on the list. If
+every remaining calendar was removed from the list, the next owned calendar
+becomes primary and is put back on the list, keeping its other list settings.
+Setting `primary: true` through the management API puts that calendar back on
+the list as well, so the primary calendar is never missing from `list` or
+`get`. `calendarList.insert` subscribes by id,
 including `primary`. It restores an owned calendar that was removed, starting
 from the replace defaults plus the body. A calendar already on the list,
 including a hidden one, returns `409 duplicate`; unhide it with patch. Insert

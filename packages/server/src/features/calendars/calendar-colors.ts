@@ -36,6 +36,17 @@ export const calendarColors: Record<
 /** Palette id used when an owned calendar has no stored list color. */
 export const defaultCalendarColorId = '1';
 
+/**
+ * Palette entry for an id `1`–`24`.
+ *
+ * The lookup uses an own property, so inherited names such as `constructor`,
+ * `toString`, and `__proto__` are not colors.
+ */
+export function calendarColor(id: string) {
+  if (!Object.hasOwn(calendarColors, id)) return undefined;
+  return calendarColors[id];
+}
+
 function channel(hex: string, offset: number) {
   return Number.parseInt(hex.slice(offset, offset + 2), 16);
 }

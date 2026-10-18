@@ -120,8 +120,11 @@ cross-origin browser requests are rejected. Use `{}` for bodyless POST controls.
 
 Loading a fixture does **not** replace the startup reset target. User/calendar
 removal cascades to their events; user removal also revokes connections. Deleting
-a primary calendar selects another owned calendar as primary when available.
-Setting another calendar primary transfers the flag atomically.
+a primary calendar selects another owned calendar that is still on the calendar
+list, or the next owned calendar when every remaining calendar was removed from
+the list. The chosen calendar is put back on the list if needed. Setting another
+calendar primary transfers the flag atomically and puts that calendar back on
+the list.
 
 State exports intentionally omit client secrets and credentials; they are
 inspection output, not reloadable fixture files. Keep your original fixture file.

@@ -3,6 +3,7 @@ import type { Calendar } from '../../model/directory';
 import type { Workspace } from '../../workspace/workspace';
 import { interval } from '../events/event-time';
 import { notifyCalendarList, stopChannel } from '../watch/channel-operations';
+import { isDefaultCalendarListSettings } from './calendar-list-entry';
 import { makeCalendar } from './calendar-input';
 
 /**
@@ -34,7 +35,9 @@ export function findCalendar(
  * Keeps the primary invariant: a user's first calendar becomes primary,
  * making another calendar primary demotes the old one, and the primary flag
  * cannot simply be removed. A time zone change is refused when it would give
- * a saved all-day event a non-positive duration.
+ * a saved all-day event a non-positive duration. Making a calendar primary
+ * puts it back on the owner's calendar list when `calendarList.delete` had
+ * removed it, and keeps that entry's other settings.
  *
  * @returns The saved calendar and whether it was created.
  * @throws {@link ApiError} 400 for invalid or immutable fields, an unknown
@@ -78,6 +81,7 @@ export function saveCalendar(
     );
     workspace.data.calendars.push(c);
   }
+  keepPrimaryOnCalendarList(workspace, existing ?? c);
   workspace.touch();
   notifyCalendarList(workspace, c.userId);
   return { calendar: c, created: !existing };
@@ -87,8 +91,10 @@ export function saveCalendar(
  * Deletes a calendar with its events and event watch channels, and keeps a
  * tombstone for `calendarList` with `showDeleted`. Per-user list settings for
  * that calendar are dropped. Calendar-list channels for the owner are
- * notified. When the primary calendar is deleted, the owner's next calendar
- * becomes primary.
+ * notified. When the primary calendar is deleted, another calendar that is
+ * still on the owner's list becomes primary. If every remaining calendar was
+ * removed from the list, the next owned calendar becomes primary and is put
+ * back on the list, keeping its other list settings.
  */
 export function deleteCalendar(workspace: Workspace, existing: Calendar) {
   workspace.deletedCalendars.push(structuredClone(existing));
@@ -103,12 +109,53 @@ export function deleteCalendar(workspace: Workspace, existing: Calendar) {
   );
   for (const c of workspace.channels.values())
     if (c.calendarId === existing.id) stopChannel(workspace, c);
-  if (existing.primary) {
-    const next = workspace.data.calendars.find(
-      (c) => c.userId === existing.userId,
-    );
-    if (next) next.primary = true;
-  }
+  if (existing.primary) promoteNextPrimary(workspace, existing.userId);
   workspace.touch();
   notifyCalendarList(workspace, existing.userId);
+}
+
+/**
+ * Chooses the next primary after the current one is deleted.
+ *
+ * A calendar that is still on the list is preferred, so unsubscribing from a
+ * secondary calendar does not make it primary while another listed calendar
+ * remains. When none remain listed, the first remaining calendar is promoted
+ * and {@link keepPrimaryOnCalendarList} puts it back.
+ */
+function promoteNextPrimary(workspace: Workspace, userId: string) {
+  const peers = workspace.data.calendars.filter((c) => c.userId === userId);
+  const next = peers.find((c) => listedCalendar(workspace, c)) ?? peers[0];
+  if (!next) return;
+  next.primary = true;
+  keepPrimaryOnCalendarList(workspace, next);
+}
+
+/** Whether `calendar` is still on its owner's calendar list. */
+function listedCalendar(workspace: Workspace, calendar: Calendar) {
+  return !workspace.calendarListEntries.some(
+    (entry) =>
+      entry.userId === calendar.userId &&
+      entry.calendarId === calendar.id &&
+      entry.removed,
+  );
+}
+
+/**
+ * Puts a primary calendar back on its owner's list.
+ *
+ * A missing record is already listed. Clearing `removed` keeps the other
+ * per-user settings. The record is dropped when that leaves only defaults.
+ */
+function keepPrimaryOnCalendarList(workspace: Workspace, calendar: Calendar) {
+  if (!calendar.primary) return;
+  const index = workspace.calendarListEntries.findIndex(
+    (entry) =>
+      entry.userId === calendar.userId && entry.calendarId === calendar.id,
+  );
+  if (index < 0) return;
+  const entry = workspace.calendarListEntries[index]!;
+  if (!entry.removed) return;
+  entry.removed = false;
+  if (isDefaultCalendarListSettings(entry))
+    workspace.calendarListEntries.splice(index, 1);
 }

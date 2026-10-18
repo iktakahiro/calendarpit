@@ -158,6 +158,91 @@ describe('calendarList', () => {
       (await s.api(`${list}?syncToken=abc`, 'GET', undefined, 400)).error
         .errors[0].reason,
     ).toBe('unsupportedFeature');
+    const roundTrip = await s.api(`${list}/alex-work`, 'PATCH', echoed);
+    expect(roundTrip.backgroundColor).toBe('#ff0000');
+    expect(roundTrip.colorId).toBe('3');
+    const overridden = await s.api(
+      `${list}/alex-work?colorRgbFormat=true`,
+      'PATCH',
+      {
+        colorId: 'constructor',
+        backgroundColor: '#00ff00',
+        foregroundColor: '#111111',
+      },
+    );
+    expect(overridden.backgroundColor).toBe('#00ff00');
+    expect(overridden.colorId).not.toBe('constructor');
+  });
+
+  test('rejects inherited colorId values without storing them', async () => {
+    const s = await apiClient();
+    const before = await s.api(`${list}/alex-personal`);
+    for (const colorId of ['constructor', 'toString', '__proto__']) {
+      const rejected = await s.api(
+        `${list}/alex-personal`,
+        'PATCH',
+        { colorId },
+        400,
+      );
+      expect(rejected.error.message).toContain('Invalid calendar colorId.');
+    }
+    expect(await s.api(`${list}/alex-personal`)).toEqual(before);
+  });
+
+  test('an empty notificationSettings object does not clear notifications', async () => {
+    const s = await apiClient();
+    await s.api(`${list}/alex-personal`, 'PATCH', {
+      notificationSettings: {
+        notifications: [{ type: 'agenda', method: 'email' }],
+      },
+    });
+    const kept = await s.api(`${list}/alex-personal`, 'PATCH', {
+      notificationSettings: {},
+    });
+    expect(kept.notificationSettings).toEqual({
+      notifications: [{ type: 'agenda', method: 'email' }],
+    });
+    const cleared = await s.api(`${list}/alex-personal`, 'PATCH', {
+      notificationSettings: { notifications: [] },
+    });
+    expect(cleared.notificationSettings).toBeUndefined();
+  });
+
+  test('promoting a removed calendar puts the primary calendar back on the list', async () => {
+    const s = await apiClient();
+    await s.api(`${list}/alex-personal`, 'PATCH', {
+      summaryOverride: 'Home',
+      selected: false,
+    });
+    await s.api(`${list}/alex-personal`, 'DELETE', undefined, 204);
+    await s.api('/__calendarpit/calendars/alex-work', 'DELETE', undefined, 204);
+    const primary = await s.api(`${list}/primary`);
+    expect(primary).toMatchObject({
+      id: 'alex-personal',
+      primary: true,
+      summaryOverride: 'Home',
+      selected: false,
+    });
+    expect(
+      (await s.api(list)).items.map((item: { id: string }) => item.id),
+    ).toEqual(['alex-personal']);
+
+    const again = await apiClient();
+    await again.api(`${list}/alex-personal`, 'PATCH', {
+      summaryOverride: 'Home',
+    });
+    await again.api(`${list}/alex-personal`, 'DELETE', undefined, 204);
+    await again.api('/__calendarpit/calendars/alex-personal', 'PATCH', {
+      primary: true,
+    });
+    expect(await again.api(`${list}/primary`)).toMatchObject({
+      id: 'alex-personal',
+      primary: true,
+      summaryOverride: 'Home',
+    });
+    expect(
+      (await again.api(list)).items.map((item: { id: string }) => item.id),
+    ).toEqual(['alex-work', 'alex-personal']);
   });
 
   test('scopes separate calendar-list reads, writes, and watches', async () => {

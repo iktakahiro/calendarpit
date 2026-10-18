@@ -86,6 +86,11 @@ describe('writeCalendarListSettings', () => {
     ],
     ['an unknown color', { colorId: '25' }, 'Invalid calendar colorId.'],
     [
+      'an inherited color id',
+      { colorId: 'constructor' },
+      'Invalid calendar colorId.',
+    ],
+    [
       'a sixth reminder',
       {
         defaultReminders: Array.from({ length: 6 }, () => ({
@@ -99,9 +104,13 @@ describe('writeCalendarListSettings', () => {
     expect(apiError(() => write(input, true)).message).toContain(message);
   });
 
-  test('colorRgbFormat stores both colors and the nearest palette id', () => {
+  test('colorRgbFormat stores both colors and ignores a stale colorId', () => {
     const next = write(
-      { backgroundColor: '#FF0000', foregroundColor: '#ffffff' },
+      {
+        colorId: '1',
+        backgroundColor: '#FF0000',
+        foregroundColor: '#ffffff',
+      },
       true,
       true,
     );
@@ -111,5 +120,41 @@ describe('writeCalendarListSettings', () => {
     const entry = calendarListEntry(calendar, next);
     expect(entry.backgroundColor).toBe('#ff0000');
     expect(entry.etag).toBe(calendarListEntry(calendar, next).etag);
+    const echoed = write(
+      {
+        colorId: entry.colorId,
+        backgroundColor: entry.backgroundColor,
+        foregroundColor: entry.foregroundColor,
+        summaryOverride: 'Desk',
+      },
+      true,
+      false,
+      next,
+    );
+    expect(echoed.backgroundColor).toBe('#ff0000');
+    expect(echoed.colorId).toBe('3');
+    expect(echoed.summaryOverride).toBe('Desk');
+  });
+
+  test('an empty notificationSettings object leaves the array unchanged', () => {
+    const current = write(
+      {
+        notificationSettings: {
+          notifications: [{ type: 'agenda', method: 'email' }],
+        },
+      },
+      true,
+    );
+    const kept = write({ notificationSettings: {} }, true, false, current);
+    expect(kept.notificationSettings).toEqual(current.notificationSettings);
+    const cleared = write(
+      { notificationSettings: { notifications: [] } },
+      true,
+      false,
+      current,
+    );
+    expect(cleared.notificationSettings).toBeUndefined();
+    const replaced = write({ notificationSettings: {} }, false, false, current);
+    expect(replaced.notificationSettings).toBeUndefined();
   });
 });

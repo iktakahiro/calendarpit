@@ -8,7 +8,7 @@ import type {
 } from '../../model/calendar-list';
 import type { Calendar } from '../../model/directory';
 import {
-  calendarColors,
+  calendarColor,
   defaultCalendarColorId,
   nearestCalendarColorId,
 } from './calendar-colors';
@@ -94,9 +94,10 @@ export function displayedCalendarColors(
     'colorId' | 'backgroundColor' | 'foregroundColor'
   >,
 ) {
-  const palette = calendarColors[settings.colorId] ?? calendarColors['1']!;
+  const known = calendarColor(settings.colorId);
+  const palette = known ?? calendarColor(defaultCalendarColorId)!;
   return {
-    colorId: settings.colorId,
+    colorId: known ? settings.colorId : defaultCalendarColorId,
     backgroundColor: settings.backgroundColor ?? palette.background,
     foregroundColor: settings.foregroundColor ?? palette.foreground,
   };
@@ -219,8 +220,15 @@ export type CalendarListWrite = {
  * `summaryOverride`, reminders, and notifications are cleared, `hidden` becomes
  * false, `selected` becomes false, and `colorId` returns to palette `1` unless
  * a color was supplied. `null` clears `summaryOverride`, `defaultReminders`,
- * and `notificationSettings`. Read-only fields may be echoed only when they
- * equal the current entry, so a client can send a resource it just fetched.
+ * and `notificationSettings`. An empty `notificationSettings` object leaves
+ * the notifications array unchanged, because that array was not specified.
+ * Read-only fields may be echoed only when they equal the current entry, so a
+ * client can send a resource it just fetched. Repeating the current `colorId`
+ * with the stored RGB colors is the same kind of echo.
+ *
+ * With `colorRgbFormat`, both RGB colors are required and a supplied `colorId`
+ * is ignored. Google's reference says the flag sets `colorId` to the nearest
+ * palette color automatically.
  *
  * @throws {@link ApiError} 400 when a field is unknown, read-only and different,
  * or an invalid color, reminder, or notification. `backgroundColor` and
@@ -335,6 +343,9 @@ function applyNotifications(settings: CalendarListSettings, value: unknown) {
   }
   const body = object(value);
   fields(body, ['notifications']);
+  // Patch replaces an array only when the request specifies it. An empty
+  // notificationSettings object therefore leaves the stored list unchanged.
+  if (body.notifications === undefined) return;
   if (!Array.isArray(body.notifications) || body.notifications.length > 5)
     fail('At most five calendar notifications are supported.');
   const notifications = body.notifications.map((item) => {
@@ -381,16 +392,20 @@ function applyColors(
       fail('colorRgbFormat=true requires backgroundColor and foregroundColor.');
     const backgroundColor = hexColor(input.backgroundColor, 'backgroundColor');
     const foregroundColor = hexColor(input.foregroundColor, 'foregroundColor');
-    const colorId = nearestCalendarColorId(backgroundColor);
-    if (input.colorId !== undefined && input.colorId !== colorId)
-      fail('colorId is derived from backgroundColor when colorRgbFormat=true.');
-    settings.colorId = colorId;
+    // Google's colorRgbFormat parameter sets colorId automatically. A stale
+    // or unknown colorId in the same body is ignored.
+    settings.colorId = nearestCalendarColorId(backgroundColor);
     settings.backgroundColor = backgroundColor;
     settings.foregroundColor = foregroundColor;
     return;
   }
+  const mentionsColor =
+    input.colorId !== undefined ||
+    input.backgroundColor !== undefined ||
+    input.foregroundColor !== undefined;
+  if (mentionsColor && colorsEcho(settings, input)) return;
   if ('colorId' in input) {
-    if (typeof input.colorId !== 'string' || !calendarColors[input.colorId])
+    if (typeof input.colorId !== 'string' || !calendarColor(input.colorId))
       fail('Invalid calendar colorId.');
     settings.colorId = input.colorId;
     delete settings.backgroundColor;
@@ -415,4 +430,19 @@ function applyColors(
 
 function sameColor(value: unknown, expected: string) {
   return typeof value === 'string' && value.toLowerCase() === expected;
+}
+
+/** Whether the color fields in `input` only repeat what `settings` already shows. */
+function colorsEcho(
+  settings: CalendarListSettings,
+  input: Record<string, unknown>,
+) {
+  const current = displayedCalendarColors(settings);
+  return (
+    (input.colorId === undefined || input.colorId === current.colorId) &&
+    (input.backgroundColor === undefined ||
+      sameColor(input.backgroundColor, current.backgroundColor)) &&
+    (input.foregroundColor === undefined ||
+      sameColor(input.foregroundColor, current.foregroundColor))
+  );
 }
