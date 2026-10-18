@@ -81,7 +81,7 @@ const auth = new OAuth2Client({
   },
 });
 const api = calendar({ version: 'v3', auth, rootUrl: origin });
-// コールバックの後: auth.setCredentials((await auth.getToken(code)).tokens)
+// After the callback: auth.setCredentials((await auth.getToken(code)).tokens)
 const profile = await auth.request({ url: `${origin}/userinfo` });
 const calendars = await api.calendarList.list();
 const { data } = await api.freebusy.query({
@@ -106,10 +106,13 @@ console.log(data.calendars?.primary?.busy);
 
 ## 参考実装のサンプルアプリ
 
-リポジトリには、`@googleapis/calendar` と `google-auth-library` を使って Calendarpit に接続するサンプルアプリが含まれています。リポジトリをクローンして依存関係をインストールしたら ([クイックスタート](/calendarpit/ja/quick-start/) を参照)、Calendarpit とサンプルアプリを別々のターミナルで起動します。
+リポジトリには、`@googleapis/calendar` と `google-auth-library` を使う任意のサンプルアプリがあります。Calendarpit の配布パッケージには含まれません。自分のアプリを接続する場合は不要です。試す場合は、[開発ガイド](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md)に従ってサンプル用のチェックアウトを用意し、別々のターミナルで実行してください。
 
 ```sh
-bun run dev
+# Terminal 1: start the packaged server
+npx @iktakahiro/calendarpit@0.9.0 serve
+
+# Terminal 2: from the prepared source checkout
 bun run sample:dev
 ```
 

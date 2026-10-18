@@ -61,30 +61,30 @@ The built-in test client is `sample-app` / `local-sample-secret`, with callback
 Calendar API, and revocation endpoints and blocks real Google requests. See
 [Connect your app](apps/docs/src/content/docs/connect.mdx) for consuming-app configuration.
 
-For reproducible custom data in a temporary session:
+Save the JSON example from [Fixtures](apps/docs/src/content/docs/fixtures.mdx) as
+`calendarpit.fixture.json`, then start a temporary session from that directory:
 
 ```sh
-CALENDARPIT_DATABASE=:memory: CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev
+npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --config ./calendarpit.fixture.json
 ```
 
-Use absolute fixture paths with workspace commands. Loading a fixture replaces
+Relative fixture paths resolve from the directory where you start the CLI. Loading a fixture replaces
 current data; reset always restores the startup fixture and clears credentials,
 history and watch state. See [Fixtures](apps/docs/src/content/docs/fixtures.mdx) and [Test control API](apps/docs/src/content/docs/test-control.mdx).
 
 ## Data storage
 
-Normal development and CLI runs save changes to `.calendarpit/calendarpit.sqlite`
-relative to the application's working directory. With `bun run dev` or `bun run start`
-from this repository, that is `apps/calendarpit/.calendarpit/calendarpit.sqlite`.
+npm, Homebrew, and standalone CLI runs save changes to
+`.calendarpit/calendarpit.sqlite` in the directory where you start Calendarpit.
+Run from your project directory, or pass an explicit database path.
 The startup log and **Settings → Test data → Storage** show the actual path.
 
 ```sh
-# Temporary E2E session; no files are written
-CALENDARPIT_DATABASE=:memory: bun run dev
-bun run start -- --database :memory: --port 0
+# Temporary E2E session; no database files are written
+npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0
 
-# Choose a persistent workspace (use an absolute path with workspace scripts)
-bun run start -- --database "$PWD/.calendarpit/manual.sqlite"
+# Choose a persistent workspace
+npx @iktakahiro/calendarpit@0.9.0 serve --database ./.calendarpit/manual.sqlite
 ```
 
 Existing databases reopen their saved data, connections, tokens, watch channels,
@@ -125,7 +125,9 @@ New dependency resolutions require a minimum release age of 48 hours via
 `bunfig.toml`. npm-check-updates uses the matching two-day cooldown in
 `.ncurc.json`. Existing locked versions are not re-evaluated by this policy.
 
-## Commands
+## Contributor commands
+
+These commands require a source checkout and the [development setup](docs/development.md).
 
 | Command                        | Purpose                                                         |
 | ------------------------------ | --------------------------------------------------------------- |
@@ -142,42 +144,57 @@ New dependency resolutions require a minimum release age of 48 hours via
 
 ## CLI and executable
 
-```sh
-bun run build
-bun apps/calendarpit/bin/calendarpit.ts --help
-bun apps/calendarpit/bin/calendarpit.ts serve --port 4173
+After installing with Homebrew or placing a standalone executable on your `PATH`:
 
-bun run build:binary
-./apps/calendarpit/dist/bin/calendarpit --port 4173
+```sh
+calendarpit --help
+calendarpit --version
+calendarpit serve --port 4173 --database :memory:
 ```
 
-The executable embeds the server, client JavaScript/CSS, icons, and Bun
-runtime. It does not need `node_modules` or a separate asset directory at runtime.
-The admin UI loads Roboto Mono from Google Fonts and falls back to
-system fonts when unavailable. Calendar and OAuth operations remain local.
-Compilation defaults to the build host. The release workflow builds and tests
-macOS arm64/x64, Linux glibc arm64/x64, and Windows x64 artifacts. On Windows the output has an `.exe`
-suffix.
+npm/npx, Homebrew, and standalone downloads run the same embedded executable.
+It includes the server, admin UI assets, and Bun runtime. The npm launcher needs
+Node.js 22 or later; Homebrew and standalone executables need no separate runtime.
+Releases target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64.
+See [installation](apps/docs/src/content/docs/installation.mdx) for downloads,
+checksums, and upgrades, and [Run and configure](apps/docs/src/content/docs/running.mdx)
+for all flags and environment variables.
 
 The default bind address is `127.0.0.1`. Use `--host` explicitly to change it.
-`CALENDARPIT_HOST` and `CALENDARPIT_PORT` provide environment defaults; CLI flags
-win. Port `0` requests an available port, which is printed on startup. Source CLI
-execution requires Bun and a completed build; `--help` and `--version` do not.
+CLI flags take precedence over `CALENDARPIT_*` environment variables. Port `0`
+requests an available port, which is printed on startup. The admin UI loads
+Roboto Mono from Google Fonts with system-font fallbacks; Calendar and OAuth
+operations remain local.
 
-## Docker (optional)
+## Docker Compose
 
-Build a local image from a source checkout, or use the versioned GHCR image
-after publication. The release workflow validates both Linux architectures.
+After the image is published, add this service to your project's `compose.yaml`:
 
-```sh
-docker build -t calendarpit:local .
-docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
+```yaml
+services:
+  calendarpit:
+    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    ports:
+      - '127.0.0.1:4173:4173'
+    volumes:
+      - calendarpit-data:/data
+
+volumes:
+  calendarpit-data:
 ```
 
-The container explicitly binds `0.0.0.0` inside its own network namespace; the
-published host port above remains loopback-only. The runtime image runs as a
-non-root user. The named volume preserves `/data/calendarpit.sqlite` across restarts.
-Use `-e CALENDARPIT_DATABASE=:memory:` for a temporary container session.
+```sh
+docker compose up -d calendarpit
+docker compose logs calendarpit
+docker compose down
+```
+
+The container binds `0.0.0.0` internally and runs as a non-root user. The host
+port stays on loopback. The named volume preserves `/data/calendarpit.sqlite`;
+`docker compose down -v` deletes it. Use `CALENDARPIT_DATABASE=:memory:` for
+disposable tests. Browsers use `http://127.0.0.1:4173`; another Compose service
+uses `http://calendarpit:4173`. See [installation](apps/docs/src/content/docs/installation.mdx)
+for OAuth and webhook networking.
 
 ## Development conventions
 

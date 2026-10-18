@@ -7,34 +7,31 @@ Calendarpit stores workspace state in a local SQLite file by default, or in memo
 
 ## Choosing a storage mode
 
-By default, the CLI and dev server write to `.calendarpit/calendarpit.sqlite` relative to the process working directory. When you run `bun run dev` or `bun run start` from the repository root, the working directory is `apps/calendarpit`, so the default file is `apps/calendarpit/.calendarpit/calendarpit.sqlite`.
+With npm, Homebrew, or a standalone executable, the default file is `.calendarpit/calendarpit.sqlite` inside the directory where you start Calendarpit. Run it from your project directory to keep that project's data together.
 
-Use `--database <path>` or `CALENDARPIT_DATABASE` to choose a file or `:memory:`. CLI flags override environment variables (`bun run dev` does not accept Calendarpit CLI flags, so set `CALENDARPIT_DATABASE` instead; see [Run and configure](/calendarpit/running/)).
+Use `--database <path>` or `CALENDARPIT_DATABASE` to choose a file or `:memory:`. CLI flags override environment variables. Check prerequisites and publication status in [Installation](/calendarpit/installation/).
 
 ```sh
-# Temporary E2E session; no files are written
-CALENDARPIT_DATABASE=:memory: bun run dev
+# Temporary E2E session; no database files are written
+npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0
 
-bun run build
-bun run start -- --database :memory: --port 0
-
-# Choose a persistent workspace (use an absolute path with workspace scripts)
-bun run start -- --database "$PWD/.calendarpit/manual.sqlite"
+# Choose a persistent workspace
+npx @iktakahiro/calendarpit@0.9.0 serve --database ./.calendarpit/manual.sqlite
 ```
 
 - **SQLite file (default):** Saves changes after each request that modifies state and after each webhook delivery finishes. Relative paths resolve against the working directory.
 - **In-memory (`:memory:`):** Writes no database or lock files. All state is discarded when the process exits.
-- **Docker:** The `Dockerfile` sets `CALENDARPIT_DATABASE=/data/calendarpit.sqlite` and declares `/data` as a volume. Mount `-v calendarpit-data:/data` to keep data when the container is removed and re-created (for example with `--rm`), or pass `-e CALENDARPIT_DATABASE=:memory:` for a temporary session (container build and startup validation are still pending).
+- **Docker:** The image sets `CALENDARPIT_DATABASE=/data/calendarpit.sqlite`. Mount a named volume with `-v calendarpit-data:/data` to retain data when the container is removed and re-created. Pass `-e CALENDARPIT_DATABASE=:memory:` for a temporary session. The [Compose example](/calendarpit/installation/) also uses a named volume: `docker compose down` preserves data, while `docker compose down -v` deletes it.
 
 You can check the active storage mode and path in:
 
-- **Startup log:** The CLI prints `Data   <absolute-path>` (or `Data   :memory:`); the CLI and `bun run dev` also print `Calendarpit data: <path or :memory:>` once the server entry loads.
+- **Startup log:** The CLI prints `Data   <absolute-path>` (or `Data   :memory:`), and also prints `Calendarpit data: <path or :memory:>` once the server entry loads.
 - **Admin UI:** The sidebar footer shows `SQLite` or `In-memory`; **Settings → Test data** describes the mode and shows the path (or `:memory:`).
 - **Management API:** `GET /__calendarpit/health` returns `storage: "sqlite" | "memory"`, and `GET /__calendarpit/state` returns `storage: { mode, path? }`.
 
 ## What survives a SQLite restart
 
-On `SIGINT` or `SIGTERM`, the CLI (`bun run start` or the standalone executable) aborts in-flight webhook deliveries, saves state, and releases the database lock. Reopening an existing SQLite file restores saved data and drops short-lived flow state:
+On `SIGINT` or `SIGTERM`, the Calendarpit process aborts in-flight webhook deliveries, saves state, and releases the database lock. Reopening an existing SQLite file restores saved data and drops short-lived flow state:
 
 | State                                                                                            | SQLite restart behavior                                                                                                |
 | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |

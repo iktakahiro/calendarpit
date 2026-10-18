@@ -7,34 +7,31 @@ Calendarpit は、デフォルトではワークスペースの状態をロー�
 
 ## ストレージモードの選び方
 
-デフォルトでは、CLI と開発サーバーはプロセスの作業ディレクトリを基準にした `.calendarpit/calendarpit.sqlite` に書き込みます。リポジトリのルートで `bun run dev` または `bun run start` を実行した場合、作業ディレクトリは `apps/calendarpit` になります。そのため、デフォルトのファイルは `apps/calendarpit/.calendarpit/calendarpit.sqlite` です。
+npm、Homebrew、単体実行ファイルでは、デフォルトで起動したディレクトリ内の `.calendarpit/calendarpit.sqlite` に保存します。プロジェクトのディレクトリから起動すると、そのプロジェクトごとにデータを保持できます。
 
-ファイルや `:memory:` を指定するには、`--database <path>` または `CALENDARPIT_DATABASE` を使います。CLI フラグは環境変数より優先されます。`bun run dev` は Calendarpit の CLI フラグを受け付けないため、代わりに `CALENDARPIT_DATABASE` を設定してください（[実行と設定](/calendarpit/ja/running/)を参照）。
+保存先や `:memory:` は `--database <path>` または `CALENDARPIT_DATABASE` で指定します。CLI フラグは環境変数より優先されます。[インストール](/calendarpit/ja/installation/)で必要な環境と公開状況を確認してください。
 
 ```sh
-# 一時的な E2E セッション。ファイルは書き込まれません
-CALENDARPIT_DATABASE=:memory: bun run dev
+# Temporary E2E session; no database files are written
+npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0
 
-bun run build
-bun run start -- --database :memory: --port 0
-
-# 永続的なワークスペースを指定します（ワークスペーススクリプトでは絶対パスを使ってください）
-bun run start -- --database "$PWD/.calendarpit/manual.sqlite"
+# Choose a persistent workspace
+npx @iktakahiro/calendarpit@0.9.0 serve --database ./.calendarpit/manual.sqlite
 ```
 
 - **SQLite ファイル（デフォルト）:** 状態を変更するリクエストのたびに、また Webhook の配信が終わるたびに変更を保存します。相対パスは作業ディレクトリを基準に解決されます。
 - **インメモリ（`:memory:`）:** データベースファイルもロックファイルも書き込みません。プロセスが終了すると、すべての状態が破棄されます。
-- **Docker:** `Dockerfile` は `CALENDARPIT_DATABASE=/data/calendarpit.sqlite` を設定し、`/data` をボリュームとして宣言しています。コンテナを削除して作り直す場合（`--rm` を使う場合など）にデータを残すには、`-v calendarpit-data:/data` をマウントしてください。一時的なセッションにするには `-e CALENDARPIT_DATABASE=:memory:` を渡します。なお、コンテナのビルドと起動の検証はまだ終わっていません。
+- **Docker:** イメージは `CALENDARPIT_DATABASE=/data/calendarpit.sqlite` を設定しています。`-v calendarpit-data:/data` で名前付きボリュームをマウントすると、コンテナを削除して作り直してもデータが残ります。一時的なセッションには `-e CALENDARPIT_DATABASE=:memory:` を渡します。[Compose の例](/calendarpit/ja/installation/)も名前付きボリュームを使います。`docker compose down` ではデータが残り、`docker compose down -v` では削除されます。
 
 使用中のストレージモードとパスは、次の場所で確認できます。
 
-- **起動ログ:** CLI は `Data   <absolute-path>`（または `Data   :memory:`）を出力します。CLI と `bun run dev` は、サーバーのエントリが読み込まれた時点で `Calendarpit data: <path or :memory:>` も出力します。
+- **起動ログ:** CLI は `Data   <absolute-path>`（または `Data   :memory:`）を出力します。サーバーのエントリが読み込まれた時点で `Calendarpit data: <path or :memory:>` も出力します。
 - **管理画面:** サイドバーのフッターに `SQLite` または `In-memory` が表示されます。**Settings → Test data** には、モードの説明とパス（または `:memory:`）が表示されます。
 - **管理 API:** `GET /__calendarpit/health` は `storage: "sqlite" | "memory"` を返します。`GET /__calendarpit/state` は `storage: { mode, path? }` を返します。
 
 ## SQLite の再起動後に残るデータ
 
-CLI（`bun run start` または単体実行ファイル）は、`SIGINT` または `SIGTERM` を受け取ると、処理中の Webhook 配信を中断し、状態を保存してから、データベースのロックを解放します。既存の SQLite ファイルを開き直すと、保存済みのデータが復元され、短時間しか使わないフローの状態は破棄されます。
+Calendarpit のプロセスは、`SIGINT` または `SIGTERM` を受け取ると、処理中の Webhook 配信を中断し、状態を保存してから、データベースのロックを解放します。既存の SQLite ファイルを開き直すと、保存済みのデータが復元され、短時間しか使わないフローの状態は破棄されます。
 
 | 状態                                                                                                | SQLite の再起動後の扱い                                                                                                                  |
 | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |

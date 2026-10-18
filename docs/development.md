@@ -22,6 +22,14 @@ workspace scripts. Use `CALENDARPIT_DATABASE=:memory: bun run dev` for disposabl
 data, or `bun run start -- --database :memory:` after building. Server hot reloads
 close the previous workspace before reopening the saved database.
 
+`bun run dev` always binds to `127.0.0.1:4173` with a strict port check.
+It does not accept Calendarpit CLI flags, `CALENDARPIT_HOST`, or `CALENDARPIT_PORT`;
+use the built CLI for a custom host or port. The dev server passes through
+`CALENDARPIT_DATABASE`, `CALENDARPIT_CONFIG`, and `CALENDARPIT_WATCH_HOSTS`.
+Workspace commands run from `apps/calendarpit`, so use absolute fixture paths
+such as `CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev` when invoking
+them from the repository root.
+
 Run `bun run docs:dev` for the documentation preview at
 `http://127.0.0.1:4487/calendarpit/`. The docs are an Astro Starlight site.
 `bun run docs:check` builds it and fails on broken internal links or anchors.

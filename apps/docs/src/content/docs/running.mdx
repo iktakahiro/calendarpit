@@ -3,34 +3,26 @@ title: Run and configure
 description: Ways to start Calendarpit, command-line options, environment variables, Docker setup, and the admin UI.
 ---
 
-Calendarpit serves the API, OAuth, and admin UI from one origin. See [Installation](/calendarpit/installation/) for npm, Docker Compose, Homebrew, standalone downloads, and publication status. The source commands below require a checkout and dependencies installed using the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md).
+Calendarpit serves the API, OAuth, and admin UI from one origin. See [Installation](/calendarpit/installation/) for prerequisites, supported platforms, and 0.9.0 publication status. The commands below use the packaged distribution; no source checkout or build is needed.
 
 ## Ways to run Calendarpit
 
-### Development server
+### npm and the installed CLI
 
-Use `bun run dev` when you want a local server on the default address (`http://127.0.0.1:4173`).
-
-```sh
-bun run dev
-CALENDARPIT_DATABASE=:memory: bun run dev
-```
-
-`bun run dev` always binds to `127.0.0.1:4173` with a strict port check. Command-line flags, `CALENDARPIT_HOST`, and `CALENDARPIT_PORT` do not apply to `bun run dev`. Only `CALENDARPIT_DATABASE`, `CALENDARPIT_CONFIG`, and `CALENDARPIT_WATCH_HOSTS` are passed through.
-
-### Built server
-
-Use `bun run build` and `bun run start` when you need CLI flags, a custom port, or an OS-assigned port (`--port 0`) in local scripts or CI. Running `start` before `build` exits with `Calendarpit: Build the application first with "bun run build".`
-
-Pass CLI flags after `--`, or run the CLI entry directly with Bun:
+Start with Node.js 22 or later:
 
 ```sh
-bun run build
-bun run start -- --port 0 --database :memory:
-bun apps/calendarpit/bin/calendarpit.ts serve --port 4173
+npx @iktakahiro/calendarpit@0.9.0 serve
 ```
 
-When the built server starts, it prints the storage mode and the resolved URLs:
+Pass options directly after the package name, for example `npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0`. If you installed with Homebrew or put a standalone executable on your `PATH`, use `calendarpit` instead:
+
+```sh
+calendarpit serve --port 4173
+calendarpit serve --port 0 --database :memory:
+```
+
+These are alternative startup commands; run one server per database file. Port `0` lets the OS choose an available port. Read the actual URLs in the startup output:
 
 ```text
 Calendarpit data: :memory:
@@ -42,27 +34,25 @@ API    http://127.0.0.1:38425/calendar/v3
 Health http://127.0.0.1:38425/__calendarpit/health
 ```
 
-### Standalone executable
+The packaged executable includes the server, admin UI assets, and Bun runtime. npm needs Node.js for its launcher; Homebrew and standalone downloads need neither Node.js nor Bun. Stop the server with Ctrl+C.
 
-Use `bun run build:binary` to compile a single executable at `apps/calendarpit/dist/bin/calendarpit` (with `.exe` on Windows). You can copy this file to another directory or test runner on the same machine.
-
-```sh
-bun run build:binary
-./apps/calendarpit/dist/bin/calendarpit serve --port 4173 --database :memory:
-```
-
-The standalone executable embeds the server, client JavaScript and CSS assets, icons, and the Bun runtime. It does not need `node_modules` or a separate asset directory at runtime. The build defaults to the host platform. Release builds also target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64.
-
-### Docker
-
-See [Installation](/calendarpit/installation/) for the published image and Compose configuration. To build from a checkout:
+### Docker and Compose
 
 ```sh
-docker build -t calendarpit:local .
-docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data calendarpit:local
+docker run --rm \
+  -p 127.0.0.1:4173:4173 \
+  -v calendarpit-data:/data \
+  ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-The container runs as a non-root user with explicit `CALENDARPIT_HOST=0.0.0.0` and `CALENDARPIT_PORT=4173`. These environment defaults remain active when you supply CLI arguments. SQLite is stored at `/data/calendarpit.sqlite`.
+The container runs as a non-root user with `CALENDARPIT_HOST=0.0.0.0` and `CALENDARPIT_PORT=4173`. SQLite is stored at `/data/calendarpit.sqlite`. The published host port stays on loopback. Add environment variables with `-e` before the image name, or CLI flags after it:
+
+```sh
+docker run --rm -p 127.0.0.1:4173:4173 \
+  ghcr.io/iktakahiro/calendarpit:0.9.0 serve --database :memory:
+```
+
+See [Installation](/calendarpit/installation/) for a Compose service, health checks, and host/container addresses. Use [Fixtures](/calendarpit/fixtures/) to mount a startup configuration. Source development instructions live in the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md).
 
 ## Command-line options and environment variables
 
@@ -73,11 +63,11 @@ Command-line flags take precedence over environment variables.
 | CLI option          | Environment variable   | Default                           | Description                                                                                                                                                                                                            |
 | ------------------- | ---------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--host <host>`     | `CALENDARPIT_HOST`     | `127.0.0.1`                       | Bind address. Non-loopback addresses (`0.0.0.0`, `::`) must be set explicitly.                                                                                                                                         |
-| `-p`, `--port <n>`  | `CALENDARPIT_PORT`     | `4173`                            | Listen port (`0`–`65535`). Use `0` to let the OS choose a free port; the assigned port appears in the startup output. Avoid `4175` if you also run `bun run sample:dev`.                                               |
+| `-p`, `--port <n>`  | `CALENDARPIT_PORT`     | `4173`                            | Listen port (`0`–`65535`). Use `0` to let the OS choose a free port; the assigned port appears in the startup output. Avoid `4175` if you also run the reference sample app.                                           |
 | `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/calendarpit/storage/).                                                                                        |
 | `--config <path>`   | `CALENDARPIT_CONFIG`   | Built-in fixture                  | Path to a JSON startup fixture. The file must exist and contain valid JSON. Seeds a new database or `:memory:` session; silently ignored when opening an existing SQLite file. See [Fixtures](/calendarpit/fixtures/). |
-| `-h`, `--help`      | —                      | —                                 | Print help and exit. Works without a build.                                                                                                                                                                            |
-| `-v`, `--version`   | —                      | —                                 | Print `0.9.0` and exit. Works without a build.                                                                                                                                                                         |
+| `-h`, `--help`      | —                      | —                                 | Print help and exit.                                                                                                                                                                                                   |
+| `-v`, `--version`   | —                      | —                                 | Print `0.9.0` and exit.                                                                                                                                                                                                |
 
 ### Additional environment variables
 
@@ -88,7 +78,7 @@ Command-line flags take precedence over environment variables.
 ### Loopback binding and working directory
 
 - **Loopback by default**: Calendarpit binds to `127.0.0.1` unless you pass `--host` or `CALENDARPIT_HOST`. The admin UI and [test control API](/calendarpit/test-control/) have no authentication, so binding to `0.0.0.0` exposes them to other machines on your network.
-- **Relative paths in workspace scripts**: `bun run dev` and `bun run start` execute with `apps/calendarpit` as their working directory. Relative paths in `--database`, `CALENDARPIT_DATABASE`, `--config`, and `CALENDARPIT_CONFIG` resolve from `apps/calendarpit` (so the default SQLite path is `apps/calendarpit/.calendarpit/calendarpit.sqlite`). When you run the CLI entry directly, relative paths resolve from your current directory. Use absolute paths such as `"$PWD/fixtures/default.json"` when running workspace commands from the repository root. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
+- **Relative paths**: With npm, Homebrew, and standalone executables, paths in `--database` and `--config` (or their environment variables) resolve from the directory where you start Calendarpit. Run it from your project directory or use absolute paths. Docker uses paths inside the container; mount host files before referencing them. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
 
 ## Admin UI
 

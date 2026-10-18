@@ -11,18 +11,26 @@ Setting explicit `id` values in your fixture gives your tests fixed user IDs, ca
 
 Pass a fixture file path with the `--config` CLI flag or the `CALENDARPIT_CONFIG` environment variable. If you omit both, Calendarpit loads a built-in default fixture that is identical to `fixtures/default.json` in the repository (users `alex` and `sam`, calendars `alex-work`, `alex-personal`, and `sam-work`, one `planning` event, and the `sample-app` OAuth client).
 
-Copy `fixtures/default.json` and edit it for your test:
+Save the JSON example below as `calendarpit.fixture.json` and edit it for your test. Check prerequisites and publication status in [Installation](/calendarpit/installation/), then start from the directory containing the file:
 
 ```sh
-# Option 1: run the dev server
-CALENDARPIT_DATABASE=:memory: CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev
-
-# Option 2: build and run the server
-bun run build
-bun run start -- --database :memory: --config "$PWD/fixtures/default.json" --port 4173
+npx @iktakahiro/calendarpit@0.9.0 serve \
+  --database :memory: --config ./calendarpit.fixture.json
 ```
 
-Calendarpit reads the `--config` or `CALENDARPIT_CONFIG` path relative to the process working directory. For repository workspace scripts (`bun run dev` and `bun run start`), use an **absolute path** such as `"$PWD/fixtures/default.json"`, since the application runs from `apps/calendarpit`. See [Run and configure](/calendarpit/running/) for all startup options.
+Relative `--config` and `CALENDARPIT_CONFIG` paths resolve from the directory where you start Calendarpit. With an installed CLI, replace `npx @iktakahiro/calendarpit@0.9.0` with `calendarpit`.
+
+In Docker, mount the existing file read-only and use its container path. This command uses POSIX shell syntax:
+
+```sh
+docker run --rm -p 127.0.0.1:4173:4173 \
+  --mount "type=bind,source=$PWD/calendarpit.fixture.json,target=/fixtures/startup.json,readonly" \
+  -e CALENDARPIT_CONFIG=/fixtures/startup.json \
+  -e CALENDARPIT_DATABASE=:memory: \
+  ghcr.io/iktakahiro/calendarpit:0.9.0
+```
+
+For Compose, add `./calendarpit.fixture.json:/fixtures/startup.json:ro` to the service's `volumes` and set `CALENDARPIT_CONFIG: /fixtures/startup.json` in `environment`. The host file must be readable by the container's non-root user. See [Run and configure](/calendarpit/running/) for startup options.
 
 A startup fixture seeds only a **new, empty** database:
 
