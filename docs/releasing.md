@@ -90,7 +90,8 @@ If publication fails, rerun the failed job using the same artifacts. Never
 silently replace a public release or rebuild and overwrite its assets.
 `.github/workflows/publish-prepared.yml` can resume an existing reviewed draft
 from `main`: supply its version tag. It validates the draft's complete archive
-checksums, builds the container from the existing tag, and publishes the draft.
+checksums, builds and smoke-tests each container on its native CPU runner from
+the existing tag, combines the image manifests, and publishes the draft.
 It does not build native archives, publish npm packages, or update the tap.
 Update the tap separately after this recovery workflow succeeds.
 
