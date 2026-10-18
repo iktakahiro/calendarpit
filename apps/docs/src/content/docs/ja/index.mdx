@@ -9,8 +9,141 @@ head:
 editUrl: false
 prev: false
 next: false
+eyebrow: ローカル API・OAuth サーバー
+hero:
+  title: テスト用のローカル Google Calendar API
+  tagline: Google Calendar API v3 とローカル OAuth が 1 つのプロセスで動きます。Google アカウントや外部通信なしで開発・テストできます。
+  actions:
+    - text: クイックスタート
+      link: /calendarpit/ja/quick-start/
+      icon: right-arrow
+    - text: GitHub で見る
+      link: https://github.com/iktakahiro/calendarpit
+      icon: external
+      variant: secondary
 ---
 
-import Landing from '../../../components/landing/Landing.astro';
+import {
+  Card,
+  CardGrid,
+  Code,
+  LinkButton,
+  LinkCard,
+  Steps,
+  TabItem,
+  Tabs,
+} from '@astrojs/starlight/components';
 
-<Landing locale='ja' />
+## ローカルサーバーでテストする理由
+
+<CardGrid>
+  <Card title="実際の Google に接続する場合" icon="warning">
+
+    - Google アカウント、Cloud プロジェクト、OAuth の事前設定が必要
+    - ネットワーク接続や共有の API クォータに左右される
+    - 共有カレンダーのデータがテストごとに変わり、同じ状態を再現しにくい
+
+  </Card>
+  <Card title="Calendarpit を使う場合" icon="approve-check">
+
+    - 認証情報なしでローカルのテストユーザーとしてログイン
+    - 127.0.0.1 の単一プロセスで動き、外部通信が不要
+    - フィクスチャとリセットで毎回同じデータからテストを開始
+
+  </Card>
+</CardGrid>
+
+## 使い方の流れ
+
+<Steps>
+
+1. **Calendarpit を起動する。** 1 つのプロセスで、API、ローカル OAuth、管理画面が `http://127.0.0.1:4173` で動きます。
+
+   <Tabs syncKey='install'>
+     <TabItem label='Homebrew'>
+       <Code
+         lang='sh'
+         code={`brew install iktakahiro/tap/calendarpit\ncalendarpit serve`}
+       />
+     </TabItem>
+     <TabItem label='Docker'>
+       <Code
+         lang='sh'
+         code='docker run --rm -p 127.0.0.1:4173:4173 ghcr.io/iktakahiro/calendarpit:0.9.0'
+       />
+     </TabItem>
+   </Tabs>
+
+2. **アプリの接続先を切り替える。** Google SDK はそのまま使い、OAuth と API のエンドポイントだけを上書きします。`@googleapis/calendar` と `google-auth-library` の場合は次のとおりです。
+
+   ```ts
+   const origin = 'http://127.0.0.1:4173';
+   const auth = new OAuth2Client({
+     clientId: 'sample-app',
+     clientSecret: 'local-sample-secret',
+     redirectUri: 'http://127.0.0.1:4175/callback',
+     endpoints: {
+       oauth2AuthBaseUrl: `${origin}/oauth/authorize`,
+       oauth2TokenUrl: `${origin}/oauth/token`,
+     },
+   });
+   const api = calendar({ version: 'v3', auth, rootUrl: origin });
+   ```
+
+   すべてのエンドポイントは[アプリを接続する](/calendarpit/ja/connect/)で、Python、Go、Java、.NET の例は [SDK の使用例](/calendarpit/ja/sdks/)で説明しています。
+
+3. **決まったデータでテストする。** テストのたびに起動時のフィクスチャへリセットし、リクエストは管理画面で確認します。
+
+   ```sh
+   curl -X POST http://127.0.0.1:4173/__calendarpit/reset \
+     -H "Content-Type: application/json" \
+     -d '{}'
+   ```
+
+</Steps>
+
+## Calendarpit の機能
+
+<CardGrid>
+  <LinkCard
+    title='Google Calendar API'
+    description='カレンダー、イベント、繰り返しイベント、FreeBusy、差分同期を API v3 形式で扱えます。'
+    href='/calendarpit/ja/compatibility/'
+  />
+  <LinkCard
+    title='ローカル OAuth 認可'
+    description='ローカルの同意画面でテストユーザーを選ぶだけで、パスワードなしでトークンを発行・更新できます。'
+    href='/calendarpit/ja/oauth/'
+  />
+  <LinkCard
+    title='フィクスチャとリセット'
+    description='ユーザー、カレンダー、イベント、クライアントをフィクスチャから投入し、テストごとに初期状態へ戻せます。'
+    href='/calendarpit/ja/fixtures/'
+  />
+  <LinkCard
+    title='Watch Webhook'
+    description='events.watch の通知をローカルのコールバックに配信し、テストから配信の完了を待てます。'
+    href='/calendarpit/ja/watch/'
+  />
+  <LinkCard
+    title='管理画面'
+    description='ブラウザでユーザー、カレンダー、イベントを確認・編集し、リクエスト履歴を参照できます。'
+    href='/calendarpit/ja/running/#管理画面'
+  />
+  <LinkCard
+    title='未対応機能の明示的なエラー'
+    description='未対応の機能は黙って無視せず、HTTP 501（unsupportedFeature）などのエラーを返します。'
+    href='/calendarpit/ja/scope/'
+  />
+</CardGrid>
+
+## Calendarpit でテストを始める
+
+Calendarpit はローカル開発と自動テスト専用のサーバーです。ループバック上で Google Calendar API v3 の定義されたサブセットを提供します。
+
+<LinkButton href='/calendarpit/ja/quick-start/' icon='right-arrow'>
+  クイックスタート
+</LinkButton>
+<LinkButton href='/calendarpit/ja/scope/' variant='secondary'>
+  対応範囲と制限
+</LinkButton>

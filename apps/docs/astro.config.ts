@@ -55,8 +55,8 @@ export default defineConfig({
         },
       ],
       customCss: ['./src/styles/theme.css'],
-      // The landing pages render their own <h1>.
-      components: { PageTitle: './src/components/PageTitle.astro' },
+      // The landing pages' hero adds an eyebrow label and the routing diagram.
+      components: { Hero: './src/components/Hero.astro' },
       // English is the root locale, so its URLs carry no prefix.
       defaultLocale: 'root',
       locales: {

@@ -3,15 +3,16 @@
  * The landing page's hero diagram: the app sends its Google Calendar traffic
  * to Calendarpit instead of Google, and Calendarpit sends watch webhooks
  * back. Labels are HTML so long translations wrap instead of clipping; the
- * drawings are decorative inline SVG themed through the landing variables.
+ * drawings are decorative inline SVG themed through the `--lp-*` variables
+ * below.
  * Google Calendar stays in the picture on its own dashed lane that ends in a
  * stop mark, so the request lanes visibly pass it by. The layout turns
  * vertical when the figure is narrower than 34rem.
  */
-type DiagramCopy = (typeof import('./copy.en.json'))['diagram'];
+type DiagramCopy = typeof import('./diagram.en.json');
 
 interface Props {
-  /** Localized diagram copy, in the shape of `copy.en.json#diagram`. */
+  /** Localized diagram copy, in the shape of `diagram.en.json`. */
   copy: DiagramCopy;
 }
 
@@ -167,9 +168,45 @@ const flows = copy.flows.map((label, index) => ({
 </figure>
 
 <style>
+  /* The admin UI's palette. Starlight's default theme is dark, and light
+     mode sets `data-theme='light'` on the root element. */
   .diagram {
+    --lp-paper: #161719;
+    --lp-surface: #1f2023;
+    --lp-sunken: #191a1d;
+    --lp-rail: #1c1d20;
+    --lp-ink: #f1eee7;
+    --lp-ink-2: #d1cfc8;
+    --lp-muted: #b1b0a8;
+    --lp-line: #333438;
+    --lp-line-strong: #55565a;
+    --lp-signal: #ff8d57;
+    --lp-signal-ink: #ffac82;
+    --lp-signal-wash: #412a21;
+    --lp-signal-line: #7a4229;
+    --lp-dot: rgb(241 238 231 / 0.07);
+    --lp-shadow-lift: 0 12px 32px -12px rgb(0 0 0 / 0.65);
+
     container-type: inline-size;
     margin: 0;
+  }
+  :global([data-theme='light']) .diagram {
+    --lp-paper: #f2f1ec;
+    --lp-surface: #fdfcfa;
+    --lp-sunken: #f1efe9;
+    --lp-rail: #f8f7f3;
+    --lp-ink: #16171a;
+    --lp-ink-2: #393b3f;
+    --lp-muted: #5d605a;
+    --lp-line: #e2e0d8;
+    --lp-line-strong: #cbc8be;
+    --lp-signal: #e5531a;
+    --lp-signal-ink: #ad3b0d;
+    --lp-signal-wash: #fcece3;
+    --lp-signal-line: #f1c3aa;
+    --lp-dot: rgb(22 23 26 / 0.09);
+    --lp-shadow-lift:
+      0 1px 0 rgb(22 23 26 / 0.04), 0 12px 32px -12px rgb(22 23 26 / 0.22);
   }
 
   .stage {

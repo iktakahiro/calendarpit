@@ -103,3 +103,13 @@ body {
 starlight-lang-select label {
   --sl-select-width: 8em !important;
 }
+
+/* Buttons and cards in the admin UI's shape: 8px corners, and the accent
+   color for every card icon instead of Starlight's rotating hues. */
+.sl-link-button {
+  border-radius: 8px;
+}
+.card {
+  --sl-card-border: var(--sl-color-accent);
+  --sl-card-bg: var(--sl-color-accent-low);
+}
