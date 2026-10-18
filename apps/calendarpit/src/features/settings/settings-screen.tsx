@@ -1,8 +1,11 @@
 import type { Snapshot } from '@calendarpit/server';
-import { Button } from '@cloudflare/kumo/components/button';
+import { Collapsible } from '@cloudflare/kumo/components/collapsible';
+import { Empty } from '@cloudflare/kumo/components/empty';
+import { InputArea } from '@cloudflare/kumo/components/input';
 import { Tabs } from '@cloudflare/kumo/primitives/tabs';
 import { useState } from 'react';
 import { AppearanceSwitcher } from '../../components/appearance';
+import { ConfirmButton } from '../../components/confirm-button';
 import { Icon } from '../../components/icon';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { useLoadFixture, useResetWorkspace } from './hooks/use-fixtures';
@@ -68,7 +71,8 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
           <div className='panel-body'>
             <label className='field'>
               <span>Fixture JSON</span>
-              <textarea
+              <InputArea
+                aria-label='Fixture JSON'
                 className='mono'
                 rows={8}
                 spellCheck={false}
@@ -92,20 +96,15 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
                 <Icon name='code' />
                 Open JSON file…
               </label>
-              <Button
+              <ConfirmButton
+                label='Load fixture'
                 variant='primary'
                 disabled={busy || !fixture.trim()}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      'Replace current data and revoke all connections?',
-                    )
-                  )
-                    loadFixture.mutate(fixture);
-                }}
-              >
-                Load fixture
-              </Button>
+                title='Load this fixture?'
+                description='The fixture replaces the current users, calendars, events, and OAuth clients, and every connection is revoked.'
+                confirmLabel='Load fixture'
+                confirm={() => loadFixture.mutate(fixture)}
+              />
             </div>
             <div className='danger-zone'>
               <div>
@@ -115,31 +114,27 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
                   channels.
                 </p>
               </div>
-              <Button
-                variant='secondary-destructive'
+              <ConfirmButton
+                label='Reset workspace'
                 icon={<Icon name='arrowRotateLeft' />}
                 disabled={busy}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      'Restore initial data and clear connections, history, and watch channels?',
-                    )
-                  )
-                    reset.mutate(undefined);
-                }}
-              >
-                Reset workspace
-              </Button>
+                title='Reset the workspace?'
+                description='The startup fixture is restored, and connections, protocol history, and watch channels are cleared.'
+                confirmLabel='Reset workspace'
+                confirm={() => reset.mutate(undefined)}
+              />
             </div>
           </div>
         </section>
-        <details className='panel state-dump'>
-          <summary>
+        <Collapsible.Root className='panel state-dump'>
+          <Collapsible.Trigger className='state-dump-summary'>
             <span>Current state</span>
             <small>Credentials excluded · revision {snapshot.revision}</small>
-          </summary>
-          <pre>{JSON.stringify(snapshot, null, 2)}</pre>
-        </details>
+          </Collapsible.Trigger>
+          <Collapsible.Panel>
+            <pre>{JSON.stringify(snapshot, null, 2)}</pre>
+          </Collapsible.Panel>
+        </Collapsible.Root>
       </Tabs.Panel>
       <Tabs.Panel value='clients' className='stack settings-panel'>
         <section className='panel' aria-labelledby='clients-title'>
@@ -168,11 +163,13 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
               ))}
             </ul>
           ) : (
-            <div className='empty-state compact'>
-              <Icon name='shield' />
-              <h3>No OAuth clients</h3>
-              <p>Add clients to a fixture to enable the consent flow.</p>
-            </div>
+            <Empty
+              size='sm'
+              className='empty-state'
+              icon={<Icon name='shield' />}
+              title='No OAuth clients'
+              description='Add clients to a fixture to enable the consent flow.'
+            />
           )}
         </section>
       </Tabs.Panel>

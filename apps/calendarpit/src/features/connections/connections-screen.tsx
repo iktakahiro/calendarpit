@@ -1,6 +1,7 @@
 import type { Snapshot } from '@calendarpit/server';
 import { Badge } from '@cloudflare/kumo/components/badge';
 import { Button } from '@cloudflare/kumo/components/button';
+import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon } from '../../components/icon';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { useRevokeConnection } from './hooks/use-revoke-connection';
@@ -66,14 +67,14 @@ export function ConnectionsScreen({ snapshot }: { snapshot: Snapshot }) {
             ))}
           </ul>
         ) : (
-          <div className='empty-state compact'>
-            <Icon name='plug' />
-            <h3>No connections yet</h3>
-            <p>
-              Approve access from your app. To try it, start the SDK sample with{' '}
-              <code>bun run sample:dev</code>.
-            </p>
-          </div>
+          <Empty
+            size='sm'
+            className='empty-state'
+            icon={<Icon name='plug' />}
+            title='No connections yet'
+            description='Approve access from your app. To try it, start the SDK sample:'
+            commandLine='bun run sample:dev'
+          />
         )}
       </section>
     </div>

@@ -1,11 +1,14 @@
 import type { Calendar, CalendarEvent } from '@calendarpit/server';
 import { Button } from '@cloudflare/kumo/components/button';
-import { Input } from '@cloudflare/kumo/components/input';
+import { Checkbox } from '@cloudflare/kumo/components/checkbox';
+import { Input, InputArea } from '@cloudflare/kumo/components/input';
+import { Select } from '@cloudflare/kumo/components/select';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useEffect, useRef, useState } from 'react';
 import { FieldError } from '../../../components/field-error';
 import { Icon } from '../../../components/icon';
 import { useSaveEvent } from '../hooks/use-event-mutations';
+import { DateTimeField } from './date-time-field';
 import {
   eventFormValues,
   toEventBody,
@@ -126,73 +129,67 @@ export function EventEditor({
           <legend>When</legend>
           <form.Field name='allDay'>
             {(field) => (
-              <label className='check-label'>
-                <input
-                  type='checkbox'
-                  checked={field.state.value}
-                  onChange={(e) => {
-                    field.handleChange(e.target.checked);
-                    const next = toggleAllDay(
-                      {
-                        start: form.getFieldValue('start'),
-                        end: form.getFieldValue('end'),
-                      },
-                      e.target.checked,
-                    );
-                    form.setFieldValue('start', next.start);
-                    form.setFieldValue('end', next.end);
-                  }}
-                />
-                All-day event
-              </label>
+              <Checkbox
+                label='All-day event'
+                checked={field.state.value}
+                onCheckedChange={(checked: boolean) => {
+                  field.handleChange(checked);
+                  const next = toggleAllDay(
+                    {
+                      start: form.getFieldValue('start'),
+                      end: form.getFieldValue('end'),
+                    },
+                    checked,
+                  );
+                  form.setFieldValue('start', next.start);
+                  form.setFieldValue('end', next.end);
+                }}
+              />
             )}
           </form.Field>
           <form.Subscribe selector={(state) => state.values.allDay}>
-            {(allDay) => (
-              <div className='form-row'>
-                {(['start', 'end'] as const).map((name) => {
-                  const label =
-                    name === 'start'
-                      ? 'Start'
-                      : allDay
-                        ? 'End (exclusive)'
-                        : 'End';
-                  return (
-                    <form.Field name={name} key={name}>
-                      {(field) => (
-                        <label className='field'>
-                          <span>{label}</span>
-                          <Input
-                            aria-label={label}
-                            type={allDay ? 'date' : 'datetime-local'}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                          />
-                          <FieldError errors={field.state.meta.errors} />
-                        </label>
-                      )}
-                    </form.Field>
-                  );
-                })}
-              </div>
-            )}
+            {(allDay) =>
+              (['start', 'end'] as const).map((name) => {
+                // The spoken names stay "Start" and "End" in every mode; only
+                // the visible label says that an all-day end is exclusive.
+                const end = name === 'end';
+                const spoken = end ? 'End' : 'Start';
+                return (
+                  <form.Field name={name} key={name}>
+                    {(field) => (
+                      <div className='field'>
+                        <span>
+                          {allDay && end ? 'End (exclusive)' : spoken}
+                        </span>
+                        <DateTimeField
+                          name={spoken}
+                          value={field.state.value}
+                          allDay={allDay}
+                          change={(value) => field.handleChange(value)}
+                          blur={field.handleBlur}
+                        />
+                        <FieldError errors={field.state.meta.errors} />
+                      </div>
+                    )}
+                  </form.Field>
+                );
+              })
+            }
           </form.Subscribe>
         </fieldset>
         <form.Field name='transparency'>
           {(field) => (
-            <label className='field'>
-              <span>Availability</span>
-              <select
+            <div className='field'>
+              <span id='availability-label'>Availability</span>
+              <Select
+                aria-labelledby='availability-label'
                 value={field.state.value}
-                onChange={(e) =>
-                  field.handleChange(e.target.value as 'opaque' | 'transparent')
+                onValueChange={(value: 'opaque' | 'transparent' | null) =>
+                  value && field.handleChange(value)
                 }
-              >
-                <option value='opaque'>Busy</option>
-                <option value='transparent'>Free</option>
-              </select>
-            </label>
+                items={{ opaque: 'Busy', transparent: 'Free' }}
+              />
+            </div>
           )}
         </form.Field>
         <form.Field name='location'>
@@ -212,7 +209,8 @@ export function EventEditor({
           {(field) => (
             <label className='field'>
               <span>Description</span>
-              <textarea
+              <InputArea
+                aria-label='Description'
                 rows={3}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -225,7 +223,8 @@ export function EventEditor({
           {(field) => (
             <label className='field'>
               <span>Extended properties (JSON)</span>
-              <textarea
+              <InputArea
+                aria-label='Extended properties (JSON)'
                 className='mono'
                 rows={4}
                 spellCheck={false}

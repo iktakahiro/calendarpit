@@ -25,9 +25,14 @@ export const sampleClient = {
   redirectUri: 'http://127.0.0.1:4175/callback',
 };
 
-/** The success toast, a polite status region at the bottom of the shell. */
-export const toast = (page: Page) =>
-  page.locator('.toasts').getByRole('status');
+/**
+ * A toast with `message`, inside the Kumo toast viewport. Toasts stack, so the
+ * message is matched instead of the region's whole text.
+ */
+export const toast = (page: Page, message: string) =>
+  page
+    .getByRole('region', { name: 'Notifications' })
+    .getByText(message, { exact: true });
 
 /** A section button in the sidebar navigation. */
 export const sectionLink = (page: Page, name: string) =>

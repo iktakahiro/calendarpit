@@ -15,8 +15,10 @@ test('creates a user after fixing validation errors, then adds a calendar', asyn
   await form.getByLabel('Name', { exact: true }).fill('Kim Lee');
   await form.getByLabel('Email', { exact: true }).fill('kim@example.test');
   await form.getByRole('button', { name: 'Save user' }).click();
-  await expect(toast(page)).toHaveText('User saved.');
-  await expect(page.getByLabel('Test user')).toHaveValue(/.+/);
+  await expect(toast(page, 'User saved.')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Test user' })).toContainText(
+    'Kim Lee',
+  );
   await expect(page.getByText('kim@example.test').first()).toBeVisible();
 
   await sectionLink(page, 'Calendars').click();
@@ -25,7 +27,7 @@ test('creates a user after fixing validation errors, then adds a calendar', asyn
   await calendar.getByLabel('Calendar name', { exact: true }).fill('Kim work');
   await calendar.getByLabel('Time zone', { exact: true }).fill('Europe/Berlin');
   await calendar.getByRole('button', { name: 'Save calendar' }).click();
-  await expect(toast(page)).toHaveText('Calendar saved.');
+  await expect(toast(page, 'Calendar saved.')).toBeVisible();
   // The new user's only calendar becomes primary and appears in the sidebar.
   await expect(
     page

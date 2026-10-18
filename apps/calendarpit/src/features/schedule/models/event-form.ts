@@ -17,6 +17,35 @@ export type EventFormValues = {
   extendedProperties: string;
 };
 
+/** A timed form value, as the editor writes it. */
+const timed = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+/** Returns the `YYYY-MM-DD` half of a form value. */
+export function datePart(value: string) {
+  return value.slice(0, 10);
+}
+
+/** Returns the `HH:mm` half of a form value, or `''` when it has no time. */
+export function timePart(value: string) {
+  return value.slice(11, 16);
+}
+
+/** Returns `value` moved to `date`, keeping the time half it already had. */
+export function withDate(value: string, date: string) {
+  const time = timePart(value);
+  return time ? `${date}T${time}` : date;
+}
+
+/**
+ * Returns `value` at `time` (`HH:mm`). An empty `time` keeps the date and
+ * drops the time, so clearing the field reports a missing time rather than
+ * losing the date the picker chose.
+ */
+export function withTime(value: string, time: string) {
+  const date = datePart(value);
+  return time ? `${date}T${time.slice(0, 5)}` : date;
+}
+
 /** Returns a local `YYYY-MM-DDTHH:mm` one hour later, rolling over midnight. */
 function addHour(local: string) {
   const value = new Date(`${local}:00Z`);
@@ -91,8 +120,11 @@ export function validateEventForm(
   values: EventFormValues,
 ): Partial<Record<keyof EventFormValues, string>> | undefined {
   const errors: Partial<Record<keyof EventFormValues, string>> = {};
+  const missingTime = (value: string) => !values.allDay && !timed.test(value);
   if (!values.start) errors.start = 'Enter a start.';
+  else if (missingTime(values.start)) errors.start = 'Enter a start time.';
   if (!values.end) errors.end = 'Enter an end.';
+  else if (missingTime(values.end)) errors.end = 'Enter an end time.';
   else if (values.start && values.end <= values.start)
     errors.end = 'End must be after start.';
   if (parseProperties(values.extendedProperties) === undefined)

@@ -1,6 +1,8 @@
 import type { Snapshot } from '@calendarpit/server';
+import { Badge } from '@cloudflare/kumo/components/badge';
 import { Button } from '@cloudflare/kumo/components/button';
 import { ButtonGroup } from '@cloudflare/kumo/components/button-group';
+import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon } from '../../components/icon';
 import { useNow } from '../../lib/use-now';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
@@ -99,7 +101,9 @@ export function ScheduleScreen({
             Week
           </Button>
         </ButtonGroup>
-        <span className='tz-chip'>{calendar?.timeZone ?? 'No calendar'}</span>
+        <Badge variant='outline' className='tz-chip'>
+          {calendar?.timeZone ?? 'No calendar'}
+        </Badge>
         <Button
           className='toolbar-end'
           variant='primary'
@@ -131,8 +135,7 @@ export function ScheduleScreen({
             now={now}
             busy={busy}
             open={(event) => edit(event.id)}
-            remove={(event) => {
-              if (!window.confirm('Delete this event?')) return;
+            remove={(event) =>
               remove.mutate(
                 { calendarId: calendar.id, id: event.id },
                 {
@@ -140,28 +143,31 @@ export function ScheduleScreen({
                     if (editing === event.id) edit(undefined);
                   },
                 },
-              );
-            }}
+              )
+            }
             create={() => edit('new')}
           />
         ) : (
           <section className='day-sheet' aria-label='Daily events'>
-            <div className='empty-state'>
-              <Icon name='calendar' />
-              <h3>No calendar selected</h3>
-              <p>
-                {user
+            <Empty
+              className='empty-state'
+              icon={<Icon name='calendar' />}
+              title='No calendar selected'
+              description={
+                user
                   ? `${user.name} has no calendars yet. Add one in workspace settings.`
-                  : 'Create a test user and a calendar in workspace settings.'}
-              </p>
-              <Button
-                variant='secondary'
-                icon={<Icon name='gear' />}
-                onClick={openSettings}
-              >
-                Open workspace settings
-              </Button>
-            </div>
+                  : 'Create a test user and a calendar in workspace settings.'
+              }
+              contents={
+                <Button
+                  variant='secondary'
+                  icon={<Icon name='gear' />}
+                  onClick={openSettings}
+                >
+                  Open workspace settings
+                </Button>
+              }
+            />
           </section>
         )}
         {editorOpen && calendar && (

@@ -14,9 +14,12 @@ test('reset restores the startup fixture after changes', async ({
 
   await sectionLink(page, 'Settings').click();
   await page.getByRole('tab', { name: 'Test data' }).click();
-  page.once('dialog', (dialog) => void dialog.accept());
   await page.getByRole('button', { name: 'Reset workspace' }).click();
-  await expect(toast(page)).toHaveText('Startup state restored.');
+  await page
+    .getByRole('alertdialog', { name: 'Reset the workspace?' })
+    .getByRole('button', { name: 'Reset workspace' })
+    .click();
+  await expect(toast(page, 'Startup state restored.')).toBeVisible();
 
   await sectionLink(page, 'Schedule').click();
   await expect(page.getByText('Weekly planning')).toBeVisible();
@@ -31,9 +34,11 @@ test('protocol history records API calls with secrets masked', async ({
   });
   expect(response.status()).toBe(401);
   await page.goto('/history');
-  const entry = page.locator('details').filter({ hasText: 'calendarList' });
-  await expect(entry.getByText('401')).toBeVisible();
-  await entry.locator('summary').click();
-  await expect(entry.getByText('[REDACTED]').first()).toBeVisible();
-  await expect(entry.getByText('not-a-real-token')).toHaveCount(0);
+  const entry = page
+    .getByRole('button')
+    .filter({ hasText: '/calendar/v3/users/me/calendarList' });
+  await expect(entry).toContainText('401');
+  await entry.click();
+  await expect(page.getByText('[REDACTED]').first()).toBeVisible();
+  await expect(page.getByText('not-a-real-token')).toHaveCount(0);
 });

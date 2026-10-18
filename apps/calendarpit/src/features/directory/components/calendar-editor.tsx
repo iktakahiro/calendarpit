@@ -1,5 +1,6 @@
 import type { Calendar } from '@calendarpit/server';
 import { Button } from '@cloudflare/kumo/components/button';
+import { Checkbox } from '@cloudflare/kumo/components/checkbox';
 import { Input } from '@cloudflare/kumo/components/input';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useState } from 'react';
@@ -113,14 +114,13 @@ export function CalendarEditor({
         </form.Field>
         <form.Field name='primary'>
           {(field) => (
-            <label className='check-label'>
-              <input
-                type='checkbox'
-                checked={field.state.value}
-                onChange={(e) => field.handleChange(e.target.checked)}
-              />
-              Primary calendar
-            </label>
+            <Checkbox
+              label='Primary calendar'
+              checked={field.state.value}
+              onCheckedChange={(checked: boolean) =>
+                field.handleChange(checked)
+              }
+            />
           )}
         </form.Field>
         {submitError && (
