@@ -14,11 +14,11 @@ Pass a fixture file path with the `--config` CLI flag or the `CALENDARPIT_CONFIG
 Save the JSON example below as `calendarpit.fixture.json` and edit it for your test. Check prerequisites and publication status in [Installation](/calendarpit/installation/), then start from the directory containing the file:
 
 ```sh
-npx @iktakahiro/calendarpit@0.9.0 serve \
+calendarpit serve \
   --database :memory: --config ./calendarpit.fixture.json
 ```
 
-Relative `--config` and `CALENDARPIT_CONFIG` paths resolve from the directory where you start Calendarpit. With an installed CLI, replace `npx @iktakahiro/calendarpit@0.9.0` with `calendarpit`.
+Relative `--config` and `CALENDARPIT_CONFIG` paths resolve from the directory where you start Calendarpit.
 
 In Docker, mount the existing file read-only and use its container path. This command uses POSIX shell syntax:
 

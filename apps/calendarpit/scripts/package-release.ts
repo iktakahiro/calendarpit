@@ -2,8 +2,6 @@ import { chmod, copyFile, mkdir, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import {
   archiveName,
-  packageManifest,
-  npmPackageName,
   releaseDirectory,
   releaseVersion,
   repositoryRoot,
@@ -30,16 +28,13 @@ await copyFile(
 await chmod(join(directory, 'bin', executable), 0o755);
 await copyFile(join(repositoryRoot, 'LICENSE'), join(directory, 'LICENSE'));
 await Bun.write(
-  join(directory, 'package.json'),
-  JSON.stringify(packageManifest(platform), null, 2) + '\n',
-);
-await Bun.write(
   join(directory, 'README.md'),
-  `# ${npmPackageName(platform)}\n\nNative executable for Calendarpit ${releaseVersion}. Install ${npmPackageName()} to select the correct executable automatically.\n`,
-);
-await run(
-  ['bun', 'pm', 'pack', '--destination', join(releaseDirectory, 'artifacts')],
-  directory,
+  `# Calendarpit ${releaseVersion}
+
+Run bin/${executable} serve to start the local API, OAuth server, and admin UI.
+No separate Bun or Node.js runtime is required.
+See https://github.com/iktakahiro/calendarpit for documentation.
+`,
 );
 await run([
   'tar',

@@ -7,10 +7,11 @@ description: リポジトリをクローンせずに Calendarpit を起動し、
 
 0.9.0 の配布物は準備中で、まだ公開されていません。公開状況とソースからの起動方法は[インストール](/calendarpit/ja/installation/)を参照してください。
 
-公開後は Node.js 22 以降で実行できます。
+公開後は Homebrew でインストールして起動します。
 
 ```sh
-npx @iktakahiro/calendarpit@0.9.0 serve
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
 ```
 
 Docker を使用する場合:
@@ -22,7 +23,7 @@ docker run --rm \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-Google アカウント、Google Cloud プロジェクト、外部データベース、`.env` ファイル、プロバイダーの認証情報は不要です。どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。Homebrew、Compose、単体実行ファイル、プロジェクトへの追加は[インストール](/calendarpit/ja/installation/)で説明しています。
+Google アカウント、Google Cloud プロジェクト、外部データベース、`.env` ファイル、プロバイダーの認証情報は不要です。どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。Compose と単体ダウンロードは[インストール](/calendarpit/ja/installation/)で説明しています。
 
 ## 管理画面を開く
 

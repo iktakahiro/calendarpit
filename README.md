@@ -12,17 +12,11 @@ limited; unsupported features return explicit errors. See
 
 ## Quick start
 
-**0.9.0 distribution is being prepared; the packages, images, and Homebrew tap
+**0.9.0 distribution is being prepared; the images and Homebrew tap
 are not published yet.** The following commands are the intended release interface.
 Until publication, use the [development guide](docs/development.md).
 
-With Node.js 22 or later:
-
-```sh
-npx @iktakahiro/calendarpit@0.9.0 serve
-```
-
-Or Docker:
+With Docker:
 
 ```sh
 docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.0
@@ -38,7 +32,7 @@ calendarpit serve
 Open <http://127.0.0.1:4173>. The API, local OAuth, and admin UI share one origin.
 No Google credentials, environment file, or external database is needed.
 See [installation](apps/docs/src/content/docs/installation.mdx) for Compose,
-project dependencies, standalone downloads, networking, and updates.
+standalone downloads, networking, and updates.
 
 Contributor setup, including the docs preview, lives in [docs/](docs/README.md).
 
@@ -65,7 +59,7 @@ Save the JSON example from [Fixtures](apps/docs/src/content/docs/fixtures.mdx) a
 `calendarpit.fixture.json`, then start a temporary session from that directory:
 
 ```sh
-npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --config ./calendarpit.fixture.json
+calendarpit serve --database :memory: --config ./calendarpit.fixture.json
 ```
 
 Relative fixture paths resolve from the directory where you start the CLI. Loading a fixture replaces
@@ -74,17 +68,17 @@ history and watch state. See [Fixtures](apps/docs/src/content/docs/fixtures.mdx)
 
 ## Data storage
 
-npm, Homebrew, and standalone CLI runs save changes to
+Homebrew and standalone CLI runs save changes to
 `.calendarpit/calendarpit.sqlite` in the directory where you start Calendarpit.
 Run from your project directory, or pass an explicit database path.
 The startup log and **Settings → Test data → Storage** show the actual path.
 
 ```sh
 # Temporary E2E session; no database files are written
-npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0
+calendarpit serve --database :memory: --port 0
 
 # Choose a persistent workspace
-npx @iktakahiro/calendarpit@0.9.0 serve --database ./.calendarpit/manual.sqlite
+calendarpit serve --database ./.calendarpit/manual.sqlite
 ```
 
 Existing databases reopen their saved data, connections, tokens, watch channels,
@@ -152,9 +146,9 @@ calendarpit --version
 calendarpit serve --port 4173 --database :memory:
 ```
 
-npm/npx, Homebrew, and standalone downloads run the same embedded executable.
-It includes the server, admin UI assets, and Bun runtime. The npm launcher needs
-Node.js 22 or later; Homebrew and standalone executables need no separate runtime.
+Homebrew and standalone downloads run the same embedded executable.
+It includes the server, admin UI assets, and Bun runtime. No separate Node.js
+or Bun installation is needed. Calendarpit is not distributed through npm.
 Releases target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64.
 See [installation](apps/docs/src/content/docs/installation.mdx) for downloads,
 checksums, and upgrades, and [Run and configure](apps/docs/src/content/docs/running.mdx)
@@ -205,5 +199,5 @@ data or logic to Calendarpit. See [AGENTS.md](AGENTS.md) for repository guidance
 
 CI runs protocol/CLI and Google SDK HTTP integration tests. The separate release
 workflow builds and tests distribution artifacts, then publishes version tags
-to npm, GHCR, and GitHub Releases. Homebrew updates require tap credentials.
+to GHCR and GitHub Releases. Homebrew updates require tap credentials.
 See [Releasing](docs/releasing.md) for initial setup and publication status.

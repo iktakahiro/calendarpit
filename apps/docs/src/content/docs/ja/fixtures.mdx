@@ -14,11 +14,11 @@ description: JSON のフィクスチャファイルで、テストユーザー�
 下の JSON の例を `calendarpit.fixture.json` として保存し、テスト用に編集してください。[インストール](/calendarpit/ja/installation/)の公開状況と必要な環境を確認してから、ファイルを保存したディレクトリで起動します。
 
 ```sh
-npx @iktakahiro/calendarpit@0.9.0 serve \
+calendarpit serve \
   --database :memory: --config ./calendarpit.fixture.json
 ```
 
-`--config` と `CALENDARPIT_CONFIG` の相対パスは、起動したディレクトリを基準に解決されます。インストール済みの CLI では、`npx @iktakahiro/calendarpit@0.9.0` を `calendarpit` に置き換えられます。
+`--config` と `CALENDARPIT_CONFIG` の相対パスは、起動したディレクトリを基準に解決されます。
 
 Docker では、作成済みのファイルを読み取り専用でマウントし、コンテナ内のパスを指定します。以下は POSIX シェル用のコマンドです。
 

@@ -10,20 +10,8 @@ import {
 
 /** Repository root used to read license and release inputs. */
 export const repositoryRoot = resolve(import.meta.dir, '../../../..');
-/** Version shared by the CLI, npm packages, archives, image tags, and formula. */
+/** Version shared by the CLI, archives, image tags, and formula. */
 export const releaseVersion = serverMetadata.version;
-/** npm scope owned by the project's maintainer. */
-export const npmScope = '@iktakahiro';
-
-/** Scoped npm name for the launcher or one native executable. */
-export function npmPackageName(platform?: ReleasePlatform) {
-  return `${npmScope}/calendarpit${platform ? `-${platform}` : ''}`;
-}
-
-/** npm's archive filename for a scoped release package. */
-export function npmArchiveName(platform?: ReleasePlatform) {
-  return `${npmPackageName(platform).replace('@', '').replace('/', '-')}-${releaseVersion}.tgz`;
-}
 /** Generated release output; never committed or used as a source workspace. */
 export const releaseDirectory = resolve(import.meta.dir, '../../dist/release');
 
@@ -41,61 +29,16 @@ export function validateVersion(tag?: string) {
     throw new Error(`Expected tag v${releaseVersion}, received ${tag}.`);
 }
 
-/** Produces an exact-version npm manifest for a launcher or native package. */
-export function packageManifest(platform?: ReleasePlatform) {
-  const common = {
-    name: npmPackageName(platform),
-    version: releaseVersion,
-    description:
-      'A local Google Calendar-compatible service for development and repeatable tests.',
-    license: 'MIT',
-    homepage: 'https://iktakahiro.github.io/calendarpit/',
-    repository: {
-      type: 'git',
-      url: 'git+https://github.com/iktakahiro/calendarpit.git',
-    },
-    bugs: { url: 'https://github.com/iktakahiro/calendarpit/issues' },
-    publishConfig: { access: 'public' },
-  };
-  if (platform) {
-    const { os, cpu } = releaseTargets[platform];
-    return {
-      ...common,
-      os: [os],
-      cpu: [cpu],
-      ...(os === 'linux' ? { libc: ['glibc'] } : {}),
-      files: ['bin', 'LICENSE', 'README.md'],
-    };
-  }
-  return {
-    ...common,
-    type: 'module',
-    engines: { node: '>=22' },
-    bin: { calendarpit: 'cli.mjs' },
-    files: ['cli.mjs', 'LICENSE', 'README.md'],
-    optionalDependencies: Object.fromEntries(
-      Object.keys(releaseTargets).map((key) => [
-        npmPackageName(key as ReleasePlatform),
-        releaseVersion,
-      ]),
-    ),
-  };
-}
-
 /** Returns the filename of a standalone release archive, including its version. */
 export function archiveName(platform: ReleasePlatform) {
   return `calendarpit-${releaseVersion}-${platform}.tar.gz`;
 }
 
-/** Complete allowlist of versioned archives and npm tarballs for publication. */
+/** Complete allowlist of versioned standalone archives for publication. */
 export function releaseArtifactNames() {
-  return [
-    npmArchiveName(),
-    ...Object.keys(releaseTargets).flatMap((key) => {
-      const platform = releasePlatform(key);
-      return [archiveName(platform), npmArchiveName(platform)];
-    }),
-  ];
+  return Object.keys(releaseTargets).map((key) =>
+    archiveName(releasePlatform(key)),
+  );
 }
 
 /** Verifies a complete release before any irreversible registry publication. */

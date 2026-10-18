@@ -7,16 +7,16 @@ Calendarpit は、デフォルトでワークスペースの状態をローカ�
 
 ## ストレージモードの選び方
 
-npm、Homebrew、単体実行ファイルでは、デフォルトで起動したディレクトリ内の `.calendarpit/calendarpit.sqlite` に保存します。プロジェクトのディレクトリから起動すると、プロジェクトごとにデータを保持できます。
+Homebrew、単体実行ファイルでは、デフォルトで起動したディレクトリ内の `.calendarpit/calendarpit.sqlite` に保存します。プロジェクトのディレクトリから起動すると、プロジェクトごとにデータを保持できます。
 
 保存先や `:memory:` は `--database <path>` または `CALENDARPIT_DATABASE` で指定します。CLI フラグは環境変数より優先されます。[インストール](/calendarpit/ja/installation/)で必要な環境と公開状況を確認してください。
 
 ```sh
 # Temporary E2E session; no database files are written
-npx @iktakahiro/calendarpit@0.9.0 serve --database :memory: --port 0
+calendarpit serve --database :memory: --port 0
 
 # Choose a persistent workspace
-npx @iktakahiro/calendarpit@0.9.0 serve --database ./.calendarpit/manual.sqlite
+calendarpit serve --database ./.calendarpit/manual.sqlite
 ```
 
 - **SQLite ファイル（デフォルト）:** 状態を変更するリクエストや Webhook の配信が終わるたびに、変更を保存します。相対パスは作業ディレクトリを基準に解決されます。

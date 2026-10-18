@@ -27,7 +27,7 @@ must be documented and tested instead of silently accepted.
 
 ## Release work
 
-The release workflow prepares versioned executables, scoped npm packages, GHCR
+The release workflow prepares versioned executables, GHCR
 images, checksums, and a Homebrew formula. Initial registry publication and tap
 setup remain pending. Validate all native targets in a dry run before publishing
 0.9.0, then verify installation from each public channel. See [Releasing](releasing.md).

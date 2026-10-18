@@ -7,10 +7,11 @@ description: Start Calendarpit without cloning a repository and connect your app
 
 The 0.9.0 distributions are being prepared and are not published yet. See [Installation](/calendarpit/installation/) for availability and the source fallback.
 
-After publication, with Node.js 22 or later:
+After publication, install and start with Homebrew:
 
 ```sh
-npx @iktakahiro/calendarpit@0.9.0 serve
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
 ```
 
 Or use Docker:
@@ -22,7 +23,7 @@ docker run --rm \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-No Google account, Google Cloud project, external database, `.env` file, or provider credentials are needed. Both commands start the API, local OAuth server, and admin UI on the same origin. See [Installation](/calendarpit/installation/) for Homebrew, Compose, standalone downloads, and project dependencies.
+No Google account, Google Cloud project, external database, `.env` file, or provider credentials are needed. Both commands start the API, local OAuth server, and admin UI on the same origin. Compose and standalone downloads are covered in [Installation](/calendarpit/installation/).
 
 ## Open the admin UI
 

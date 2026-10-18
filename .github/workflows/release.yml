@@ -54,22 +54,16 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: .bun-version
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
       - run: bun install --frozen-lockfile
       - run: bun run --cwd apps/calendarpit build
       - run: bun apps/calendarpit/scripts/build-binary.ts --platform ${{ matrix.platform }}
       - run: bun run smoke
       - run: bun run release:package ${{ matrix.platform }}
-      - run: bun run release:assemble --local
-      - run: bun run smoke:npm
       - uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.platform }}
           path: |
             apps/calendarpit/dist/release/artifacts/calendarpit-*-${{ matrix.platform }}.tar.gz
-            apps/calendarpit/dist/release/artifacts/iktakahiro-calendarpit-${{ matrix.platform }}-*.tgz
           if-no-files-found: error
 
   containers:
@@ -121,7 +115,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      id-token: write
     env:
       RELEASE_TAG: v${{ needs.assemble.outputs.version }}
       VERSION: ${{ needs.assemble.outputs.version }}
@@ -130,10 +123,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: .bun-version
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          registry-url: https://registry.npmjs.org
       - uses: actions/download-artifact@v4
         with:
           name: release
@@ -151,10 +140,6 @@ jobs:
             gh release create "$RELEASE_TAG" --verify-tag --draft --title "Calendarpit $RELEASE_TAG" --generate-notes
           fi
           gh release upload "$RELEASE_TAG" apps/calendarpit/dist/release/artifacts/* --clobber
-      - name: Publish npm packages (native packages before launcher)
-        run: bun apps/calendarpit/scripts/publish-npm.ts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
