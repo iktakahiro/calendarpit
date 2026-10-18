@@ -1,5 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { assetPath } from '../src/cli/asset-path';
 import { releasePlatform, releaseTargets } from './release/targets';
 
 const args = process.argv.slice(2);
@@ -25,7 +26,8 @@ const imports = files.map(
     `import asset${index} from ${JSON.stringify(resolve(clientDirectory, path))} with { type: "file" };`,
 );
 const entries = files.map(
-  (path, index) => `[${JSON.stringify(`/${path}`)}, Bun.file(asset${index})]`,
+  (path, index) =>
+    `[${JSON.stringify(assetPath(path))}, Bun.file(asset${index})]`,
 );
 const generatedDirectory = resolve(root, '.calendarpit');
 await mkdir(generatedDirectory, { recursive: true });

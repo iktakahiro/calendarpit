@@ -97,6 +97,7 @@ try {
     'Container passed: version, HTTP/UI, non-root user, volume persistence, reset baseline, and memory isolation.',
   );
 } finally {
-  for (const name of names) await docker(['rm', '-f', name]).catch(() => {});
+  for (const name of names)
+    await docker(['rm', '-f', '-v', name]).catch(() => {});
   await docker(['volume', 'rm', volume]).catch(() => {});
 }

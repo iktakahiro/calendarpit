@@ -134,7 +134,7 @@ try {
     }),
   );
   for (const file of files) {
-    const response = await request(`/${file}`);
+    const response = await request(`/${file.replaceAll('\\', '/')}`);
     assert.equal(response.status, 200, file);
     assert.ok((await response.arrayBuffer()).byteLength > 0, file);
   }
