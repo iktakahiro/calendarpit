@@ -32,8 +32,8 @@ export default defineConfig({
       logo: {
         light: './src/assets/logo-light.svg',
         dark: './src/assets/logo-dark.svg',
-        alt: 'Calendarpit',
-        // The lockup already spells out the name.
+        // The hidden site title already names the site for screen readers.
+        alt: '',
         replacesTitle: true,
       },
       social: [{ icon: 'github', label: 'GitHub', href: repository }],
