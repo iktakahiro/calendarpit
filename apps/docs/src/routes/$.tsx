@@ -12,7 +12,7 @@ import { docs, source } from '../site/source';
 import { mdxComponents } from '../site/mdx-components';
 import { layoutOptions } from '../site/navigation';
 import { groupSections } from '../site/navigation-tree';
-import { sitePath } from '../site/paths';
+import { markdownFile, sitePath } from '../site/paths';
 import { i18n, localeFromPath } from '../site/i18n';
 import { LandingHero } from '../site/landing-hero';
 import { SiteFooter } from '../site/site-footer';
@@ -55,6 +55,11 @@ export const Route = createFileRoute('/$')({
       ],
       links: [
         { rel: 'canonical', href: url },
+        {
+          rel: 'alternate',
+          type: 'text/markdown',
+          href: `${__DOCS_SITE_URL__}${sitePath(markdownFile(page.slug))}`,
+        },
         ...i18n.languages.flatMap((locale) => {
           const alternate = source.getPage(page.slugs, locale);
           return alternate

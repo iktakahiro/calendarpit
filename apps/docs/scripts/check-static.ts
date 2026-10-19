@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import { readPages } from './content';
-import { localeFromPath } from '../src/site/i18n';
+import { i18n, localeFromPath } from '../src/site/i18n';
+import { markdownFile } from '../src/site/paths';
 
 const root = resolve(import.meta.dirname, '..');
 const base = process.env.DOCS_BASE_PATH ?? '/';
@@ -112,6 +113,32 @@ for (const page of pages) {
   if (!documents.has(`${base}${page.slug ? `${page.slug}/` : ''}`))
     errors.push(`Missing generated page: ${page.slug}`);
 }
+// Agent-readable text must cover every page and link only to published files.
+const texts = i18n.languages.flatMap((locale) => {
+  const prefix = locale === i18n.defaultLanguage ? '' : `${locale}/`;
+  return [`${prefix}llms.txt`, `${prefix}llms-full.txt`];
+});
+for (const page of pages) texts.push(markdownFile(page.slug));
+for (const file of texts) {
+  const text = Bun.file(`${root}/dist/${file}`);
+  if (!(await text.exists())) {
+    errors.push(`Missing agent-readable text: ${file}`);
+    continue;
+  }
+  for (const [, href = ''] of (await text.text()).matchAll(
+    /\]\((https?:\/\/[^)\s]+)\)/gu,
+  )) {
+    const target = new URL(href);
+    if (target.origin !== origin || documents.has(target.pathname)) continue;
+    if (
+      !target.pathname.startsWith(base) ||
+      !(await Bun.file(
+        `${root}/dist/${decodeURIComponent(target.pathname.slice(base.length))}`,
+      ).exists())
+    )
+      errors.push(`${file}: broken link ${href}`);
+  }
+}
 if (documents.size !== pages.length + 1)
   errors.push('Unexpected number of generated HTML pages.');
 if (await Bun.file(`${root}/dist/server/server.js`).exists())
@@ -137,5 +164,5 @@ if (errors.length)
     `Static documentation validation failed:\n${errors.join('\n')}`,
   );
 console.log(
-  `Validated ${documents.size} static pages, localized metadata, links, anchors, assets, and bilingual code examples.`,
+  `Validated ${documents.size} static pages, ${texts.length} agent-readable texts, localized metadata, links, anchors, assets, and bilingual code examples.`,
 );
