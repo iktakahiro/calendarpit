@@ -57,8 +57,8 @@ Only the operations listed in [Calendar API compatibility](/compatibility/) are 
 
 ## List calendars and query FreeBusy
 
-<Tabs items={["TypeScript / JavaScript","Python","Go","Kotlin","PHP","C#","HTTP / curl"]}>
-<Tab value="TypeScript / JavaScript" forceMount>
+<Tabs items={["TypeScript","Python","Go","Kotlin","PHP","C#","curl"]}>
+<Tab value="TypeScript" forceMount>
 
 - **Packages**: `@googleapis/calendar` and `google-auth-library`.
 - **Runtime**: Bun, or Node.js 22 or later as an ES module (`.mjs`).
@@ -353,7 +353,7 @@ foreach (var interval in result.Calendars["primary"].Busy)
 References: [service base URI](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Services.BaseClientService.Initializer), [access-token credentials](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Auth.OAuth2.GoogleCredential), [FreeBusy request](https://googleapis.dev/dotnet/Google.Apis.Calendar.v3/latest/api/Google.Apis.Calendar.v3.Data.FreeBusyRequest.html).
 
 </Tab>
-<Tab value="HTTP / curl" forceMount>
+<Tab value="curl" forceMount>
 
 You can call the same HTTP endpoints directly from any language.
 
