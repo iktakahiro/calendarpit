@@ -172,8 +172,14 @@
     transparent 100%
   );
 }
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]:hover::before,
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]:hover::after {
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card]:hover::before,
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card]:hover::after {
   opacity: 1;
 }
 
