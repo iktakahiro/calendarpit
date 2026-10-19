@@ -1377,6 +1377,13 @@ input[type='time'] {
 .data-row:first-child {
   border-top: 0;
 }
+.client-list > li + li {
+  border-top: 1px solid var(--line);
+}
+.client-list .client-editor,
+.client-editor + .client-list {
+  border-top: 1px solid var(--line);
+}
 .data-main {
   flex: 1;
   min-width: 0;

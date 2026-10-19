@@ -101,6 +101,20 @@ Fixture が反映されるタイミングは、渡し方によって異なりま
 
 詳しくは[Fixture](/ja/fixtures/)を参照してください。
 
+### Fixture を読み込み直さずにクライアントを編集する
+
+実行中のワークスペースでコールバック URL を変更したり、シークレットを差し替えたりするには、管理 UI の **Settings → OAuth clients** を開きます。ここでクライアントを追加・編集・削除できます。ユーザー、カレンダー、イベント、接続はそのまま残ります。
+
+スクリプトからは[テスト制御 API](/ja/test-control/)で同じ操作ができます。
+
+```bash
+curl -X PATCH http://127.0.0.1:4173/__calendarpit/clients/my-app \
+  -H 'Content-Type: application/json' \
+  -d '{"redirectUris": ["http://127.0.0.1:3000/auth/google/callback"]}'
+```
+
+この編集は、ほかの管理操作と同じように保存されます。リセットすると、起動時 Fixture の状態に戻ります。
+
 ### 組み込みのクライアント
 
 組み込みのデフォルト Fixture には、ローカルテスト用の OAuth クライアントが 1 件登録されています。
@@ -214,7 +228,7 @@ Calendarpit は `http://127.0.0.1:4173`、サンプルアプリは `http://127.0
 - 取り消し URL: `${CALENDARPIT_URL}/oauth/revoke`
 - リダイレクト URI: `http://127.0.0.1:<SAMPLE_PORT>/callback`
 
-組み込みの `sample-app` クライアントに登録されているのは、ポート `4175` のみです。`SAMPLE_PORT` を変更する場合は、Fixture の `redirectUris` もあわせて更新してください。
+組み込みの `sample-app` クライアントに登録されているのは、ポート `4175` のみです。`SAMPLE_PORT` を変更する場合は、**Settings → OAuth clients** または Fixture で `redirectUris` もあわせて更新してください。
 
 ## 接続設定のチェックリスト
 

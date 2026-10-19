@@ -46,6 +46,8 @@ All paths below are relative to `/__calendarpit`.
 | `PATCH` / `DELETE`                 | `/calendars/{id}`                  | Edit or delete (`204`) a calendar.                                         |
 | `GET` / `POST`                     | `/calendars/{id}/events`           | List events or create an event (`200`).                                    |
 | `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | Read, replace, patch, or delete (`204`) an event.                          |
+| `POST`                             | `/clients`                         | Register an OAuth client (`201`).                                          |
+| `PATCH` / `DELETE`                 | `/clients/{id}`                    | Edit or delete (`204`) an OAuth client.                                    |
 | `POST`                             | `/connections/{id}/revoke`         | Revoke the connection's tokens and stop its watch channels (`204`).        |
 | `POST`                             | `/deliveries/drain`                | Wait for pending webhook deliveries, then return the delivery log (`200`). |
 
@@ -60,6 +62,8 @@ All paths below are relative to `/__calendarpit`.
 - **`/users/{id}`**: `PATCH` edits `name` and `email`. `id` is immutable. Deleting a user also deletes the data they own.
 - **`/calendars`**: Accepts `userId`, `summary`, and optional `timeZone`, `primary`, and `id`.
 - **`/calendars/{id}`**: `id` and `userId` are immutable.
+- **`/clients`**: Accepts `id`, `secret`, and `redirectUris` with the same rules as a fixture client. Returns `409 duplicate` if the ID already exists. Responses omit the secret.
+- **`/clients/{id}`**: `PATCH` edits `secret` and `redirectUris`; an omitted `secret` keeps the current one. `id` is immutable. Users, calendars, events, and connections are kept, and issued tokens stay valid. Pending consent requests and unexchanged authorization codes for a removed redirect URI are discarded. Deleting a client revokes its connections.
 - **`/calendars/{id}/events`**: Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`.
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` keeps a tombstone.
 - **`/deliveries/drain`**: Also waits for the retries of pending deliveries. The response is the delivery log array.

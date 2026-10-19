@@ -1,6 +1,5 @@
 import type { Snapshot } from '@calendarpit/server';
 import { Collapsible } from '@cloudflare/kumo/components/collapsible';
-import { Empty } from '@cloudflare/kumo/components/empty';
 import { InputArea } from '@cloudflare/kumo/components/input';
 import { Tabs } from '@cloudflare/kumo/primitives/tabs';
 import { useState } from 'react';
@@ -8,6 +7,7 @@ import { AppearanceSwitcher } from '../../components/appearance';
 import { ConfirmButton } from '../../components/confirm-button';
 import { Icon } from '../../components/icon';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
+import { ClientsPanel } from './components/clients-panel';
 import { useLoadFixture, useResetWorkspace } from './hooks/use-fixtures';
 
 /** Appearance, storage, fixtures and reset, and registered OAuth clients. */
@@ -137,41 +137,7 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
         </Collapsible.Root>
       </Tabs.Panel>
       <Tabs.Panel value='clients' className='stack settings-panel'>
-        <section className='panel' aria-labelledby='clients-title'>
-          <header className='panel-head'>
-            <div>
-              <h2 id='clients-title'>Registered OAuth clients</h2>
-              <p>Configure client secrets and redirect URIs in a fixture.</p>
-            </div>
-            <Icon name='shield' />
-          </header>
-          {snapshot.clients.length ? (
-            <ul className='rows'>
-              {snapshot.clients.map((c) => (
-                <li className='data-row' key={c.id}>
-                  <div className='data-main'>
-                    <strong>
-                      <code>{c.id}</code>
-                    </strong>
-                    <ul className='scopes' aria-label='Redirect URIs'>
-                      {c.redirectUris.map((uri) => (
-                        <li key={uri}>{uri}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Empty
-              size='sm'
-              className='empty-state'
-              icon={<Icon name='shield' />}
-              title='No OAuth clients'
-              description='Add clients to a fixture to enable the consent flow.'
-            />
-          )}
-        </section>
+        <ClientsPanel clients={snapshot.clients} />
       </Tabs.Panel>
     </Tabs.Root>
   );
