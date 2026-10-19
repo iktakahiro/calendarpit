@@ -18,6 +18,20 @@ import { LandingHero } from '../site/landing-hero';
 import { SiteFooter } from '../site/site-footer';
 import { LandingMotionRoot } from '../site/motion/landing-motion';
 
+/** Social preview image and Open Graph locale for each documentation language. */
+const socialCards = {
+  en: {
+    image: 'og-image.png',
+    locale: 'en_US',
+    alt: 'Calendarpit: Google Calendar API on localhost',
+  },
+  ja: {
+    image: 'og-image-ja.png',
+    locale: 'ja_JP',
+    alt: 'Calendarpit: ローカル環境で動く開発用 Google Calendar API',
+  },
+} as const;
+
 /** Resolves every English/Japanese MDX page without a server function. */
 export const Route = createFileRoute('/$')({
   loader: async ({ params }) => {
@@ -44,14 +58,26 @@ export const Route = createFileRoute('/$')({
     if (!page) return {};
     const url = `${__DOCS_SITE_URL__}${sitePath(page.slug ? `${page.slug}/` : '')}`;
     const title = `${page.hero ? page.hero.title.replace(/\n/gu, ' ') : page.title} | Calendarpit`;
+    const card = page.locale === 'ja' ? socialCards.ja : socialCards.en;
     return {
       meta: [
         { title },
         { name: 'description', content: page.description },
+        { property: 'og:site_name', content: 'Calendarpit' },
         { property: 'og:title', content: title },
         { property: 'og:description', content: page.description },
         { property: 'og:type', content: 'website' },
         { property: 'og:url', content: url },
+        { property: 'og:locale', content: card.locale },
+        {
+          property: 'og:image',
+          content: `${__DOCS_SITE_URL__}${sitePath(card.image)}`,
+        },
+        { property: 'og:image:type', content: 'image/png' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: card.alt },
+        { name: 'twitter:card', content: 'summary_large_image' },
       ],
       links: [
         { rel: 'canonical', href: url },
@@ -62,15 +88,15 @@ export const Route = createFileRoute('/$')({
         },
         ...i18n.languages.flatMap((locale) => {
           const alternate = source.getPage(page.slugs, locale);
-          return alternate
-            ? [
-                {
-                  rel: 'alternate',
-                  hrefLang: locale,
-                  href: `${__DOCS_SITE_URL__}${sitePath(alternate.url)}`,
-                },
-              ]
-            : [];
+          if (!alternate) return [];
+          // Page URLs omit the trailing slash that every canonical URL carries.
+          const href = `${__DOCS_SITE_URL__}${sitePath(`${alternate.url.replace(/\/$/u, '')}/`)}`;
+          return [
+            { rel: 'alternate', hrefLang: locale, href },
+            ...(locale === i18n.defaultLanguage
+              ? [{ rel: 'alternate', hrefLang: 'x-default', href }]
+              : []),
+          ];
         }),
       ],
     };
