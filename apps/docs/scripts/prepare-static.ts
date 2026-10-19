@@ -13,10 +13,7 @@ for await (const entry of new Bun.Glob('*').scan({
   await cp(`${staged}/${entry}`, `${dist}/${entry}`, { recursive: true });
 }
 await rm(staged, { recursive: true });
-const base = (process.env.DOCS_BASE_PATH ?? '/calendarpit/').replace(
-  /^\/|\/$/gu,
-  '',
-);
+const base = (process.env.DOCS_BASE_PATH ?? '/').replace(/^\/|\/$/gu, '');
 // Prerender paths include the deployment base, while hosts mount the artifact at it.
 const prerendered = base ? `${dist}/${base}` : dist;
 if (base && (await Bun.file(`${prerendered}/index.html`).exists())) {
@@ -25,5 +22,4 @@ if (base && (await Bun.file(`${prerendered}/index.html`).exists())) {
 }
 await cp(`${dist}/404/index.html`, `${dist}/404.html`);
 await rm(`${dist}/404`, { recursive: true });
-await Bun.write(`${dist}/.nojekyll`, '');
 console.log('Static documentation ready in apps/docs/dist (no server bundle).');

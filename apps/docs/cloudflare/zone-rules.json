@@ -1,0 +1,71 @@
+{
+  "zone_name": "calendarpit.dev",
+  "rulesets": [
+    {
+      "name": "Calendarpit redirects",
+      "kind": "zone",
+      "phase": "http_request_dynamic_redirect",
+      "rules": [
+        {
+          "action": "redirect",
+          "description": "Redirect WWW to apex",
+          "enabled": true,
+          "expression": "(http.host eq \"www.calendarpit.dev\")",
+          "ref": "redirect_www_to_apex",
+          "action_parameters": {
+            "from_value": {
+              "preserve_query_string": true,
+              "status_code": 301,
+              "target_url": {
+                "expression": "concat(\"https://calendarpit.dev\", http.request.uri.path)"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calendarpit security rules",
+      "kind": "zone",
+      "phase": "http_request_firewall_custom",
+      "rules": [
+        {
+          "action": "block",
+          "description": "Block sensitive file probing",
+          "enabled": true,
+          "expression": "(lower(url_decode(http.request.uri.path, \"r\")) contains \"/.git/\"\nor ends_with(lower(url_decode(http.request.uri.path, \"r\")), \"/.git\")\nor lower(url_decode(http.request.uri.path, \"r\")) contains \"/.env.\"\nor lower(url_decode(http.request.uri.path, \"r\")) contains \"/.env/\"\nor ends_with(lower(url_decode(http.request.uri.path, \"r\")), \"/.env\")\nor lower(url_decode(http.request.uri.path, \"r\")) contains \"/.ssh/\"\nor lower(url_decode(http.request.uri.path, \"r\")) contains \"/.aws/\"\nor lower(url_decode(http.request.uri.path, \"r\")) contains \"/proc/self/environ\"\nor lower(url_decode(http.request.uri.path, \"r\")) contains \"/var/run/secrets/\"\nor lower(url_decode(http.request.uri.path, \"r\")) in {\"/id_rsa\" \"/id_ecdsa\" \"/id_ed25519\" \"/keys/service-account.json\" \"/docker-compose.yml\" \"/docker-compose.yaml\"})",
+          "ref": "block_sensitive_file_probing"
+        }
+      ]
+    },
+    {
+      "name": "Calendarpit rate limiting",
+      "kind": "zone",
+      "phase": "http_ratelimit",
+      "rules": [
+        {
+          "action": "block",
+          "description": "Limit request bursts - 300 per 10 seconds",
+          "enabled": true,
+          "expression": "(not cf.bot_management.verified_bot and not starts_with(http.request.uri.path, \"/cdn-cgi/\") and not starts_with(http.request.uri.path, \"/assets/\") and not (ends_with(lower(http.request.uri.path), \".js\") or ends_with(lower(http.request.uri.path), \".css\") or ends_with(lower(http.request.uri.path), \".png\") or ends_with(lower(http.request.uri.path), \".jpg\") or ends_with(lower(http.request.uri.path), \".jpeg\") or ends_with(lower(http.request.uri.path), \".webp\") or ends_with(lower(http.request.uri.path), \".avif\") or ends_with(lower(http.request.uri.path), \".gif\") or ends_with(lower(http.request.uri.path), \".svg\") or ends_with(lower(http.request.uri.path), \".ico\") or ends_with(lower(http.request.uri.path), \".woff\") or ends_with(lower(http.request.uri.path), \".woff2\") or ends_with(lower(http.request.uri.path), \".ttf\")))",
+          "ref": "limit_request_bursts",
+          "ratelimit": {
+            "characteristics": ["ip.src", "cf.colo.id"],
+            "mitigation_timeout": 10,
+            "period": 10,
+            "requests_per_period": 300
+          }
+        }
+      ]
+    }
+  ],
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "www.calendarpit.dev",
+      "content": "192.0.2.1",
+      "ttl": 1,
+      "proxied": true
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { resolve, sep } from 'node:path';
 
 const dist = resolve(import.meta.dirname, '../dist');
-const base = process.env.DOCS_BASE_PATH ?? '/calendarpit/';
+const base = process.env.DOCS_BASE_PATH ?? '/';
 const server = Bun.serve({
   hostname: '127.0.0.1',
   port: 4488,

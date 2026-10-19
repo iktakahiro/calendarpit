@@ -10,6 +10,8 @@
     "dev": "turbo run dev --filter=calendarpit",
     "docs:dev": "turbo run dev --filter=@calendarpit/docs",
     "docs:check": "turbo run validate --filter=@calendarpit/docs",
+    "docs:deploy": "DOCS_BASE_PATH=/ DOCS_SITE_URL=https://calendarpit.dev turbo run deploy --filter=@calendarpit/docs",
+    "docs:deploy:check": "DOCS_BASE_PATH=/ DOCS_SITE_URL=https://calendarpit.dev turbo run deploy:check --filter=@calendarpit/docs",
     "build": "turbo run build",
     "build:binary": "bun run build && bun run --cwd apps/calendarpit build:binary",
     "start": "bun run --cwd apps/calendarpit start",

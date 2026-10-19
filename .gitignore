@@ -121,6 +121,9 @@ playwright-report/
 .turbo/
 .output/
 .tanstack/
+.wrangler/
+.dev.vars
+.dev.vars.*
 .calendarpit/
 .DS_Store
 .env.*

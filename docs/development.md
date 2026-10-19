@@ -31,10 +31,11 @@ such as `CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev` when invok
 them from the repository root.
 
 Run `bun run docs:dev` for the documentation preview at
-`http://127.0.0.1:4487/calendarpit/`. The docs use TanStack Start, Fumadocs, and MDX.
+`http://127.0.0.1:4487/`. The docs use TanStack Start, Fumadocs, and MDX.
 `bun run docs:check` builds it and fails on broken internal links or anchors.
-Publishing is manual for now: `.github/workflows/docs.yml` runs only on demand
-while the custom domain and hosting are decided.
+Cloudflare Workers Builds watches `main` and builds and deploys the site after
+updates, including merged pull requests. GitHub Actions only validates the site.
+See [Site deployment](site-deployment.md) for Git integration and first publication.
 The preview does not open an external browser automatically.
 
 ## Checks
@@ -164,26 +165,26 @@ The build-time renderer does not run in production.
 - `bun run docs:check` builds, type-checks, and checks all rendered pages,
   internal links, anchors, assets, metadata, locale coverage, and code parity.
   `bun run --cwd apps/docs preview` serves **only static output** at
-  `http://127.0.0.1:4488/calendarpit/`, including a real HTTP 404 for missing pages.
+  `http://127.0.0.1:4488/`, including a real HTTP 404 for missing pages.
 - TanStack Start generates `src/routeTree.gen.ts`; keep it in source control.
   The build cleans stale output and removes its temporary server bundle.
 
 ### Static hosting
 
-The default `DOCS_BASE_PATH=/calendarpit/` and
-`DOCS_SITE_URL=https://iktakahiro.github.io` preserve the existing GitHub
-Pages URLs. The manual workflow uploads `apps/docs/dist` as before.
+The defaults are `DOCS_BASE_PATH=/` and
+`DOCS_SITE_URL=https://calendarpit.dev`. Canonical and alternate-language URLs
+use this apex origin. The Cloudflare deployment also redirects `www` to it.
+See [Site deployment](site-deployment.md) for validation and publication.
 
-For a root-domain deployment, including Cloudflare static hosting, build with:
+For another static host, override both settings when building:
 
 ```sh
-DOCS_BASE_PATH=/ DOCS_SITE_URL=https://docs.example.com bun run docs:check
+DOCS_BASE_PATH=/calendarpit/ DOCS_SITE_URL=https://example.com bun run docs:check
 ```
 
-Replace the example origin with the final public origin. Set the same base path
-when running the static preview. No SSR worker or SPA fallback is needed: every
-page has an `index.html`, and `404.html` handles missing paths. MDX links use
-router paths without a deployment prefix. `SiteLink` adapts Fumadocs links to
-TanStack Router's base path and separate hash property; this small adapter avoids
-duplicated prefixes and preserves in-page anchors on both hosting layouts.
+Set the same base path when running the static preview. No SSR worker or SPA
+fallback is needed: every page has an `index.html`, and `404.html` handles
+missing paths. MDX links use router paths without a deployment prefix.
+`SiteLink` adapts Fumadocs links to TanStack Router's base path and separate
+hash property, preserving prefixes and in-page anchors on both hosting layouts.
 Turborepo includes both deployment settings in the docs build cache key.

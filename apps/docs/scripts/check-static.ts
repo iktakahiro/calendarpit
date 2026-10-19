@@ -3,10 +3,9 @@ import { readPages } from './content';
 import { localeFromPath } from '../src/site/i18n';
 
 const root = resolve(import.meta.dirname, '..');
-const base = process.env.DOCS_BASE_PATH ?? '/calendarpit/';
-const origin = new URL(
-  process.env.DOCS_SITE_URL ?? 'https://iktakahiro.github.io',
-).origin;
+const base = process.env.DOCS_BASE_PATH ?? '/';
+const origin = new URL(process.env.DOCS_SITE_URL ?? 'https://calendarpit.dev')
+  .origin;
 const pages = await readPages(`${root}/src/content/docs`);
 const errors: string[] = [];
 const documents = new Map<string, { ids: Set<string>; links: string[] }>();

@@ -6,15 +6,13 @@ import { fumadocsMdx } from 'fumadocs-mdx/vite';
 import { defineConfig } from 'vite';
 import { readPages } from './scripts/content.ts';
 
-const base = process.env.DOCS_BASE_PATH ?? '/calendarpit/';
+const base = process.env.DOCS_BASE_PATH ?? '/';
 if (!base.startsWith('/') || !base.endsWith('/') || base.includes('..')) {
   throw new Error(
     'DOCS_BASE_PATH must start and end with / and contain no .. segments.',
   );
 }
-const site = new URL(
-  process.env.DOCS_SITE_URL ?? 'https://iktakahiro.github.io',
-);
+const site = new URL(process.env.DOCS_SITE_URL ?? 'https://calendarpit.dev');
 const contentDirectory = resolve(import.meta.dirname, 'src/content/docs');
 const pages = await readPages(contentDirectory);
 
