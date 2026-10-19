@@ -100,6 +100,20 @@ A reset restores the startup fixture, not a fixture loaded through the API. To k
 
 See [Fixtures](/fixtures/).
 
+### Edit a client without reloading the fixture
+
+To change a callback URL or rotate a secret in a running workspace, open **Settings → OAuth clients** in the admin UI. You can add, edit, and delete clients there. Users, calendars, events, and connections stay as they are.
+
+Scripts can do the same with the [Test control API](/test-control/):
+
+```bash
+curl -X PATCH http://127.0.0.1:4173/__calendarpit/clients/my-app \
+  -H 'Content-Type: application/json' \
+  -d '{"redirectUris": ["http://127.0.0.1:3000/auth/google/callback"]}'
+```
+
+These edits are saved like other admin changes. A reset still restores the startup fixture.
+
 ### Built-in client
 
 The built-in default fixture registers one OAuth client for local testing:
@@ -213,7 +227,7 @@ The sample app also sets these values:
 - Revocation URL: `${CALENDARPIT_URL}/oauth/revoke`
 - Redirect URI: `http://127.0.0.1:<SAMPLE_PORT>/callback`
 
-The built-in `sample-app` client registers only port `4175`. If you change `SAMPLE_PORT`, update the client's `redirectUris` in a fixture.
+The built-in `sample-app` client registers only port `4175`. If you change `SAMPLE_PORT`, update the client's `redirectUris` in **Settings → OAuth clients** or in a fixture.
 
 ## Checklist for your app
 

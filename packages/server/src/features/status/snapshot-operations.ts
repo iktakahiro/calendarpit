@@ -1,4 +1,5 @@
 import type { Workspace } from '../../workspace/workspace';
+import { publicClient } from '../oauth/oauth-client';
 import { expireChannels } from '../watch/channel-operations';
 
 /**
@@ -12,10 +13,7 @@ export function snapshot(workspace: Workspace) {
     users: workspace.data.users,
     calendars: workspace.data.calendars,
     events: workspace.data.events,
-    clients: workspace.data.clients.map(({ id, redirectUris }) => ({
-      id,
-      redirectUris,
-    })),
+    clients: workspace.data.clients.map(publicClient),
     connections: [...workspace.grants.values()],
     channels: [...workspace.channels.values()].map(
       ({ controller: _controller, tail: _tail, token, ...c }) => ({

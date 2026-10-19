@@ -46,6 +46,8 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 | `PATCH` / `DELETE`                 | `/calendars/{id}`                  | カレンダーを編集・削除（`204`）します。                                    |
 | `GET` / `POST`                     | `/calendars/{id}/events`           | イベントを一覧取得・作成（`200`）します。                                  |
 | `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | イベントを取得・置き換え・部分更新・削除（`204`）します。                  |
+| `POST`                             | `/clients`                         | OAuth クライアントを登録します（`201`）。                                  |
+| `PATCH` / `DELETE`                 | `/clients/{id}`                    | OAuth クライアントを編集・削除（`204`）します。                            |
 | `POST`                             | `/connections/{id}/revoke`         | 接続のトークンを取り消し、その接続の watch チャネルを停止します（`204`）。 |
 | `POST`                             | `/deliveries/drain`                | 待機中の Webhook 配信が終わるまで待ち、配信ログを返します（`200`）。       |
 
@@ -60,6 +62,8 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - **`/users/{id}`**: `PATCH` で `name` と `email` を編集します。`id` は変更できません。ユーザーを削除すると、そのユーザーが所有するデータも削除されます。
 - **`/calendars`**: `userId`、`summary`、省略可能な `timeZone`、`primary`、`id` を受け取ります。
 - **`/calendars/{id}`**: `id` と `userId` は変更できません。
+- **`/clients`**: Fixture のクライアントと同じ規則で `id`、`secret`、`redirectUris` を受け取ります。ID がすでにある場合は `409 duplicate` を返します。レスポンスにシークレットは含まれません。
+- **`/clients/{id}`**: `PATCH` で `secret` と `redirectUris` を編集します。`secret` を省略すると現在の値を維持します。`id` は変更できません。ユーザー、カレンダー、イベント、接続は残り、発行済みのトークンも有効なままです。削除したリダイレクト URI 宛ての保留中の同意リクエストと未交換の認可コードは破棄されます。クライアントを削除すると、その接続は取り消されます。
 - **`/calendars/{id}/events`**: 一覧取得では `syncToken` を含む `events.list` のパラメータを使えます。一覧の各項目には `calendarId` が入ります。
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` しても削除済みレコードは残ります。
 - **`/deliveries/drain`**: 待機中の配信のリトライが終わるまで待ちます。レスポンスは配信ログの配列です。

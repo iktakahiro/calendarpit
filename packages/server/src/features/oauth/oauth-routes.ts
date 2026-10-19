@@ -1,9 +1,15 @@
-import { requireSameOrigin } from '../../http/requests';
+import { parseJsonBody, requireSameOrigin } from '../../http/requests';
 import { json, noContent } from '../../http/responses';
 import type { Route } from '../../http/router';
 import { parseAuthorizationRequest } from './authorization-request';
 import { consentPageHeaders, renderConsentPage } from './consent-page';
-import { identifyClient } from './oauth-client';
+import {
+  createClient,
+  deleteClient,
+  findClient,
+  updateClient,
+} from './client-operations';
+import { identifyClient, publicClient } from './oauth-client';
 import {
   authenticate,
   createConsent,
@@ -98,8 +104,31 @@ export const oauthGoogleRoutes: Route[] = [
   },
 ];
 
-/** Management endpoint that revokes a connection from the admin UI. */
+/**
+ * Management endpoints for OAuth clients (create, update, and delete) and for
+ * revoking a connection from the admin UI.
+ */
 export const oauthManagementRoutes: Route[] = [
+  {
+    pattern: /^\/__calendarpit\/clients(?:\/([^/]+))?$/,
+    handle({ workspace, request, body }, [clientId]) {
+      const method = request.method;
+      const existing = clientId ? findClient(workspace, clientId) : undefined;
+      if (method === 'POST' && !existing)
+        return json(
+          publicClient(createClient(workspace, parseJsonBody(body))),
+          201,
+        );
+      if (method === 'PATCH' && existing)
+        return json(
+          publicClient(updateClient(workspace, existing, parseJsonBody(body))),
+        );
+      if (method === 'DELETE' && existing) {
+        deleteClient(workspace, existing);
+        return noContent();
+      }
+    },
+  },
   {
     pattern: /^\/__calendarpit\/connections\/([^/]+)\/revoke$/,
     handle({ workspace, request }, [grantId]) {

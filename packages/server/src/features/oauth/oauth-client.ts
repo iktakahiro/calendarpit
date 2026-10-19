@@ -36,6 +36,14 @@ export function parseClient(value: unknown): Client {
 }
 
 /**
+ * Returns the client without its secret, as the management API exposes it.
+ */
+export const publicClient = ({ id, redirectUris }: Client) => ({
+  id,
+  redirectUris,
+});
+
+/**
  * Identifies the client of an OAuth request from `client_id` or HTTP Basic
  * credentials, and optionally verifies its secret in constant time.
  *

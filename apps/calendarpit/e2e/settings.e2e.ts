@@ -42,3 +42,40 @@ test('protocol history records API calls with secrets masked', async ({
   await expect(page.getByText('[REDACTED]').first()).toBeVisible();
   await expect(page.getByText('not-a-real-token')).toHaveCount(0);
 });
+
+test('an OAuth client callback can change without reloading the fixture', async ({
+  page,
+}) => {
+  const moved = 'http://127.0.0.1:3000/auth/google/callback';
+  await page.goto('/settings');
+  await page.getByRole('tab', { name: 'OAuth clients' }).click();
+  await page.getByRole('button', { name: 'Edit sample-app' }).click();
+  const editor = page.getByRole('form', { name: 'Edit sample-app' });
+  await editor.getByLabel('Redirect URIs').fill(`${moved}\nnot a url`);
+  await editor.getByRole('button', { name: 'Save client' }).click();
+  await expect(
+    editor.getByText(
+      'Use absolute http or https URLs without a fragment or credentials.',
+    ),
+  ).toBeVisible();
+  await editor.getByLabel('Redirect URIs').fill(moved);
+  await editor.getByRole('button', { name: 'Save client' }).click();
+  await expect(toast(page, 'OAuth client saved.')).toBeVisible();
+  await expect(
+    page.getByRole('list', { name: 'Redirect URIs' }).getByText(moved),
+  ).toBeVisible();
+
+  const params = new URLSearchParams({
+    client_id: 'sample-app',
+    redirect_uri: moved,
+    response_type: 'code',
+    scope: 'https://www.googleapis.com/auth/calendar.readonly',
+  });
+  await page.goto(`/oauth/authorize?${params}`);
+  await expect(
+    page.getByRole('heading', { name: 'Connect your calendar.' }),
+  ).toBeVisible();
+
+  await page.goto('/');
+  await expect(page.getByText('Weekly planning')).toBeVisible();
+});
