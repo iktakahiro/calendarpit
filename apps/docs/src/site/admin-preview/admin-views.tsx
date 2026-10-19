@@ -3,17 +3,22 @@ import {
   Calendar,
   CalendarDays,
   Check,
+  ChevronsUpDown,
+  Code,
+  Database,
   ChevronLeft,
   ChevronRight,
   Copy,
   Pencil,
   Plus,
   Radio,
+  RotateCcw,
   Search,
   ShieldCheck,
   Signal,
   Trash2,
   Users,
+  X,
 } from 'lucide-react';
 import type { AdminSection } from './admin-window';
 import {
@@ -36,11 +41,13 @@ import {
 export type AdminView =
   | 'schedule-week'
   | 'schedule-day'
+  | 'event-editor'
   | 'users'
   | 'calendars'
   | 'connections'
   | 'watch'
   | 'history'
+  | 'test-data'
   | 'oauth-clients'
   | 'consent';
 
@@ -64,6 +71,13 @@ const scheduleShell = {
   lede: 'Alex Morgan · alex-work · primary',
 } as const;
 
+const settingsShell = {
+  section: 'settings',
+  eyebrow: 'Configuration',
+  title: 'Settings',
+  lede: 'Set your appearance and configure the local test workspace.',
+} as const;
+
 /** Every preview screen, keyed by view name. */
 export const adminViews: Record<AdminView, ViewDefinition> = {
   'schedule-week': {
@@ -75,6 +89,11 @@ export const adminViews: Record<AdminView, ViewDefinition> = {
     path: '/?date=2026-10-19',
     shell: scheduleShell,
     body: () => <DaySchedule />,
+  },
+  'event-editor': {
+    path: '/?event=planning',
+    shell: scheduleShell,
+    body: () => <EventEditing />,
   },
   users: {
     path: '/users',
@@ -126,14 +145,14 @@ export const adminViews: Record<AdminView, ViewDefinition> = {
     },
     body: () => <RequestHistory />,
   },
+  'test-data': {
+    path: '/settings',
+    shell: settingsShell,
+    body: () => <TestData />,
+  },
   'oauth-clients': {
     path: '/settings',
-    shell: {
-      section: 'settings',
-      eyebrow: 'Configuration',
-      title: 'Settings',
-      lede: 'Set your appearance and configure the local test workspace.',
-    },
+    shell: settingsShell,
     body: () => <ClientSettings />,
   },
   consent: {
@@ -269,72 +288,166 @@ function WeekSchedule() {
 }
 
 function DaySchedule() {
-  const events = sampleEvents.filter((event) => event.day === sampleToday);
   return (
     <>
       <Toolbar view='day' />
-      <div className='am-panel'>
-        <div className='am-sheet-head'>
-          <div>
-            <strong>Monday, October 19, 2026</strong>
-            <small>{events.length} events · 1 busy · 1 free</small>
-          </div>
-          <Legend />
-        </div>
-        <div className='am-track'>
-          <div className='am-track-lane'>
-            {events.map((event) => (
-              <span
-                key={event.summary}
-                className={`am-track-block ${event.free ? 'free' : 'busy'}`}
-                style={{
-                  left: `${(event.start / 24) * 100}%`,
-                  width: `${((event.end - event.start) / 24) * 100}%`,
-                }}
-              />
-            ))}
-            <span
-              className='am-track-now'
-              style={{ left: `${(sampleNow / 24) * 100}%` }}
-            />
-          </div>
-          <div className='am-track-scale'>
-            {['00', '03', '06', '09', '12', '15', '18', '21', '24'].map(
-              (hour) => (
-                <span key={hour}>{hour}</span>
-              ),
-            )}
-          </div>
-        </div>
-        {events.map((event) => (
-          <div
-            key={event.summary}
-            className={`am-agenda ${event.free ? 'free' : ''}`}
-          >
-            <span className='am-agenda-time'>
-              <strong>{clock(event.start)}</strong>
-              <small>{clock(event.end)}</small>
-            </span>
-            <span className='am-agenda-bar' />
-            <span className='am-agenda-body'>
-              <strong>{event.summary}</strong>
-              <small>{event.free ? 'focus-time' : 'planning'}</small>
-            </span>
-            <span className='am-agenda-meta'>
-              {event.end - event.start}h
-              <span className='am-badge neutral'>
-                {event.free ? 'Free' : 'Busy'}
-              </span>
-              <Trash2 />
-            </span>
-          </div>
-        ))}
-        <div className='am-footnote'>
-          Times shown in Asia/Tokyo. End times are exclusive. Free events do not
-          block availability.
-        </div>
+      <DaySheet />
+    </>
+  );
+}
+
+function EventEditing() {
+  return (
+    <>
+      <Toolbar view='day' />
+      <div className='am-editing'>
+        <DaySheet selected='Weekly planning' />
+        <EventEditor />
       </div>
     </>
+  );
+}
+
+/** The day track and agenda, optionally with one event open in the editor. */
+function DaySheet({ selected }: { selected?: string }) {
+  const events = sampleEvents.filter((event) => event.day === sampleToday);
+  return (
+    <div className='am-panel'>
+      <div className='am-sheet-head'>
+        <div>
+          <strong>Monday, October 19, 2026</strong>
+          <small>{events.length} events · 1 busy · 1 free</small>
+        </div>
+        <Legend />
+      </div>
+      <div className='am-track'>
+        <div className='am-track-lane'>
+          {events.map((event) => (
+            <span
+              key={event.summary}
+              className={`am-track-block ${event.free ? 'free' : 'busy'} ${event.summary === selected ? 'selected' : ''}`}
+              style={{
+                left: `${(event.start / 24) * 100}%`,
+                width: `${((event.end - event.start) / 24) * 100}%`,
+              }}
+            />
+          ))}
+          <span
+            className='am-track-now'
+            style={{ left: `${(sampleNow / 24) * 100}%` }}
+          />
+        </div>
+        <div className='am-track-scale'>
+          {['00', '03', '06', '09', '12', '15', '18', '21', '24'].map(
+            (hour) => (
+              <span key={hour}>{hour}</span>
+            ),
+          )}
+        </div>
+      </div>
+      {events.map((event) => (
+        <div
+          key={event.summary}
+          className={`am-agenda ${event.free ? 'free' : ''} ${event.summary === selected ? 'selected' : ''}`}
+        >
+          <span className='am-agenda-time'>
+            <strong>{clock(event.start)}</strong>
+            <small>{clock(event.end)}</small>
+          </span>
+          <span className='am-agenda-bar' />
+          <span className='am-agenda-body'>
+            <strong>{event.summary}</strong>
+            <small>{event.free ? 'focus-time' : 'planning'}</small>
+          </span>
+          <span className='am-agenda-meta'>
+            {event.end - event.start}h
+            <span className='am-badge neutral'>
+              {event.free ? 'Free' : 'Busy'}
+            </span>
+            <Trash2 />
+          </span>
+        </div>
+      ))}
+      <div className='am-footnote'>
+        Times shown in Asia/Tokyo. End times are exclusive. Free events do not
+        block availability.
+      </div>
+    </div>
+  );
+}
+
+function EventEditor() {
+  return (
+    <div className='am-panel am-editor'>
+      <div className='am-panel-head'>
+        <div>
+          <div className='am-eyebrow'>Edit event</div>
+          <strong>Weekly planning</strong>
+          <small>Work calendar · Asia/Tokyo</small>
+        </div>
+        <span className='am-button am-ghost am-small'>
+          <X />
+          Close
+        </span>
+      </div>
+      <div className='am-form'>
+        <span className='am-field'>
+          Summary
+          <span className='am-input'>Weekly planning</span>
+        </span>
+        <span className='am-fieldset'>
+          <span className='am-label'>When</span>
+          <span className='am-check'>
+            <span className='am-checkbox off' />
+            All-day event
+          </span>
+          <span className='am-field'>
+            Start
+            <span className='am-pair'>
+              <span className='am-input'>
+                <CalendarDays />
+                2026-10-19
+              </span>
+              <span className='am-input'>10:00</span>
+            </span>
+          </span>
+          <span className='am-field'>
+            End
+            <span className='am-pair'>
+              <span className='am-input'>
+                <CalendarDays />
+                2026-10-19
+              </span>
+              <span className='am-input'>11:00</span>
+            </span>
+          </span>
+        </span>
+        <span className='am-field'>
+          Availability
+          <span className='am-input'>
+            Busy
+            <ChevronsUpDown />
+          </span>
+        </span>
+        <span className='am-field'>
+          Location
+          <span className='am-input'>Room 4</span>
+        </span>
+        <span className='am-field'>
+          Extended properties (JSON)
+          <span className='am-input am-code'>
+            {'{"private": {"source": "sample-app"}}'}
+          </span>
+        </span>
+        <span className='am-actions'>
+          <span className='am-button am-primary'>Save event</span>
+          <span className='am-button am-danger'>
+            <Trash2 />
+            Delete
+          </span>
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -659,14 +772,89 @@ function Payload({ title, value }: { title: string; value: unknown }) {
   );
 }
 
+function SettingsTabs({ active }: { active: string }) {
+  return (
+    <div className='am-tabs'>
+      {['Appearance', 'Test data', 'OAuth clients'].map((tab) => (
+        <span key={tab} className={tab === active ? 'on' : ''}>
+          {tab}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function TestData() {
+  return (
+    <>
+      <SettingsTabs active='Test data' />
+      <div className='am-stack'>
+        <div className='am-panel'>
+          <PanelHead
+            title='Storage'
+            sub='Temporary session. Restarting discards changes.'
+          >
+            <Database />
+          </PanelHead>
+          <div className='am-form'>
+            <code className='am-path-box'>:memory:</code>
+          </div>
+        </div>
+        <div className='am-panel'>
+          <PanelHead
+            title='Fixtures & reset'
+            sub='Load JSON with users, calendars, events, and OAuth clients. Loading replaces current state; reset restores the initial fixture.'
+          >
+            <Database />
+          </PanelHead>
+          <div className='am-form'>
+            <span className='am-field'>
+              Fixture JSON
+              <span className='am-input am-textarea'>
+                {'{"users": [], "calendars": [], "events": [], "clients": []}'}
+              </span>
+            </span>
+            <span className='am-actions'>
+              <span className='am-button'>
+                <Code />
+                Open JSON file…
+              </span>
+              <span className='am-button am-primary am-muted'>
+                Load fixture
+              </span>
+            </span>
+            <span className='am-danger-zone'>
+              <span>
+                <strong>Reset workspace</strong>
+                <small>
+                  Restore initial data and clear connections, history, and watch
+                  channels.
+                </small>
+              </span>
+              <span className='am-button am-danger'>
+                <RotateCcw />
+                Reset workspace
+              </span>
+            </span>
+          </div>
+        </div>
+        <div className='am-panel am-row'>
+          <span className='am-row-main'>
+            <strong>
+              Current state <small>Credentials excluded · revision 42</small>
+            </strong>
+          </span>
+          <ChevronRight />
+        </div>
+      </div>
+    </>
+  );
+}
+
 function ClientSettings() {
   return (
     <>
-      <div className='am-tabs'>
-        <span>Appearance</span>
-        <span>Test data</span>
-        <span className='on'>OAuth clients</span>
-      </div>
+      <SettingsTabs active='OAuth clients' />
       <div className='am-panel'>
         <div className='am-panel-head'>
           <div>
