@@ -1,12 +1,11 @@
 {
-  "caption": "Your app uses standard Google SDKs and API v3 shapes, pointed at Calendarpit on 127.0.0.1.",
   "yourApp": {
     "label": "Your app",
     "sub": "Google SDKs and tests"
   },
   "calendarpit": {
     "label": "Calendarpit",
-    "sub": "Local server on 127.0.0.1"
+    "sub": "Local server"
   },
   "google": {
     "label": "Google Calendar",

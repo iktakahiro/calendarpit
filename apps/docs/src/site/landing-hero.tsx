@@ -16,20 +16,9 @@ export function LandingHero({ page }: { page: PageMetadata }) {
   const [before, after] = (page.hero?.title ?? '').split(accent);
 
   const workbench = (
-    <>
-      <div className='workbench-title'>
-        <span>
-          <span className='workbench-led' />
-          {japanese
-            ? 'Calendar API 連携の開発がローカル環境で完結'
-            : 'Develop and test Calendar API integrations locally'}
-        </span>
-        <code>127.0.0.1:4173</code>
-      </div>
-      <div className='landing-diagram'>
-        <LandingDiagram japanese={japanese} />
-      </div>
-    </>
+    <div className='landing-diagram'>
+      <LandingDiagram japanese={japanese} />
+    </div>
   );
 
   return (

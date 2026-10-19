@@ -499,7 +499,6 @@ export function LandingDiagram({ japanese }: { japanese: boolean }) {
           </svg>
         </div>
       </div>
-      <figcaption>{copy.caption}</figcaption>
     </figure>
   );
 }

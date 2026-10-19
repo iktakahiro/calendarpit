@@ -318,13 +318,6 @@
     color: var(--lp-signal-ink);
   }
 
-  figcaption {
-    margin-top: 0.625rem;
-    color: var(--lp-muted);
-    font-size: 0.75rem;
-    line-height: 1.6;
-  }
-
   /* Wide layout: the app and Calendarpit side by side with one lane per
      flow. Google sits on the lane above them, cut off before it is reached,
      while the request lanes run underneath it straight to Calendarpit. */

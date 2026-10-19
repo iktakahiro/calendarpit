@@ -131,15 +131,6 @@
 }
 
 /* Shared accents. */
-@keyframes led-pulse {
-  50% {
-    box-shadow: 0 0 0 4px
-      color-mix(in srgb, var(--color-fd-primary) 22%, transparent);
-  }
-}
-.landing:not([data-motion='off']) .workbench-led {
-  animation: led-pulse 2.4s ease-in-out infinite;
-}
 .landing [data-reveal='pending'] {
   opacity: 0;
 }
