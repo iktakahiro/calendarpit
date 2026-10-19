@@ -55,33 +55,6 @@ For disposable tests, use in-memory storage:
 
 See [Storage and restarts](/storage/).
 
-## Check the health endpoint
-
-```sh
-curl http://127.0.0.1:4173/__calendarpit/health
-```
-
-```json
-{
-  "name": "Calendarpit",
-  "version": "<version>",
-  "stage": "preview",
-  "storage": "sqlite",
-  "capabilities": {
-    "calendar": true,
-    "oauth": true,
-    "watch": true,
-    "fixtures": true
-  }
-}
-```
-
-<Callout type="info">
-
-Calendarpit is a preview. Its supported compatibility scope is documented, but the API may change before 1.0.
-
-</Callout>
-
 ## Connect your app
 
 1. Follow [Connect your app](/connect/) to point your SDK and OAuth flow at Calendarpit.

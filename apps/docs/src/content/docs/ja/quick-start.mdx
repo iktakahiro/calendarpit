@@ -55,33 +55,6 @@ Compose と単体ダウンロードは[インストール](/ja/installation/)で
 
 [ストレージと再起動](/ja/storage/)も参照してください。
 
-## ヘルスエンドポイントを確認する
-
-```sh
-curl http://127.0.0.1:4173/__calendarpit/health
-```
-
-```json
-{
-  "name": "Calendarpit",
-  "version": "<version>",
-  "stage": "preview",
-  "storage": "sqlite",
-  "capabilities": {
-    "calendar": true,
-    "oauth": true,
-    "watch": true,
-    "fixtures": true
-  }
-}
-```
-
-<Callout type="info">
-
-Calendarpit はプレビュー版です。対応範囲はドキュメントに記載していますが、1.0 までは API が変わる可能性があります。
-
-</Callout>
-
 ## アプリを接続する
 
 1. [アプリを接続する](/ja/connect/)に従って、SDK と OAuth フローの接続先を Calendarpit に変更します。
