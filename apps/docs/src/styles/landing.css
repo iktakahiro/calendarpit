@@ -188,12 +188,12 @@
 .landing-body > h2 {
   margin-top: 3.5rem;
 }
-.landing-body [data-card][href] {
+.landing-body .grid > [data-card][href] {
   transition:
     border-color 200ms,
     box-shadow 200ms;
 }
-.landing-body [data-card][href]:hover {
+.landing-body .grid > [data-card][href]:hover {
   border-color: color-mix(
     in srgb,
     var(--color-fd-primary) 50%,

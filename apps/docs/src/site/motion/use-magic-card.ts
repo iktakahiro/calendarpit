@@ -19,7 +19,7 @@ export function useMagicCard(
     const onPointerMove = (event: PointerEvent) => {
       if (!(event.target instanceof Element)) return;
       const card = event.target.closest<HTMLElement>(
-        '.landing-body [data-card]',
+        '.landing-body .grid > [data-card]',
       );
       if (!card) return;
       const rect = card.getBoundingClientRect();
