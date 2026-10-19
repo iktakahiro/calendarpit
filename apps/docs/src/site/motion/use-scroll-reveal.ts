@@ -5,6 +5,7 @@ const targets = [
   '.landing-body > h2',
   '.landing-body > p',
   '.landing-body > .hero-actions',
+  '.landing-body .admin-showcase-item',
   '.landing-body [data-card]',
   '.landing-body .fd-steps > .fd-step',
 ].join(', ');

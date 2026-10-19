@@ -187,6 +187,11 @@ Calendarpit does not keep a durable delivery queue across restarts.
 
 The admin UI shows the latest 200 delivery records with their attempt counts, status, and last HTTP status code.
 
+<AdminScreen
+  view='watch'
+  caption='The Watch screen. A delivery that your endpoint rejected shows its attempts and last HTTP status.'
+/>
+
 In automated tests, call `POST /__calendarpit/deliveries/drain` with `Content-Type: application/json`. It waits for all pending deliveries and their retries to finish:
 
 ```sh

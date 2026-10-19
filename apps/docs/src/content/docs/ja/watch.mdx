@@ -187,6 +187,11 @@ Calendarpit は、再起動をまたいで配信待ちを保持するキュー�
 
 管理画面には最新 200 件の配信記録が表示されます。各記録で試行回数、状態、最後に受け取った HTTP ステータスコードを確認できます。
 
+<AdminScreen
+  view='watch'
+  caption='Watch 画面。エンドポイントが拒否した配信には、試行回数と最後の HTTP ステータスが表示されます。'
+/>
+
 自動テストでは、`Content-Type: application/json` を付けて `POST /__calendarpit/deliveries/drain` を呼び出します。この時点で待機中の配信とその再試行がすべて終わるまで待ってから応答が返ります。
 
 ```sh

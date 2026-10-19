@@ -61,16 +61,31 @@ function absolute(path: string): string {
 
 const alerts: Record<string, string> = { info: 'NOTE', warn: 'WARNING' };
 
+/** Opens an admin UI preview, a picture with no Markdown form. */
+const adminPreview = /^<Admin(?:Screen|Showcase)\b/u;
+
 /**
- * Makes router-relative links absolute and turns callouts into GitHub alerts,
- * leaving fenced code untouched. Other MDX components stay as JSX.
+ * Makes router-relative links absolute, turns callouts into GitHub alerts, and
+ * drops admin UI previews, leaving fenced code untouched. Other MDX components
+ * stay as JSX.
  */
 function toMarkdown(body: string): string {
   let fence = '';
   let quote = false;
+  // A preview spans lines until its self-closing `/>`.
+  let preview: 'none' | 'open' | 'closed' = 'none';
   const lines: string[] = [];
   for (const line of body.split('\n')) {
     let text = line;
+    if (preview === 'open') {
+      if (line.trimEnd().endsWith('/>')) preview = 'closed';
+      continue;
+    }
+    if (preview === 'closed') {
+      preview = 'none';
+      // Also drop the blank line that separated the removed preview.
+      if (!line && !lines.at(-1)) continue;
+    }
     const marker = /^\s*(`{3,}|~{3,})(.*)$/u.exec(line);
     if (marker?.[1]) {
       if (!fence) fence = marker[1];
@@ -91,6 +106,10 @@ function toMarkdown(body: string): string {
       }
       if (quote && line === '</Callout>') {
         quote = false;
+        continue;
+      }
+      if (adminPreview.test(line)) {
+        preview = line.trimEnd().endsWith('/>') ? 'closed' : 'open';
         continue;
       }
       text = line.replace(

@@ -11,6 +11,11 @@ To investigate a failure, open **API history** (`http://127.0.0.1:4173/history`)
 - Each entry records the HTTP method, path, status code, headers, and masked request and response bodies.
 - The **Errors** toggle filters for responses with status `400` or higher.
 
+<AdminScreen
+  view='history'
+  caption='Expand an entry to read its request and response. Here, a lookup of a missing event returned 404.'
+/>
+
 Each entry on this page follows the same pattern: the exact **Error** output (when there is one), the likely **Cause**, and the **Fix**.
 
 ## Error response formats
