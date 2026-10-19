@@ -1,11 +1,11 @@
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
-import { layoutOptions } from './navigation';
+import { homeLayoutOptions } from './navigation';
 import { sitePath } from './paths';
 
 /** Bilingual static error page used by hosts and unknown client-side routes. */
 export function NotFoundPage() {
   return (
-    <HomeLayout {...layoutOptions('')}>
+    <HomeLayout {...homeLayoutOptions('')}>
       <main id='main-content' className='not-found'>
         <p className='eyebrow'>404 / Calendarpit</p>
         <h1>Page not found</h1>
