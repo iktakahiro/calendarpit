@@ -72,7 +72,7 @@ const settingsShell = {
   section: 'settings',
   eyebrow: 'Configuration',
   title: 'Settings',
-  lede: 'Set your appearance and configure the local test workspace.',
+  lede: 'Choose the theme and language, load or reset test data, and manage OAuth clients.',
 } as const;
 
 /** Every preview screen, keyed by view name. */
@@ -108,7 +108,7 @@ export const adminViews: Record<AdminView, ViewDefinition> = {
       section: 'connections',
       eyebrow: 'Integration',
       title: 'Connections',
-      lede: 'Review permissions and revoke connections to test reconnection.',
+      lede: 'A connection is an OAuth grant: which test user granted which scopes to which OAuth client. Revoking it invalidates its tokens, so your app must ask the user to authorize again.',
     },
     body: () => <ConnectionList />,
   },
@@ -118,7 +118,7 @@ export const adminViews: Record<AdminView, ViewDefinition> = {
       section: 'watch',
       eyebrow: 'Notifications',
       title: 'Watch',
-      lede: 'Inspect active subscriptions and webhook deliveries from all calendars.',
+      lede: 'Inspect the watch channels your app created and the notifications Calendarpit sent to them, across all calendars.',
     },
     body: () => <WatchLog />,
   },
@@ -128,7 +128,7 @@ export const adminViews: Record<AdminView, ViewDefinition> = {
       section: 'history',
       eyebrow: 'Protocol log',
       title: 'API history',
-      lede: 'Calendar and OAuth requests from your app, with headers and bodies.',
+      lede: 'Calendar API and OAuth requests that your app sent to Calendarpit, with request and response headers and bodies.',
     },
     body: () => <RequestHistory />,
   },
@@ -604,7 +604,7 @@ function WatchLog() {
   return (
     <div className='am-stack'>
       <div className='am-panel'>
-        <PanelHead title='Watch channels' sub='1 active subscriptions'>
+        <PanelHead title='Watch channels' sub='1 active channel'>
           <Radio />
         </PanelHead>
         {sampleChannels.map((channel) => (
@@ -626,7 +626,7 @@ function WatchLog() {
       <div className='am-panel'>
         <PanelHead
           title='Delivery log'
-          sub='Push notifications sent to watch channels, newest first.'
+          sub='Push notifications that Calendarpit sent to watch channel addresses, newest first.'
         >
           <Signal />
         </PanelHead>
@@ -685,7 +685,8 @@ function RequestHistory() {
         </span>
       </div>
       <div className='am-note'>
-        The latest 200 protocol requests, newest first. Credentials are masked.
+        The latest 200 Calendar API and OAuth requests, newest first.
+        Credentials are masked.
       </div>
       <div className='am-panel'>
         {sampleRequests.map((request) => {
@@ -765,7 +766,7 @@ function TestData() {
         <div className='am-panel'>
           <PanelHead
             title='Fixtures & reset'
-            sub='Load JSON with users, calendars, events, and OAuth clients. Loading replaces current state; reset restores the initial fixture.'
+            sub='Load JSON with users, calendars, events, and OAuth clients. Loading replaces the current state; reset restores the startup fixture.'
           >
             <Database />
           </PanelHead>
@@ -789,8 +790,8 @@ function TestData() {
               <span>
                 <strong>Reset workspace</strong>
                 <small>
-                  Restore initial data and clear connections, history, and watch
-                  channels.
+                  Restore the startup fixture and clear connections, request
+                  history, and watch channels.
                 </small>
               </span>
               <span className='am-button am-danger'>

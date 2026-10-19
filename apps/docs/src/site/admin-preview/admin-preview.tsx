@@ -80,7 +80,7 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
     },
     {
       view: 'connections',
-      label: 'OAuth 接続',
+      label: '接続',
       text: '接続は OAuth の認可（grant）です。どのテストユーザーが、どの OAuth クライアントに、どのスコープを許可したかを確認できます。接続を取り消すとトークンが無効になるので、アプリがユーザーに再認可を求める処理をテストできます。',
     },
   ],

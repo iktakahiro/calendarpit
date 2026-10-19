@@ -93,7 +93,7 @@ test('the interface language can switch to Japanese and back', async ({
   await expect(page).toHaveTitle('Calendarpit · ローカルカレンダーラボ');
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     'content',
-    '開発と再現可能なテストのためのローカルカレンダーサービス。',
+    '開発とテストで使う、Google Calendar API 互換のローカルサーバー。',
   );
   await expect(
     page
