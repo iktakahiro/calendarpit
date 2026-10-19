@@ -9,7 +9,10 @@ const origin = new URL(process.env.DOCS_SITE_URL ?? 'https://calendarpit.dev')
   .origin;
 const pages = await readPages(`${root}/src/content/docs`);
 const errors: string[] = [];
-const documents = new Map<string, { ids: Set<string>; links: string[] }>();
+const documents = new Map<
+  string,
+  { ids: Set<string>; links: string[]; alternates: string[] }
+>();
 
 for await (const file of new Bun.Glob('**/*.html').scan(`${root}/dist`)) {
   const html = await Bun.file(`${root}/dist/${file}`).text();
@@ -19,6 +22,9 @@ for await (const file of new Bun.Glob('**/*.html').scan(`${root}/dist`)) {
   let title = '';
   let headings = 0;
   let canonical = '';
+  let image = '';
+  let card = '';
+  const alternates: string[] = [];
   const assets: string[] = [];
   await new HTMLRewriter()
     .on('[id]', {
@@ -52,6 +58,21 @@ for await (const file of new Bun.Glob('**/*.html').scan(`${root}/dist`)) {
         canonical = element.getAttribute('href') ?? '';
       },
     })
+    .on('meta[property="og:image"]', {
+      element(element) {
+        image = element.getAttribute('content') ?? '';
+      },
+    })
+    .on('meta[name="twitter:card"]', {
+      element(element) {
+        card = element.getAttribute('content') ?? '';
+      },
+    })
+    .on('link[rel="alternate"][hreflang]', {
+      element(element) {
+        alternates.push(element.getAttribute('href') ?? '');
+      },
+    })
     .on('script[src], link[rel="stylesheet"], img[src]', {
       element(element) {
         assets.push(
@@ -62,7 +83,7 @@ for await (const file of new Bun.Glob('**/*.html').scan(`${root}/dist`)) {
     .transform(new Response(html))
     .text();
   const pathname = `${base}${file === 'index.html' ? '' : file.replace(/index\.html$/u, '')}`;
-  documents.set(pathname, { ids, links });
+  documents.set(pathname, { ids, links, alternates });
   if (language !== localeFromPath(file))
     errors.push(`${file}: incorrect html lang (${language})`);
   if (!title || headings !== 1)
@@ -71,6 +92,20 @@ for await (const file of new Bun.Glob('**/*.html').scan(`${root}/dist`)) {
     );
   if (file !== '404.html' && canonical !== `${origin}${pathname}`)
     errors.push(`${file}: incorrect canonical URL (${canonical})`);
+  // Social previews need an absolute image URL; crawlers do not resolve paths.
+  if (file !== '404.html') {
+    if (!image.startsWith(`${origin}${base}`)) {
+      errors.push(`${file}: missing absolute og:image (${image})`);
+    } else if (
+      !(await Bun.file(
+        `${root}/dist/${new URL(image).pathname.slice(base.length)}`,
+      ).exists())
+    ) {
+      errors.push(`${file}: missing og:image file ${image}`);
+    }
+    if (card !== 'summary_large_image')
+      errors.push(`${file}: unexpected twitter:card (${card})`);
+  }
   if (html.includes('/api/search') || html.includes('/_serverFn/'))
     errors.push(`${file}: runtime API dependency`);
   for (const href of assets) {
@@ -88,7 +123,13 @@ for await (const file of new Bun.Glob('**/*.html').scan(`${root}/dist`)) {
       errors.push(`${file}: missing asset ${href}`);
   }
 }
-for (const [pathname, { links }] of documents) {
+for (const [pathname, { links, alternates }] of documents) {
+  // Language alternates must name the canonical URL, not one that redirects.
+  for (const href of alternates) {
+    const target = new URL(href);
+    if (target.origin !== origin || !documents.has(target.pathname))
+      errors.push(`${pathname}: hreflang is not a canonical page ${href}`);
+  }
   for (const href of links) {
     const target = new URL(href, `${origin}${pathname}`);
     if (target.origin !== origin) continue;
