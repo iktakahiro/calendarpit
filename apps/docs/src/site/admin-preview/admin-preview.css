@@ -1242,16 +1242,21 @@
 }
 .admin-showcase {
   display: grid;
-  gap: 3.5rem;
-  margin: 2rem 0 3rem;
+  gap: clamp(4rem, 9vw, 6.5rem);
+  margin: 3rem 0 4rem;
   padding: 0;
   list-style: none;
 }
 .admin-showcase-item {
   display: grid;
   grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
-  gap: 2.5rem;
+  gap: 4rem;
   align-items: start;
+}
+.admin-showcase-frame {
+  position: relative;
+  min-width: 0;
+  border-radius: 12px;
 }
 .admin-showcase-text {
   position: sticky;
@@ -1280,7 +1285,15 @@
     var(--color-fd-foreground) 80%,
     var(--color-fd-muted-foreground)
   );
-  line-height: 1.65;
+}
+/* The tour keeps API history short: no rows after the expanded request, and
+   payloads cut off after five lines. Docs pages show the full screen. */
+.admin-showcase .am-request.open ~ .am-request {
+  display: none;
+}
+.admin-showcase .am-window .am-payload pre {
+  max-height: calc(7.5em + 8px);
+  mask-image: linear-gradient(#000 55%, transparent);
 }
 /* Even items put the text on the right. The DOM keeps text before the
    picture, so the stacked layout and reading order stay the same. */
@@ -1295,7 +1308,7 @@
 @media (max-width: 900px) {
   .admin-showcase-item {
     grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
+    gap: 1.5rem;
   }
   .admin-showcase-text {
     position: static;

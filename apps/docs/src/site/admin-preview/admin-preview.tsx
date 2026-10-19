@@ -1,3 +1,5 @@
+import { BorderBeam } from '../motion/border-beam';
+import { useLandingMotion } from '../motion/landing-motion';
 import { AdminShell, BrowserFrame } from './admin-window';
 import { adminViews, type AdminView } from './admin-views';
 import './admin-preview.css';
@@ -88,9 +90,11 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
 
 /**
  * Landing page tour of the admin UI: each screen in turn, with its name and
- * one sentence on what it is for.
+ * one sentence on what it is for. With landing motion on, a border beam
+ * circles each screen, staggered so the screens do not pulse in step.
  */
 export function AdminShowcase({ lang = 'en' }: { lang?: 'en' | 'ja' }) {
+  const motion = useLandingMotion();
   return (
     <ol className='admin-showcase not-prose'>
       {showcaseCopy[lang].map((item, index) => (
@@ -102,7 +106,12 @@ export function AdminShowcase({ lang = 'en' }: { lang?: 'en' | 'ja' }) {
             <h3>{item.label}</h3>
             <p>{item.text}</p>
           </div>
-          <AdminPreview view={item.view} />
+          <div className='admin-showcase-frame'>
+            <AdminPreview view={item.view} />
+            {motion && (
+              <BorderBeam size={120} duration={12} delay={index * 3} />
+            )}
+          </div>
         </li>
       ))}
     </ol>
