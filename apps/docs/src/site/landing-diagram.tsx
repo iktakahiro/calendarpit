@@ -183,12 +183,14 @@ export function LandingDiagram({ japanese }: { japanese: boolean }) {
         </div>
 
         <ul className='flows'>
-          {flows.map((flow) => (
+          {flows.map((flow, index) => (
             <li
               key={flow.label}
               className='flow'
               data-direction={flow.direction}
+              style={{ '--flow': index }}
             >
+              <span className='flow-packet' aria-hidden='true' />
               <span className='flow-label'>{flow.label}</span>
             </li>
           ))}

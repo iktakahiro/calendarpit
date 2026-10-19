@@ -40,3 +40,68 @@
 .not-found p {
   margin-block: 1.5rem;
 }
+
+/* Card descriptions sit closer to body text than the muted default, which
+   loses contrast on the card background. */
+[data-card] > p,
+[data-card] > div {
+  color: color-mix(
+    in oklab,
+    var(--color-fd-foreground) 72%,
+    var(--color-fd-muted-foreground)
+  );
+}
+
+/* Inline code carries the brand accent so identifiers stand out from prose.
+   Code inside links and headings keeps the surrounding color. */
+:root {
+  --inline-code: #b03f16;
+}
+.dark {
+  --inline-code: #ffa57c;
+}
+.prose :not(pre) > code:not(:where(.not-prose *)) {
+  border-color: color-mix(
+    in oklab,
+    var(--inline-code) 28%,
+    var(--color-fd-border)
+  );
+  background: color-mix(in oklab, var(--inline-code) 9%, transparent);
+  color: var(--inline-code);
+}
+.prose :is(a, h1, h2, h3, h4) > code {
+  color: inherit;
+}
+
+/* Text contrast: the Fumadocs neutral palette dims body text (92% white at
+   90% opacity) and muted text (70% at 80% opacity). Use near-white text and an
+   opaque, lighter muted tone in dark mode, and matching darker text in light
+   mode. */
+:root {
+  --color-fd-foreground: hsl(0, 0%, 3%);
+  --color-fd-muted-foreground: hsl(0, 0%, 36%);
+}
+.dark {
+  --color-fd-foreground: hsl(0, 0%, 97%);
+  --color-fd-card-foreground: hsl(0, 0%, 97%);
+  --color-fd-muted-foreground: hsl(0, 0%, 76%);
+}
+.dark #nd-sidebar {
+  --color-fd-muted-foreground: hsl(0, 0%, 80%);
+}
+.prose {
+  --tw-prose-body: var(--color-fd-foreground);
+}
+
+/* Page descriptions and the landing tagline use a desaturated brand tint
+   instead of neutral gray, so the lead reads warmer than body text. */
+:root {
+  --lead: #7d5545;
+}
+.dark {
+  --lead: #d6b8aa;
+}
+.page-description,
+.hero-description {
+  color: var(--lead);
+}

@@ -7,14 +7,15 @@ import {
   DocsDescription,
   DocsPage,
   DocsTitle,
-  EditOnGitHub,
 } from 'fumadocs-ui/layouts/docs/page';
 import { docs, source } from '../site/source';
 import { mdxComponents } from '../site/mdx-components';
 import { layoutOptions } from '../site/navigation';
+import { groupSections } from '../site/navigation-tree';
 import { sitePath } from '../site/paths';
 import { i18n, localeFromPath } from '../site/i18n';
 import { LandingHero } from '../site/landing-hero';
+import { LandingMotionRoot } from '../site/motion/landing-motion';
 
 /** Resolves every English/Japanese MDX page without a server function. */
 export const Route = createFileRoute('/$')({
@@ -81,7 +82,7 @@ function Content() {
   if (page.hero)
     return (
       <HomeLayout {...layoutOptions(page.slug)}>
-        <main id='main-content' className='landing'>
+        <LandingMotionRoot>
           <LandingHero page={page} />
           <DocsBody className='landing-body'>
             <MDX components={mdxComponents} />
@@ -94,26 +95,22 @@ function Content() {
                 : 'Built for local development. Ready to repeat.'}
             </span>
           </footer>
-        </main>
+        </LandingMotionRoot>
       </HomeLayout>
     );
   return (
     <DocsLayout
       {...layoutOptions(page.slug)}
-      tree={source.getPageTree(page.locale)}
+      tree={groupSections(source.getPageTree(page.locale))}
     >
       <DocsPage toc={toc} id='main-content'>
         <DocsTitle>{page.title}</DocsTitle>
-        <DocsDescription>{page.description}</DocsDescription>
+        <DocsDescription className='page-description'>
+          {page.description}
+        </DocsDescription>
         <DocsBody>
           <MDX components={mdxComponents} />
         </DocsBody>
-        <EditOnGitHub
-          href={`https://github.com/iktakahiro/calendarpit/edit/main/apps/docs/src/content/docs/${page.slug}.mdx`}
-        >
-          {japanese ? 'GitHub でこのページを編集' : 'Edit this page on GitHub'}{' '}
-          ↗
-        </EditOnGitHub>
       </DocsPage>
     </DocsLayout>
   );

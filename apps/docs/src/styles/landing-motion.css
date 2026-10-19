@@ -1,0 +1,245 @@
+/* Landing motion patterns adapted from Magic UI (MIT; see
+   apps/docs/THIRD_PARTY_NOTICES.md). `.landing[data-motion='off']` turns
+   motion off; the reduced-motion rule in landing.css stops every animation here,
+   and hidden states live only in keyframes so text stays visible without
+   animation. */
+
+/* Entrance: copy and workbench rise in after the heading. */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+.landing:not([data-motion='off']) .hero-rise {
+  animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--rise) * 110ms + 380ms);
+}
+.landing:not([data-motion='off']) .hero-copy h1 {
+  animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+/* Border Beam: a short light that travels around a border. */
+.border-beam {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  mask-image:
+    linear-gradient(transparent, transparent), linear-gradient(#000, #000);
+  mask-clip: padding-box, border-box;
+  mask-composite: intersect;
+  pointer-events: none;
+}
+.border-beam-light {
+  position: absolute;
+  aspect-ratio: 1;
+  background: linear-gradient(
+    to left,
+    var(--color-fd-primary),
+    color-mix(in srgb, var(--color-fd-primary) 40%, #ffe3d1),
+    transparent
+  );
+}
+.hero-workbench {
+  position: relative;
+}
+
+/* Animated Grid Pattern: cells of the hero grid light up in turn. */
+.hero-grid[data-animated] {
+  background-image: none;
+  opacity: 0.6;
+}
+.animated-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  stroke: var(--color-fd-border);
+}
+.animated-grid-cell {
+  fill: color-mix(in srgb, var(--color-fd-primary) 35%, transparent);
+  stroke: none;
+}
+
+/* Scroll tilt: the workbench settles flat as the page scrolls. */
+.scroll-tilt {
+  perspective: 1400px;
+}
+.scroll-tilt > .hero-workbench {
+  transform-origin: 50% 100%;
+}
+
+/* Animated Shiny Text: a glint crosses the eyebrow now and then. */
+@keyframes shiny-text {
+  0%,
+  90%,
+  100% {
+    background-position: calc(-100% - var(--shiny-width)) 0;
+  }
+  30%,
+  60% {
+    background-position: calc(100% + var(--shiny-width)) 0;
+  }
+}
+.landing:not([data-motion='off']) .eyebrow-text {
+  --shiny-width: 90px;
+  color: color-mix(
+    in oklab,
+    color-mix(
+        in oklab,
+        var(--color-fd-foreground) 72%,
+        var(--color-fd-muted-foreground)
+      )
+      82%,
+    transparent
+  );
+  background: linear-gradient(
+      to right,
+      transparent,
+      var(--color-fd-foreground) 50%,
+      transparent
+    )
+    0 0 / var(--shiny-width) 100% no-repeat;
+  background-clip: text;
+  animation: shiny-text 8s 1.2s infinite;
+}
+
+/* Eyebrow orb: floats a few pixels, breathes, and sends out a faint ring. */
+@keyframes orb-float {
+  50% {
+    transform: translateY(-3px);
+    box-shadow: 0 0 18px 0
+      color-mix(in srgb, var(--color-fd-primary) 60%, transparent);
+  }
+}
+@keyframes orb-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+.landing:not([data-motion='off']) .eyebrow-orb {
+  animation: orb-float 4.5s ease-in-out infinite;
+}
+.landing:not([data-motion='off']) .eyebrow-orb::after {
+  animation: orb-ring 3.6s cubic-bezier(0.2, 0.6, 0.3, 1) 1.2s infinite;
+}
+
+/* Shared accents. */
+@keyframes led-pulse {
+  50% {
+    box-shadow: 0 0 0 4px
+      color-mix(in srgb, var(--color-fd-primary) 22%, transparent);
+  }
+}
+.landing:not([data-motion='off']) .workbench-led {
+  animation: led-pulse 2.4s ease-in-out infinite;
+}
+.landing [data-reveal='pending'] {
+  opacity: 0;
+}
+
+/* Magic Card: a radial light on the border and inside, at the pointer. */
+.landing:not([data-motion='off']) .landing-body [data-card] {
+  position: relative;
+  isolation: isolate;
+}
+.landing:not([data-motion='off']) .landing-body [data-card]::before,
+.landing:not([data-motion='off']) .landing-body [data-card]::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms;
+}
+.landing:not([data-motion='off']) .landing-body [data-card]::before {
+  inset: -1px;
+  border: 1px solid transparent;
+  background: radial-gradient(
+      220px circle at var(--pointer-x, -999px) var(--pointer-y, -999px),
+      var(--color-fd-primary),
+      transparent 100%
+    )
+    border-box;
+  mask-image:
+    linear-gradient(transparent, transparent), linear-gradient(#000, #000);
+  mask-clip: padding-box, border-box;
+  mask-composite: intersect;
+}
+.landing:not([data-motion='off']) .landing-body [data-card]::after {
+  inset: 0;
+  background: radial-gradient(
+    260px circle at var(--pointer-x, -999px) var(--pointer-y, -999px),
+    color-mix(in srgb, var(--color-fd-primary) 9%, transparent),
+    transparent 100%
+  );
+}
+.landing:not([data-motion='off']) .landing-body [data-card]:hover::before,
+.landing:not([data-motion='off']) .landing-body [data-card]:hover::after {
+  opacity: 1;
+}
+
+/* Diagram packets: requests run to Calendarpit, then a webhook returns. */
+.flow-packet {
+  display: none;
+}
+@keyframes packet-out {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  3%,
+  19% {
+    opacity: 1;
+  }
+  23%,
+  100% {
+    left: calc(100% - var(--packet));
+    opacity: 0;
+  }
+}
+@keyframes packet-in {
+  0% {
+    left: calc(100% - var(--packet));
+    opacity: 0;
+  }
+  3%,
+  19% {
+    opacity: 1;
+  }
+  23%,
+  100% {
+    left: 0;
+    opacity: 0;
+  }
+}
+@container (min-width: 34rem) {
+  .landing:not([data-motion='off']) .flow-packet {
+    --packet: 1.75rem;
+    display: block;
+    position: absolute;
+    top: calc(50% - 1px);
+    left: 0;
+    width: var(--packet);
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--lp-ink));
+    opacity: 0;
+    animation: packet-out 6s cubic-bezier(0.45, 0, 0.55, 1) infinite both;
+    animation-delay: calc(var(--flow) * 0.32s + 1.4s);
+  }
+  .landing:not([data-motion='off']) [data-direction='in'] .flow-packet {
+    background: linear-gradient(270deg, transparent, var(--lp-signal));
+    box-shadow: 0 0 8px var(--lp-signal);
+    animation-name: packet-in;
+    animation-delay: 3.4s;
+  }
+}
