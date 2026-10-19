@@ -24,15 +24,15 @@ The left rail sets the context for every screen:
 
 Each section header has a **Refresh** button that reloads the workspace right away.
 
-| Route          | Screen          | Use it to                                                  |
-| -------------- | --------------- | ---------------------------------------------------------- |
-| `/`            | **Schedule**    | View, create, edit, and delete events.                     |
-| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth traffic.   |
-| `/watch`       | **Watch**       | Inspect watch channels and webhook deliveries (read-only). |
-| `/connections` | **Connections** | Inspect and revoke OAuth grants.                           |
-| `/users`       | **Users**       | Create, edit, and delete test users.                       |
-| `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.        |
-| `/settings`    | **Settings**    | Theme, storage, fixtures, reset, state, and OAuth clients. |
+| Route          | Screen          | Use it to                                                            |
+| -------------- | --------------- | -------------------------------------------------------------------- |
+| `/`            | **Schedule**    | View, create, edit, and delete events.                               |
+| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth traffic.             |
+| `/watch`       | **Watch**       | Inspect watch channels and webhook deliveries (read-only).           |
+| `/connections` | **Connections** | Inspect and revoke OAuth grants.                                     |
+| `/users`       | **Users**       | Create, edit, and delete test users.                                 |
+| `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.                  |
+| `/settings`    | **Settings**    | Theme, language, storage, fixtures, reset, state, and OAuth clients. |
 
 <Callout type="warn">
 
@@ -151,7 +151,12 @@ Your app should send the user through the [OAuth flow](/oauth/) again.
 
 ### Appearance
 
-Choose **Light**, **Dark**, or **System**. The choice is stored in a cookie in your browser.
+- **Theme**: choose **Light**, **Dark**, or **System**.
+- **Language**: choose **English**, **日本語** (Japanese), or **System**. English is the default. **System** follows your browser's preferred languages and falls back to English.
+
+Both choices are stored in cookies in your browser, so the next page load renders in the chosen theme and language.
+
+The language applies to interface text only: navigation, headings, buttons, form labels, messages, and dates. Protocol data stays as Calendarpit sends and receives it: paths, HTTP methods and statuses, JSON, scopes, resource states, and IDs. The [local consent page](/oauth/) is always in English.
 
 ### Test data
 

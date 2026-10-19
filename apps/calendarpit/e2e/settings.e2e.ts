@@ -79,3 +79,59 @@ test('an OAuth client callback can change without reloading the fixture', async 
   await page.goto('/');
   await expect(page.getByText('Weekly planning')).toBeVisible();
 });
+
+test('the interface language can switch to Japanese and back', async ({
+  page,
+}) => {
+  await page.goto('/settings');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page
+    .getByRole('group', { name: 'Language' })
+    .getByRole('button', { name: '日本語' })
+    .click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
+  await expect(page).toHaveTitle('Calendarpit · ローカルカレンダーラボ');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    '開発と再現可能なテストのためのローカルカレンダーサービス。',
+  );
+  await expect(
+    page
+      .getByRole('navigation', { name: 'ワークスペースのセクション' })
+      .getByRole('button', { name: '設定' }),
+  ).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'テストデータ' })).toBeVisible();
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
+  await expect(
+    page.getByRole('heading', { level: 1, name: '設定' }),
+  ).toBeVisible();
+
+  await page
+    .getByRole('group', { name: '言語' })
+    .getByRole('button', { name: 'English' })
+    .click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page).toHaveTitle('Calendarpit · Local calendar lab');
+  await expect(sectionLink(page, 'Settings')).toBeVisible();
+});
+
+test.describe('with a Japanese browser', () => {
+  test.use({ locale: 'ja-JP' });
+
+  test('the system language renders Japanese from the server', async ({
+    page,
+  }) => {
+    const response = await page.goto('/history');
+    expect(await response?.text()).toContain('<html lang="ja"');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'API 履歴' }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('group', { name: 'リクエストのステータス' })
+        .getByRole('button', { name: /すべて/ }),
+    ).toBeVisible();
+  });
+});

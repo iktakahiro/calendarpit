@@ -1,4 +1,6 @@
 import type { CalendarEvent } from '@calendarpit/server';
+import type { Locale } from '../../../lib/locale';
+import type { Messages } from '../../../lib/messages';
 import { shortDate } from './dates';
 import { localTime } from './local-time';
 
@@ -61,31 +63,32 @@ export function eventsOn(
     );
 }
 
-/** Formats an event's elapsed duration, such as `1h 30m` or `2 days`. */
-export function duration(event: CalendarEvent) {
+/**
+ * Formats an event's elapsed duration in the language of `t`, such as
+ * `1h 30m` or `2 days` in English.
+ */
+export function duration(event: CalendarEvent, t: Messages) {
   if (event.start.date && event.end.date) {
     const days = Math.round(
       (Date.parse(`${event.end.date}T00:00:00Z`) -
         Date.parse(`${event.start.date}T00:00:00Z`)) /
         86_400_000,
     );
-    return days === 1 ? '1 day' : `${days} days`;
+    return t['day.durationDays'](days);
   }
   const minutes = Math.round(
     (Date.parse(event.end.dateTime!) - Date.parse(event.start.dateTime!)) /
       60_000,
   );
   if (!Number.isFinite(minutes)) return '';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+  return t['day.durationTime'](Math.floor(minutes / 60), minutes % 60);
 }
 
 /** Splits a local time into `HH:mm` and a day label when not on `date`. */
-export function clockLabel(local: string, date: string) {
+export function clockLabel(local: string, date: string, locale: Locale) {
   return {
     time: local.slice(11, 16),
-    day: local.slice(0, 10) === date ? '' : shortDate(local),
+    day: local.slice(0, 10) === date ? '' : shortDate(local, locale),
   };
 }
 

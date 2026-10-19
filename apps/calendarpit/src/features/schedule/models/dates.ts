@@ -1,3 +1,4 @@
+import type { Locale } from '../../../lib/locale';
 import { localTime } from './local-time';
 
 /** Returns `date` (`YYYY-MM-DD`) moved by `days`, independent of time zones. */
@@ -17,18 +18,21 @@ export function today(now: Date, timeZone?: string) {
     : now.toLocaleDateString('en-CA');
 }
 
-/** Formats a date as `Oct 19`. */
-export function shortDate(date: string) {
-  return new Intl.DateTimeFormat('en', {
+/** Formats a date as `Oct 19` in English or `10月19日` in Japanese. */
+export function shortDate(date: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(`${date.slice(0, 10)}T12:00:00Z`));
 }
 
-/** Formats a date as `Monday, October 19, 2026`. */
-export function longDate(date: string) {
-  return new Intl.DateTimeFormat('en', {
+/**
+ * Formats a date as `Monday, October 19, 2026` in English or
+ * `2026年10月19日 月曜日` in Japanese.
+ */
+export function longDate(date: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -57,9 +61,9 @@ export function fromPickerDate(value: Date) {
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
 }
 
-/** Formats a date's weekday as `Mon`. */
-export function weekdayLabel(date: string) {
-  return new Intl.DateTimeFormat('en', {
+/** Formats a date's weekday as `Mon` in English or `月` in Japanese. */
+export function weekdayLabel(date: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     timeZone: 'UTC',
   }).format(new Date(`${date}T12:00:00Z`));

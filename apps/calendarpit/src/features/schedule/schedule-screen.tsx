@@ -4,6 +4,7 @@ import { Button } from '@cloudflare/kumo/components/button';
 import { ButtonGroup } from '@cloudflare/kumo/components/button-group';
 import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon } from '../../components/icon';
+import { useMessages } from '../../components/language';
 import { useNow } from '../../lib/use-now';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import type { Selection } from '../workspace/models/selection';
@@ -48,6 +49,7 @@ export function ScheduleScreen({
   const busy = useWorkspaceBusy();
   const now = useNow();
   const remove = useDeleteEvent();
+  const t = useMessages();
   const { user, calendar } = selection;
   const events = calendar
     ? eventsOn(snapshot.events, calendar.id, calendar.timeZone, date)
@@ -64,17 +66,21 @@ export function ScheduleScreen({
   return (
     <>
       <div className='toolbar'>
-        <div className='date-nav' role='group' aria-label='Date navigation'>
+        <div
+          className='date-nav'
+          role='group'
+          aria-label={t['schedule.dateNavigation']}
+        >
           <Button
             shape='square'
-            aria-label='Previous day'
+            aria-label={t['schedule.previousDay']}
             icon={<Icon name='chevronLeft' />}
             onClick={() => showDate(shiftDate(date, -1))}
           />
           <DateField date={date} showDate={showDate} />
           <Button
             shape='square'
-            aria-label='Next day'
+            aria-label={t['schedule.nextDay']}
             icon={<Icon name='chevronRight' />}
             onClick={() => showDate(shiftDate(date, 1))}
           />
@@ -83,26 +89,26 @@ export function ScheduleScreen({
           variant='ghost'
           onClick={() => showDate(today(new Date(), calendar?.timeZone))}
         >
-          Today
+          {t['schedule.today']}
         </Button>
-        <ButtonGroup aria-label='Calendar view'>
+        <ButtonGroup aria-label={t['schedule.view']}>
           <Button
             variant={view === 'day' ? 'primary' : 'secondary'}
             aria-pressed={view === 'day'}
             onClick={() => showView('day')}
           >
-            Day
+            {t['schedule.day']}
           </Button>
           <Button
             variant={view === 'week' ? 'primary' : 'secondary'}
             aria-pressed={view === 'week'}
             onClick={() => showView('week')}
           >
-            Week
+            {t['schedule.week']}
           </Button>
         </ButtonGroup>
         <Badge variant='outline' className='tz-chip'>
-          {calendar?.timeZone ?? 'No calendar'}
+          {calendar?.timeZone ?? t['schedule.noCalendar']}
         </Badge>
         <Button
           className='toolbar-end'
@@ -111,7 +117,7 @@ export function ScheduleScreen({
           disabled={!calendar}
           onClick={() => edit('new')}
         >
-          New event
+          {t['schedule.newEvent']}
         </Button>
       </div>
       <div className={`schedule-layout ${editorOpen ? 'editing' : ''}`}>
@@ -148,15 +154,15 @@ export function ScheduleScreen({
             create={() => edit('new')}
           />
         ) : (
-          <section className='day-sheet' aria-label='Daily events'>
+          <section className='day-sheet' aria-label={t['schedule.dailyEvents']}>
             <Empty
               className='empty-state'
               icon={<Icon name='calendar' />}
-              title='No calendar selected'
+              title={t['schedule.noCalendarSelected']}
               description={
                 user
-                  ? `${user.name} has no calendars yet. Add one in workspace settings.`
-                  : 'Create a test user and a calendar in workspace settings.'
+                  ? t['schedule.userHasNoCalendars'](user.name)
+                  : t['schedule.createUserAndCalendar']
               }
               contents={
                 <Button
@@ -164,7 +170,7 @@ export function ScheduleScreen({
                   icon={<Icon name='gear' />}
                   onClick={openSettings}
                 >
-                  Open workspace settings
+                  {t['schedule.openSettings']}
                 </Button>
               }
             />

@@ -6,5 +6,5 @@ export const useRevokeConnection = () =>
   useWorkspaceMutation(
     (grantId: string) =>
       managementApi(`/connections${segment(grantId)}/revoke`, 'POST'),
-    'Connection revoked. Reconnect from your app.',
+    'connections.revokedNotice',
   );

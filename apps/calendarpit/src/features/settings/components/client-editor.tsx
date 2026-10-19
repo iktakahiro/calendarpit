@@ -3,6 +3,7 @@ import { Input, InputArea } from '@cloudflare/kumo/components/input';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useState } from 'react';
 import { FieldError } from '../../../components/field-error';
+import { useMessages } from '../../../components/language';
 import { useWorkspaceBusy } from '../../workspace/hooks/use-workspace-mutation';
 import { useSaveClient } from '../hooks/use-clients';
 import {
@@ -26,6 +27,7 @@ export function ClientEditor({
   const [submitError, setSubmitError] = useState('');
   const save = useSaveClient();
   const busy = useWorkspaceBusy();
+  const t = useMessages();
   const creating = !client;
   const form = useForm({
     defaultValues: clientFormValues(client),
@@ -35,7 +37,7 @@ export function ClientEditor({
     }),
     validators: {
       onDynamic: ({ value }) => {
-        const fields = validateClientForm(value, creating);
+        const fields = validateClientForm(value, creating, t);
         return fields ? { fields } : undefined;
       },
     },
@@ -50,7 +52,9 @@ export function ClientEditor({
   return (
     <form
       className='panel-body client-editor'
-      aria-label={creating ? 'New OAuth client' : `Edit ${client.id}`}
+      aria-label={
+        creating ? t['clients.newForm'] : t['clients.edit'](client.id)
+      }
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
@@ -66,9 +70,9 @@ export function ClientEditor({
         <form.Field name='id'>
           {(field) => (
             <label className='field'>
-              <span>Client ID</span>
+              <span>{t['clients.id']}</span>
               <Input
-                aria-label='Client ID'
+                aria-label={t['clients.id']}
                 className='mono'
                 spellCheck={false}
                 value={field.state.value}
@@ -83,15 +87,13 @@ export function ClientEditor({
       <form.Field name='secret'>
         {(field) => (
           <label className='field'>
-            <span>Client secret</span>
+            <span>{t['clients.secret']}</span>
             <Input
-              aria-label='Client secret'
+              aria-label={t['clients.secret']}
               className='mono'
               autoComplete='off'
               spellCheck={false}
-              placeholder={
-                creating ? undefined : 'Leave blank to keep the current secret'
-              }
+              placeholder={creating ? undefined : t['clients.keepSecret']}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
@@ -103,9 +105,9 @@ export function ClientEditor({
       <form.Field name='redirectUris'>
         {(field) => (
           <label className='field'>
-            <span>Redirect URIs, one per line</span>
+            <span>{t['clients.redirectUrisField']}</span>
             <InputArea
-              aria-label='Redirect URIs'
+              aria-label={t['clients.redirectUris']}
               className='mono'
               rows={3}
               spellCheck={false}
@@ -132,12 +134,12 @@ export function ClientEditor({
               loading={submitting}
               disabled={busy}
             >
-              Save client
+              {t['clients.save']}
             </Button>
           )}
         </form.Subscribe>
         <Button variant='secondary' disabled={busy} onClick={done}>
-          Cancel
+          {t['common.cancel']}
         </Button>
       </div>
     </form>

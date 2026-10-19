@@ -4,6 +4,8 @@ import { Empty } from '@cloudflare/kumo/components/empty';
 import { Input } from '@cloudflare/kumo/components/input';
 import { useState } from 'react';
 import { Icon } from '../../components/icon';
+import { useLocale, useMessages } from '../../components/language';
+import { formatClock } from '../../lib/format';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { Payload } from './components/payload';
 import { useClearHistory, useHistory } from './hooks/use-history';
@@ -14,6 +16,8 @@ export function HistoryScreen() {
   const { data: history = [] } = useHistory();
   const clear = useClearHistory();
   const busy = useWorkspaceBusy();
+  const t = useMessages();
+  const locale = useLocale();
   const [query, setQuery] = useState('');
   const [errorsOnly, setErrorsOnly] = useState(false);
   const rows = filterHistory(history, query, errorsOnly);
@@ -23,29 +27,33 @@ export function HistoryScreen() {
       <div className='toolbar'>
         <label className='search-field'>
           <Icon name='magnifier' />
-          <span className='sr-only'>Filter requests</span>
+          <span className='sr-only'>{t['history.filter']}</span>
           <Input
-            aria-label='Filter requests'
+            aria-label={t['history.filter']}
             type='search'
-            placeholder='Filter by method, path, or status'
+            placeholder={t['history.filterPlaceholder']}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <div className='segmented' role='group' aria-label='Request status'>
+        <div
+          className='segmented'
+          role='group'
+          aria-label={t['history.status']}
+        >
           <button
             type='button'
             aria-pressed={!errorsOnly}
             onClick={() => setErrorsOnly(false)}
           >
-            All <span>{history.length}</span>
+            {t['history.all']} <span>{history.length}</span>
           </button>
           <button
             type='button'
             aria-pressed={errorsOnly}
             onClick={() => setErrorsOnly(true)}
           >
-            Errors <span>{errors}</span>
+            {t['history.errors']} <span>{errors}</span>
           </button>
         </div>
         <Button
@@ -55,13 +63,11 @@ export function HistoryScreen() {
           onClick={() => clear.mutate(undefined)}
           disabled={busy}
         >
-          Clear history
+          {t['history.clear']}
         </Button>
       </div>
-      <p className='toolbar-note'>
-        The latest 200 protocol requests, newest first. Credentials are masked.
-      </p>
-      <section className='history-list' aria-label='API requests'>
+      <p className='toolbar-note'>{t['history.note']}</p>
+      <section className='history-list' aria-label={t['history.requests']}>
         {rows.map((row) => (
           <Collapsible.Root key={row.id} className='history-row'>
             <Collapsible.Trigger className='history-summary'>
@@ -75,20 +81,18 @@ export function HistoryScreen() {
               {area(row.path) && (
                 <span className='http-area'>{area(row.path)}</span>
               )}
-              <time dateTime={row.time}>
-                {new Date(row.time).toLocaleTimeString('en', {
-                  hour12: false,
-                })}
-              </time>
+              <time dateTime={row.time}>{formatClock(row.time, locale)}</time>
             </Collapsible.Trigger>
             <Collapsible.Panel>
               <div className='history-detail'>
                 <Payload
-                  title='Request'
+                  title={t['history.request']}
+                  copyLabel={t['history.copyRequest']}
                   value={{ headers: row.headers, body: row.request }}
                 />
                 <Payload
-                  title='Response'
+                  title={t['history.response']}
+                  copyLabel={t['history.copyResponse']}
                   value={{ headers: row.responseHeaders, body: row.response }}
                 />
               </div>
@@ -99,8 +103,8 @@ export function HistoryScreen() {
           <Empty
             className='empty-state'
             icon={<Icon name='code' />}
-            title='Waiting for your app.'
-            description='Calendar and OAuth calls appear here as they arrive.'
+            title={t['history.waiting']}
+            description={t['history.waitingDescription']}
           />
         )}
         {history.length > 0 && !rows.length && (
@@ -108,8 +112,8 @@ export function HistoryScreen() {
             size='sm'
             className='empty-state'
             icon={<Icon name='magnifier' />}
-            title='No matching requests'
-            description='Change the filter to see more of the log.'
+            title={t['history.noMatches']}
+            description={t['history.noMatchesDescription']}
           />
         )}
       </section>

@@ -1,20 +1,14 @@
+import { readCookie } from './cookie';
+
 export type Appearance = 'system' | 'light' | 'dark';
 export const APPEARANCE_COOKIE = 'calendarpit-appearance';
 const MAX_AGE = 60 * 60 * 24 * 365;
 
 export function parseAppearance(cookieHeader?: string | null): Appearance {
-  for (const cookie of cookieHeader?.split(';') ?? []) {
-    const [name, ...value] = cookie.trim().split('=');
-    if (name !== APPEARANCE_COOKIE) continue;
-    try {
-      const preference = decodeURIComponent(value.join('='));
-      if (preference === 'light' || preference === 'dark') return preference;
-    } catch {
-      return 'system';
-    }
-    return 'system';
-  }
-  return 'system';
+  const preference = readCookie(cookieHeader, APPEARANCE_COOKIE);
+  return preference === 'light' || preference === 'dark'
+    ? preference
+    : 'system';
 }
 
 export function appearanceCookie(preference: Appearance, secure: boolean) {

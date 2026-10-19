@@ -1,5 +1,7 @@
 import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon, type IconName } from '../../../components/icon';
+import { useMessages } from '../../../components/language';
+import type { DirectoryKind } from '../models/directory-forms';
 
 /** One selectable row in a directory list. */
 export type DirectoryRow = {
@@ -15,7 +17,7 @@ export function DirectoryList({
   title,
   subtitle,
   icon,
-  noun,
+  kind,
   rows,
   selectedId,
   disabled,
@@ -25,12 +27,13 @@ export function DirectoryList({
   title: string;
   subtitle: string;
   icon: IconName;
-  noun: string;
+  kind: DirectoryKind;
   rows: DirectoryRow[];
   selectedId?: string;
   disabled: boolean;
   select: (id: string) => void;
 }) {
+  const t = useMessages();
   return (
     <section className='panel' aria-label={label}>
       <header className='panel-head'>
@@ -64,8 +67,8 @@ export function DirectoryList({
         <Empty
           size='sm'
           className='empty-state'
-          title={`No ${noun}s yet`}
-          description={`Add the first ${noun} using the form.`}
+          title={t[`directory.${kind}.empty`]}
+          description={t[`directory.${kind}.emptyDescription`]}
         />
       )}
     </section>

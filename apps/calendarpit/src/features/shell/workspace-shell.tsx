@@ -2,6 +2,7 @@ import { Button } from '@cloudflare/kumo/components/button';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Icon } from '../../components/icon';
+import { useMessages } from '../../components/language';
 import { useNotices } from '../../lib/notices';
 import { useHost } from '../../lib/use-host';
 import { useHistory } from '../history/hooks/use-history';
@@ -34,6 +35,7 @@ export function WorkspaceShell({
   const history = useHistory();
   const queryClient = useQueryClient();
   const { succeed, fail } = useNotices();
+  const t = useMessages();
   const busy = useWorkspaceBusy();
   // A mutation, so a manual refresh also disables conflicting actions.
   const refresh = useMutation({
@@ -42,7 +44,7 @@ export function WorkspaceShell({
         { queryKey: ['workspace'] },
         { throwOnError: true },
       ),
-    onSuccess: () => succeed('Workspace refreshed.'),
+    onSuccess: () => succeed(t['shell.refreshed']),
     onError: fail,
   });
   const host = useHost();
@@ -56,7 +58,7 @@ export function WorkspaceShell({
   return (
     <div className='shell'>
       <a className='skip-link' href='#main'>
-        Skip to content
+        {t['shell.skip']}
       </a>
       <Rail
         snapshot={snapshot}
@@ -75,11 +77,11 @@ export function WorkspaceShell({
       <main id='main' className='main' tabIndex={-1}>
         <header className='view-head'>
           <div>
-            <p className='eyebrow'>{meta.eyebrow}</p>
+            <p className='eyebrow'>{t[meta.eyebrow]}</p>
             <h1>
               {section === 'schedule'
-                ? (calendar?.summary ?? 'Your schedule')
-                : meta.label}
+                ? (calendar?.summary ?? t['shell.yourSchedule'])
+                : t[meta.label]}
             </h1>
             <p className='lede'>
               {section === 'schedule'
@@ -87,12 +89,12 @@ export function WorkspaceShell({
                   ? [
                       user.name,
                       calendar?.id,
-                      calendar?.primary ? 'primary' : undefined,
+                      calendar?.primary ? t['shell.primary'] : undefined,
                     ]
                       .filter(Boolean)
                       .join(' · ')
-                  : 'Create a test user to begin.'
-                : meta.lede}
+                  : t['shell.createUser']
+                : meta.lede && t[meta.lede]}
             </p>
           </div>
           <div className='view-actions'>
@@ -102,7 +104,7 @@ export function WorkspaceShell({
               loading={busy}
               onClick={() => refresh.mutate()}
             >
-              Refresh
+              {t['shell.refresh']}
             </Button>
           </div>
         </header>
@@ -111,7 +113,7 @@ export function WorkspaceShell({
         ) : (
           <div className='loading' role='status'>
             <span className='live-dot' aria-hidden='true' />
-            Loading your workspace…
+            {t['shell.loading']}
           </div>
         )}
       </main>

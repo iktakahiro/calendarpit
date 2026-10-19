@@ -20,7 +20,13 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${port}`,
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      // The admin UI follows Accept-Language by default; tests read English.
+      use: { ...devices['Desktop Chrome'], locale: 'en-US' },
+    },
+  ],
   webServer: {
     command: `bun bin/calendarpit.ts --port ${port} --database :memory:`,
     url: `http://127.0.0.1:${port}/__calendarpit/health`,
