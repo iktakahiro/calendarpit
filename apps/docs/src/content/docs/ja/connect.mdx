@@ -46,7 +46,8 @@ Calendar API の URL の指定方法は SDK ごとに異なります。
 
 - **JavaScript**（`@googleapis/calendar`）: `rootUrl` の末尾に `/calendar/v3/...` を付与します。`rootUrl` に `/calendar/v3` を含めないでください。
 - **Python・Go・.NET**: `/calendar/v3/` を含むサービス URL 全体を指定します。
-- **Java**: ルート URL とサービスパスを別々に設定します。
+- **Kotlin**（Java 用クライアントライブラリ）: ルート URL とサービスパスを別々に設定します。
+- **PHP**（`google/apiclient`）: コンストラクター引数 `$rootUrl` にオリジンを渡すと、`calendar/v3/` を付与します。
 
 詳しくは[SDK の使用例](/ja/sdks/)を参照してください。
 

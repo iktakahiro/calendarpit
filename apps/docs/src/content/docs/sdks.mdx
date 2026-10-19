@@ -1,6 +1,6 @@
 ---
 title: SDK examples
-description: Point official Google Calendar clients in TypeScript, Python, Go, Java, and C# at Calendarpit.
+description: Point official Google Calendar clients in TypeScript, Python, Go, Kotlin, PHP, and C# at Calendarpit.
 ---
 
 Point your app's official Google Calendar SDK client at Calendarpit. You do not need a Calendarpit-specific SDK.
@@ -41,7 +41,8 @@ Each library expects a different endpoint format.
 | TypeScript / JavaScript | `rootUrl`                               | `http://127.0.0.1:4173/`                  |
 | Python                  | `client_options.api_endpoint`           | `http://127.0.0.1:4173/calendar/v3/`      |
 | Go                      | `option.WithEndpoint`                   | `http://127.0.0.1:4173/calendar/v3/`      |
-| Java                    | `setRootUrl` + `setServicePath`         | `http://127.0.0.1:4173/` + `calendar/v3/` |
+| Kotlin                  | `setRootUrl` + `setServicePath`         | `http://127.0.0.1:4173/` + `calendar/v3/` |
+| PHP                     | `Calendar` constructor `$rootUrl`       | `http://127.0.0.1:4173/`                  |
 | C# / .NET               | `BaseClientService.Initializer.BaseUri` | `http://127.0.0.1:4173/calendar/v3/`      |
 
 Every FreeBusy example sends `POST /calendar/v3/freeBusy` to Calendarpit. Event CRUD and calendar-list calls on the same client also use that local URL.
@@ -56,7 +57,7 @@ Only the operations listed in [Calendar API compatibility](/compatibility/) are 
 
 ## List calendars and query FreeBusy
 
-<Tabs items={["TypeScript / JavaScript","Python","Go","Java","C#","HTTP / curl"]}>
+<Tabs items={["TypeScript / JavaScript","Python","Go","Kotlin","PHP","C#","HTTP / curl"]}>
 <Tab value="TypeScript / JavaScript" forceMount>
 
 - **Packages**: `@googleapis/calendar` and `google-auth-library`.
@@ -206,53 +207,100 @@ func main() {
 References: [Calendar client](https://pkg.go.dev/google.golang.org/api/calendar/v3), [WithEndpoint](https://pkg.go.dev/google.golang.org/api/option#WithEndpoint), [OAuth configuration](https://pkg.go.dev/golang.org/x/oauth2#Config).
 
 </Tab>
-<Tab value="Java" forceMount>
+<Tab value="Kotlin" forceMount>
 
 - **Artifacts**: `com.google.apis:google-api-services-calendar`, `com.google.http-client:google-http-client`, and `com.google.http-client:google-http-client-gson`.
-- **Java version**: This example uses Java 11 or later.
+- **Runtime**: Kotlin/JVM with JDK 11 or later. The example calls the Google API Client Library for Java from Kotlin.
 
-```java
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.FreeBusyRequest;
-import com.google.api.services.calendar.model.FreeBusyRequestItem;
-import java.util.List;
+```kotlin
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
+import com.google.api.client.util.DateTime
+import com.google.api.services.calendar.Calendar
+import com.google.api.services.calendar.model.FreeBusyRequest
+import com.google.api.services.calendar.model.FreeBusyRequestItem
 
-public class CalendarpitExample {
-    public static void main(String[] args) throws Exception {
-        String token = System.getenv("CALENDARPIT_ACCESS_TOKEN");
-        if (token == null || token.isBlank()) {
-            throw new IllegalStateException("Set CALENDARPIT_ACCESS_TOKEN first.");
-        }
-        Calendar api = new Calendar.Builder(
-            new NetHttpTransport(),
-            GsonFactory.getDefaultInstance(),
-            request -> request.getHeaders().setAuthorization("Bearer " + token)
-        )
-            .setRootUrl("http://127.0.0.1:4173/")
-            .setServicePath("calendar/v3/")
-            .setApplicationName("Calendarpit local example")
-            .build();
+fun main() {
+    val token = System.getenv("CALENDARPIT_ACCESS_TOKEN")
+    require(!token.isNullOrBlank()) { "Set CALENDARPIT_ACCESS_TOKEN first." }
 
-        System.out.println(api.calendarList().list().execute().getItems());
-        FreeBusyRequest body = new FreeBusyRequest()
-            .setTimeMin(new DateTime("2026-10-19T00:00:00+09:00"))
-            .setTimeMax(new DateTime("2026-10-20T00:00:00+09:00"))
-            .setTimeZone("Asia/Tokyo")
-            .setItems(List.of(new FreeBusyRequestItem().setId("primary")));
-        var result = api.freebusy().query(body).execute();
-        System.out.println(result.getCalendars().get("primary").getBusy());
-    }
+    val api = Calendar.Builder(
+        NetHttpTransport(),
+        GsonFactory.getDefaultInstance(),
+    ) { request -> request.headers.setAuthorization("Bearer $token") }
+        .setRootUrl("http://127.0.0.1:4173/")
+        .setServicePath("calendar/v3/")
+        .setApplicationName("Calendarpit local example")
+        .build()
+
+    println(api.calendarList().list().execute().items)
+
+    val body = FreeBusyRequest()
+        .setTimeMin(DateTime("2026-10-19T00:00:00+09:00"))
+        .setTimeMax(DateTime("2026-10-20T00:00:00+09:00"))
+        .setTimeZone("Asia/Tokyo")
+        .setItems(listOf(FreeBusyRequestItem().setId("primary")))
+    val result = api.freebusy().query(body).execute()
+    println(result.calendars["primary"]?.busy)
 }
 ```
 
-The request initializer sets the bearer token header directly. Obtain and refresh tokens using the [local OAuth endpoints](/oauth/).
+The request initializer lambda sets the bearer token header directly. Obtain and refresh tokens using the [local OAuth endpoints](/oauth/).
 
 Setting `setRootUrl` does not redirect separate Google authorization helpers.
 
 References: [Calendar builder](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/Calendar.Builder.html), [FreeBusy request](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/model/FreeBusyRequest.html).
+
+</Tab>
+<Tab value="PHP" forceMount>
+
+- **Composer package**: `google/apiclient` (2.x).
+- **Runtime**: PHP 8.1 or later, run from the project directory that contains `vendor/`.
+- **Root URL**: The second `Calendar` constructor argument is the origin. The service appends `calendar/v3/`.
+
+```php
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Google\Client;
+use Google\Service\Calendar;
+use Google\Service\Calendar\FreeBusyRequest;
+use Google\Service\Calendar\FreeBusyRequestItem;
+
+$token = getenv('CALENDARPIT_ACCESS_TOKEN');
+if ($token === false || $token === '') {
+    throw new RuntimeException('Set CALENDARPIT_ACCESS_TOKEN first.');
+}
+
+$client = new Client();
+$client->setApplicationName('Calendarpit local example');
+$client->setAccessToken($token);
+$api = new Calendar($client, 'http://127.0.0.1:4173/');
+
+foreach ($api->calendarList->listCalendarList()->getItems() as $calendar) {
+    echo $calendar->getId(), PHP_EOL;
+}
+
+$item = new FreeBusyRequestItem();
+$item->setId('primary');
+$request = new FreeBusyRequest();
+$request->setTimeMin('2026-10-19T00:00:00+09:00');
+$request->setTimeMax('2026-10-20T00:00:00+09:00');
+$request->setTimeZone('Asia/Tokyo');
+$request->setItems([$item]);
+
+$result = $api->freebusy->query($request);
+foreach ($result->getCalendars()['primary']->getBusy() as $interval) {
+    echo $interval->getStart(), ' - ', $interval->getEnd(), PHP_EOL;
+}
+```
+
+`setAccessToken` with only an access token does not refresh it. Refresh via the [local token endpoint](/oauth/), then call `setAccessToken` again.
+
+The `$rootUrl` argument configures Calendar API requests only. OAuth helpers on `Google\Client`, such as `fetchAccessTokenWithAuthCode`, still target Google.
+
+References: [PHP client library](https://github.com/googleapis/google-api-php-client), [Calendar service](https://github.com/googleapis/google-api-php-client-services/blob/main/src/Calendar.php).
 
 </Tab>
 <Tab value="C#" forceMount>

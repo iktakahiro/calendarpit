@@ -284,7 +284,8 @@ CLI startup failures print `Calendarpit: <message>` to `stderr` and exit with co
 | SDK                            | Base URL setting                                                 |
 | ------------------------------ | ---------------------------------------------------------------- |
 | JS/TS (`@googleapis/calendar`) | Set `rootUrl` to `http://127.0.0.1:4173/`.                       |
-| Java                           | Set `rootUrl` to the origin and `servicePath` to `calendar/v3/`. |
+| Kotlin                         | Set `rootUrl` to the origin and `servicePath` to `calendar/v3/`. |
+| PHP (`google/apiclient`)       | Pass `http://127.0.0.1:4173/` as `$rootUrl`.                     |
 | Python, Go, and C#             | Include `/calendar/v3/`.                                         |
 
 ### Unsupported calendar or calendar list operation
