@@ -40,19 +40,19 @@ Google カレンダーと連携するアプリや AI エージェントの開発
 
 1 つのプロセスで、API、ローカル OAuth、管理画面が `http://127.0.0.1:4173` で動きます。
 
-<Tabs items={["Homebrew","Docker"]} groupId='install'>
+<Tabs items={["Docker","Homebrew"]} groupId='install'>
+  <Tab value='Docker' forceMount>
+
+```sh
+docker run --rm -p 127.0.0.1:4173:4173 ghcr.io/iktakahiro/calendarpit:latest
+```
+
+</Tab>
   <Tab value='Homebrew' forceMount>
 
 ```sh
 brew install iktakahiro/tap/calendarpit
 calendarpit serve
-```
-
-</Tab>
-  <Tab value='Docker' forceMount>
-
-```sh
-docker run --rm -p 127.0.0.1:4173:4173 ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 </Tab>

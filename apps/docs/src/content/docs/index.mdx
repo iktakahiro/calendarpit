@@ -38,19 +38,19 @@ Building apps and AI agents that use Google Calendar means setting up OAuth and 
 
 One process serves the API, local OAuth, and the admin UI on `http://127.0.0.1:4173`.
 
-<Tabs items={["Homebrew","Docker"]} groupId='install'>
+<Tabs items={["Docker","Homebrew"]} groupId='install'>
+  <Tab value='Docker' forceMount>
+
+```sh
+docker run --rm -p 127.0.0.1:4173:4173 ghcr.io/iktakahiro/calendarpit:latest
+```
+
+</Tab>
   <Tab value='Homebrew' forceMount>
 
 ```sh
 brew install iktakahiro/tap/calendarpit
 calendarpit serve
-```
-
-</Tab>
-  <Tab value='Docker' forceMount>
-
-```sh
-docker run --rm -p 127.0.0.1:4173:4173 ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 </Tab>

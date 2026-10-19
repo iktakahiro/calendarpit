@@ -6,20 +6,20 @@ description: Start Calendarpit without cloning a repository and connect your app
 
 ## Start Calendarpit
 
-Install and start with Homebrew:
-
-```sh
-brew install iktakahiro/tap/calendarpit
-calendarpit serve
-```
-
-Or use Docker:
+Start with Docker:
 
 ```sh
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
   ghcr.io/iktakahiro/calendarpit:latest
+```
+
+Or install and start with Homebrew:
+
+```sh
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
 ```
 
 Both commands start the API, the local OAuth server, and the admin UI on the same origin.

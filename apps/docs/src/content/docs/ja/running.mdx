@@ -10,33 +10,6 @@ Calendarpit は API、OAuth、管理画面を同じオリジンで提供しま�
 
 ## Calendarpit の起動方法
 
-### インストール済みの CLI
-
-Homebrew でインストールするか、単体実行ファイルを `PATH` に配置します。そのうえで、プロジェクトのディレクトリで起動します。導入方法は[インストール](/ja/installation/)を参照してください。
-
-```sh
-calendarpit serve --port 4173
-calendarpit serve --port 0 --database :memory:
-```
-
-これらは起動コマンドの例です。
-
-- 同じデータベースファイルを使うサーバーは 1 つだけ起動してください。
-- ポート `0` を指定すると、OS が空きポートを割り当てます。
-- 実際の URL は起動時の出力で確認できます。
-
-```text
-Calendarpit data: :memory:
-
-Calendarpit v<version>
-Data   :memory:
-Admin  http://127.0.0.1:38425/
-API    http://127.0.0.1:38425/calendar/v3
-Health http://127.0.0.1:38425/__calendarpit/health
-```
-
-配布実行ファイルには、サーバー、管理画面のアセット（`favicon.svg` を含む）、Bun ランタイムが含まれています。Node.js も Bun も別途インストールする必要はありません。サーバーは Ctrl+C で停止します。
-
 ### Docker と Compose
 
 ```sh
@@ -64,6 +37,33 @@ docker run --rm -p 127.0.0.1:4173:4173 \
 - [インストール](/ja/installation/): Compose のサービス定義、ヘルスチェック、ホストとコンテナの接続先
 - [Fixture](/ja/fixtures/): 起動時の設定ファイルをマウントする方法
 - [開発ガイド](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md): ソースからの開発手順
+
+### インストール済みの CLI
+
+Homebrew でインストールするか、単体実行ファイルを `PATH` に配置します。そのうえで、プロジェクトのディレクトリで起動します。導入方法は[インストール](/ja/installation/)を参照してください。
+
+```sh
+calendarpit serve --port 4173
+calendarpit serve --port 0 --database :memory:
+```
+
+これらは起動コマンドの例です。
+
+- 同じデータベースファイルを使うサーバーは 1 つだけ起動してください。
+- ポート `0` を指定すると、OS が空きポートを割り当てます。
+- 実際の URL は起動時の出力で確認できます。
+
+```text
+Calendarpit data: :memory:
+
+Calendarpit v<version>
+Data   :memory:
+Admin  http://127.0.0.1:38425/
+API    http://127.0.0.1:38425/calendar/v3
+Health http://127.0.0.1:38425/__calendarpit/health
+```
+
+配布実行ファイルには、サーバー、管理画面のアセット（`favicon.svg` を含む）、Bun ランタイムが含まれています。Node.js も Bun も別途インストールする必要はありません。サーバーは Ctrl+C で停止します。
 
 ## コマンドラインオプションと環境変数
 

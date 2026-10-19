@@ -10,33 +10,6 @@ The commands below use the packaged distribution. You need no source checkout or
 
 ## Ways to run Calendarpit
 
-### Installed CLI
-
-Install with Homebrew or place a standalone executable on your `PATH`. Then run it from your project directory. See [Installation](/installation/) for setup.
-
-```sh
-calendarpit serve --port 4173
-calendarpit serve --port 0 --database :memory:
-```
-
-These are alternative startup commands:
-
-- Run one server per database file.
-- Port `0` lets the OS choose an available port.
-- Read the actual URLs in the startup output:
-
-```text
-Calendarpit data: :memory:
-
-Calendarpit v<version>
-Data   :memory:
-Admin  http://127.0.0.1:38425/
-API    http://127.0.0.1:38425/calendar/v3
-Health http://127.0.0.1:38425/__calendarpit/health
-```
-
-The packaged executable includes the server, the admin UI assets (including `favicon.svg`), and the Bun runtime. You need no separate Node.js or Bun installation. Stop the server with Ctrl+C.
-
 ### Docker and Compose
 
 ```sh
@@ -64,6 +37,33 @@ Related pages:
 - [Installation](/installation/): a Compose service, health checks, and host/container addresses.
 - [Fixtures](/fixtures/): mount a startup configuration.
 - [Development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md): source development instructions.
+
+### Installed CLI
+
+Install with Homebrew or place a standalone executable on your `PATH`. Then run it from your project directory. See [Installation](/installation/) for setup.
+
+```sh
+calendarpit serve --port 4173
+calendarpit serve --port 0 --database :memory:
+```
+
+These are alternative startup commands:
+
+- Run one server per database file.
+- Port `0` lets the OS choose an available port.
+- Read the actual URLs in the startup output:
+
+```text
+Calendarpit data: :memory:
+
+Calendarpit v<version>
+Data   :memory:
+Admin  http://127.0.0.1:38425/
+API    http://127.0.0.1:38425/calendar/v3
+Health http://127.0.0.1:38425/__calendarpit/health
+```
+
+The packaged executable includes the server, the admin UI assets (including `favicon.svg`), and the Bun runtime. You need no separate Node.js or Bun installation. Stop the server with Ctrl+C.
 
 ## Command-line options and environment variables
 
