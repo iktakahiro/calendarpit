@@ -40,6 +40,33 @@ The admin UI has no authentication. Calendarpit binds to `127.0.0.1` by default.
 
 </Callout>
 
+## Command palette and keyboard shortcuts
+
+Press <kbd>⌘</kbd> <kbd>K</kbd> on macOS or <kbd>Ctrl</kbd> <kbd>K</kbd> elsewhere, or select **Commands** in the section header, to open the command palette. Type to filter, use the arrow keys to move, and press <kbd>Enter</kbd> to run a command. <kbd>?</kbd> also opens the palette, which shows each command's shortcut.
+
+- Go to any section, create an event, or change the theme.
+- The palette is in English whatever the interface language. Section names also match their Japanese labels, such as `ユーザー`.
+- Type a test user's name or email, or a calendar's name, to switch to it. **Switch user…** and **Switch calendar…** list them all.
+- **Go to date…** accepts `2026-10-21`, `today`, `tomorrow`, `yesterday`, or an offset from the shown date such as `+3`, `-1`, or `+1w`.
+
+On a palette page such as **Go to date…**, press <kbd>Backspace</kbd> in the empty field to return to every command.
+
+| Shortcut                                                 | Action                                              |
+| -------------------------------------------------------- | --------------------------------------------------- |
+| <kbd>⌘</kbd> <kbd>K</kbd> / <kbd>Ctrl</kbd> <kbd>K</kbd> | Open or close the command palette                   |
+| <kbd>?</kbd>                                             | Open the command palette                            |
+| <kbd>⌘</kbd> <kbd>,</kbd> / <kbd>Ctrl</kbd> <kbd>,</kbd> | Open **Settings**                                   |
+| <kbd>C</kbd>                                             | Create an event in the selected calendar            |
+| <kbd>T</kbd>                                             | Show today                                          |
+| <kbd>P</kbd> / <kbd>N</kbd>                              | Show the previous or next day, or week in week view |
+| <kbd>D</kbd> / <kbd>W</kbd>                              | Switch to the day or week view                      |
+| <kbd>G</kbd>                                             | Go to a date                                        |
+
+<kbd>T</kbd>, <kbd>P</kbd>, <kbd>N</kbd>, <kbd>D</kbd>, <kbd>W</kbd>, and
+<kbd>G</kbd> work on **Schedule**. The others work on every screen.
+
+Single-key shortcuts do nothing while you type in a field or while the event editor or a dialog has focus, so typing an event title never triggers them.
+
 ## Check the events your app writes
 
 **Schedule** shows the events in the selected calendar, including events your app creates or updates in Calendarpit through the Calendar API. To create or configure the calendars themselves, use [Calendars](#manage-test-users-and-calendars).

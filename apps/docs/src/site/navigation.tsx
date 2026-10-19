@@ -3,11 +3,14 @@ import logoDark from '../assets/logo-dark.svg';
 import logoLight from '../assets/logo-light.svg';
 import { i18n, localeFromPath } from './i18n';
 
+function homePath(slug: string): string {
+  const locale = localeFromPath(slug);
+  return locale === i18n.defaultLanguage ? '/' : `/${locale}/`;
+}
+
 /** Product navigation; Fumadocs supplies the locale selector and page tree. */
 export function layoutOptions(slug: string): BaseLayoutProps {
-  const locale = localeFromPath(slug);
-  const japanese = locale === 'ja';
-  const home = locale === i18n.defaultLanguage ? '/' : `/${locale}/`;
+  const home = homePath(slug);
   return {
     nav: {
       title: (
@@ -34,10 +37,21 @@ export function layoutOptions(slug: string): BaseLayoutProps {
     },
     githubUrl: 'https://github.com/iktakahiro/calendarpit',
     searchToggle: { enabled: false },
+  };
+}
+
+/**
+ * Navigation for pages outside the docs sidebar (landing and 404), which add a
+ * Documentation link that the docs pages do not need.
+ */
+export function homeLayoutOptions(slug: string): BaseLayoutProps {
+  const japanese = localeFromPath(slug) === 'ja';
+  return {
+    ...layoutOptions(slug),
     links: [
       {
         text: japanese ? 'ドキュメント' : 'Documentation',
-        url: `${home}quick-start/`,
+        url: `${homePath(slug)}quick-start/`,
       },
     ],
   };

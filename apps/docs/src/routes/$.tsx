@@ -10,7 +10,7 @@ import {
 } from 'fumadocs-ui/layouts/docs/page';
 import { docs, source } from '../site/source';
 import { mdxComponents } from '../site/mdx-components';
-import { layoutOptions } from '../site/navigation';
+import { homeLayoutOptions, layoutOptions } from '../site/navigation';
 import { groupSections } from '../site/navigation-tree';
 import { markdownFile, sitePath } from '../site/paths';
 import { i18n, localeFromPath } from '../site/i18n';
@@ -87,7 +87,7 @@ function Content() {
   const japanese = page.locale === 'ja';
   if (page.hero)
     return (
-      <HomeLayout {...layoutOptions(page.slug)}>
+      <HomeLayout {...homeLayoutOptions(page.slug)}>
         <LandingMotionRoot>
           <LandingHero page={page} />
           <DocsBody className='landing-body'>

@@ -60,11 +60,19 @@ export function AppearanceProvider({
   );
 }
 
-export function AppearanceSwitcher() {
+/**
+ * Returns the stored appearance preference and the function that changes it.
+ * Throws outside `AppearanceProvider`.
+ */
+export function useAppearance() {
   const context = useContext(AppearanceContext);
+  if (!context) throw new Error('Appearance requires AppearanceProvider.');
+  return context;
+}
+
+export function AppearanceSwitcher() {
+  const context = useAppearance();
   const t = useMessages();
-  if (!context)
-    throw new Error('AppearanceSwitcher requires AppearanceProvider.');
   return (
     <div
       className='segmented appearance-switcher'
