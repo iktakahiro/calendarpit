@@ -22,6 +22,20 @@
     "test": {
       "dependsOn": ["^test"],
       "outputs": []
+    },
+    "@calendarpit/docs#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "env": ["DOCS_BASE_PATH", "DOCS_SITE_URL"]
+    },
+    "@calendarpit/docs#dev": {
+      "cache": false,
+      "persistent": true,
+      "env": ["DOCS_BASE_PATH", "DOCS_SITE_URL"]
+    },
+    "@calendarpit/docs#validate": {
+      "cache": false,
+      "env": ["DOCS_BASE_PATH", "DOCS_SITE_URL"]
     }
   }
 }

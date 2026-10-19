@@ -3,13 +3,38 @@ title: Incremental sync
 description: Run a full event sync and fetch incremental changes and deletions with nextSyncToken.
 ---
 
-Calendarpit implements Google Calendar's full and incremental synchronization flow for `events.list`. Run an initial full list to get a `nextSyncToken`, then pass that token as `syncToken` on later requests to fetch only events created, updated, or deleted since that checkpoint. See Google's [sync guide](https://developers.google.com/workspace/calendar/api/guides/sync) and [`events.list` reference](https://developers.google.com/workspace/calendar/api/v3/reference/events/list) for protocol details.
+Calendarpit implements Google Calendar's full and incremental synchronization flow for `events.list`. The flow has two steps:
+
+1. Run an initial full list to get a `nextSyncToken`.
+2. Pass that token as `syncToken` on later requests. You get only the events created, updated, or deleted since that checkpoint.
+
+See Google's [sync guide](https://developers.google.com/workspace/calendar/api/guides/sync) and [`events.list` reference](https://developers.google.com/workspace/calendar/api/v3/reference/events/list) for protocol details.
 
 ## Full synchronization
 
-Every full `events.list` call (not `events.instances`) issues a sync token, whether or not you pass `showDeleted=true`. Follow every `nextPageToken` until the final page. Send the same query parameters with each `pageToken`; changing a parameter returns HTTP `410` (`invalidPageToken`). Calendarpit returns `nextSyncToken` only on the last page, never alongside `nextPageToken`. Save `nextSyncToken` after you process all pages.
+Every full `events.list` call (not `events.instances`) issues a sync token, whether or not you pass `showDeleted=true`.
 
-Page rows and the sync snapshot are frozen together on the first page. Event writes during pagination appear in the next incremental sync. With `singleEvents=true`, always set `timeMax` on the full sync. A token issued without `timeMax` returns HTTP `400` (`unsupportedFeature`) if the calendar contains an unbounded recurring series (an `RRULE` without `COUNT` or `UNTIL`). A deleted unbounded series still counts because its tombstone stays in the calendar until a reset or fixture load. In that case, run a new full sync with `timeMax`. With `singleEvents=false`, a full `events.list` with `timeMin` and no `timeMax` is also rejected when such a series exists (see [Events, recurrence and time](/calendarpit/recurrence/)). Incremental syncs with `singleEvents=false` are not affected.
+### Pagination
+
+- Follow every `nextPageToken` until the final page.
+- Send the same query parameters with each `pageToken`. Changing a parameter returns HTTP `410` (`invalidPageToken`).
+- Calendarpit returns `nextSyncToken` only on the last page, never alongside `nextPageToken`. Save `nextSyncToken` after you process all pages.
+- Page rows and the sync snapshot are frozen together on the first page. Event writes during pagination appear in the next incremental sync.
+
+### Unbounded recurring series
+
+<Callout type="warn">
+
+With `singleEvents=true`, always set `timeMax` on the full sync.
+
+</Callout>
+
+An unbounded recurring series is an `RRULE` without `COUNT` or `UNTIL`. When the calendar contains one, these requests fail:
+
+- **`singleEvents=true`**: A token issued without `timeMax` returns HTTP `400` (`unsupportedFeature`). Run a new full sync with `timeMax`.
+- **`singleEvents=false`**: A full `events.list` with `timeMin` and no `timeMax` is also rejected (see [Events, recurrence and time](/recurrence/)). Incremental syncs with `singleEvents=false` are not affected.
+
+A deleted unbounded series still counts. Its tombstone stays in the calendar until a reset or fixture load.
 
 ```ts
 // api is the Google SDK client configured with Calendarpit's rootUrl.
@@ -35,7 +60,7 @@ do {
 
 ## Incremental synchronization
 
-After a [watch notification](/calendarpit/watch/) or on a poll timer, call `events.list` with `syncToken`. You can paginate incremental results with `maxResults` and `pageToken`.
+After a [watch notification](/watch/) or on a poll timer, call `events.list` with `syncToken`. You can paginate incremental results with `maxResults` and `pageToken`.
 
 ```ts
 const previousToken = syncToken;
@@ -61,15 +86,23 @@ do {
 Requests that break these rules fail with HTTP `400` (`invalidParameter`):
 
 - **Forbidden parameters**: Do not combine `syncToken` with `timeMin`, `timeMax`, `orderBy`, `updatedMin`, `privateExtendedProperty`, `sharedExtendedProperty`, or `iCalUID`. `events.instances` does not support `syncToken`.
-- **Deleted events**: Do not pass `showDeleted=false`. Incremental sync always includes deletions; pass `showDeleted=true` or omit `showDeleted`.
-- **Matching expansion options**: `singleEvents` and the effective `timeZone` (the `timeZone` parameter, or the calendar's time zone when omitted) must match the initial sync. Changing a calendar's time zone in the admin UI or management API invalidates tokens issued without an explicit `timeZone` parameter (HTTP `400`).
+- **Deleted events**: Do not pass `showDeleted=false`. Incremental sync always includes deletions. Pass `showDeleted=true` or omit `showDeleted`.
+- **Matching expansion options**: `singleEvents` and the effective `timeZone` must match the initial sync. The effective `timeZone` is the `timeZone` parameter, or the calendar's time zone when you omit it.
+- **Time zone changes**: Changing a calendar's time zone in the admin UI or management API invalidates tokens issued without an explicit `timeZone` parameter (HTTP `400`).
 
 ### Delta contents and behavior
 
-- **Retries and empty deltas**: Sync tokens are not consumed on use, so you can retry with the same `syncToken` if a request fails. Each incremental sync returns a new `nextSyncToken` on its last page. When nothing changed, `items` is `[]` and a new `nextSyncToken` is still returned.
+- **Retries**: Sync tokens are not consumed on use. If a request fails, you can retry with the same `syncToken`.
+- **New token on every sync**: Each incremental sync returns a new `nextSyncToken` on its last page.
+- **Empty deltas**: When nothing changed, `items` is `[]`. A new `nextSyncToken` is still returned.
 - **Tombstones**: Deleted events are kept as tombstones and returned with `status: "cancelled"`.
-- **Unfiltered deltas**: Deltas are not filtered by the initial request's `updatedMin`, extended-property, or `iCalUID` filters; they contain every changed event in the calendar.
-- **Recurring series window**: With `singleEvents=false`, deltas contain changed series masters, stored exceptions, and single events. With `singleEvents=true`, recurring series are re-expanded within the `timeMin` and `timeMax` window from the initial full sync. Editing a series master returns all of its occurrences in that window, and occurrences removed by trimming or cancelling a series are returned with `status: "cancelled"`. Changed non-recurring events are returned even outside that initial window. Run a new full sync when you move the recurring expansion window.
+- **Unfiltered deltas**: Deltas are not filtered by the initial request's `updatedMin`, extended-property, or `iCalUID` filters. They contain every changed event in the calendar.
+- **Recurring series window**: What a delta contains depends on `singleEvents`:
+  - With `singleEvents=false`, deltas contain changed series masters, stored exceptions, and single events.
+  - With `singleEvents=true`, recurring series are re-expanded within the `timeMin` and `timeMax` window from the initial full sync. Editing a series master returns all of its occurrences in that window. Occurrences removed by trimming or cancelling a series are returned with `status: "cancelled"`.
+  - Changed non-recurring events are returned even outside the initial `timeMin` and `timeMax` window.
+
+  Run a new full sync when you move the recurring expansion window.
 
 ## Lifecycle and limits
 
@@ -80,6 +113,14 @@ Sync tokens are opaque UUIDs bound to the user, calendar, expansion options, and
 | `syncToken` | 7 days TTL; max 100 per workspace (oldest evicted first)                | Stored in SQLite; lost on restart in `:memory:` mode | HTTP `410` (`fullSyncRequired`) |
 | `pageToken` | 1 hour TTL; max 1,000 frozen pages per workspace (oldest evicted first) | In-memory only (lost on restart)                     | HTTP `410` (`invalidPageToken`) |
 
-- **HTTP `410` (`fullSyncRequired`)**: Returned when a `syncToken` is unknown, expired, evicted past the 100-token limit, cleared by a reset or fixture load, or issued for another user or calendar. Each full or incremental `events.list` request without a `pageToken` issues a new token. All users and calendars, including management API event lists, share the 100-token limit. Discard your local synced data for that calendar and run a full sync.
-- **Resets and fixtures**: `POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` clear all sync tokens and page tokens (see [Test control API](/calendarpit/test-control/)). They also revoke all OAuth grants, so clients must reauthorize first.
-- **Page cursors**: Event `pageToken` cursors are bound to the query parameters and user, and do not survive restarts, resets, or fixture loads. After HTTP `410` (`invalidPageToken`), restart pagination from your `syncToken` or restart the full sync.
+- **HTTP `410` (`fullSyncRequired`)**: Returned when a `syncToken` is any of the following:
+  - Unknown or expired
+  - Evicted past the 100-token limit
+  - Cleared by a reset or fixture load
+  - Issued for another user or calendar
+
+  Discard your local synced data for that calendar and run a full sync.
+
+- **Token limit**: Each full or incremental `events.list` request without a `pageToken` issues a new token. All users and calendars share the 100-token limit, including management API event lists.
+- **Resets and fixtures**: `POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` clear all sync tokens and page tokens (see [Test control API](/test-control/)). They also revoke all OAuth grants, so clients must reauthorize first.
+- **Page cursors**: Event `pageToken` cursors are bound to the query parameters and user. They do not survive restarts, resets, or fixture loads. After HTTP `410` (`invalidPageToken`), restart pagination from your `syncToken` or restart the full sync.

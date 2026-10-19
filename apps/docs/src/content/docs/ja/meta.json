@@ -1,0 +1,28 @@
+{
+  "title": "Calendarpit",
+  "pages": [
+    "---はじめに---",
+    "index",
+    "quick-start",
+    "installation",
+    "running",
+    "---ガイド---",
+    "---[Plug]アプリとつなぐ---",
+    "connect",
+    "oauth",
+    "sdks",
+    "---[FlaskConical]テストに使う---",
+    "fixtures",
+    "test-control",
+    "storage",
+    "---リファレンス---",
+    "---[CalendarDays]Calendar API---",
+    "compatibility",
+    "recurrence",
+    "sync",
+    "watch",
+    "---[LifeBuoy]ヘルプ---",
+    "scope",
+    "troubleshooting"
+  ]
+}

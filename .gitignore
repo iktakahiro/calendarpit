@@ -122,7 +122,6 @@ playwright-report/
 .output/
 .tanstack/
 .calendarpit/
-.astro/
 .DS_Store
 .env.*
 !.env.example

@@ -1,11 +1,15 @@
 ---
 title: インストール
+icon: Download
 description: Docker Compose、Homebrew、単体実行ファイルで Calendarpit をインストールします。
 ---
 
-[0.9.0](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.0) を Docker、Homebrew、単体実行ファイルで公開しています。
+Calendarpit は Docker、Homebrew、単体実行ファイルで公開しています。現在のバージョンは [GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/latest) で確認できます。
 
-コンテナ環境には Docker Compose、ローカルの CLI には Homebrew を使えます。どちらも API、OAuth サーバー、管理画面、SQLite を含みます。Bun、Node.js、Google の認証情報、別のデータベースは不要です。npm では配布していません。
+- **Docker Compose**: コンテナ環境で使う場合に適しています。
+- **Homebrew**: ローカルの CLI として使う場合に適しています。
+
+どちらも API、OAuth サーバー、管理画面、SQLite を含みます。Bun、Node.js、Google の認証情報、別のデータベースは不要です。npm では配布していません。
 
 ## Docker
 
@@ -13,10 +17,19 @@ description: Docker Compose、Homebrew、単体実行ファイルで Calendarpit
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
-イメージは Linux amd64 と arm64（Apple Silicon 上の Docker を含む）に対応しています。非 root ユーザーで動作し、SQLite を `/data/calendarpit.sqlite` に保存します。コンテナを作り直してもデータを残すには、名前付きボリュームを保持してください。一時的なテストには `-e CALENDARPIT_DATABASE=:memory:` を使用します。ホストのポートはループバックだけに公開し、コンテナ内部では明示的に `0.0.0.0` にバインドします。
+イメージの特徴は次のとおりです。
+
+- Linux amd64 と arm64 に対応しています（Apple Silicon 上の Docker を含む）。
+- 非 root ユーザーで動作します。
+- SQLite を `/data/calendarpit.sqlite` に保存します。
+- `latest` と各リリースのバージョン番号でタグ付けされています。CI でバージョンを固定する場合は、バージョンのタグを指定してください。
+
+コンテナを作り直してもデータを残すには、名前付きボリュームを保持してください。一時的なテストには `-e CALENDARPIT_DATABASE=:memory:` を使用します。
+
+ホストのポートはループバックだけに公開します。コンテナ内部では明示的に `0.0.0.0` にバインドします。
 
 ## Docker Compose
 
@@ -25,7 +38,7 @@ docker run --rm \
 ```yaml
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    image: ghcr.io/iktakahiro/calendarpit:latest
     ports:
       - '127.0.0.1:4173:4173'
     volumes:
@@ -41,7 +54,11 @@ docker compose logs calendarpit
 docker compose down
 ```
 
-`down` はボリュームを保持し、`down -v` は保存データも削除します。別のサービスで Calendarpit の起動を待つには、`depends_on: { calendarpit: { condition: service_healthy } }` を使用してください。イメージにはヘルスチェックが含まれています。コンテナのポートを変更する場合は、ヘルスチェックも同じポートを使うように、ポートマッピングと `CALENDARPIT_PORT` の両方を設定してください。
+`down` はボリュームを保持します。`down -v` は保存データも削除します。
+
+イメージにはヘルスチェックが含まれています。別のサービスで Calendarpit の起動を待つには、`depends_on: { calendarpit: { condition: service_healthy } }` を使用してください。
+
+コンテナのポートを変更する場合は、ポートマッピングと `CALENDARPIT_PORT` の両方を設定してください。これでヘルスチェックも同じポートを使います。
 
 ### リクエスト元によってアドレスが異なります
 
@@ -50,9 +67,18 @@ docker compose down
 | ホスト上のブラウザやアプリ          | `http://127.0.0.1:4173`   |
 | 同じ Compose ネットワーク内のアプリ | `http://calendarpit:4173` |
 
-ブラウザで開く OAuth 認可 URL は、ホストからアクセスできるアドレスにしてください。コンテナ内のバックエンドは、トークン交換と Calendar API に Compose のアドレスを使用します。OAuth の `redirect_uri` は fixture に登録した URI と完全一致し、ブラウザからアクセスできる必要があります。
+- ブラウザで開く OAuth 認可 URL は、ホストからアクセスできるアドレスにしてください。
+- コンテナ内のバックエンドは、トークン交換と Calendar API に Compose のアドレスを使用します。
+- OAuth の `redirect_uri` は、Fixture に登録した URI と完全一致する必要があります。また、ブラウザからアクセスできる必要があります。
 
-Webhook のアドレスは Calendarpit 側から解決されます。受信サービスの名前が `app` の場合は、`CALENDARPIT_WATCH_HOSTS=app` を設定して `http://app:<port>/<path>` を登録してください。ホスト上のプロセスには、Docker Desktop の `host.docker.internal` を使用できます。Linux の Docker Engine では `extra_hosts: ["host.docker.internal:host-gateway"]` を追加してください。このホスト名も `CALENDARPIT_WATCH_HOSTS` で許可します。受信プロセスはコンテナから到達可能なアドレスで待ち受ける必要があります。[watch 通知](/calendarpit/ja/watch/)も参照してください。
+### Webhook の受信先
+
+Webhook のアドレスは Calendarpit 側から解決されます。
+
+- **Compose 内の受信サービス**: サービス名が `app` の場合は、`CALENDARPIT_WATCH_HOSTS=app` を設定して `http://app:<port>/<path>` を登録してください。
+- **ホスト上のプロセス**: Docker Desktop では `host.docker.internal` を使用できます。Linux の Docker Engine では `extra_hosts: ["host.docker.internal:host-gateway"]` を追加してください。このホスト名も `CALENDARPIT_WATCH_HOSTS` で許可します。
+
+受信プロセスは、コンテナから到達可能なアドレスで待ち受ける必要があります。[watch 通知](/ja/watch/)も参照してください。
 
 ## Homebrew
 
@@ -61,7 +87,11 @@ brew install iktakahiro/tap/calendarpit
 calendarpit serve
 ```
 
-Tap は macOS または Linux 用の単体実行ファイルをインストールします。Bun と Node.js は不要です。デフォルトの SQLite ファイルをプロジェクト内に作るため、プロジェクトのディレクトリで起動してください。更新方法:
+Tap は macOS または Linux 用の単体実行ファイルをインストールします。Bun と Node.js は不要です。
+
+デフォルトの SQLite ファイルをプロジェクト内に作るため、プロジェクトのディレクトリで起動してください。
+
+更新方法:
 
 ```sh
 brew update
@@ -70,7 +100,7 @@ brew upgrade iktakahiro/tap/calendarpit
 
 ## 単体実行ファイル
 
-[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases) から OS と CPU に合ったアーカイブと `SHA256SUMS` をダウンロードします。展開前にチェックサムを照合してください。Apple Silicon の例:
+[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases) から、OS と CPU に合ったアーカイブと `SHA256SUMS` をダウンロードします。展開する前にチェックサムを照合してください。Apple Silicon の例:
 
 ```sh
 shasum -a 256 calendarpit-0.9.0-darwin-arm64.tar.gz
@@ -78,8 +108,21 @@ tar -xzf calendarpit-0.9.0-darwin-arm64.tar.gz
 ./bin/calendarpit serve
 ```
 
-表示されたハッシュを `SHA256SUMS` の該当行と照合します。Windows のアーカイブには `bin/calendarpit.exe` が含まれます。Bun、Node.js、別のアセットディレクトリは不要です。
+表示されたハッシュを `SHA256SUMS` の該当行と照合します。
+
+Windows のアーカイブには `bin/calendarpit.exe` が含まれます。Bun、Node.js、別のアセットディレクトリは不要です。
 
 ## 更新とデータ保存
 
-更新時は Docker イメージのタグを変更します。Homebrew では `brew upgrade` を使用します。更新前に Calendarpit を停止し、SQLite のディレクトリか Docker ボリュームをバックアップしてください。同じデータベースファイルを複数のインスタンスで同時に使用しないでください。[ストレージと再起動](/calendarpit/ja/storage/)と[起動と設定](/calendarpit/ja/running/)も参照してください。
+更新するときは、次の方法を使います。
+
+- **Docker**: イメージのタグを変更します。
+- **Homebrew**: `brew upgrade` を使用します。
+
+更新前に Calendarpit を停止し、SQLite のディレクトリか Docker ボリュームをバックアップしてください。
+
+<Callout type='warn'>
+  同じデータベースファイルを複数のインスタンスで同時に使用しないでください。
+</Callout>
+
+[ストレージと再起動](/ja/storage/)と[起動と設定](/ja/running/)も参照してください。

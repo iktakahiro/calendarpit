@@ -1,34 +1,41 @@
 ---
 title: Run and configure
+icon: SquareTerminal
 description: Ways to start Calendarpit, command-line options, environment variables, Docker setup, and the admin UI.
 ---
 
-Calendarpit serves the API, OAuth, and admin UI from one origin. See [Installation](/calendarpit/installation/) for prerequisites, supported platforms, and 0.9.0 publication status. The commands below use the packaged distribution; no source checkout or build is needed.
+Calendarpit serves the API, OAuth, and admin UI from one origin.
+
+The commands below use the packaged distribution. You need no source checkout or build. See [Installation](/installation/) for prerequisites and supported platforms.
 
 ## Ways to run Calendarpit
 
 ### Installed CLI
 
-Install with Homebrew or place a standalone executable on your `PATH`, then run it from your project directory. See [Installation](/calendarpit/installation/) for setup.
+Install with Homebrew or place a standalone executable on your `PATH`. Then run it from your project directory. See [Installation](/installation/) for setup.
 
 ```sh
 calendarpit serve --port 4173
 calendarpit serve --port 0 --database :memory:
 ```
 
-These are alternative startup commands; run one server per database file. Port `0` lets the OS choose an available port. Read the actual URLs in the startup output:
+These are alternative startup commands:
+
+- Run one server per database file.
+- Port `0` lets the OS choose an available port.
+- Read the actual URLs in the startup output:
 
 ```text
 Calendarpit data: :memory:
 
-Calendarpit v0.9.0
+Calendarpit v<version>
 Data   :memory:
 Admin  http://127.0.0.1:38425/
 API    http://127.0.0.1:38425/calendar/v3
 Health http://127.0.0.1:38425/__calendarpit/health
 ```
 
-The packaged executable includes the server, admin UI assets (including `favicon.svg`), and Bun runtime. No separate Node.js or Bun installation is required. Stop the server with Ctrl+C.
+The packaged executable includes the server, the admin UI assets (including `favicon.svg`), and the Bun runtime. You need no separate Node.js or Bun installation. Stop the server with Ctrl+C.
 
 ### Docker and Compose
 
@@ -36,56 +43,166 @@ The packaged executable includes the server, admin UI assets (including `favicon
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
-The container runs as a non-root user with `CALENDARPIT_HOST=0.0.0.0` and `CALENDARPIT_PORT=4173`. The SQLite database is stored at `/data/calendarpit.sqlite`. The published host port stays on loopback. Add environment variables with `-e` before the image name, or CLI flags after it:
+The container has these defaults:
+
+- It runs as a non-root user.
+- It sets `CALENDARPIT_HOST=0.0.0.0` and `CALENDARPIT_PORT=4173`.
+- It stores the SQLite database at `/data/calendarpit.sqlite`.
+
+The published host port stays on loopback. Add environment variables with `-e` before the image name. Add CLI flags after it:
 
 ```sh
 docker run --rm -p 127.0.0.1:4173:4173 \
-  ghcr.io/iktakahiro/calendarpit:0.9.0 serve --database :memory:
+  ghcr.io/iktakahiro/calendarpit:latest serve --database :memory:
 ```
 
-See [Installation](/calendarpit/installation/) for a Compose service, health checks, and host/container addresses. Use [Fixtures](/calendarpit/fixtures/) to mount a startup configuration. For source development instructions, see the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md).
+Related pages:
+
+- [Installation](/installation/): a Compose service, health checks, and host/container addresses.
+- [Fixtures](/fixtures/): mount a startup configuration.
+- [Development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md): source development instructions.
 
 ## Command-line options and environment variables
 
-The CLI syntax is `calendarpit [serve] [options]`. The `serve` subcommand is optional. Unknown commands, unknown flags, or invalid option values print an error to `stderr` and exit with code `1`.
+The CLI syntax is `calendarpit [serve] [options]`. The `serve` subcommand is optional.
+
+The CLI prints an error to `stderr` and exits with code `1` on any of these:
+
+- an unknown command
+- an unknown flag
+- an invalid option value
 
 Command-line flags take precedence over environment variables.
 
-| CLI option          | Environment variable   | Default                           | Description                                                                                                                                                                                                            |
-| ------------------- | ---------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--host <host>`     | `CALENDARPIT_HOST`     | `127.0.0.1`                       | Bind address. Non-loopback addresses (`0.0.0.0`, `::`) must be set explicitly.                                                                                                                                         |
-| `-p`, `--port <n>`  | `CALENDARPIT_PORT`     | `4173`                            | Listen port (`0`–`65535`). Use `0` to let the OS choose a free port; the assigned port appears in the startup output. Avoid `4175` if you also run the reference sample app.                                           |
-| `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/calendarpit/storage/).                                                                                        |
-| `--config <path>`   | `CALENDARPIT_CONFIG`   | Built-in fixture                  | Path to a JSON startup fixture. The file must exist and contain valid JSON. Seeds a new database or `:memory:` session; silently ignored when opening an existing SQLite file. See [Fixtures](/calendarpit/fixtures/). |
-| `-h`, `--help`      | —                      | —                                 | Print help and exit.                                                                                                                                                                                                   |
-| `-v`, `--version`   | —                      | —                                 | Print `0.9.0` and exit.                                                                                                                                                                                                |
+| CLI option          | Environment variable   | Default                           | Description                                                                                                         |
+| ------------------- | ---------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--host <host>`     | `CALENDARPIT_HOST`     | `127.0.0.1`                       | Bind address. Non-loopback addresses (`0.0.0.0`, `::`) must be set explicitly.                                      |
+| `-p`, `--port <n>`  | `CALENDARPIT_PORT`     | `4173`                            | Listen port (`0`–`65535`). Use `0` to let the OS choose a free port.                                                |
+| `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/storage/). |
+| `--config <path>`   | `CALENDARPIT_CONFIG`   | Built-in fixture                  | Path to a JSON startup fixture. See [Fixtures](/fixtures/).                                                         |
+| `-h`, `--help`      | —                      | —                                 | Print help and exit.                                                                                                |
+| `-v`, `--version`   | —                      | —                                 | Print the version and exit.                                                                                         |
+
+Option details:
+
+- **`--port 0`**: The assigned port appears in the startup output.
+- **Port `4175`**: Avoid it if you also run the reference sample app.
+- **`--config`**: The file must exist and contain valid JSON. It seeds a new database or a `:memory:` session.
+
+<Callout type="warn">
+
+`--config` is silently ignored when Calendarpit opens an existing SQLite file.
+
+</Callout>
 
 ### Additional environment variables
 
-| Environment variable      | Default       | Description                                                                                                                                                                                                                                              |
-| ------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CALENDARPIT_WATCH_HOSTS` | Loopback only | Comma-separated extra hostnames allowed as `events.watch` and `calendarList.watch` webhook targets (for example, `host.docker.internal` when running in Docker). Environment variable only; no CLI flag. See [Watch notifications](/calendarpit/watch/). |
+| Environment variable      | Default       | Description                                                                                         |
+| ------------------------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| `CALENDARPIT_WATCH_HOSTS` | Loopback only | Comma-separated extra hostnames allowed as `events.watch` and `calendarList.watch` webhook targets. |
+
+About `CALENDARPIT_WATCH_HOSTS`:
+
+- Example: `host.docker.internal` when running in Docker.
+- It is an environment variable only. There is no CLI flag.
+- See [Watch notifications](/watch/).
 
 ### Loopback binding and working directory
 
-- **Loopback by default**: Calendarpit binds to `127.0.0.1` unless you pass `--host` or `CALENDARPIT_HOST`. The admin UI and [test control API](/calendarpit/test-control/) have no authentication, so binding to `0.0.0.0` exposes them to other machines on your network.
-- **Relative paths**: With Homebrew, and standalone executables, paths in `--database` and `--config` (or their environment variables) resolve from the directory where you start Calendarpit. Run it from your project directory or use absolute paths. Docker uses paths inside the container; mount host files before referencing them. See [Troubleshooting](/calendarpit/troubleshooting/) for common startup errors.
+**Loopback by default.** Calendarpit binds to `127.0.0.1` unless you pass `--host` or `CALENDARPIT_HOST`.
+
+<Callout type="warn">
+
+The admin UI and [test control API](/test-control/) have no authentication. Binding to `0.0.0.0` exposes them to other machines on your network.
+
+</Callout>
+
+**Relative paths.** Path resolution depends on how you run Calendarpit:
+
+- **Homebrew and standalone executables**: Paths in `--database` and `--config` (or their environment variables) resolve from the directory where you start Calendarpit. Run it from your project directory or use absolute paths.
+- **Docker**: Paths are inside the container. Mount host files before referencing them.
+
+See [Troubleshooting](/troubleshooting/) for common startup errors.
 
 ## Admin UI
 
-The admin UI is served at the root of the same origin as the API (`http://127.0.0.1:4173/` by default). It polls `GET /__calendarpit/state` and request history every 2 seconds, so changes made by your app appear automatically. Use the left rail to switch the selected test user and calendar (`?user=<id>&calendar=<id>`) and to check whether storage is `SQLite` or `In-memory`.
+The admin UI is served at the root of the same origin as the API. The default URL is `http://127.0.0.1:4173/`.
 
-The admin UI loads the Roboto Mono font from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`) and falls back to system fonts when offline. Calendar API and OAuth operations never contact Google and need no internet access.
+- It polls `GET /__calendarpit/state` and request history every 2 seconds. Changes made by your app appear automatically.
+- Use the left rail to switch the selected test user and calendar (`?user=<id>&calendar=<id>`).
+- The left rail also shows whether storage is `SQLite` or `In-memory`.
 
-| Route          | Section         | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`            | **Schedule**    | View stored events in day or week mode (default date `2026-10-19`). Create, edit, and delete events (summary, all-day toggle, start/end, busy/free status, location, description, and extended properties JSON). A recurring series appears once, at its first occurrence, and is not expanded. Saving an event in the editor overwrites it with only the fields shown in the form. Attendees, colors, and other fields set through the Calendar API are removed, and a recurring event loses its `recurrence`. Custom reminders reset to the default (`reminders: { useDefault: true }`). Use the Calendar API to edit those events. |
-| `/users`       | **Users**       | List, create, edit, and delete test users. Deleting a user also deletes their calendars and events, and revokes their OAuth connections (which stops their watch channels).                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `/calendars`   | **Calendars**   | List, create, edit, and delete calendars for the selected test user, set the IANA time zone (default `Asia/Tokyo`), and choose the primary calendar.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `/connections` | **Connections** | Inspect active and revoked OAuth grants by test user and OAuth client, and revoke active grants (which stops their watch channels). See [Local OAuth](/calendarpit/oauth/).                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `/watch`       | **Watch**       | Read-only view of active watch channels and the webhook delivery log. See [Watch notifications](/calendarpit/watch/).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `/history`     | **API history** | Inspect and clear the latest 200 Calendar API and OAuth exchanges (with masked credentials). Filter exchanges by text or show only HTTP `>= 400` errors.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `/settings`    | **Settings**    | Switch the theme (**Appearance**), view the storage path, load a fixture JSON file, reset the workspace to its reset baseline, inspect the current state JSON (**Test data**), or view registered OAuth clients and redirect URIs (**OAuth clients**).                                                                                                                                                                                                                                                                                                                                                                                |
+<Callout type="info">
+
+The admin UI loads the Roboto Mono font from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`). It falls back to system fonts when offline. Calendar API and OAuth operations never contact Google and need no internet access.
+
+</Callout>
+
+| Route          | Screen          | Purpose                                                  |
+| -------------- | --------------- | -------------------------------------------------------- |
+| `/`            | **Schedule**    | View, create, edit, and delete events.                   |
+| `/users`       | **Users**       | List, create, edit, and delete test users.               |
+| `/calendars`   | **Calendars**   | Manage calendars for the selected test user.             |
+| `/connections` | **Connections** | Inspect and revoke OAuth grants.                         |
+| `/watch`       | **Watch**       | Read-only view of watch channels and webhook deliveries. |
+| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth traffic. |
+| `/settings`    | **Settings**    | Theme, storage, fixtures, reset, state, and OAuth setup. |
+
+### Schedule
+
+- View stored events in day or week mode. The default date is `2026-10-19`.
+- Create, edit, and delete events. The editor covers the summary, all-day toggle, start/end, busy/free status, location, description, and extended properties JSON.
+- A recurring series appears once, at its first occurrence. It is not expanded.
+
+<Callout type="warn">
+
+Saving an event in the editor overwrites it with only the fields shown in the form:
+
+- Attendees, colors, and other fields set through the Calendar API are removed.
+- A recurring event loses its `recurrence`.
+- Custom reminders reset to the default (`reminders: { useDefault: true }`).
+
+Use the Calendar API to edit those events.
+
+</Callout>
+
+### Users
+
+- List, create, edit, and delete test users.
+- Deleting a user also deletes their calendars and events.
+- Deleting a user also revokes their OAuth connections, which stops their watch channels.
+
+### Calendars
+
+- List, create, edit, and delete calendars for the selected test user.
+- Set the IANA time zone. The default is `Asia/Tokyo`.
+- Choose the primary calendar.
+
+### Connections
+
+- Inspect active and revoked OAuth grants by test user and OAuth client.
+- Revoke active grants. Revoking a grant stops its watch channels.
+- See [Local OAuth](/oauth/).
+
+### Watch
+
+- Read-only view of active watch channels and the webhook delivery log.
+- See [Watch notifications](/watch/).
+
+### API history
+
+- Inspect the latest 200 Calendar API and OAuth exchanges. Credentials are masked.
+- Filter exchanges by text, or show only HTTP `>= 400` errors.
+- Clear the history.
+
+### Settings
+
+- Switch the theme (**Appearance**).
+- View the storage path.
+- Load a fixture JSON file.
+- Reset the workspace to its reset baseline.
+- Inspect the current state JSON (**Test data**).
+- View registered OAuth clients and redirect URIs (**OAuth clients**).

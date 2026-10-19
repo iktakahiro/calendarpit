@@ -8,8 +8,8 @@
   "type": "module",
   "scripts": {
     "dev": "turbo run dev --filter=calendarpit",
-    "docs:dev": "bun run --cwd apps/docs dev",
-    "docs:check": "bun run --cwd apps/docs validate",
+    "docs:dev": "turbo run dev --filter=@calendarpit/docs",
+    "docs:check": "turbo run validate --filter=@calendarpit/docs",
     "build": "turbo run build",
     "build:binary": "bun run build && bun run --cwd apps/calendarpit build:binary",
     "start": "bun run --cwd apps/calendarpit start",

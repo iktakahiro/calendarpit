@@ -73,8 +73,24 @@ For automatic updates, set repository variable `HOMEBREW_TAP_ENABLED=true` and
 environment secret `HOMEBREW_TAP_TOKEN` to a fine-grained token with contents write
 access only to the tap repository. Alternatively, copy the generated formula
 into the tap, review it, commit, and push after the GitHub release is public.
-The first release uses this manual tap update, so no persistent tap token is
-needed. Creating a tap is independent of admission to Homebrew core.
+The 0.9.0 release used a manual tap update. Creating a tap is independent of
+admission to Homebrew core.
+
+To enable automatic updates:
+
+1. Create a fine-grained GitHub personal access token owned by `iktakahiro`.
+   Select only `homebrew-tap` and grant repository **Contents: Read and write**.
+   The required metadata read permission is included automatically.
+2. Store the token as `HOMEBREW_TAP_TOKEN` in Calendarpit's `release` environment.
+   Keep its value out of source files, logs, and chat messages.
+3. Run `.github/workflows/verify-homebrew.yml` from `main`. It checks the saved
+   credential with a Git push dry run, without creating commits or releases.
+4. After that check succeeds, set repository variable `HOMEBREW_TAP_ENABLED=true`.
+
+Rotate the credential before its expiration and rerun the verification workflow.
+An expired or revoked token causes the Homebrew job to fail; Docker and GitHub
+Releases may already be published at that point. Update the token and rerun the
+failed Homebrew job instead of creating another release tag.
 
 ## Publish a reviewed version
 
