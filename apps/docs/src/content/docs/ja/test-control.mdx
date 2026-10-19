@@ -51,7 +51,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 
 ### エンドポイントの詳細
 
-- **`/health`**: サーバーの `name`（`"Calendarpit"`）、`version`（例: `0.9.0`）、`stage`、`storage`（`"memory"` または `"sqlite"`）を返します。機能フラグ `calendar`、`oauth`、`watch`、`fixtures` も返します。`HEAD` は空の `200` を返します。
+- **`/health`**: サーバーの `name`（`"Calendarpit"`）、`version`、`stage`、`storage`（`"memory"` または `"sqlite"`）を返します。機能フラグ `calendar`、`oauth`、`watch`、`fixtures` も返します。`HEAD` は空の `200` を返します。
 - **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision` のスナップショットを返します。
 - **`/fixtures`**: ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします。
 - **`/reset`**: 起動時 Fixture のリセット基準を復元し、ランタイム状態をすべてクリアします。

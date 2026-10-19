@@ -4,7 +4,7 @@ icon: Download
 description: Docker Compose、Homebrew、単体実行ファイルで Calendarpit をインストールします。
 ---
 
-[0.9.0](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.0) を Docker、Homebrew、単体実行ファイルで公開しています。
+Calendarpit は Docker、Homebrew、単体実行ファイルで公開しています。現在のバージョンは [GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/latest) で確認できます。
 
 - **Docker Compose**: コンテナ環境で使う場合に適しています。
 - **Homebrew**: ローカルの CLI として使う場合に適しています。
@@ -17,7 +17,7 @@ description: Docker Compose、Homebrew、単体実行ファイルで Calendarpit
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 イメージの特徴は次のとおりです。
@@ -25,6 +25,7 @@ docker run --rm \
 - Linux amd64 と arm64 に対応しています（Apple Silicon 上の Docker を含む）。
 - 非 root ユーザーで動作します。
 - SQLite を `/data/calendarpit.sqlite` に保存します。
+- `latest` と各リリースのバージョン番号でタグ付けされています。CI でバージョンを固定する場合は、バージョンのタグを指定してください。
 
 コンテナを作り直してもデータを残すには、名前付きボリュームを保持してください。一時的なテストには `-e CALENDARPIT_DATABASE=:memory:` を使用します。
 
@@ -37,7 +38,7 @@ docker run --rm \
 ```yaml
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    image: ghcr.io/iktakahiro/calendarpit:latest
     ports:
       - '127.0.0.1:4173:4173'
     volumes:

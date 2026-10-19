@@ -4,7 +4,7 @@ icon: Download
 description: Install Calendarpit with Docker Compose, Homebrew, or a standalone executable.
 ---
 
-[0.9.0](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.0) is available through Docker, Homebrew, and standalone downloads.
+Calendarpit is available through Docker, Homebrew, and standalone downloads. See [GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/latest) for the current version.
 
 - **Docker Compose**: Use it for a container environment.
 - **Homebrew**: Use it for a local CLI.
@@ -17,7 +17,7 @@ Both include the API, OAuth server, admin UI, and SQLite. Neither requires Bun, 
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 The image:
@@ -25,6 +25,7 @@ The image:
 - Targets Linux amd64 and arm64, including Docker on Apple Silicon.
 - Runs as a non-root user.
 - Persists SQLite in `/data/calendarpit.sqlite`.
+- Is tagged `latest` and with each release version. Pin a version tag when CI needs a fixed version.
 
 Keep the named volume to retain data across container recreation. For disposable tests, use `-e CALENDARPIT_DATABASE=:memory:`.
 
@@ -37,7 +38,7 @@ Add this service and volume to your `compose.yaml`:
 ```yaml
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.0
+    image: ghcr.io/iktakahiro/calendarpit:latest
     ports:
       - '127.0.0.1:4173:4173'
     volumes:

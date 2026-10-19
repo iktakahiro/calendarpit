@@ -38,7 +38,7 @@ docker run --rm -p 127.0.0.1:4173:4173 \
   --mount "type=bind,source=$PWD/calendarpit.fixture.json,target=/fixtures/startup.json,readonly" \
   -e CALENDARPIT_CONFIG=/fixtures/startup.json \
   -e CALENDARPIT_DATABASE=:memory: \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 Compose では、サービスに次の 2 点を設定します。

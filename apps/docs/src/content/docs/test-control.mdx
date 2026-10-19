@@ -51,7 +51,7 @@ All paths below are relative to `/__calendarpit`.
 
 ### Endpoint details
 
-- **`/health`**: Returns the server `name` (`"Calendarpit"`), `version` (for example, `0.9.0`), `stage`, and `storage` (`"memory"` or `"sqlite"`). It also returns the capability flags `calendar`, `oauth`, `watch`, and `fixtures`. `HEAD` returns an empty `200`.
+- **`/health`**: Returns the server `name` (`"Calendarpit"`), `version`, `stage`, and `storage` (`"memory"` or `"sqlite"`). It also returns the capability flags `calendar`, `oauth`, `watch`, and `fixtures`. `HEAD` returns an empty `200`.
 - **`/state`**: Removes expired channels first. It then returns a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, and `revision`.
 - **`/fixtures`**: Validates and replaces users, calendars, events, and clients. It clears runtime state and invalidates connections.
 - **`/reset`**: Restores the startup fixture baseline and clears all runtime state.

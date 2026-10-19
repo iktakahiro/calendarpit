@@ -6,7 +6,7 @@ description: Calendarpit の起動方法、コマンドラインオプション�
 
 Calendarpit は API、OAuth、管理画面を同じオリジンで提供します。
 
-以下は配布パッケージを使う起動方法です。ソースのクローンやビルドは不要です。必要な環境、対応プラットフォーム、0.9.0 の公開状況は[インストール](/ja/installation/)を参照してください。
+以下は配布パッケージを使う起動方法です。ソースのクローンやビルドは不要です。必要な環境と対応プラットフォームは[インストール](/ja/installation/)を参照してください。
 
 ## Calendarpit の起動方法
 
@@ -28,7 +28,7 @@ calendarpit serve --port 0 --database :memory:
 ```text
 Calendarpit data: :memory:
 
-Calendarpit v0.9.0
+Calendarpit v<version>
 Data   :memory:
 Admin  http://127.0.0.1:38425/
 API    http://127.0.0.1:38425/calendar/v3
@@ -43,7 +43,7 @@ Health http://127.0.0.1:38425/__calendarpit/health
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 コンテナのデフォルト設定は次のとおりです。
@@ -56,7 +56,7 @@ docker run --rm \
 
 ```sh
 docker run --rm -p 127.0.0.1:4173:4173 \
-  ghcr.io/iktakahiro/calendarpit:0.9.0 serve --database :memory:
+  ghcr.io/iktakahiro/calendarpit:latest serve --database :memory:
 ```
 
 関連ページ:
@@ -84,7 +84,7 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 | `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite データベースファイルのパス、または使い捨てのインメモリセッション用の `:memory:` です。[ストレージと再起動](/ja/storage/)を参照してください。 |
 | `--config <path>`   | `CALENDARPIT_CONFIG`   | 組み込み Fixture                  | 起動時 Fixture の JSON ファイルのパスです。[Fixture](/ja/fixtures/)を参照してください。                                                             |
 | `-h`, `--help`      | —                      | —                                 | ヘルプを表示して終了します。                                                                                                                        |
-| `-v`, `--version`   | —                      | —                                 | `0.9.0` を表示して終了します。                                                                                                                      |
+| `-v`, `--version`   | —                      | —                                 | バージョンを表示して終了します。                                                                                                                    |
 
 オプションの補足:
 

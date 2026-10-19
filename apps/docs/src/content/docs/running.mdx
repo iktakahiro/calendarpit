@@ -6,7 +6,7 @@ description: Ways to start Calendarpit, command-line options, environment variab
 
 Calendarpit serves the API, OAuth, and admin UI from one origin.
 
-The commands below use the packaged distribution. You need no source checkout or build. See [Installation](/installation/) for prerequisites, supported platforms, and 0.9.0 publication status.
+The commands below use the packaged distribution. You need no source checkout or build. See [Installation](/installation/) for prerequisites and supported platforms.
 
 ## Ways to run Calendarpit
 
@@ -28,7 +28,7 @@ These are alternative startup commands:
 ```text
 Calendarpit data: :memory:
 
-Calendarpit v0.9.0
+Calendarpit v<version>
 Data   :memory:
 Admin  http://127.0.0.1:38425/
 API    http://127.0.0.1:38425/calendar/v3
@@ -43,7 +43,7 @@ The packaged executable includes the server, the admin UI assets (including `fav
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 The container has these defaults:
@@ -56,7 +56,7 @@ The published host port stays on loopback. Add environment variables with `-e` b
 
 ```sh
 docker run --rm -p 127.0.0.1:4173:4173 \
-  ghcr.io/iktakahiro/calendarpit:0.9.0 serve --database :memory:
+  ghcr.io/iktakahiro/calendarpit:latest serve --database :memory:
 ```
 
 Related pages:
@@ -84,7 +84,7 @@ Command-line flags take precedence over environment variables.
 | `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/storage/). |
 | `--config <path>`   | `CALENDARPIT_CONFIG`   | Built-in fixture                  | Path to a JSON startup fixture. See [Fixtures](/fixtures/).                                                         |
 | `-h`, `--help`      | —                      | —                                 | Print help and exit.                                                                                                |
-| `-v`, `--version`   | —                      | —                                 | Print `0.9.0` and exit.                                                                                             |
+| `-v`, `--version`   | —                      | —                                 | Print the version and exit.                                                                                         |
 
 Option details:
 
