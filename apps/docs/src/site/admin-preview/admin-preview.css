@@ -1282,6 +1282,16 @@
   );
   line-height: 1.65;
 }
+/* Even items put the text on the right. The DOM keeps text before the
+   picture, so the stacked layout and reading order stay the same. */
+@media (min-width: 901px) {
+  .admin-showcase-item:nth-child(even) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 16rem);
+  }
+  .admin-showcase-item:nth-child(even) > .admin-showcase-text {
+    order: 1;
+  }
+}
 @media (max-width: 900px) {
   .admin-showcase-item {
     grid-template-columns: minmax(0, 1fr);
