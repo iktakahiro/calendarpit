@@ -6,7 +6,7 @@ Release archives. There is no supported npm distribution.
 ## Names and version source
 
 - Container: `ghcr.io/iktakahiro/calendarpit`.
-- GitHub release: `iktakahiro/calendarpit`, tag `v0.9.0`.
+- GitHub release: `iktakahiro/calendarpit`, tag `v0.9.1`.
 - Homebrew: `iktakahiro/homebrew-tap`, formula `Formula/calendarpit.rb`;
   installed with `brew install iktakahiro/tap/calendarpit`.
 
