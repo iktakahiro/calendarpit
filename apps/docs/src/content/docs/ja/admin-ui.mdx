@@ -19,7 +19,7 @@ description: Calendarpit の管理画面をブラウザで開き、アプリが�
 
 - **Live**: 管理画面は 2 秒ごとに `GET /__calendarpit/state` とリクエスト履歴をポーリングします。アプリが行った変更は再読み込みなしで反映されます。サーバーが応答しなくなると **Disconnected** に変わります。
 - **Test user** と **Calendars**: 各画面に表示するユーザーとカレンダーを選択します。選択内容は URL（`?user=<id>&calendar=<id>`）に保持されるため、ブックマークや共有ができます。
-- **セクション**: 数字は、有効な接続、有効な watch チャネル、履歴の件数を表します。
+- **セクション**: 先頭は **Schedule** です。**Activity** にはアプリが行ったことを確認する API history、Watch、Connections が、**Workspace** にはテストデータを扱う Users、Calendars、Settings がまとまっています。数字は、履歴の件数、有効な watch チャネル、有効な接続を表します。
 - **ストレージ**: 下部に `SQLite` か `In-memory` かと、サーバーのアドレスが表示されます。詳しくは[ストレージと再起動](/ja/storage/)を参照してください。
 
 各セクションのヘッダーにある **Refresh** ボタンを押すと、ワークスペースをすぐに再読み込みします。
@@ -27,11 +27,11 @@ description: Calendarpit の管理画面をブラウザで開き、アプリが�
 | ルート         | 画面            | 用途                                                            |
 | -------------- | --------------- | --------------------------------------------------------------- |
 | `/`            | **Schedule**    | イベントの表示、作成、編集、削除                                |
+| `/history`     | **API history** | 直近の Calendar API と OAuth の通信の確認と消去                 |
+| `/watch`       | **Watch**       | watch チャネルと Webhook 配信の確認（読み取り専用）             |
+| `/connections` | **Connections** | OAuth 認可の確認と取り消し                                      |
 | `/users`       | **Users**       | テストユーザーの作成、編集、削除                                |
 | `/calendars`   | **Calendars**   | 選択中のユーザーのカレンダーの作成と設定                        |
-| `/connections` | **Connections** | OAuth 認可の確認と取り消し                                      |
-| `/watch`       | **Watch**       | watch チャネルと Webhook 配信の確認（読み取り専用）             |
-| `/history`     | **API history** | 直近の Calendar API と OAuth の通信の確認と消去                 |
 | `/settings`    | **Settings**    | テーマ、ストレージ、Fixture、リセット、状態、OAuth クライアント |
 
 <Callout type="warn">

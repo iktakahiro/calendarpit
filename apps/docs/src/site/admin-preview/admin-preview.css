@@ -269,7 +269,7 @@
   padding-top: 12px;
   border-top: 1px solid var(--am-line);
 }
-.am-nav > span {
+.am-nav-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -277,16 +277,23 @@
   border-radius: 6px;
   color: var(--am-ink-2);
 }
+.am-nav-group {
+  display: grid;
+  gap: 1px;
+}
+.am-nav-group .am-label {
+  padding: 10px 8px 4px;
+}
 .am-nav svg {
   width: 13px;
   height: 13px;
   color: var(--am-muted);
 }
-.am-nav > span.active {
+.am-nav-item.active {
   background: var(--am-ink);
   color: var(--am-surface);
 }
-.am-nav > span.active svg {
+.am-nav-item.active svg {
   color: var(--am-signal);
 }
 .am-nav-label {
@@ -303,7 +310,7 @@
   line-height: 15px;
   text-align: center;
 }
-.am-nav > span.active .am-count {
+.am-nav-item.active .am-count {
   background: rgb(255 255 255 / 0.14);
   color: var(--am-surface);
 }

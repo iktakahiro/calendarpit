@@ -19,7 +19,7 @@ The left rail sets the context for every screen:
 
 - **Live**: The admin UI polls `GET /__calendarpit/state` and request history every 2 seconds. Changes made by your app appear without a reload. The indicator turns to **Disconnected** when the server stops responding.
 - **Test user** and **Calendars**: Select the user and calendar that the screens show. The selection is kept in the URL (`?user=<id>&calendar=<id>`), so you can bookmark it or share it.
-- **Sections**: The counts show active connections, active watch channels, and history entries.
+- **Sections**: **Schedule** comes first. **Activity** groups what your app did: API history, Watch, and Connections. **Workspace** groups the test data it runs against: Users, Calendars, and Settings. The counts show history entries, active watch channels, and active connections.
 - **Storage**: The footer shows `SQLite` or `In-memory`, and the server address. See [Storage and restarts](/storage/).
 
 Each section header has a **Refresh** button that reloads the workspace right away.
@@ -27,11 +27,11 @@ Each section header has a **Refresh** button that reloads the workspace right aw
 | Route          | Screen          | Use it to                                                  |
 | -------------- | --------------- | ---------------------------------------------------------- |
 | `/`            | **Schedule**    | View, create, edit, and delete events.                     |
+| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth traffic.   |
+| `/watch`       | **Watch**       | Inspect watch channels and webhook deliveries (read-only). |
+| `/connections` | **Connections** | Inspect and revoke OAuth grants.                           |
 | `/users`       | **Users**       | Create, edit, and delete test users.                       |
 | `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.        |
-| `/connections` | **Connections** | Inspect and revoke OAuth grants.                           |
-| `/watch`       | **Watch**       | Inspect watch channels and webhook deliveries (read-only). |
-| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth traffic.   |
 | `/settings`    | **Settings**    | Theme, storage, fixtures, reset, state, and OAuth clients. |
 
 <Callout type="warn">

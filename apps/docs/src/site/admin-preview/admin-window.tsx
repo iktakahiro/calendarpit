@@ -19,7 +19,7 @@ import {
   sampleUser,
 } from './sample-workspace';
 
-/** Admin UI sections, in the order the sidebar lists them. */
+/** Admin UI sections. */
 export type AdminSection =
   | 'schedule'
   | 'users'
@@ -29,29 +29,50 @@ export type AdminSection =
   | 'history'
   | 'settings';
 
-const sections: {
+type NavItem = {
   id: AdminSection;
   label: string;
   icon: typeof Calendar;
   count?: number;
-}[] = [
-  { id: 'schedule', label: 'Schedule', icon: Calendar },
-  { id: 'users', label: 'Users', icon: Users },
-  { id: 'calendars', label: 'Calendars', icon: Calendar },
+};
+
+/** The primary screen, listed above the groups. */
+const primary: NavItem = { id: 'schedule', label: 'Schedule', icon: Calendar };
+
+/** Navigation groups: what the app did, then the test workspace. */
+const groups: { label: string; items: NavItem[] }[] = [
   {
-    id: 'connections',
-    label: 'Connections',
-    icon: Plug,
-    count: sampleConnections.filter((connection) => !connection.revoked).length,
+    label: 'Activity',
+    items: [
+      {
+        id: 'history',
+        label: 'API history',
+        icon: Code,
+        count: sampleRequests.length,
+      },
+      {
+        id: 'watch',
+        label: 'Watch',
+        icon: Radio,
+        count: sampleChannels.length,
+      },
+      {
+        id: 'connections',
+        label: 'Connections',
+        icon: Plug,
+        count: sampleConnections.filter((connection) => !connection.revoked)
+          .length,
+      },
+    ],
   },
-  { id: 'watch', label: 'Watch', icon: Radio, count: sampleChannels.length },
   {
-    id: 'history',
-    label: 'API history',
-    icon: Code,
-    count: sampleRequests.length,
+    label: 'Workspace',
+    items: [
+      { id: 'users', label: 'Users', icon: Users },
+      { id: 'calendars', label: 'Calendars', icon: Calendar },
+      { id: 'settings', label: 'Settings', icon: Settings },
+    ],
   },
-  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 /**
@@ -138,12 +159,14 @@ export function AdminShell({
           ))}
         </div>
         <div className='am-nav'>
-          {sections.map(({ id, label, icon: Icon, count }) => (
-            <span key={id} className={section === id ? 'active' : ''}>
-              <Icon />
-              <span className='am-nav-label'>{label}</span>
-              {count !== undefined && <span className='am-count'>{count}</span>}
-            </span>
+          <NavEntry item={primary} section={section} />
+          {groups.map((group) => (
+            <div key={group.label} className='am-nav-group'>
+              <span className='am-label'>{group.label}</span>
+              {group.items.map((item) => (
+                <NavEntry key={item.id} item={item} section={section} />
+              ))}
+            </div>
           ))}
         </div>
       </div>
@@ -162,5 +185,21 @@ export function AdminShell({
         {children}
       </div>
     </div>
+  );
+}
+
+function NavEntry({
+  item: { id, label, icon: Icon, count },
+  section,
+}: {
+  item: NavItem;
+  section: AdminSection;
+}) {
+  return (
+    <span className={`am-nav-item ${section === id ? 'active' : ''}`}>
+      <Icon />
+      <span className='am-nav-label'>{label}</span>
+      {count !== undefined && <span className='am-count'>{count}</span>}
+    </span>
   );
 }
