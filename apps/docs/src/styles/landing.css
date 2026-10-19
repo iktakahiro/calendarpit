@@ -235,6 +235,93 @@
   width: 1.125rem;
   height: 1.125rem;
 }
+
+/* Comparison: testing with real Google (before) and with Calendarpit
+   (after). The before card recedes with a dashed outline and crosses; the
+   after card carries the brand tint and checks, and an arrow links them. */
+.landing-body .comparison {
+  --mark-cross: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M17 7 7 17M7 7l10 10'/%3E%3C/svg%3E");
+  --mark-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  --mark-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+.landing-body .grid.comparison {
+  gap: 2.5rem;
+}
+.landing-body .comparison > [data-card] {
+  position: relative;
+}
+.landing-body .comparison > [data-card]:first-child {
+  border-style: dashed;
+  background: transparent;
+}
+.landing-body .comparison > [data-card]:first-child > h3 {
+  color: var(--color-fd-muted-foreground);
+}
+.landing-body .comparison > [data-card]:last-child {
+  border-color: color-mix(
+    in srgb,
+    var(--color-fd-primary) 45%,
+    var(--color-fd-border)
+  );
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-fd-primary) 10%, var(--color-fd-card)),
+    var(--color-fd-card) 60%
+  );
+  box-shadow: 0 18px 50px -36px var(--color-fd-primary);
+}
+.landing-body .comparison ul {
+  padding-inline-start: 0;
+  list-style: none;
+}
+.landing-body .comparison li {
+  position: relative;
+  padding-inline-start: 1.75rem;
+}
+.landing-body .comparison li::before {
+  content: '';
+  position: absolute;
+  top: calc((1lh - 1rem) / 2);
+  left: 0;
+  width: 1rem;
+  height: 1rem;
+  background: var(--color-fd-muted-foreground);
+  mask: var(--mark-cross) center / contain no-repeat;
+}
+.landing-body .comparison > [data-card]:last-child li::before {
+  background: var(--color-fd-primary);
+  mask-image: var(--mark-check);
+}
+.landing-body .comparison > [data-card]:last-child::before,
+.landing-body .comparison > [data-card]:last-child::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -1.25rem;
+  width: 2rem;
+  height: 2rem;
+  translate: -50% -50%;
+}
+.landing-body .comparison > [data-card]:last-child::before {
+  border: 1px solid var(--color-fd-border);
+  border-radius: 50%;
+  background: var(--color-fd-background);
+}
+.landing-body .comparison > [data-card]:last-child::after {
+  background: var(--color-fd-primary);
+  mask: var(--mark-arrow) center / 1rem no-repeat;
+}
+/* Stacked cards: the arrow points down between them. */
+@container (width < 32rem) {
+  .landing-body .comparison > [data-card]:last-child::before,
+  .landing-body .comparison > [data-card]:last-child::after {
+    top: -1.25rem;
+    left: 50%;
+  }
+  .landing-body .comparison > [data-card]:last-child::after {
+    rotate: 90deg;
+  }
+}
 .site-footer {
   display: grid;
   gap: 1.25rem;
