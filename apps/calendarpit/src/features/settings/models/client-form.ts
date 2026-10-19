@@ -1,4 +1,5 @@
 import type { Snapshot } from '@calendarpit/server';
+import type { Messages } from '../../../lib/messages';
 
 /** An OAuth client as the snapshot shows it, without its secret. */
 export type ClientSummary = Snapshot['clients'][number];
@@ -48,24 +49,24 @@ function isRedirectUri(text: string) {
 /**
  * Checks a client form before it reaches the server, which validates again.
  * A new client needs an ID and a secret; an existing client keeps its secret
- * when the field is left blank.
+ * when the field is left blank. Errors are written in the language of `t`.
  *
  * @returns Field errors, or `undefined` when the values look valid.
  */
 export function validateClientForm(
   values: ClientFormValues,
   creating: boolean,
+  t: Messages,
 ): ClientFormErrors | undefined {
   const errors: ClientFormErrors = {};
   const id = values.id.trim();
   if (creating && (!/^[a-zA-Z0-9@._-]{1,128}$/.test(id) || id === 'primary'))
-    errors.id = 'Use 1–128 letters, digits, or @ . _ - characters.';
-  if (creating && !values.secret) errors.secret = 'Enter a client secret.';
+    errors.id = t['clients.errorId'];
+  if (creating && !values.secret) errors.secret = t['clients.errorSecret'];
   const uris = redirectUriLines(values.redirectUris);
-  if (!uris.length) errors.redirectUris = 'Enter at least one redirect URI.';
+  if (!uris.length) errors.redirectUris = t['clients.errorRedirectMissing'];
   else if (!uris.every(isRedirectUri))
-    errors.redirectUris =
-      'Use absolute http or https URLs without a fragment or credentials.';
+    errors.redirectUris = t['clients.errorRedirectInvalid'];
   return Object.keys(errors).length ? errors : undefined;
 }
 

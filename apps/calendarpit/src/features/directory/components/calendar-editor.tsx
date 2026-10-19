@@ -5,6 +5,7 @@ import { Input } from '@cloudflare/kumo/components/input';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useState } from 'react';
 import { FieldError } from '../../../components/field-error';
+import { useMessages } from '../../../components/language';
 import { useWorkspaceBusy } from '../../workspace/hooks/use-workspace-mutation';
 import {
   useDeleteCalendar,
@@ -34,6 +35,7 @@ export function CalendarEditor({
   const save = useSaveCalendar();
   const remove = useDeleteCalendar();
   const busy = useWorkspaceBusy();
+  const t = useMessages();
   const creating = create || !calendar;
   const form = useForm({
     defaultValues: calendarFormValues(creating ? undefined : calendar),
@@ -43,7 +45,7 @@ export function CalendarEditor({
     }),
     validators: {
       onDynamic: ({ value }) => {
-        const fields = validateCalendarForm(value);
+        const fields = validateCalendarForm(value, t);
         return fields ? { fields } : undefined;
       },
     },
@@ -59,8 +61,7 @@ export function CalendarEditor({
   });
   return (
     <EditorPanel
-      noun='calendar'
-      eyebrow='Calendar'
+      kind='calendar'
       creating={creating}
       existingId={calendar?.id}
       disabled={busy}
@@ -86,9 +87,9 @@ export function CalendarEditor({
         <form.Field name='summary'>
           {(field) => (
             <label className='field'>
-              <span>Calendar name</span>
+              <span>{t['directory.calendar.name']}</span>
               <Input
-                aria-label='Calendar name'
+                aria-label={t['directory.calendar.name']}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -100,9 +101,9 @@ export function CalendarEditor({
         <form.Field name='timeZone'>
           {(field) => (
             <label className='field'>
-              <span>Time zone</span>
+              <span>{t['directory.calendar.timeZone']}</span>
               <Input
-                aria-label='Time zone'
+                aria-label={t['directory.calendar.timeZone']}
                 className='mono'
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -115,7 +116,7 @@ export function CalendarEditor({
         <form.Field name='primary'>
           {(field) => (
             <Checkbox
-              label='Primary calendar'
+              label={t['directory.calendar.primary']}
               checked={field.state.value}
               onCheckedChange={(checked: boolean) =>
                 field.handleChange(checked)
@@ -137,13 +138,13 @@ export function CalendarEditor({
                 loading={submitting}
                 disabled={busy}
               >
-                Save calendar
+                {t['directory.calendar.save']}
               </Button>
             )}
           </form.Subscribe>
           {!creating && calendar && (
             <DeleteButton
-              noun='calendar'
+              kind='calendar'
               disabled={busy}
               remove={() => remove.mutate(calendar.id)}
             />

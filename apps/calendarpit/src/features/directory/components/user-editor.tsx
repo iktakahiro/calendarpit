@@ -4,6 +4,7 @@ import { Input } from '@cloudflare/kumo/components/input';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useState } from 'react';
 import { FieldError } from '../../../components/field-error';
+import { useMessages } from '../../../components/language';
 import { useWorkspaceBusy } from '../../workspace/hooks/use-workspace-mutation';
 import { useDeleteUser, useSaveUser } from '../hooks/use-directory-mutations';
 import { userFormValues, validateUserForm } from '../models/directory-forms';
@@ -25,6 +26,7 @@ export function UserEditor({
   const save = useSaveUser();
   const remove = useDeleteUser();
   const busy = useWorkspaceBusy();
+  const t = useMessages();
   const creating = create || !user;
   const form = useForm({
     defaultValues: userFormValues(creating ? undefined : user),
@@ -34,7 +36,7 @@ export function UserEditor({
     }),
     validators: {
       onDynamic: ({ value }) => {
-        const fields = validateUserForm(value);
+        const fields = validateUserForm(value, t);
         return fields ? { fields } : undefined;
       },
     },
@@ -49,8 +51,7 @@ export function UserEditor({
   });
   return (
     <EditorPanel
-      noun='user'
-      eyebrow='Test user'
+      kind='user'
       creating={creating}
       existingId={user?.id}
       disabled={busy}
@@ -76,9 +77,9 @@ export function UserEditor({
         <form.Field name='name'>
           {(field) => (
             <label className='field'>
-              <span>Name</span>
+              <span>{t['directory.user.name']}</span>
               <Input
-                aria-label='Name'
+                aria-label={t['directory.user.name']}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -90,9 +91,9 @@ export function UserEditor({
         <form.Field name='email'>
           {(field) => (
             <label className='field'>
-              <span>Email</span>
+              <span>{t['directory.user.email']}</span>
               <Input
-                aria-label='Email'
+                aria-label={t['directory.user.email']}
                 type='email'
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -116,13 +117,13 @@ export function UserEditor({
                 loading={submitting}
                 disabled={busy}
               >
-                Save user
+                {t['directory.user.save']}
               </Button>
             )}
           </form.Subscribe>
           {!creating && user && (
             <DeleteButton
-              noun='user'
+              kind='user'
               disabled={busy}
               remove={() => remove.mutate(user.id)}
             />

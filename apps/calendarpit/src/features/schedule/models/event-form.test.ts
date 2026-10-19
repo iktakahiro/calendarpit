@@ -11,6 +11,7 @@ import {
   withTime,
   type EventFormValues,
 } from './event-form';
+import { messages } from '../../../lib/messages';
 
 const calendar: Calendar = {
   id: 'work',
@@ -85,13 +86,14 @@ describe('date and time halves', () => {
 
 describe('validateEventForm', () => {
   test('accepts valid values', () => {
-    expect(validateEventForm(values())).toBeUndefined();
+    expect(validateEventForm(values(), messages.en)).toBeUndefined();
   });
 
   test('accepts dates without times when the event is all-day', () => {
     expect(
       validateEventForm(
         values({ allDay: true, start: '2026-10-19', end: '2026-10-20' }),
+        messages.en,
       ),
     ).toBeUndefined();
   });
@@ -112,7 +114,9 @@ describe('validateEventForm', () => {
       'Extended properties must be a JSON object.',
     ],
   ])('rejects %p', (overrides, field, message) => {
-    expect(validateEventForm(values(overrides))).toEqual({ [field]: message });
+    expect(validateEventForm(values(overrides), messages.en)).toEqual({
+      [field]: message,
+    });
   });
 });
 

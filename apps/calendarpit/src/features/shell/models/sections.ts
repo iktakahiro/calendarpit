@@ -1,4 +1,5 @@
 import type { IconName } from '../../../components/icon';
+import type { TextKey } from '../../../lib/messages';
 
 /** Top-level sections of the admin UI, each with its own route. */
 export type SectionId =
@@ -16,7 +17,7 @@ export type SectionGroupId = 'activity' | 'workspace';
 /** A labelled group of sections in the sidebar navigation. */
 export type SectionGroup = {
   id: SectionGroupId;
-  label: string;
+  label: TextKey;
 };
 
 /**
@@ -24,78 +25,80 @@ export type SectionGroup = {
  * workspace is the test data and configuration it runs against.
  */
 export const sectionGroups: SectionGroup[] = [
-  { id: 'activity', label: 'Activity' },
-  { id: 'workspace', label: 'Workspace' },
+  { id: 'activity', label: 'group.activity' },
+  { id: 'workspace', label: 'group.workspace' },
 ];
 
-/** Navigation and header text for one section. */
+/**
+ * Navigation and header text for one section. Text fields are message keys,
+ * so the sidebar and header follow the interface language.
+ */
 export type Section = {
   id: SectionId;
-  label: string;
+  label: TextKey;
   icon: IconName;
   /** Navigation group. Omitted for the primary screen, listed first. */
   group?: SectionGroupId;
-  eyebrow: string;
-  /** Header text. The schedule builds its own from the selection. */
-  lede: string;
+  eyebrow: TextKey;
+  /** Header text. Omitted for the schedule, which builds its own. */
+  lede?: TextKey;
 };
 
 /** Sections in navigation order. */
 export const sections: Section[] = [
   {
     id: 'schedule',
-    label: 'Schedule',
+    label: 'section.schedule.label',
     icon: 'calendar',
-    eyebrow: 'Schedule',
-    lede: '',
+    eyebrow: 'section.schedule.eyebrow',
   },
   {
     id: 'history',
-    label: 'API history',
+    label: 'section.history.label',
     icon: 'code',
     group: 'activity',
-    eyebrow: 'Protocol log',
-    lede: 'Calendar and OAuth requests from your app, with headers and bodies.',
+    eyebrow: 'section.history.eyebrow',
+    lede: 'section.history.lede',
   },
   {
     id: 'watch',
-    label: 'Watch',
+    label: 'section.watch.label',
     icon: 'broadcast',
     group: 'activity',
-    eyebrow: 'Notifications',
-    lede: 'Inspect active subscriptions and webhook deliveries from all calendars.',
+    eyebrow: 'section.watch.eyebrow',
+    lede: 'section.watch.lede',
   },
   {
     id: 'connections',
-    label: 'Connections',
+    label: 'section.connections.label',
     icon: 'plug',
     group: 'activity',
-    eyebrow: 'Integration',
-    lede: 'Review permissions and revoke connections to test reconnection.',
+    eyebrow: 'section.connections.eyebrow',
+    lede: 'section.connections.lede',
   },
   {
     id: 'users',
-    label: 'Users',
+    label: 'section.users.label',
     icon: 'persons',
     group: 'workspace',
-    eyebrow: 'Directory',
-    lede: 'Create and edit local test identities. No login or password required.',
+    eyebrow: 'section.users.eyebrow',
+    lede: 'section.users.lede',
   },
   {
     id: 'calendars',
-    label: 'Calendars',
+    label: 'section.calendars.label',
     icon: 'calendar',
     group: 'workspace',
-    eyebrow: 'Directory',
-    lede: 'Manage calendars for the selected test user.',
+    eyebrow: 'section.calendars.eyebrow',
+    lede: 'section.calendars.lede',
   },
   {
     id: 'settings',
-    label: 'Settings',
+    label: 'section.settings.label',
     icon: 'gear',
     group: 'workspace',
-    eyebrow: 'Configuration',
-    lede: 'Set your appearance and configure the local test workspace.',
+    eyebrow: 'section.settings.eyebrow',
+    lede: 'section.settings.lede',
   },
 ];
 

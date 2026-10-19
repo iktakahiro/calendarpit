@@ -3,6 +3,7 @@ import { Badge } from '@cloudflare/kumo/components/badge';
 import { Button } from '@cloudflare/kumo/components/button';
 import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon } from '../../components/icon';
+import { useLocale, useMessages } from '../../components/language';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { useRevokeConnection } from './hooks/use-revoke-connection';
 import { formatTimestamp } from '../../lib/format';
@@ -12,15 +13,20 @@ import { scopeLabel } from './models/connection-format';
 export function ConnectionsScreen({ snapshot }: { snapshot: Snapshot }) {
   const revoke = useRevokeConnection();
   const busy = useWorkspaceBusy();
+  const t = useMessages();
+  const locale = useLocale();
   const active = snapshot.connections.filter((c) => !c.revoked).length;
   return (
     <div className='stack'>
       <section className='panel' aria-labelledby='connections-title'>
         <header className='panel-head'>
           <div>
-            <h2 id='connections-title'>OAuth connections</h2>
+            <h2 id='connections-title'>{t['connections.title']}</h2>
             <p>
-              {active} active · {snapshot.connections.length - active} revoked
+              {t['connections.summary'](
+                active,
+                snapshot.connections.length - active,
+              )}
             </p>
           </div>
           <Icon name='shield' />
@@ -38,7 +44,7 @@ export function ConnectionsScreen({ snapshot }: { snapshot: Snapshot }) {
                     </span>
                     <code>{c.clientId}</code>
                   </strong>
-                  <ul className='scopes' aria-label='Granted scopes'>
+                  <ul className='scopes' aria-label={t['connections.scopes']}>
                     {c.scopes.map((s) => (
                       <li key={s} title={s}>
                         {scopeLabel(s)}
@@ -46,14 +52,16 @@ export function ConnectionsScreen({ snapshot }: { snapshot: Snapshot }) {
                     ))}
                   </ul>
                   <p className='data-sub'>
-                    Granted{' '}
+                    {t['connections.granted']}
                     <time dateTime={c.created}>
-                      {formatTimestamp(c.created)}
+                      {formatTimestamp(c.created, locale)}
                     </time>
                   </p>
                 </div>
                 <Badge variant={c.revoked ? 'secondary' : 'success'}>
-                  {c.revoked ? 'Revoked' : 'Active'}
+                  {c.revoked
+                    ? t['connections.revoked']
+                    : t['connections.active']}
                 </Badge>
                 <Button
                   variant='secondary-destructive'
@@ -61,7 +69,7 @@ export function ConnectionsScreen({ snapshot }: { snapshot: Snapshot }) {
                   disabled={c.revoked || busy}
                   onClick={() => revoke.mutate(c.id)}
                 >
-                  Revoke
+                  {t['connections.revoke']}
                 </Button>
               </li>
             ))}
@@ -71,8 +79,8 @@ export function ConnectionsScreen({ snapshot }: { snapshot: Snapshot }) {
             size='sm'
             className='empty-state'
             icon={<Icon name='plug' />}
-            title='No connections yet'
-            description='Approve access from your app. To try it, start the SDK sample:'
+            title={t['connections.empty']}
+            description={t['connections.emptyDescription']}
             commandLine='bun run sample:dev'
           />
         )}

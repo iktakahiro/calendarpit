@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { appearanceCookie, type Appearance } from '../lib/appearance';
 import { Icon } from './icon';
+import { useMessages } from './language';
 
 const AppearanceContext = createContext<{
   preference: Appearance;
@@ -57,21 +58,22 @@ export function AppearanceProvider({
 
 export function AppearanceSwitcher() {
   const context = useContext(AppearanceContext);
+  const t = useMessages();
   if (!context)
     throw new Error('AppearanceSwitcher requires AppearanceProvider.');
   return (
     <div
       className='segmented appearance-switcher'
       role='group'
-      aria-label='Appearance'
+      aria-label={t['settings.appearance']}
     >
       {(['light', 'dark', 'system'] as const).map((mode) => (
         <button
           key={mode}
           type='button'
-          aria-label={`${mode[0]!.toUpperCase()}${mode.slice(1)} mode`}
+          aria-label={t['settings.mode'](t[`settings.${mode}`])}
           aria-pressed={context.preference === mode}
-          title={`${mode[0]!.toUpperCase()}${mode.slice(1)} mode`}
+          title={t['settings.mode'](t[`settings.${mode}`])}
           onClick={() => context.setPreference(mode)}
         >
           <Icon
@@ -79,10 +81,7 @@ export function AppearanceSwitcher() {
               mode === 'light' ? 'sun' : mode === 'dark' ? 'moon' : 'display'
             }
           />
-          <span>
-            {mode[0]!.toUpperCase()}
-            {mode.slice(1)}
-          </span>
+          <span>{t[`settings.${mode}`]}</span>
         </button>
       ))}
     </div>

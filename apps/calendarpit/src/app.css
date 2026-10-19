@@ -76,6 +76,13 @@
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+/* Roboto Mono has no Japanese glyphs; Japanese falls back to system fonts. */
+:root:lang(ja) {
+  --font-sans:
+    'Roboto Mono', ui-monospace, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Yu Gothic UI', Meiryo, 'Noto Sans JP', sans-serif;
+  --font-mono: var(--font-sans);
+}
 :root[data-mode='dark'] {
   color-scheme: dark;
   --canvas: #161719;

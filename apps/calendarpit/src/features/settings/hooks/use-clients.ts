@@ -14,12 +14,12 @@ export const useSaveClient = () =>
         id ? 'PATCH' : 'POST',
         body,
       ),
-    'OAuth client saved.',
+    'clients.saved',
   );
 
 /** Deletes a client and revokes its connections. */
 export const useDeleteClient = () =>
   useWorkspaceMutation(
     (id: string) => managementApi(`/clients${segment(id)}`, 'DELETE'),
-    'OAuth client deleted.',
+    'clients.deleted',
   );

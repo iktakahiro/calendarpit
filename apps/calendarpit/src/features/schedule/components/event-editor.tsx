@@ -7,6 +7,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useEffect, useRef, useState } from 'react';
 import { FieldError } from '../../../components/field-error';
 import { Icon } from '../../../components/icon';
+import { useLocale, useMessages } from '../../../components/language';
 import { useSaveEvent } from '../hooks/use-event-mutations';
 import { DateTimeField } from './date-time-field';
 import {
@@ -38,6 +39,8 @@ export function EventEditor({
 }) {
   const [submitError, setSubmitError] = useState('');
   const save = useSaveEvent();
+  const t = useMessages();
+  const locale = useLocale();
   const panel = useRef<HTMLElement>(null);
   useEffect(() => {
     // Move focus into the editor so keyboard and narrow-screen users land on it.
@@ -52,7 +55,7 @@ export function EventEditor({
     }),
     validators: {
       onDynamic: ({ value }) => {
-        const fields = validateEventForm(value);
+        const fields = validateEventForm(value, t);
         return fields ? { fields } : undefined;
       },
     },
@@ -70,7 +73,7 @@ export function EventEditor({
       ref={panel}
       tabIndex={-1}
       className='editor-panel'
-      aria-label='Event editor'
+      aria-label={t['event.editor']}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           e.stopPropagation();
@@ -80,8 +83,12 @@ export function EventEditor({
     >
       <div className='panel-title'>
         <div>
-          <p className='eyebrow'>{event ? 'Edit event' : 'New event'}</p>
-          <h2>{event ? event.summary || '(Untitled event)' : 'A new event'}</h2>
+          <p className='eyebrow'>{event ? t['event.edit'] : t['event.new']}</p>
+          <h2>
+            {event
+              ? event.summary || t['common.untitled']
+              : t['event.newTitle']}
+          </h2>
           <p className='panel-subtitle'>
             {calendar.summary} · <code>{calendar.timeZone}</code>
           </p>
@@ -92,7 +99,7 @@ export function EventEditor({
           icon={<Icon name='xmark' />}
           onClick={close}
         >
-          Close
+          {t['common.close']}
         </Button>
       </div>
       <form
@@ -105,9 +112,7 @@ export function EventEditor({
             .handleSubmit()
             .catch((error: unknown) =>
               setSubmitError(
-                error instanceof Error
-                  ? error.message
-                  : 'Could not save event.',
+                error instanceof Error ? error.message : t['event.saveFailed'],
               ),
             );
         }}
@@ -115,9 +120,9 @@ export function EventEditor({
         <form.Field name='summary'>
           {(field) => (
             <label className='field'>
-              <span>Summary</span>
+              <span>{t['event.summary']}</span>
               <Input
-                aria-label='Summary'
+                aria-label={t['event.summary']}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -126,11 +131,11 @@ export function EventEditor({
           )}
         </form.Field>
         <fieldset className='field-group'>
-          <legend>When</legend>
+          <legend>{t['event.when']}</legend>
           <form.Field name='allDay'>
             {(field) => (
               <Checkbox
-                label='All-day event'
+                label={t['event.allDay']}
                 checked={field.state.value}
                 onCheckedChange={(checked: boolean) => {
                   field.handleChange(checked);
@@ -153,13 +158,13 @@ export function EventEditor({
                 // The spoken names stay "Start" and "End" in every mode; only
                 // the visible label says that an all-day end is exclusive.
                 const end = name === 'end';
-                const spoken = end ? 'End' : 'Start';
+                const spoken = end ? t['event.end'] : t['event.start'];
                 return (
                   <form.Field name={name} key={name}>
                     {(field) => (
                       <div className='field'>
                         <span>
-                          {allDay && end ? 'End (exclusive)' : spoken}
+                          {allDay && end ? t['event.endExclusive'] : spoken}
                         </span>
                         <DateTimeField
                           name={spoken}
@@ -180,14 +185,17 @@ export function EventEditor({
         <form.Field name='transparency'>
           {(field) => (
             <div className='field'>
-              <span id='availability-label'>Availability</span>
+              <span id='availability-label'>{t['event.availability']}</span>
               <Select
                 aria-labelledby='availability-label'
                 value={field.state.value}
                 onValueChange={(value: 'opaque' | 'transparent' | null) =>
                   value && field.handleChange(value)
                 }
-                items={{ opaque: 'Busy', transparent: 'Free' }}
+                items={{
+                  opaque: t['common.busy'],
+                  transparent: t['common.free'],
+                }}
               />
             </div>
           )}
@@ -195,9 +203,9 @@ export function EventEditor({
         <form.Field name='location'>
           {(field) => (
             <label className='field'>
-              <span>Location</span>
+              <span>{t['event.location']}</span>
               <Input
-                aria-label='Location'
+                aria-label={t['event.location']}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -208,9 +216,9 @@ export function EventEditor({
         <form.Field name='description'>
           {(field) => (
             <label className='field'>
-              <span>Description</span>
+              <span>{t['event.description']}</span>
               <InputArea
-                aria-label='Description'
+                aria-label={t['event.description']}
                 rows={3}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -222,9 +230,9 @@ export function EventEditor({
         <form.Field name='extendedProperties'>
           {(field) => (
             <label className='field'>
-              <span>Extended properties (JSON)</span>
+              <span>{t['event.extendedProperties']}</span>
               <InputArea
-                aria-label='Extended properties (JSON)'
+                aria-label={t['event.extendedProperties']}
                 className='mono'
                 rows={4}
                 spellCheck={false}
@@ -245,12 +253,13 @@ export function EventEditor({
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(submitting) => (
               <Button type='submit' variant='primary' loading={submitting}>
-                Save event
+                {t['event.save']}
               </Button>
             )}
           </form.Subscribe>
           <span className='hint'>
-            <kbd>Esc</kbd> to close
+            <kbd>Esc</kbd>
+            {t['event.escToClose']}
           </span>
         </div>
         {event && (
@@ -268,9 +277,9 @@ export function EventEditor({
               </dd>
             </div>
             <div>
-              <dt>Updated</dt>
+              <dt>{t['event.updated']}</dt>
               <dd>
-                <code>{new Date(event.updated).toLocaleString('en')}</code>
+                <code>{new Date(event.updated).toLocaleString(locale)}</code>
               </dd>
             </div>
           </dl>

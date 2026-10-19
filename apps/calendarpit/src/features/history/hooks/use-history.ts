@@ -16,5 +16,5 @@ export const useHistory = () => useQuery(historyQuery);
 export const useClearHistory = () =>
   useWorkspaceMutation(
     () => managementApi('/history', 'DELETE'),
-    'History cleared.',
+    'history.cleared',
   );

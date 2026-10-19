@@ -4,6 +4,7 @@ import { Input } from '@cloudflare/kumo/components/input';
 import { Popover } from '@cloudflare/kumo/components/popover';
 import { useState } from 'react';
 import { Icon } from '../../../components/icon';
+import { useMessages } from '../../../components/language';
 import { fromPickerDate, toPickerDate } from '../models/dates';
 import { datePart, timePart, withDate, withTime } from '../models/event-form';
 
@@ -17,7 +18,7 @@ import { datePart, timePart, withDate, withTime } from '../models/event-form';
  * `input[type=time]` that Kumo's `Input` themes; it keeps minute precision,
  * which a list of preset slots would lose.
  *
- * The two halves are announced as `<name> date` and `<name> time`.
+ * The two halves are announced as `<name> date` and `<name> time` in English.
  */
 export function DateTimeField({
   name,
@@ -35,6 +36,7 @@ export function DateTimeField({
   blur: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const t = useMessages();
   const date = datePart(value);
   return (
     <div className='date-time'>
@@ -44,7 +46,7 @@ export function DateTimeField({
             <Button
               className='date-time-trigger'
               variant='secondary'
-              aria-label={`${name} date: ${date}`}
+              aria-label={t['event.dateLabel'](name, date)}
               icon={<Icon name='calendar' />}
               onBlur={blur}
             >
@@ -68,7 +70,7 @@ export function DateTimeField({
       {!allDay && (
         <Input
           type='time'
-          aria-label={`${name} time`}
+          aria-label={t['event.timeLabel'](name)}
           value={timePart(value)}
           onBlur={blur}
           onChange={(e) => change(withTime(value, e.target.value))}

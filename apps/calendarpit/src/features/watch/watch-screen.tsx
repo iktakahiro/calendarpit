@@ -3,6 +3,7 @@ import { Badge } from '@cloudflare/kumo/components/badge';
 import { Empty } from '@cloudflare/kumo/components/empty';
 import { Table } from '@cloudflare/kumo/components/table';
 import { Icon } from '../../components/icon';
+import { useLocale, useMessages } from '../../components/language';
 import { formatTimestamp } from '../../lib/format';
 
 const deliveryBadge = {
@@ -14,13 +15,15 @@ const deliveryBadge = {
 
 /** Active watch channels and the webhook delivery log. */
 export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
+  const t = useMessages();
+  const locale = useLocale();
   return (
     <div className='stack'>
       <section className='panel' aria-labelledby='channels-title'>
         <header className='panel-head'>
           <div>
-            <h2 id='channels-title'>Watch channels</h2>
-            <p>{snapshot.channels.length} active subscriptions</p>
+            <h2 id='channels-title'>{t['watch.channels']}</h2>
+            <p>{t['watch.activeCount'](snapshot.channels.length)}</p>
           </div>
           <Icon name='broadcast' />
         </header>
@@ -40,13 +43,13 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
                     <code>{c.address}</code>
                   </p>
                   <p className='data-sub'>
-                    Expires{' '}
+                    {t['watch.expires']}
                     <time dateTime={new Date(c.expiration).toISOString()}>
-                      {formatTimestamp(c.expiration)}
+                      {formatTimestamp(c.expiration, locale)}
                     </time>
                   </p>
                 </div>
-                <Badge variant='info'>Watching</Badge>
+                <Badge variant='info'>{t['watch.watching']}</Badge>
               </li>
             ))}
           </ul>
@@ -55,16 +58,16 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
             size='sm'
             className='empty-state'
             icon={<Icon name='broadcast' />}
-            title='No active subscriptions'
-            description='Channels created with events.watch or calendarList.watch appear here until they expire or are stopped.'
+            title={t['watch.emptyChannels']}
+            description={t['watch.emptyChannelsDescription']}
           />
         )}
       </section>
       <section className='panel' aria-labelledby='deliveries-title'>
         <header className='panel-head'>
           <div>
-            <h2 id='deliveries-title'>Delivery log</h2>
-            <p>Push notifications sent to watch channels, newest first.</p>
+            <h2 id='deliveries-title'>{t['watch.deliveries']}</h2>
+            <p>{t['watch.deliveriesDescription']}</p>
           </div>
           <Icon name='signal' />
         </header>
@@ -73,11 +76,11 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
             <Table className='data-table'>
               <Table.Header>
                 <Table.Row>
-                  <Table.Head>Channel / message</Table.Head>
-                  <Table.Head>State</Table.Head>
-                  <Table.Head>Attempts</Table.Head>
-                  <Table.Head>Time</Table.Head>
-                  <Table.Head>Status</Table.Head>
+                  <Table.Head>{t['watch.columnChannel']}</Table.Head>
+                  <Table.Head>{t['watch.columnState']}</Table.Head>
+                  <Table.Head>{t['watch.columnAttempts']}</Table.Head>
+                  <Table.Head>{t['watch.columnTime']}</Table.Head>
+                  <Table.Head>{t['watch.columnStatus']}</Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
@@ -95,10 +98,12 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
                         <code>{d.state}</code>
                       </Table.Cell>
                       <Table.Cell className='num'>
-                        {d.attempts} {d.attempts === 1 ? 'attempt' : 'attempts'}
+                        {t['watch.attempts'](d.attempts)}
                       </Table.Cell>
                       <Table.Cell className='num'>
-                        <time dateTime={d.time}>{formatTimestamp(d.time)}</time>
+                        <time dateTime={d.time}>
+                          {formatTimestamp(d.time, locale)}
+                        </time>
                       </Table.Cell>
                       <Table.Cell>
                         <Badge variant={deliveryBadge[d.status] ?? 'secondary'}>
@@ -116,8 +121,8 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
             size='sm'
             className='empty-state'
             icon={<Icon name='signal' />}
-            title='No deliveries yet'
-            description='Notifications will appear here.'
+            title={t['watch.emptyDeliveries']}
+            description={t['watch.emptyDeliveriesDescription']}
           />
         )}
       </section>

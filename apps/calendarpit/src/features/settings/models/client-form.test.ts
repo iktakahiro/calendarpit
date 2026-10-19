@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { messages } from '../../../lib/messages';
 import { clientPayload, validateClientForm } from './client-form';
 
 const callback = 'http://127.0.0.1:3000/callback';
@@ -24,7 +25,17 @@ test.each([
     },
   ],
 ])('validateClientForm(%p, %p)', (values, creating, expected) => {
-  expect(validateClientForm(values, creating)).toEqual(expected);
+  expect(validateClientForm(values, creating, messages.en)).toEqual(expected);
+});
+
+test('validateClientForm writes errors in the given language', () => {
+  expect(
+    validateClientForm(
+      { id: 'my-app', secret: 's', redirectUris: '' },
+      true,
+      messages.ja,
+    ),
+  ).toEqual({ redirectUris: 'リダイレクト URI を 1 つ以上入力してください。' });
 });
 
 test('clientPayload trims lines and keeps a blank secret on edit', () => {

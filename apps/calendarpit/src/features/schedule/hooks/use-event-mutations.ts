@@ -21,7 +21,7 @@ export const useSaveEvent = () =>
         id ? 'PUT' : 'POST',
         body,
       ),
-    'Event saved.',
+    'schedule.eventSaved',
   );
 
 /** Deletes an event. The server keeps it as a cancelled record for sync. */
@@ -29,5 +29,5 @@ export const useDeleteEvent = () =>
   useWorkspaceMutation(
     ({ calendarId, id }: { calendarId: string; id: string }) =>
       managementApi(`${eventsPath(calendarId)}${segment(id)}`, 'DELETE'),
-    'Event deleted.',
+    'schedule.eventDeleted',
   );

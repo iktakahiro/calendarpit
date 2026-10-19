@@ -7,6 +7,7 @@ import {
   minuteOf,
   placeEvents,
 } from './day-layout';
+import { messages } from '../../../lib/messages';
 
 const event = (
   id: string,
@@ -92,7 +93,14 @@ test.each([
   [event('x', { date: '2026-10-19' }, { date: '2026-10-20' }), '1 day'],
   [event('x', { date: '2026-10-19' }, { date: '2026-10-22' }), '3 days'],
 ])('duration of %#', (value, expected) => {
-  expect(duration(value)).toBe(expected);
+  expect(duration(value, messages.en)).toBe(expected);
+});
+
+test.each([
+  [timed('x', '2026-10-19T09:00:00Z', '2026-10-19T10:30:00Z'), '1 時間 30 分'],
+  [event('x', { date: '2026-10-19' }, { date: '2026-10-22' }), '3 日'],
+])('duration in Japanese of %#', (value, expected) => {
+  expect(duration(value, messages.ja)).toBe(expected);
 });
 
 test('crossesClockChange detects mixed UTC offsets', () => {

@@ -1,6 +1,7 @@
 import { Button } from '@cloudflare/kumo/components/button';
 import { Dialog } from '@cloudflare/kumo/components/dialog';
 import type { ReactNode } from 'react';
+import { useMessages } from './language';
 
 /** Button variants a confirmation trigger may use. */
 type TriggerVariant =
@@ -64,6 +65,7 @@ export function ConfirmButton(props: ConfirmButtonProps) {
     confirmLabel,
     confirm,
   } = props;
+  const t = useMessages();
   const shared = { variant, size, className, disabled, icon };
   return (
     <Dialog.Root role='alertdialog'>
@@ -84,7 +86,9 @@ export function ConfirmButton(props: ConfirmButtonProps) {
           {description}
         </Dialog.Description>
         <div className='confirm-actions'>
-          <Dialog.Close render={<Button variant='ghost'>Cancel</Button>} />
+          <Dialog.Close
+            render={<Button variant='ghost'>{t['common.cancel']}</Button>}
+          />
           <Dialog.Close
             render={
               // Kumo's `destructive` fills the button with
