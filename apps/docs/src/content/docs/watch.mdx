@@ -189,7 +189,7 @@ The admin UI shows the latest 200 delivery records with their attempt counts, st
 
 <AdminScreen
   view='watch'
-  caption='The Watch screen. A delivery that your endpoint rejected shows its attempts and last HTTP status.'
+  caption='The Watch screen showing active channels and the delivery log. A webhook delivery that your callback endpoint rejected shows its attempt count and last HTTP status (503).'
 />
 
 In automated tests, call `POST /__calendarpit/deliveries/drain` with `Content-Type: application/json`. It waits for all pending deliveries and their retries to finish:

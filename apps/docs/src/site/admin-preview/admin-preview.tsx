@@ -44,44 +44,44 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
     {
       view: 'schedule-week',
       label: 'Schedule',
-      text: 'Events your app writes appear within two seconds. Edit or add events to set up the next test.',
+      text: 'Events your app writes to Calendarpit through the Calendar API appear within 2 seconds. Add or edit events here to set up the next test.',
     },
     {
       view: 'history',
       label: 'API history',
-      text: 'Read the method, status, headers, and bodies of every Calendar API and OAuth request, with credentials masked.',
+      text: 'Inspect the method, status, headers, and bodies of every Calendar API and OAuth request your app sent, with credentials masked. Filter for error responses to see why a call failed.',
     },
     {
       view: 'watch',
       label: 'Watch',
-      text: 'Inspect active channels and every webhook delivery, including retries and the HTTP status your app returned.',
+      text: "Check active watch channels and each webhook delivery to your app's callback URL, with its attempt count and the HTTP status your endpoint returned.",
     },
     {
       view: 'connections',
       label: 'Connections',
-      text: 'Review granted scopes, and revoke a connection to test how your app handles reconnection.',
+      text: 'A connection is an OAuth grant: which test user granted which scopes to which OAuth client. Revoke one to invalidate its tokens and test how your app asks the user to authorize again.',
     },
   ],
   ja: [
     {
       view: 'schedule-week',
       label: 'スケジュール',
-      text: 'アプリが書き込んだ予定は 2 秒以内に表示されます。予定を編集・追加して次のテストを準備できます。',
+      text: 'アプリが Calendar API で Calendarpit に作成・更新した予定は、2 秒以内にここへ表示されます。予定を追加・編集して、次のテストのデータを用意できます。',
     },
     {
       view: 'history',
       label: 'API 履歴',
-      text: 'Calendar API と OAuth の各リクエストのメソッド、ステータス、ヘッダー、ボディを確認できます。認証情報はマスクされます。',
+      text: 'アプリが送信した Calendar API と OAuth の各リクエストについて、メソッド、ステータス、ヘッダー、ボディを確認できます（認証情報はマスクされます）。エラーレスポンスだけに絞り込んで失敗の原因を調べられます。',
     },
     {
       view: 'watch',
       label: 'Watch',
-      text: '有効なチャネルと Webhook の配信を、リトライやアプリが返した HTTP ステータスも含めて確認できます。',
+      text: '有効な watch チャネルと、アプリのコールバック URL への Webhook 配信を確認できます。配信ごとに、試行回数とエンドポイントが返した HTTP ステータスが表示されます。',
     },
     {
       view: 'connections',
       label: '接続',
-      text: '許可されたスコープを確認し、接続を取り消してアプリの再接続処理をテストできます。',
+      text: '接続は OAuth の認可（grant）です。どのテストユーザーが、どの OAuth クライアントに、どのスコープを許可したかを確認できます。接続を取り消すとトークンが無効になるので、アプリがユーザーに再認可を求める処理をテストできます。',
     },
   ],
 };
