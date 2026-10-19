@@ -9,12 +9,12 @@ export const useLoadFixture = () =>
   useWorkspaceMutation(
     async (text: string) =>
       managementApi('/fixtures', 'POST', JSON.parse(text)),
-    'Fixture loaded.',
+    'settings.fixtureLoaded',
   );
 
 /** Restores the startup fixture and clears runtime state. */
 export const useResetWorkspace = () =>
   useWorkspaceMutation(
     () => managementApi('/reset', 'POST'),
-    'Startup state restored.',
+    'settings.resetDone',
   );

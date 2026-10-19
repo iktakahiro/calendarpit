@@ -15,14 +15,14 @@ export const useSaveUser = () =>
         id ? 'PATCH' : 'POST',
         values,
       ),
-    'User saved.',
+    'directory.user.saved',
   );
 
 /** Deletes a user with their calendars, events, and connections. */
 export const useDeleteUser = () =>
   useWorkspaceMutation(
     (id: string) => managementApi(`/users${segment(id)}`, 'DELETE'),
-    'User and owned data deleted.',
+    'directory.user.deleted',
   );
 
 /** Creates a calendar for `userId`, or updates the calendar with `id`. */
@@ -42,12 +42,12 @@ export const useSaveCalendar = () =>
         id ? 'PATCH' : 'POST',
         id ? values : { ...values, userId },
       ),
-    'Calendar saved.',
+    'directory.calendar.saved',
   );
 
 /** Deletes a calendar with its events and watch channels. */
 export const useDeleteCalendar = () =>
   useWorkspaceMutation(
     (id: string) => managementApi(`/calendars${segment(id)}`, 'DELETE'),
-    'Calendar deleted.',
+    'directory.calendar.deleted',
   );

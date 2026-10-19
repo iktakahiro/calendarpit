@@ -6,6 +6,7 @@ import {
   shortDate,
   today,
   toPickerDate,
+  weekdayLabel,
 } from './dates';
 
 test.each([
@@ -24,8 +25,16 @@ test('today uses the calendar zone', () => {
 });
 
 test('formats dates independently of the runtime zone', () => {
-  expect(shortDate('2026-10-19T23:30')).toBe('Oct 19');
-  expect(longDate('2026-10-19')).toBe('Monday, October 19, 2026');
+  expect(shortDate('2026-10-19T23:30', 'en')).toBe('Oct 19');
+  expect(longDate('2026-10-19', 'en')).toBe('Monday, October 19, 2026');
+  expect(weekdayLabel('2026-10-19', 'en')).toBe('Mon');
+});
+
+test('formats dates in Japanese', () => {
+  expect(shortDate('2026-10-19T23:30', 'ja')).toBe('10月19日');
+  // ICU versions differ on the space before the weekday.
+  expect(longDate('2026-10-19', 'ja')).toMatch(/^2026年10月19日 ?月曜日$/);
+  expect(weekdayLabel('2026-10-19', 'ja')).toBe('月');
 });
 
 test('round-trips picker dates in the runtime zone', () => {

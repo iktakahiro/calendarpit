@@ -1,16 +1,13 @@
 import { expect, test } from 'bun:test';
-import {
-  countLabel,
-  validateCalendarForm,
-  validateUserForm,
-} from './directory-forms';
+import { messages } from '../../../lib/messages';
+import { validateCalendarForm, validateUserForm } from './directory-forms';
 
 test.each([
   [{ name: 'Kim', email: 'kim@example.test' }, undefined],
   [{ name: ' ', email: 'kim@example.test' }, { name: 'Enter a name.' }],
   [{ name: 'Kim', email: 'kim' }, { email: 'Enter an email address.' }],
 ])('validateUserForm(%p)', (values, expected) => {
-  expect(validateUserForm(values)).toEqual(expected);
+  expect(validateUserForm(values, messages.en)).toEqual(expected);
 });
 
 test.each([
@@ -24,12 +21,14 @@ test.each([
     { timeZone: 'Enter an IANA time zone, such as Asia/Tokyo.' },
   ],
 ])('validateCalendarForm(%p)', (values, expected) => {
-  expect(validateCalendarForm(values)).toEqual(expected);
+  expect(validateCalendarForm(values, messages.en)).toEqual(expected);
 });
 
-test('countLabel pluralizes', () => {
-  expect([countLabel(1, 'user'), countLabel(2, 'user')]).toEqual([
-    '1 user',
-    '2 users',
-  ]);
+test('validation errors follow the given language', () => {
+  expect(
+    validateCalendarForm(
+      { summary: '', timeZone: 'Asia/Tokyo', primary: false },
+      messages.ja,
+    ),
+  ).toEqual({ summary: 'カレンダー名を入力してください。' });
 });

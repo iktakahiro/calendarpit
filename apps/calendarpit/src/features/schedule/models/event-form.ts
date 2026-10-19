@@ -1,4 +1,5 @@
 import type { Calendar, CalendarEvent } from '@calendarpit/server';
+import type { Messages } from '../../../lib/messages';
 import { shiftDate } from './dates';
 import { localTime } from './local-time';
 
@@ -113,22 +114,24 @@ function parseProperties(text: string): unknown {
 
 /**
  * Checks the form before it reaches the server, which validates again.
+ * Errors are written in the language of `t`.
  *
  * @returns Field errors, or `undefined` when the values look valid.
  */
 export function validateEventForm(
   values: EventFormValues,
+  t: Messages,
 ): Partial<Record<keyof EventFormValues, string>> | undefined {
   const errors: Partial<Record<keyof EventFormValues, string>> = {};
   const missingTime = (value: string) => !values.allDay && !timed.test(value);
-  if (!values.start) errors.start = 'Enter a start.';
-  else if (missingTime(values.start)) errors.start = 'Enter a start time.';
-  if (!values.end) errors.end = 'Enter an end.';
-  else if (missingTime(values.end)) errors.end = 'Enter an end time.';
+  if (!values.start) errors.start = t['event.errorStart'];
+  else if (missingTime(values.start)) errors.start = t['event.errorStartTime'];
+  if (!values.end) errors.end = t['event.errorEnd'];
+  else if (missingTime(values.end)) errors.end = t['event.errorEndTime'];
   else if (values.start && values.end <= values.start)
-    errors.end = 'End must be after start.';
+    errors.end = t['event.errorOrder'];
   if (parseProperties(values.extendedProperties) === undefined)
-    errors.extendedProperties = 'Extended properties must be a JSON object.';
+    errors.extendedProperties = t['event.errorProperties'];
   return Object.keys(errors).length ? errors : undefined;
 }
 

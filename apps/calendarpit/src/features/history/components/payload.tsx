@@ -1,12 +1,23 @@
 import { Button } from '@cloudflare/kumo/components/button';
 import { useState } from 'react';
 import { Icon } from '../../../components/icon';
+import { useMessages } from '../../../components/language';
 
 /** How long the copy button shows its confirmation. */
 const copiedMs = 1500;
 
 /** A pretty-printed JSON payload with a copy button. */
-export function Payload({ title, value }: { title: string; value: unknown }) {
+export function Payload({
+  title,
+  copyLabel,
+  value,
+}: {
+  title: string;
+  /** Accessible name of the copy button. */
+  copyLabel: string;
+  value: unknown;
+}) {
+  const t = useMessages();
   const [copied, setCopied] = useState(false);
   const text = JSON.stringify(value, null, 2);
   return (
@@ -17,7 +28,7 @@ export function Payload({ title, value }: { title: string; value: unknown }) {
           variant='ghost'
           size='sm'
           icon={<Icon name={copied ? 'check' : 'copy'} />}
-          aria-label={`Copy ${title.toLowerCase()} JSON`}
+          aria-label={copyLabel}
           onClick={() => {
             void navigator.clipboard
               ?.writeText(text)
@@ -28,7 +39,7 @@ export function Payload({ title, value }: { title: string; value: unknown }) {
               .catch(() => {});
           }}
         >
-          {copied ? 'Copied' : 'Copy'}
+          {copied ? t['history.copied'] : t['history.copy']}
         </Button>
       </div>
       <pre>{text}</pre>

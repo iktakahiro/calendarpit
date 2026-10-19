@@ -1,5 +1,6 @@
 import type { Calendar, CalendarEvent } from '@calendarpit/server';
 import { useEffect, useRef } from 'react';
+import { useLocale, useMessages } from '../../../components/language';
 import { shortDate, weekdayLabel } from '../models/dates';
 import {
   clockLabel,
@@ -46,6 +47,8 @@ export function WeekView({
   create: (at: string) => void;
   showDate: (date: string) => void;
 }) {
+  const t = useMessages();
+  const locale = useLocale();
   const timeZone = calendar.timeZone;
   const body = useRef<HTMLDivElement>(null);
   const dates = weekDates(date);
@@ -80,25 +83,27 @@ export function WeekView({
     element.scrollTop = (minute / dayMinutes) * element.scrollHeight;
   }, [first, last, timeZone]);
   return (
-    <section className='day-sheet' aria-label='Weekly events'>
+    <section className='day-sheet' aria-label={t['week.weeklyEvents']}>
       <header className='day-head'>
         <div>
           <h2>
-            {shortDate(first)} – {shortDate(last)}, {first.slice(0, 4)}
+            {t['week.range'](
+              shortDate(first, locale),
+              shortDate(last, locale),
+              first.slice(0, 4),
+            )}
           </h2>
           <p>
-            <span>
-              {total} {total === 1 ? 'event' : 'events'}
-            </span>
-            <span>Week of {weekdayLabel(first)}</span>
+            <span>{t['common.events'](total)}</span>
+            <span>{t['week.weekOf'](weekdayLabel(first, locale))}</span>
           </p>
         </div>
         <div className='legend' aria-hidden='true'>
           <span>
-            <i className='swatch busy' /> Busy
+            <i className='swatch busy' /> {t['common.busy']}
           </span>
           <span>
-            <i className='swatch free' /> Free
+            <i className='swatch free' /> {t['common.free']}
           </span>
         </div>
       </header>
@@ -112,14 +117,16 @@ export function WeekView({
             aria-current={day.date === date ? 'date' : undefined}
             onClick={() => showDate(day.date)}
           >
-            <span className='week-weekday'>{weekdayLabel(day.date)}</span>
+            <span className='week-weekday'>
+              {weekdayLabel(day.date, locale)}
+            </span>
             <span className='week-daynum'>{Number(day.date.slice(8))}</span>
           </button>
         ))}
       </div>
       {hasAllDay && (
         <div className='week-allday-row'>
-          <span className='week-gutter-cell'>All day</span>
+          <span className='week-gutter-cell'>{t['common.allDay']}</span>
           {days.map((day) => (
             <div key={day.date} className='week-allday'>
               {day.allDay.map((event) => (
@@ -129,7 +136,7 @@ export function WeekView({
                   className={`track-chip ${event.transparency === 'transparent' ? 'free' : 'busy'} ${editingId === event.id ? 'selected' : ''}`}
                   onClick={() => open(event)}
                 >
-                  {event.summary || '(Untitled event)'}
+                  {event.summary || t['common.untitled']}
                 </button>
               ))}
             </div>
@@ -159,7 +166,11 @@ export function WeekView({
                   key={hour}
                   type='button'
                   className='week-slot'
-                  aria-label={`New event at ${pad(hour)}:00 on ${weekdayLabel(day.date)} ${shortDate(day.date)}`}
+                  aria-label={t['week.newEventAt'](
+                    `${pad(hour)}:00`,
+                    weekdayLabel(day.date, locale),
+                    shortDate(day.date, locale),
+                  )}
                   onClick={(e) => {
                     // The upper half of an hour starts on the hour, the lower
                     // half on the half hour. Keyboard activation reports no
@@ -174,7 +185,7 @@ export function WeekView({
             <div className='week-events'>
               {day.timed.map((placed) => {
                 const free = placed.event.transparency === 'transparent';
-                const from = clockLabel(placed.start, day.date);
+                const from = clockLabel(placed.start, day.date, locale);
                 return (
                   <button
                     key={placed.event.id}
@@ -192,7 +203,7 @@ export function WeekView({
                     onClick={() => open(placed.event)}
                   >
                     <strong>
-                      {placed.event.summary || '(Untitled event)'}
+                      {placed.event.summary || t['common.untitled']}
                     </strong>
                     <span>{from.time}</span>
                   </button>
@@ -211,9 +222,10 @@ export function WeekView({
         ))}
       </div>
       <footer className='day-footnote'>
-        Times shown in <code>{timeZone}</code>. Click a slot to add an event.
-        {clockChange &&
-          ' A clock change this week shifts the grid by its offset; the day view reports exact times.'}
+        {t['common.zoneBefore']}
+        <code>{timeZone}</code>
+        {t['week.zoneAfter']}
+        {clockChange && t['week.clockChange']}
       </footer>
     </section>
   );

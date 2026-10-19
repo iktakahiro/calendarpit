@@ -1,4 +1,8 @@
 import type { Calendar, User } from '@calendarpit/server';
+import type { Messages } from '../../../lib/messages';
+
+/** The kinds of record the directory edits. */
+export type DirectoryKind = 'user' | 'calendar';
 
 /** Editable fields of a test user. */
 export type UserFormValues = { name: string; email: string };
@@ -33,16 +37,18 @@ export const calendarFormValues = (
 
 /**
  * Checks a user form before it reaches the server, which validates again.
+ * Errors are written in the language of `t`.
  *
  * @returns Field errors, or `undefined` when the values look valid.
  */
 export function validateUserForm(
   values: UserFormValues,
+  t: Messages,
 ): FieldErrors<UserFormValues> | undefined {
   const errors: FieldErrors<UserFormValues> = {};
-  if (!values.name.trim()) errors.name = 'Enter a name.';
+  if (!values.name.trim()) errors.name = t['directory.user.errorName'];
   if (!/^[^\s@]+@[^\s@]+$/.test(values.email))
-    errors.email = 'Enter an email address.';
+    errors.email = t['directory.user.errorEmail'];
   return Object.keys(errors).length ? errors : undefined;
 }
 
@@ -58,19 +64,18 @@ export function isTimeZone(value: string) {
 
 /**
  * Checks a calendar form before it reaches the server, which validates again.
+ * Errors are written in the language of `t`.
  *
  * @returns Field errors, or `undefined` when the values look valid.
  */
 export function validateCalendarForm(
   values: CalendarFormValues,
+  t: Messages,
 ): FieldErrors<CalendarFormValues> | undefined {
   const errors: FieldErrors<CalendarFormValues> = {};
-  if (!values.summary.trim()) errors.summary = 'Enter a calendar name.';
+  if (!values.summary.trim())
+    errors.summary = t['directory.calendar.errorName'];
   if (!values.timeZone.trim() || !isTimeZone(values.timeZone))
-    errors.timeZone = 'Enter an IANA time zone, such as Asia/Tokyo.';
+    errors.timeZone = t['directory.calendar.errorTimeZone'];
   return Object.keys(errors).length ? errors : undefined;
 }
-
-/** Formats a count with a pluralized noun, such as `2 calendars`. */
-export const countLabel = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;

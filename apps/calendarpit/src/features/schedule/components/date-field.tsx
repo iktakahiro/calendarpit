@@ -3,6 +3,7 @@ import { DatePicker } from '@cloudflare/kumo/components/date-picker';
 import { Popover } from '@cloudflare/kumo/components/popover';
 import { useState } from 'react';
 import { Icon } from '../../../components/icon';
+import { useMessages } from '../../../components/language';
 import { fromPickerDate, toPickerDate } from '../models/dates';
 
 /**
@@ -19,6 +20,7 @@ export function DateField({
   showDate: (date: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const t = useMessages();
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <Popover.Trigger
@@ -26,7 +28,7 @@ export function DateField({
           <Button
             className='date-trigger'
             variant='secondary'
-            aria-label={`Schedule date: ${date}`}
+            aria-label={t['schedule.date'](date)}
             icon={<Icon name='calendar' />}
           >
             {date}

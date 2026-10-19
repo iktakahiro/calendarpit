@@ -3,6 +3,7 @@ import { Empty } from '@cloudflare/kumo/components/empty';
 import { useState } from 'react';
 import { ConfirmButton } from '../../../components/confirm-button';
 import { Icon } from '../../../components/icon';
+import { useMessages } from '../../../components/language';
 import { useWorkspaceBusy } from '../../workspace/hooks/use-workspace-mutation';
 import { useDeleteClient } from '../hooks/use-clients';
 import type { ClientSummary } from '../models/client-form';
@@ -17,16 +18,14 @@ export function ClientsPanel({ clients }: { clients: ClientSummary[] }) {
   const [editing, setEditing] = useState<string>();
   const remove = useDeleteClient();
   const busy = useWorkspaceBusy();
+  const t = useMessages();
   const close = () => setEditing(undefined);
   return (
     <section className='panel' aria-labelledby='clients-title'>
       <header className='panel-head'>
         <div>
-          <h2 id='clients-title'>Registered OAuth clients</h2>
-          <p>
-            Edit secrets and redirect URIs. Users, events, and connections stay
-            as they are.
-          </p>
+          <h2 id='clients-title'>{t['clients.title']}</h2>
+          <p>{t['clients.description']}</p>
         </div>
         <Button
           variant='ghost'
@@ -35,7 +34,7 @@ export function ClientsPanel({ clients }: { clients: ClientSummary[] }) {
           icon={<Icon name='plus' />}
           onClick={() => setEditing('')}
         >
-          New client
+          {t['clients.new']}
         </Button>
       </header>
       {editing === '' && <ClientEditor key='new' done={close} />}
@@ -48,7 +47,7 @@ export function ClientsPanel({ clients }: { clients: ClientSummary[] }) {
                   <strong>
                     <code>{c.id}</code>
                   </strong>
-                  <ul className='scopes' aria-label='Redirect URIs'>
+                  <ul className='scopes' aria-label={t['clients.redirectUris']}>
                     {c.redirectUris.map((uri) => (
                       <li key={uri}>{uri}</li>
                     ))}
@@ -58,20 +57,20 @@ export function ClientsPanel({ clients }: { clients: ClientSummary[] }) {
                   variant='secondary'
                   size='sm'
                   shape='square'
-                  aria-label={`Edit ${c.id}`}
+                  aria-label={t['clients.edit'](c.id)}
                   disabled={busy || editing === c.id}
                   icon={<Icon name='pencil' />}
                   onClick={() => setEditing(c.id)}
                 />
                 <ConfirmButton
                   iconOnly
-                  ariaLabel={`Delete ${c.id}`}
+                  ariaLabel={t['clients.delete'](c.id)}
                   size='sm'
                   icon={<Icon name='trash' />}
                   disabled={busy}
-                  title='Delete this OAuth client?'
-                  description='The client is removed and its connections are revoked. Reset restores the startup fixture.'
-                  confirmLabel='Delete client'
+                  title={t['clients.deleteTitle']}
+                  description={t['clients.deleteDescription']}
+                  confirmLabel={t['clients.deleteConfirm']}
                   confirm={() => {
                     if (editing === c.id) close();
                     remove.mutate(c.id);
@@ -90,8 +89,8 @@ export function ClientsPanel({ clients }: { clients: ClientSummary[] }) {
             size='sm'
             className='empty-state'
             icon={<Icon name='shield' />}
-            title='No OAuth clients'
-            description='Add a client to enable the consent flow.'
+            title={t['clients.empty']}
+            description={t['clients.emptyDescription']}
           />
         )
       )}

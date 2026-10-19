@@ -1,9 +1,9 @@
 import type { Snapshot } from '@calendarpit/server';
+import { useMessages } from '../../components/language';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import type { Selection } from '../workspace/models/selection';
 import { DirectoryList } from './components/directory-list';
 import { UserEditor } from './components/user-editor';
-import { countLabel } from './models/directory-forms';
 
 /** Lists test users and edits the selected one. */
 export function UsersScreen({
@@ -16,23 +16,23 @@ export function UsersScreen({
   selectUser: (userId: string) => void;
 }) {
   const busy = useWorkspaceBusy();
+  const t = useMessages();
   const rows = snapshot.users.map((u) => ({
     id: u.id,
     name: u.name,
     detail: u.email,
-    note: countLabel(
+    note: t['directory.calendarCount'](
       snapshot.calendars.filter((c) => c.userId === u.id).length,
-      'calendar',
     ),
   }));
   return (
     <div className='entity-layout'>
       <DirectoryList
-        label='User directory'
-        title='Test users'
-        subtitle={`${countLabel(rows.length, 'user')} in this workspace`}
+        label={t['directory.userList']}
+        title={t['directory.users']}
+        subtitle={t['directory.usersInWorkspace'](rows.length)}
         icon='persons'
-        noun='user'
+        kind='user'
         rows={rows}
         selectedId={selection.user?.id}
         disabled={busy}

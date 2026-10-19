@@ -1,11 +1,11 @@
 import { Button } from '@cloudflare/kumo/components/button';
 import { Empty } from '@cloudflare/kumo/components/empty';
 import { Icon } from '../../components/icon';
+import { useMessages } from '../../components/language';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import type { Selection } from '../workspace/models/selection';
 import { CalendarEditor } from './components/calendar-editor';
 import { DirectoryList } from './components/directory-list';
-import { countLabel } from './models/directory-forms';
 
 /** Lists the selected user's calendars and edits the selected one. */
 export function CalendarsScreen({
@@ -18,17 +18,18 @@ export function CalendarsScreen({
   openUsers: () => void;
 }) {
   const busy = useWorkspaceBusy();
+  const t = useMessages();
   const { user, calendars, calendar } = selection;
   if (!user)
     return (
       <Empty
         className='panel empty-state'
         icon={<Icon name='persons' />}
-        title='Create a user first'
-        description='Every calendar belongs to a test user.'
+        title={t['directory.createUserFirst']}
+        description={t['directory.calendarNeedsUser']}
         contents={
           <Button onClick={openUsers} icon={<Icon name='plus' />}>
-            Add user
+            {t['directory.addUser']}
           </Button>
         }
       />
@@ -37,16 +38,16 @@ export function CalendarsScreen({
     id: c.id,
     name: c.summary,
     detail: c.timeZone,
-    note: c.primary ? 'Primary' : '',
+    note: c.primary ? t['directory.primary'] : '',
   }));
   return (
     <div className='entity-layout'>
       <DirectoryList
-        label='Calendar directory'
-        title={`${user.name}'s calendars`}
-        subtitle={`${countLabel(rows.length, 'calendar')} for this user`}
+        label={t['directory.calendarList']}
+        title={t['directory.userCalendars'](user.name)}
+        subtitle={t['directory.calendarsForUser'](rows.length)}
         icon='calendar'
-        noun='calendar'
+        kind='calendar'
         rows={rows}
         selectedId={calendar?.id}
         disabled={busy}

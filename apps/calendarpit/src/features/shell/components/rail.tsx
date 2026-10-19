@@ -2,6 +2,8 @@ import type { Snapshot } from '@calendarpit/server';
 import { Select } from '@cloudflare/kumo/components/select';
 import { BrandLogo } from '../../../components/brand-logo';
 import { Icon } from '../../../components/icon';
+import { useLocale, useMessages } from '../../../components/language';
+import { formatClock } from '../../../lib/format';
 import type { Selection } from '../../workspace/models/selection';
 import {
   sectionGroups,
@@ -42,6 +44,8 @@ export function Rail({
   selectCalendar: (calendarId: string, showSchedule: boolean) => void;
   openSection: (section: SectionId) => void;
 }) {
+  const t = useMessages();
+  const locale = useLocale();
   const { user, calendars, calendar } = selection;
   const activeConnections =
     snapshot?.connections.filter((c) => !c.revoked).length ?? 0;
@@ -60,7 +64,7 @@ export function Rail({
       onClick={() => openSection(s.id)}
     >
       <Icon name={s.icon} />
-      <span className='nav-label'>{s.label}</span>
+      <span className='nav-label'>{t[s.label]}</span>
       {counts[s.id] !== undefined && (
         <span className='count'>{counts[s.id]}</span>
       )}
@@ -76,22 +80,22 @@ export function Rail({
           className={`live ${status === 'offline' ? 'offline' : status === 'live' ? 'online' : ''}`}
           title={
             syncedAt
-              ? `Last synced ${syncedAt.toLocaleTimeString('en', { hour12: false })}`
+              ? t['rail.lastSynced'](formatClock(syncedAt, locale))
               : undefined
           }
         >
           <span className='live-dot' aria-hidden='true' />
           {status === 'offline'
-            ? 'Disconnected'
+            ? t['rail.disconnected']
             : status === 'live'
-              ? 'Live'
-              : 'Connecting…'}
+              ? t['rail.live']
+              : t['rail.connecting']}
         </p>
       </div>
       <div className='rail-context'>
         <div className='rail-field'>
           <p className='rail-label' id='user-switch-label'>
-            Test user
+            {t['rail.testUser']}
           </p>
           <Select
             aria-labelledby='user-switch-label'
@@ -101,13 +105,11 @@ export function Rail({
               snapshot?.users.map((u) => [u.id, u.name]) ?? [],
             )}
           />
-          <p className='rail-email'>
-            {user?.email ?? 'Create a test user to begin.'}
-          </p>
+          <p className='rail-email'>{user?.email ?? t['shell.createUser']}</p>
         </div>
         <div className='rail-field mobile-calendar'>
           <p className='rail-label' id='calendar-switch-label'>
-            Calendar
+            {t['rail.calendar']}
           </p>
           <Select
             aria-labelledby='calendar-switch-label'
@@ -120,7 +122,7 @@ export function Rail({
         </div>
         <div className='calendar-list'>
           <p className='rail-label' id='calendar-list-label'>
-            Calendars
+            {t['rail.calendars']}
           </p>
           <ul aria-labelledby='calendar-list-label'>
             {calendars.map((c) => (
@@ -137,8 +139,11 @@ export function Rail({
                     <small>{c.timeZone}</small>
                   </span>
                   {c.primary && (
-                    <span className='primary-tag' title='Primary calendar'>
-                      Primary
+                    <span
+                      className='primary-tag'
+                      title={t['rail.primaryTitle']}
+                    >
+                      {t['rail.primary']}
                     </span>
                   )}
                 </button>
@@ -146,11 +151,11 @@ export function Rail({
             ))}
           </ul>
           {snapshot && !calendars.length && (
-            <p className='rail-empty'>No calendars for this user yet.</p>
+            <p className='rail-empty'>{t['rail.noCalendars']}</p>
           )}
         </div>
       </div>
-      <nav className='rail-nav' aria-label='Workspace sections'>
+      <nav className='rail-nav' aria-label={t['rail.sections']}>
         {sections.filter((s) => !s.group).map(navButton)}
         {sectionGroups.map((g) => (
           <div
@@ -160,7 +165,7 @@ export function Rail({
             aria-labelledby={`nav-group-${g.id}`}
           >
             <p className='rail-label' id={`nav-group-${g.id}`}>
-              {g.label}
+              {t[g.label]}
             </p>
             {sections.filter((s) => s.group === g.id).map(navButton)}
           </div>
@@ -169,11 +174,13 @@ export function Rail({
       <div className='rail-foot'>
         <p>
           <span className='memory-tag'>
-            {snapshot?.storage.mode === 'sqlite' ? 'SQLite' : 'In-memory'}
+            {snapshot?.storage.mode === 'sqlite'
+              ? t['rail.sqlite']
+              : t['rail.memory']}
           </span>
           {snapshot?.storage.mode === 'sqlite'
-            ? 'Changes are saved across restarts.'
-            : 'Changes live here until you reset or restart.'}
+            ? t['rail.sqliteNote']
+            : t['rail.memoryNote']}
         </p>
         {host && <code>{host}</code>}
       </div>
