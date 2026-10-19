@@ -27,22 +27,29 @@ describe('appearance preference', () => {
   });
 
   test.each([
-    ['calendarpit-appearance=dark', false, 'dark'],
-    ['calendarpit-appearance=light', true, 'light'],
-    ['', true, 'dark'],
-    ['', false, 'light'],
-    ['calendarpit-appearance=system', true, 'dark'],
-    ['calendarpit-appearance=%E0%A4%A', true, 'dark'],
-  ])(
-    'applies the initial theme before hydration for %s',
-    (cookie, systemDark, expected) => {
+    ['calendarpit-appearance=dark', 'light', 'dark'],
+    ['calendarpit-appearance=light', 'dark', 'light'],
+    ['', 'dark', 'dark'],
+    ['', 'light', 'light'],
+    ['', 'none', 'dark'],
+    ['', 'unavailable', 'dark'],
+    ['calendarpit-appearance=system', 'light', 'light'],
+    ['calendarpit-appearance=%E0%A4%A', 'none', 'dark'],
+  ] as const)(
+    'applies the initial theme before hydration for %p with a %s device',
+    (cookie, device, expected) => {
       const document = {
         cookie,
         documentElement: { dataset: { mode: 'light' } },
       };
       runInNewContext(appearanceScript, {
         document,
-        window: { matchMedia: () => ({ matches: systemDark }) },
+        window: {
+          matchMedia: (query: string) => {
+            if (device === 'unavailable') throw new Error('No matchMedia');
+            return { matches: query === `(prefers-color-scheme: ${device})` };
+          },
+        },
       });
       expect(document.documentElement.dataset.mode).toBe(expected);
     },

@@ -80,10 +80,11 @@ function NotFound() {
 
 function RootDocument({ children }: { children: ReactNode }) {
   const { appearance = 'system', language } = Route.useRouteContext();
+  // System mode renders dark until the script reads the device preference.
   return (
     <html
       lang={localeOf(language)}
-      data-mode={appearance === 'dark' ? 'dark' : 'light'}
+      data-mode={appearance === 'light' ? 'light' : 'dark'}
       suppressHydrationWarning
     >
       <head>
