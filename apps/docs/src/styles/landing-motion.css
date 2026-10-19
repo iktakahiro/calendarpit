@@ -19,15 +19,19 @@
   animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
 }
 
-/* Border Beam: a short light that travels around a border. */
+/* Border Beam: a short light that travels around a border. The square light
+   pokes past the frame at each corner, and a mask does not stop it from
+   widening the page, so the frame is a padding ring and clips its overflow
+   rather than using a border, which `overflow` would clip away. */
 .border-beam {
   position: absolute;
   inset: -1px;
-  border: 1px solid transparent;
+  padding: 1px;
+  overflow: hidden;
   border-radius: inherit;
   mask-image:
     linear-gradient(transparent, transparent), linear-gradient(#000, #000);
-  mask-clip: padding-box, border-box;
+  mask-clip: content-box, border-box;
   mask-composite: intersect;
   pointer-events: none;
 }
