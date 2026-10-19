@@ -166,6 +166,10 @@ The build-time renderer does not run in production.
   internal links, anchors, assets, metadata, locale coverage, and code parity.
   `bun run --cwd apps/docs preview` serves **only static output** at
   `http://127.0.0.1:4488/`, including a real HTTP 404 for missing pages.
+- `scripts/llms-text.ts` runs after the static build and writes `llms.txt`,
+  `llms-full.txt`, and one `.md` file per page for each locale from the MDX
+  sources and `meta.json` navigation. Callouts become GitHub alerts; other MDX
+  components stay as JSX. Every page must appear in `meta.json`.
 - TanStack Start generates `src/routeTree.gen.ts`; keep it in source control.
   The build cleans stale output and removes its temporary server bundle.
 

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --bun vite",
-    "build": "bun scripts/clean.ts && bun --bun vite build && bun scripts/prepare-static.ts",
+    "build": "bun scripts/clean.ts && bun --bun vite build && bun scripts/prepare-static.ts && bun scripts/llms-text.ts",
     "preview": "bun scripts/preview.ts",
     "deploy": "bun --bun wrangler deploy",
     "deploy:check": "bun --bun wrangler deploy --dry-run",
