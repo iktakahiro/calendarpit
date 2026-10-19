@@ -151,10 +151,10 @@ Your app should send the user through the [OAuth flow](/oauth/) again.
 
 ### Appearance
 
-- **Theme**: choose **Light**, **Dark**, or **System**.
-- **Language**: choose **English**, **日本語** (Japanese), or **System**. English is the default. **System** follows your browser's preferred languages and falls back to English.
+- **Theme**: choose **Light**, **Dark**, or **System**. **System** follows your device's color scheme and uses **Dark** when the device does not report one.
+- **Language**: choose **English**, **日本語** (Japanese), or **System**. **System** follows your browser's preferred languages and falls back to English.
 
-Both choices are stored in cookies in your browser, so the next page load renders in the chosen theme and language.
+Both settings start as **System**, and nothing is stored until you choose. Your choice is stored in a cookie in your browser for a year, so the next page load renders in the chosen theme and language.
 
 The language applies to interface text only: navigation, headings, buttons, form labels, messages, and dates. Protocol data stays as Calendarpit sends and receives it: paths, HTTP methods and statuses, JSON, scopes, resource states, and IDs. The [local consent page](/oauth/) is always in English.
 

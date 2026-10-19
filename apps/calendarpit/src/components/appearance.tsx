@@ -5,7 +5,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { appearanceCookie, type Appearance } from '../lib/appearance';
+import {
+  appearanceCookie,
+  LIGHT_SCHEME_QUERY,
+  type Appearance,
+} from '../lib/appearance';
 import { Icon } from './icon';
 import { useMessages } from './language';
 
@@ -23,13 +27,13 @@ export function AppearanceProvider({
 }) {
   const [preference, setPreference] = useState(initialPreference);
   useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const media = window.matchMedia(LIGHT_SCHEME_QUERY);
     const apply = () => {
       document.documentElement.dataset.mode =
         preference === 'system'
           ? media.matches
-            ? 'dark'
-            : 'light'
+            ? 'light'
+            : 'dark'
           : preference;
     };
     apply();

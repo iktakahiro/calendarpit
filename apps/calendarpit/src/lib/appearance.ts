@@ -15,6 +15,13 @@ export function appearanceCookie(preference: Appearance, secure: boolean) {
   return `${APPEARANCE_COOKIE}=${preference}; Path=/; Max-Age=${MAX_AGE}; SameSite=Lax${secure ? '; Secure' : ''}`;
 }
 
+/**
+ * Media query that selects the light theme in system mode. System mode is dark
+ * unless the device explicitly prefers light, so dark is also the theme when
+ * the preference cannot be read.
+ */
+export const LIGHT_SCHEME_QUERY = '(prefers-color-scheme: light)';
+
 // Run before styles and hydration so system mode never paints in the wrong theme.
 // Only static code is embedded: request cookies are never interpolated into HTML.
 export const appearanceScript = `(() => {
@@ -26,8 +33,12 @@ export const appearanceScript = `(() => {
       const value = decodeURIComponent(cookie?.slice('${APPEARANCE_COOKIE}='.length) ?? '');
       if (value === 'light' || value === 'dark') preference = value;
     } catch {}
+    let light = false;
+    try {
+      light = window.matchMedia('${LIGHT_SCHEME_QUERY}').matches;
+    } catch {}
     document.documentElement.dataset.mode = preference === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      ? (light ? 'light' : 'dark')
       : preference;
   } catch {}
 })();`;
