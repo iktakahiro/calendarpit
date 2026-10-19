@@ -25,7 +25,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 | GET, POST               | `/calendars/{calendarId}/events`                     | イベントの一覧取得・作成                                   |
 | GET, PUT, PATCH, DELETE | `/calendars/{calendarId}/events/{eventId}`           | イベントの取得・置き換え・部分更新・削除                   |
 | GET                     | `/calendars/{calendarId}/events/{eventId}/instances` | 繰り返しイベントのインスタンスと例外                       |
-| POST                    | `/freeBusy`                                          | 結合して期間内に切り詰めた busy 区間。最大 50 カレンダー   |
+| POST                    | `/freeBusy`                                          | 結合して期間内に切り詰めた busy 区間。最大50カレンダー     |
 | POST                    | `/calendars/{calendarId}/events/watch`               | イベントの変更を購読                                       |
 | POST                    | `/channels/stop`                                     | イベントまたはカレンダーリストの watch チャネルを停止      |
 
@@ -67,7 +67,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 | Calendars    | `delete`            |  ❌  | 管理画面か管理 API を使ってください                                      |
 | Calendars    | `insert`            |  ❌  |                                                                          |
 | Calendars    | `patch`             |  ❌  |                                                                          |
-| Calendars    | `transferOwnership` |  ❌  | 所有者はカレンダーごとに 1 人で、共有の仕組みはありません                |
+| Calendars    | `transferOwnership` |  ❌  | 所有者はカレンダーごとに1人で、共有の仕組みはありません                  |
 | Calendars    | `update`            |  ❌  |                                                                          |
 | Channels     | `stop`              |  ✅  | イベントまたはカレンダーリストの watch チャネルを停止します              |
 | Colors       | `get`               |  ❌  | イベントの色 1–11 とカレンダーの色 1–24 はエンドポイントなしで使えます   |
@@ -82,7 +82,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 | Events       | `import`            |  ❌  | `insert` でイベントを作成してください                                    |
 | Events       | `move`              |  ❌  | カレンダー間の移動は削除と insert で代用してください                     |
 | Events       | `quickAdd`          |  ❌  | 自然言語の解析はしません                                                 |
-| Freebusy     | `query`             |  ✅  | 結合して期間内に切り詰めた busy 区間。最大 50 カレンダー                 |
+| Freebusy     | `query`             |  ✅  | 結合して期間内に切り詰めた busy 区間。最大50カレンダー                   |
 | Settings     | `get`               |  ❌  | ユーザーごとの Google の設定はありません                                 |
 | Settings     | `list`              |  ❌  |                                                                          |
 | Settings     | `watch`             |  ❌  |                                                                          |
@@ -179,7 +179,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 
 - SQLite 使用時は、再起動後も残ります。
 - リセットや Fixture の読み込みで消えます。
-- `summaryOverride` には、空白だけではない 10,000 文字以内の文字列が必要です。`""` は `400` を返します。
+- `summaryOverride` には、空白だけではない10,000文字以内の文字列が必要です。`""` は `400` を返します。
 
 省略したフィールドの扱いは、書き込みの種類で異なります。
 
@@ -209,8 +209,8 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 
 ### リマインダーと通知
 
-- `defaultReminders` は `{method: "email" | "popup", minutes: 0–40320}` の項目を 5 件まで受け付けます。
-- `notificationSettings.notifications` は `{method: "email", type}` の項目を 5 件まで受け付けます。
+- `defaultReminders` は `{method: "email" | "popup", minutes: 0–40320}` の項目を5件まで受け付けます。
+- `notificationSettings.notifications` は `{method: "email", type}` の項目を5件まで受け付けます。
   - `type` は `eventCreation`、`eventChange`、`eventCancellation`、`eventResponse`、`agenda` のいずれかです。
   - `type` は重複できません。重複すると `400` を返します。
 - どちらの設定でもメールは送信されません。
@@ -219,7 +219,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 
 <Callout type="info">
 
-次の 2 つの動作は Google のリファレンスに合わせたもので、実際の Google では確認していません。
+次の2つの動作は Google のリファレンスに合わせたもので、実際の Google では確認していません。
 
 - `colorRgbFormat=true` で `colorId` を無視する動作
 - `PATCH {"notificationSettings": {}}` で通知を保持する動作
@@ -306,7 +306,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 
 - イベント一覧のページングでは、最初のページの時点でスナップショットを固定します。ページ取得の合間に書き込みがあっても、項目は抜けません。
 - イベントのページトークンは、クエリとユーザーに結び付いています。
-- イベントのページトークンは 1 時間で期限が切れます。再起動・リセット・Fixture の読み込みでも消えます。
+- イベントのページトークンは1時間で期限が切れます。再起動・リセット・Fixture の読み込みでも消えます。
 - カレンダーリストのページトークンは、データやカレンダーリストへの書き込みがあると無効になります。保存はされません。
 - 期限切れや無効なトークンは `410`（`invalidPageToken`）を返します。
 

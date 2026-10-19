@@ -48,7 +48,7 @@ Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれてい
    - `scope`（必須）: 対応しているスコープをスペース区切りで指定します。[スコープ](#スコープ)を参照してください。
    - `state`（任意）: ユーザーのブラウザセッションに紐づくランダムな値です。指定した場合、リダイレクト時にそのまま返されます。
    - `access_type`（任意）: `online` または `offline`。リフレッシュトークンを受け取るには `access_type=offline` を指定します。
-   - `code_challenge` および `code_challenge_method`（任意）: PKCE パラメータです。使用する場合、`code_challenge_method` は `S256` にします。`code_challenge` は 43 文字の base64url ダイジェストにする必要があります。
+   - `code_challenge` および `code_challenge_method`（任意）: PKCE パラメータです。使用する場合、`code_challenge_method` は `S256` にします。`code_challenge` は43文字の base64url ダイジェストにする必要があります。
    - `prompt`（任意）: `consent`、`select_account`、`consent select_account`、`select_account consent` のいずれかを受け付けます。同意画面は常に表示されます。
    - `include_granted_scopes`（任意）: 指定する場合は `false` でなければなりません。
 3. **同意画面で承認または拒否します。** 同意画面には、ワークスペース内のすべてのテストユーザー（`Name · email`）と、要求されたスコープ文字列が表示されます。テストユーザーを選択し、**Approve** または **Deny** をクリックします。
@@ -131,7 +131,7 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 `POST /oauth/token` のすべての呼び出しで、クライアント認証が必須です。`authorization_code` と `refresh_token` のどちらも対象で、PKCE を使用している場合も同様です。シークレットを持たないパブリッククライアントには対応していません。
 
-認証情報は次の 2 通りの方法で指定できます。
+認証情報は次の2通りの方法で指定できます。
 
 - **フォームフィールド（`client_secret_post`）**: URL エンコードされたボディに `client_id` と `client_secret` を含めます。
 - **HTTP Basic（`client_secret_basic`）**: `Authorization: Basic <base64(urlencode(client_id):urlencode(client_secret))>` ヘッダーを送信します。
@@ -148,15 +148,15 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 ### 有効期限と永続化
 
-| 対象                 | 有効期限                                                                              | 1 回限り | 再起動後の保持（SQLite）   |
-| -------------------- | ------------------------------------------------------------------------------------- | -------- | -------------------------- |
-| 保留中の同意 nonce   | 5 分                                                                                  | はい     | いいえ                     |
-| 認可コード           | 60 秒                                                                                 | はい     | いいえ                     |
-| アクセストークン     | 1 時間（`expires_in: 3600`）                                                          | いいえ   | はい（元の有効期限を維持） |
-| リフレッシュトークン | 有効期限なし（失効、テストユーザーの削除、リセット、または Fixture 読み込みまで有効） | いいえ   | はい                       |
-| 接続（grant）        | 失効、テストユーザーの削除、リセット、または Fixture 読み込みまで有効                 | いいえ   | はい                       |
+| 対象                 | 有効期限                                                                              | 1回限り | 再起動後の保持（SQLite）   |
+| -------------------- | ------------------------------------------------------------------------------------- | ------- | -------------------------- |
+| 保留中の同意 nonce   | 5分                                                                                   | はい    | いいえ                     |
+| 認可コード           | 60秒                                                                                  | はい    | いいえ                     |
+| アクセストークン     | 1時間（`expires_in: 3600`）                                                           | いいえ  | はい（元の有効期限を維持） |
+| リフレッシュトークン | 有効期限なし（失効、テストユーザーの削除、リセット、または Fixture 読み込みまで有効） | いいえ  | はい                       |
+| 接続（grant）        | 失効、テストユーザーの削除、リセット、または Fixture 読み込みまで有効                 | いいえ  | はい                       |
 
-- 保留中の同意は最大 1,000 件です。超過すると `429 rateLimitExceeded` を返します。
+- 保留中の同意は最大1,000件です。超過すると `429 rateLimitExceeded` を返します。
 - 認可コードは、その `client_id` と `redirect_uri` に紐づきます。
 - `:memory:` モードでは、プロセスが終了するとすべての OAuth の状態が失われます。詳細は[ストレージと再起動](/ja/storage/)を参照してください。
 
@@ -187,7 +187,7 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 ## スコープ
 
-すべての `GET /oauth/authorize` リクエストには、対応しているスコープを少なくとも 1 つ含める必要があります。それ以外のスコープを要求すると `400 invalid_scope` を返します。
+すべての `GET /oauth/authorize` リクエストには、対応しているスコープを少なくとも1つ含める必要があります。それ以外のスコープを要求すると `400 invalid_scope` を返します。
 
 ### Calendar API のスコープ
 
@@ -241,7 +241,7 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 - **未登録の `client_id`**: `400 invalid_client`（`"Unknown client."`）を返します。
 - **未登録の `redirect_uri`**: `400 invalid_request`（`"Unregistered redirect URI."`）を返します。クライアントの `redirectUris` のいずれとも文字列として完全一致しない値が対象です。
 - **未知の認可パラメータ**: `400 unsupported_feature` を返します。`nonce`、`login_hint`、`hd`、`request`、`request_uri`、`enable_granular_consent` などが該当します。
-- **非対話型の同意**: `400 unsupported_feature` を返します。`prompt=none`、またはステップ 2 に記載した 4 つ以外の `prompt` 値が該当します。
+- **非対話型の同意**: `400 unsupported_feature` を返します。`prompt=none`、またはステップ 2 に記載した4つ以外の `prompt` 値が該当します。
 - **増分認可（Incremental authorization）**（`include_granted_scopes=true`）: `400 unsupported_feature` を返します。
 - **その他のレスポンスタイプ**（`response_type=code` 以外）: `400 unsupported_response_type` を返します。
 - **PKCE の `plain` メソッド**: `400 invalid_request` を返します。

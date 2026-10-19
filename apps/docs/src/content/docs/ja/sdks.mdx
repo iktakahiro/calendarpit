@@ -13,7 +13,7 @@ description: TypeScript、Python、Go、Kotlin、PHP、C# の公式 Google Calen
 
 1. Calendarpit を起動します（例: `calendarpit serve`）。詳しくは[起動と設定](/ja/running/)を参照してください。
 2. `https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。
-3. 取得したアクセストークンを、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。トークンの有効期間は 1 時間です。
+3. 取得したアクセストークンを、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。トークンの有効期間は1時間です。
 4. 各タブに記載したパッケージをプロジェクトにインストールします。Calendarpit は言語ランタイムや SDK パッケージをインストールしません。
 
 `CALENDARPIT_ACCESS_TOKEN` は各例のコードが明示的に読み取る変数です。Google SDK の設定ではありません。
@@ -256,7 +256,7 @@ fun main() {
 
 - **Composer パッケージ**: `google/apiclient`（2.x）
 - **ランタイム**: PHP 8.1 以降。`vendor/` のあるプロジェクトディレクトリで実行します。
-- **ルート URL**: `Calendar` コンストラクターの第 2 引数にオリジンを渡します。`calendar/v3/` はサービス側で付与されます。
+- **ルート URL**: `Calendar` コンストラクターの第2引数にオリジンを渡します。`calendar/v3/` はサービス側で付与されます。
 
 ```php
 <?php
@@ -379,7 +379,7 @@ curl --fail-with-body http://127.0.0.1:4173/calendar/v3/freeBusy \
 
 `primary` は、認証済みのテストユーザーのプライマリカレンダーを指します。
 
-デフォルトの Fixture の Alex の場合、この照会では busy 区間が 1 件返ります。`Asia/Tokyo` で 2026 年 10 月 19 日 `10:00` から `11:00` までの区間です。
+デフォルトの Fixture の Alex の場合、この照会では busy 区間が1件返ります。`Asia/Tokyo` で2026年10月19日 `10:00` から `11:00` までの区間です。
 
 管理画面でイベントを編集すると、次の FreeBusy の応答に反映されます。transparent のイベントとキャンセル済みのイベントは、busy 区間に含まれません。
 

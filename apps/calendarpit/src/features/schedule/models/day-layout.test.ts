@@ -97,8 +97,8 @@ test.each([
 });
 
 test.each([
-  [timed('x', '2026-10-19T09:00:00Z', '2026-10-19T10:30:00Z'), '1 時間 30 分'],
-  [event('x', { date: '2026-10-19' }, { date: '2026-10-22' }), '3 日'],
+  [timed('x', '2026-10-19T09:00:00Z', '2026-10-19T10:30:00Z'), '1時間30分'],
+  [event('x', { date: '2026-10-19' }, { date: '2026-10-22' }), '3日'],
 ])('duration in Japanese of %#', (value, expected) => {
   expect(duration(value, messages.ja)).toBe(expected);
 });
