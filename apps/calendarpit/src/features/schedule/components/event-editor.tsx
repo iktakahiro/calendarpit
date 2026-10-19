@@ -74,6 +74,8 @@ export function EventEditor({
       tabIndex={-1}
       className='editor-panel'
       aria-label={t['event.editor']}
+      // Typing a title right after opening must not trigger a shortcut.
+      data-command-keys='off'
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           e.stopPropagation();
