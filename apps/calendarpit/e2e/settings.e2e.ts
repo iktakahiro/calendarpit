@@ -90,6 +90,11 @@ test('the interface language can switch to Japanese and back', async ({
     .getByRole('button', { name: '日本語' })
     .click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
+  await expect(page).toHaveTitle('Calendarpit · ローカルカレンダーラボ');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    '開発と再現可能なテストのためのローカルカレンダーサービス。',
+  );
   await expect(
     page
       .getByRole('navigation', { name: 'ワークスペースのセクション' })
@@ -108,6 +113,7 @@ test('the interface language can switch to Japanese and back', async ({
     .getByRole('button', { name: 'English' })
     .click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page).toHaveTitle('Calendarpit · Local calendar lab');
   await expect(sectionLink(page, 'Settings')).toBeVisible();
 });
 

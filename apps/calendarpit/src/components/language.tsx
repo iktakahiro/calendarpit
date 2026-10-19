@@ -36,7 +36,14 @@ export function LanguageProvider({
   const [preference, setPreference] = useState(initialPreference);
   const locale = preference === 'system' ? systemLocale : preference;
   useEffect(() => {
+    // The route head is computed from the request's language and only
+    // re-renders on navigation, so a switch updates the document here.
+    const t = messages[locale];
     document.documentElement.lang = locale;
+    document.title = t['meta.title'];
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute('content', t['meta.description']);
   }, [locale]);
   return (
     <LanguageContext
