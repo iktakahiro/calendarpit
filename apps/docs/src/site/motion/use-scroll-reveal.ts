@@ -7,7 +7,6 @@ const targets = [
   '.landing-body > .hero-actions',
   '.landing-body [data-card]',
   '.landing-body .fd-steps > .fd-step',
-  '.site-footer',
 ].join(', ');
 
 /**

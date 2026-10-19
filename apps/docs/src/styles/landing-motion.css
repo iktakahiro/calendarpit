@@ -105,12 +105,11 @@
   animation: shiny-text 8s 1.2s infinite;
 }
 
-/* Eyebrow orb: floats a few pixels, breathes, and sends out a faint ring. */
-@keyframes orb-float {
+/* Eyebrow orb: breathes and sends out a faint ring. */
+@keyframes orb-breathe {
   50% {
-    transform: translateY(-3px);
-    box-shadow: 0 0 18px 0
-      color-mix(in srgb, var(--color-fd-primary) 60%, transparent);
+    box-shadow: 0 0 14px 2px
+      color-mix(in srgb, var(--color-fd-primary) 75%, transparent);
   }
 }
 @keyframes orb-ring {
@@ -121,11 +120,11 @@
   70%,
   100% {
     opacity: 0;
-    transform: scale(1.9);
+    transform: scale(2.6);
   }
 }
 .landing:not([data-motion='off']) .eyebrow-orb {
-  animation: orb-float 4.5s ease-in-out infinite;
+  animation: orb-breathe 3.6s ease-in-out infinite;
 }
 .landing:not([data-motion='off']) .eyebrow-orb::after {
   animation: orb-ring 3.6s cubic-bezier(0.2, 0.6, 0.3, 1) 1.2s infinite;

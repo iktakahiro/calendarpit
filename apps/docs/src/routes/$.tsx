@@ -15,6 +15,7 @@ import { groupSections } from '../site/navigation-tree';
 import { sitePath } from '../site/paths';
 import { i18n, localeFromPath } from '../site/i18n';
 import { LandingHero } from '../site/landing-hero';
+import { SiteFooter } from '../site/site-footer';
 import { LandingMotionRoot } from '../site/motion/landing-motion';
 
 /** Resolves every English/Japanese MDX page without a server function. */
@@ -87,14 +88,7 @@ function Content() {
           <DocsBody className='landing-body'>
             <MDX components={mdxComponents} />
           </DocsBody>
-          <footer className='site-footer'>
-            Calendarpit{' '}
-            <span>
-              {japanese
-                ? 'ローカル開発と、繰り返せるテストのために。'
-                : 'Built for local development. Ready to repeat.'}
-            </span>
-          </footer>
+          <SiteFooter japanese={japanese} />
         </LandingMotionRoot>
       </HomeLayout>
     );
