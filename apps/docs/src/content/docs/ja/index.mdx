@@ -113,31 +113,37 @@ curl -X POST http://127.0.0.1:4173/__calendarpit/reset \
     title='Google Calendar API'
     description='カレンダー、イベント、繰り返しイベント、FreeBusy、差分同期を API v3 形式で扱えます。'
     href='/ja/compatibility/'
+    icon={<CalendarDays />}
   />
   <Card
     title='ローカル OAuth 認可'
     description='ローカルの同意画面でテストユーザーを選ぶだけで、パスワードなしでトークンを発行し、更新できます。'
     href='/ja/oauth/'
+    icon={<KeyRound />}
   />
   <Card
     title='Fixture とリセット'
     description='ユーザー、カレンダー、イベント、クライアントを Fixture から投入し、テストごとに初期状態へ戻せます。'
     href='/ja/fixtures/'
+    icon={<RotateCcw />}
   />
   <Card
     title='Watch Webhook'
     description='events.watch の通知をローカルのコールバックに配信し、テストから配信の完了を待てます。'
     href='/ja/watch/'
+    icon={<Webhook />}
   />
   <Card
     title='管理画面'
     description='ブラウザでユーザー、カレンダー、イベントを確認して編集し、リクエスト履歴を参照できます。'
     href='/ja/admin-ui/'
+    icon={<LayoutDashboard />}
   />
   <Card
     title='未対応機能の明示的なエラー'
     description='未対応の機能は黙って無視せず、HTTP 501（unsupportedFeature）などのエラーを返します。'
     href='/ja/scope/'
+    icon={<Ban />}
   />
 </Cards>
 

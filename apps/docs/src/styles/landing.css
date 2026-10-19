@@ -221,6 +221,20 @@
   );
   box-shadow: 0 8px 30px -20px var(--color-fd-primary);
 }
+/* Card icons take the brand tint instead of the neutral Fumadocs chip. */
+.landing-body .grid > [data-card] > div:has(> svg) {
+  display: flex;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-color: color-mix(in srgb, var(--color-fd-primary) 30%, transparent);
+  background: color-mix(in srgb, var(--color-fd-primary) 10%, transparent);
+  color: var(--color-fd-primary);
+  box-shadow: none;
+}
+.landing-body .grid > [data-card] > div:has(> svg) svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
 .site-footer {
   display: grid;
   gap: 1.25rem;
