@@ -170,6 +170,10 @@ The build-time renderer does not run in production.
   `llms-full.txt`, and one `.md` file per page for each locale from the MDX
   sources and `meta.json` navigation. Callouts become GitHub alerts; other MDX
   components stay as JSX. Every page must appear in `meta.json`.
+- The root `context7.json` limits Context7 indexing to the English pages in
+  `apps/docs/src/content/docs`. Keep its `rules` in step with the docs when a
+  behavior they describe changes. Setting `excludeFiles` turns off Context7's
+  default file exclusions.
 - TanStack Start generates `src/routeTree.gen.ts`; keep it in source control.
   The build cleans stale output and removes its temporary server bundle.
 

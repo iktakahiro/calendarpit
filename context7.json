@@ -1,0 +1,18 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Calendarpit",
+  "description": "Local Google Calendar API v3 and OAuth server for development and tests. Point official Google SDKs at it to test calendar apps and AI agents with fixtures, incremental sync, watch webhooks, and deterministic resets, without a Google account or network access.",
+  "folders": ["apps/docs/src/content/docs"],
+  "excludeFolders": ["apps/docs/src/content/docs/ja"],
+  "excludeFiles": ["AGENTS.md"],
+  "rules": [
+    "Use Calendarpit only for local development and automated tests, never as a production calendar backend.",
+    "Keep the official Google SDK and override every provider endpoint together: /oauth/authorize, /oauth/token, /userinfo, /oauth/revoke, and the Calendar API root. Overriding only the Calendar API URL still sends OAuth traffic to Google.",
+    "The default origin is http://127.0.0.1:4173. Calendarpit binds to loopback unless --host or CALENDARPIT_HOST is set.",
+    "Never put real Google credentials in a fixture. sample-app / local-sample-secret are public test values with the callback http://127.0.0.1:4175/callback.",
+    "Call POST /__calendarpit/reset before each test to restore the startup fixture with the same IDs, and use --database :memory: for disposable runs.",
+    "Unsupported features fail with 400 or 501 unsupportedFeature instead of degrading. Check the Scope and limitations page rather than working around them.",
+    "Calendarpit does not issue id_token or serve OIDC discovery or JWKS, so do not verify ID tokens against it.",
+    "When a calendar contains an unbounded recurring series, events.list with timeMin or singleEvents=true also requires timeMax."
+  ]
+}
