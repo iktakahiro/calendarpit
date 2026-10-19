@@ -11,7 +11,7 @@ hero:
 
 Building apps and AI agents that use Google Calendar means setting up OAuth and preparing test data. With a live calendar, repeating a test from the same state can be hard. Calendarpit lets you test locally with fixtures and no Google credentials.
 
-<Cards>
+<Cards className='comparison'>
   <Card title="Testing with real Google">
 
     - Needs a Google account, Cloud project, and OAuth setup.
@@ -111,31 +111,37 @@ The admin UI is served on the same origin as the API (`http://127.0.0.1:4173/`).
     title='Google Calendar API'
     description='Calendars, events, recurring events, free/busy, and incremental sync in API v3 shapes.'
     href='/compatibility/'
+    icon={<CalendarDays />}
   />
   <Card
     title='Local OAuth sign-in'
     description='Pick a test user on the local consent page to issue and refresh tokens with no passwords.'
     href='/oauth/'
+    icon={<KeyRound />}
   />
   <Card
     title='Fixtures and reset'
     description='Seed users, calendars, events, and clients from a fixture, then reset between test runs.'
     href='/fixtures/'
+    icon={<RotateCcw />}
   />
   <Card
     title='Watch webhooks'
     description='Send events.watch notifications to local callbacks, and drain deliveries from tests.'
     href='/watch/'
+    icon={<Webhook />}
   />
   <Card
     title='Admin UI'
     description='Inspect and edit users, calendars, and events in the browser, and read the request history.'
     href='/admin-ui/'
+    icon={<LayoutDashboard />}
   />
   <Card
     title='Explicit about gaps'
     description='Unsupported features fail with HTTP 501 (unsupportedFeature), never a silent wrong answer.'
     href='/scope/'
+    icon={<Ban />}
   />
 </Cards>
 
