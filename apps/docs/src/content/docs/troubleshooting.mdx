@@ -74,9 +74,21 @@ CLI startup failures print `Calendarpit: <message>` to `stderr` and exit with co
 
 ### Fixture file not found
 
-- **Error**: `Calendarpit: ENOENT: no such file or directory, open '<path>'`
+- **Error**: `Calendarpit: Fixture file not found: <path>. …`
 - **Cause**: The fixture path does not exist in the current working directory or inside the container.
 - **Fix**: Use a valid absolute path. In Docker, mount the file and pass its container path. See [Fixtures](/fixtures/).
+
+### Fixture path is a directory
+
+- **Error**: `Calendarpit: Fixture path is a directory, not a file: <path>`
+- **Cause**: In a container, the bind mount source was not shared with the container runtime's VM, so Docker mounted an empty directory at the target. This happens with Colima for paths outside your home directory. A source path that does not exist on the host has the same effect.
+- **Fix**: Share the host directory with the runtime (for Colima, add it to `mounts` in `colima.yaml` and restart Colima), or copy the file into the container with `docker cp` before starting it. See [Share the host directory with the container runtime](/fixtures/#share-the-host-directory-with-the-container-runtime).
+
+### Fixture file is not readable or not JSON
+
+- **Error**: `Calendarpit: Fixture file is not readable: <path>. …` or `Calendarpit: Fixture file is not valid JSON: <path> (<reason>)`
+- **Cause**: The container's non-root user cannot read the file, or the file is not valid JSON.
+- **Fix**: Make the file readable by other users (for example, mode `644`), or fix the JSON syntax.
 
 ### Fixture fails validation
 

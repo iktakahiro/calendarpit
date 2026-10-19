@@ -48,6 +48,35 @@ Compose では、サービスに次の 2 点を設定します。
 
 ホスト上のファイルは、コンテナの非 root ユーザーが読み取れる必要があります。起動オプションは[起動と設定](/ja/running/)を参照してください。
 
+#### ホストのディレクトリをコンテナランタイムと共有する
+
+Docker Desktop や Colima などの VM ベースのランタイムでは、VM と共有しているホストのディレクトリしかバインドマウントできません。Fixture が共有対象外のディレクトリにあると、コンテナからはファイルではなく空のディレクトリが見え、`Fixture path is a directory, not a file` で起動に失敗します。
+
+- **Colima**: デフォルトで共有されるのはホームディレクトリのみです。ほかのディレクトリを共有するには、`~/.colima/default/colima.yaml` の `mounts` に追加し、`colima stop` と `colima start` で Colima を再起動します。`mounts` を空でない値にするとデフォルトの設定が置き換わるため、ホームディレクトリも必要な場合はあわせて記載してください。
+
+  ```yaml
+  mounts:
+    - location: ~
+      writable: true
+    - location: /Volumes/Work/my-app
+      writable: false
+  ```
+
+- **Docker Desktop**: **Settings → Resources → File sharing** にディレクトリを追加します。
+
+共有ディレクトリを変更できない場合は、マウントする代わりに、起動前のコンテナへ Fixture をコピーします。
+
+```sh
+docker create --name calendarpit -p 127.0.0.1:4173:4173 \
+  -e CALENDARPIT_CONFIG=/app/startup.json \
+  -e CALENDARPIT_DATABASE=:memory: \
+  ghcr.io/iktakahiro/calendarpit:latest
+docker cp ./calendarpit.fixture.json calendarpit:/app/startup.json
+docker start calendarpit
+```
+
+コピーするファイルは、ほかのユーザーも読み取れる必要があります（例: モード `644`）。起動済みのサーバーに Fixture を読み込む場合は、代わりに `POST /__calendarpit/fixtures` を使います。[実行中に読み込む・リセットする](#実行中に読み込むリセットする)を参照してください。
+
 ### 起動時 Fixture が適用される条件
 
 起動時 Fixture が投入されるのは、**新しい空の**データベースだけです。

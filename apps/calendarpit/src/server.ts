@@ -4,9 +4,10 @@ import {
   defaultStreamHandler,
 } from '@tanstack/react-start/server';
 import { createServerEntry } from '@tanstack/react-start/server-entry';
+import { readFixtureFile } from './cli/fixture-file';
 
 const fixture = process.env.CALENDARPIT_CONFIG
-  ? await Bun.file(process.env.CALENDARPIT_CONFIG).json()
+  ? await readFixtureFile(process.env.CALENDARPIT_CONFIG)
   : undefined;
 // Vite may reevaluate the SSR entry without invoking its HMR dispose handler.
 const development = globalThis as typeof globalThis & {
