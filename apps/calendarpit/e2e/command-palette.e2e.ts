@@ -1,4 +1,21 @@
+import type { Page } from '@playwright/test';
 import { expect, test, toast } from './support/fixtures';
+
+/**
+ * Opens `url` and waits until shortcuts work. The shortcut listener starts
+ * when the page hydrates, and React does not replay key presses made before
+ * that, as it replays clicks.
+ */
+async function gotoWithShortcuts(page: Page, url: string) {
+  await page.goto(url);
+  const palette = page.getByRole('dialog');
+  await expect(async () => {
+    await page.keyboard.press('?');
+    await expect(palette).toBeVisible({ timeout: 250 });
+  }).toPass();
+  await page.keyboard.press('Escape');
+  await expect(palette).toHaveCount(0);
+}
 
 test.describe('command palette', () => {
   test('opens from the keyboard and the header, and goes to a section', async ({
@@ -35,7 +52,7 @@ test.describe('command palette', () => {
   test('moves through results with the arrow keys and reopens empty', async ({
     page,
   }) => {
-    await page.goto('/history');
+    await gotoWithShortcuts(page, '/history');
     const palette = page.getByRole('dialog');
     const search = palette.getByRole('combobox', { name: 'Search commands' });
 
@@ -58,7 +75,7 @@ test.describe('command palette', () => {
   });
 
   test('finds sections by their Japanese names', async ({ page }) => {
-    await page.goto('/');
+    await gotoWithShortcuts(page, '/');
     const palette = page.getByRole('dialog');
 
     await page.keyboard.press('ControlOrMeta+k');
@@ -73,7 +90,7 @@ test.describe('command palette', () => {
   test('creates an event with a shortcut from another section', async ({
     page,
   }) => {
-    await page.goto('/users');
+    await gotoWithShortcuts(page, '/users');
     await expect(
       page.getByRole('heading', { name: 'Users', exact: true }),
     ).toBeVisible();
@@ -95,7 +112,7 @@ test.describe('command palette', () => {
   test('ignores single-key shortcuts while typing in a field', async ({
     page,
   }) => {
-    await page.goto('/history');
+    await gotoWithShortcuts(page, '/history');
     const filter = page.getByLabel('Filter requests');
     await filter.click();
     await page.keyboard.type('cgtw?');
@@ -107,7 +124,7 @@ test.describe('command palette', () => {
   test('jumps to a date, changes the view, and switches calendars', async ({
     page,
   }) => {
-    await page.goto('/?date=2026-10-19');
+    await gotoWithShortcuts(page, '/?date=2026-10-19');
     await expect(
       page.getByRole('heading', { name: 'Work calendar' }),
     ).toBeVisible();
