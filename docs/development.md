@@ -39,13 +39,31 @@ updates, including merged pull requests. GitHub Actions only validates the site.
 See [Site deployment](site-deployment.md) for Git integration and first publication.
 The preview does not open an external browser automatically.
 
+## Commands
+
+These commands need a source checkout and the setup above.
+
+| Command                        | Purpose                                                         |
+| ------------------------------ | --------------------------------------------------------------- |
+| `bun run dev`                  | Local API/admin development server with HMR                     |
+| `bun run sample:dev`           | Separate Google SDK consumer at port 4175                       |
+| `bun run docs:dev`             | Documentation preview                                           |
+| `bun run validate`             | Lint, format check, `bun check`, and Bun tests                  |
+| `bun run fix`                  | Apply lint and formatting fixes                                 |
+| `bun run build`                | Build the admin client and server                               |
+| `bun run start -- --port 4175` | Start the built application on a custom port                    |
+| `bun run build:binary`         | Build and compile a standalone executable for the host platform |
+| `bun run smoke`                | Verify the compiled executable in an isolated directory         |
+| `bun run docs:check`           | Validate documentation                                          |
+
 ## Checks
 
 ### Dependency release interval
 
-`bunfig.toml` sets `install.minimumReleaseAge = 172800` (48 hours) for new
-dependency resolutions, including transitive dependencies. `.ncurc.json` sets
-the matching two-day `cooldown` for npm-check-updates and preserves exact versions.
+Direct dependency versions and `bun.lock` are pinned. `bunfig.toml` sets
+`install.minimumReleaseAge = 172800` (48 hours) for new dependency resolutions,
+including transitive dependencies. `.ncurc.json` sets the matching two-day
+`cooldown` for npm-check-updates and preserves exact versions.
 Keep both settings aligned. Do not disable the gate, lower the interval, or add
 package exclusions without explicit approval.
 
@@ -63,9 +81,9 @@ bun run docs:check
 ```
 
 `validate` runs Oxlint, Oxfmt, workspace type checks using `bun check`, and Bun
-tests. `bun run fix` applies formatting and lint fixes. The API package is tested
-without starting a UI server. CLI tests cover bind defaults, argument parsing,
-and asset serving.
+tests. Turborepo orchestrates the workspace tasks. `bun run fix` applies
+formatting and lint fixes. The API package is tested without starting a UI
+server. CLI tests cover bind defaults, argument parsing, and asset serving.
 
 `test:e2e` builds the app and runs the Playwright browser tests in
 `apps/calendarpit/e2e` against the production server with an in-memory
@@ -74,6 +92,17 @@ database. Install the browser once with
 
 Do not create a package script named `check` that obscures Bun's native command.
 Use `type-check` for type checking and `validate` for the aggregate checks.
+
+### Continuous integration
+
+Pull requests and pushes to `main` run `bun run validate`, which includes
+protocol, CLI, and Google SDK HTTP integration tests. The same job then builds
+and smoke-tests the host executable, runs browser end-to-end tests, and checks
+the documentation deployment build.
+
+The separate release workflow builds and tests distribution artifacts, then
+publishes version tags to GHCR and GitHub Releases. Homebrew updates require
+tap credentials. See [Releasing](releasing.md) for setup and publication.
 
 ## Production and packaging
 
@@ -112,10 +141,17 @@ for cross-platform artifacts, GHCR, and Homebrew publication.
 ### Optional consumer sample
 
 With Calendarpit running on port 4173, run `bun run sample:dev` from the checkout.
-Open `http://127.0.0.1:4175` and connect a test calendar, create an event, inspect
-FreeBusy, start watch notifications, and revoke/reconnect. The sample uses public
-local test credentials `sample-app` / `local-sample-secret` and callback
-`http://127.0.0.1:4175/callback`. No real Google requests are needed.
+Open `http://127.0.0.1:4175`, connect a calendar, and approve a test user. Create
+an event, inspect busy intervals, start a watch, update and delete events, and
+revoke and reconnect. The sample's default event time is October 19, 2026. The
+admin UI polls for external changes every two seconds.
+
+The built-in test client is `sample-app` / `local-sample-secret`, with callback
+`http://127.0.0.1:4175/callback`. The sample overrides the authorization, token,
+user-info, Calendar API, and revocation endpoints. It blocks outbound SDK
+requests to hosts other than loopback, so those calls stay on the local server.
+See [Connect your app](https://calendarpit.dev/connect/) for consuming-app
+configuration.
 
 ## Generated files
 
@@ -197,3 +233,11 @@ missing paths. MDX links use router paths without a deployment prefix.
 `SiteLink` adapts Fumadocs links to TanStack Router's base path and separate
 hash property, preserving prefixes and in-page anchors on both hosting layouts.
 Turborepo includes both deployment settings in the docs build cache key.
+
+## Conventions
+
+Use English for source code, comments, documentation, issues, and commit
+messages. Keep protocol behavior independent of UI components and application
+consumers. Chronock is the first integration target; it contributes no
+application-specific data or logic to Calendarpit. See [AGENTS.md](../AGENTS.md)
+for repository guidance.
