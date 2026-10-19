@@ -11,7 +11,13 @@ import {
 } from 'lucide-react';
 import logoDark from '../../assets/logo-dark.svg';
 import logoLight from '../../assets/logo-light.svg';
-import { sampleCalendars, sampleUser } from './sample-workspace';
+import {
+  sampleCalendars,
+  sampleChannels,
+  sampleConnections,
+  sampleRequests,
+  sampleUser,
+} from './sample-workspace';
 
 /** Admin UI sections, in the order the sidebar lists them. */
 export type AdminSection =
@@ -32,9 +38,19 @@ const sections: {
   { id: 'schedule', label: 'Schedule', icon: Calendar },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'calendars', label: 'Calendars', icon: Calendar },
-  { id: 'connections', label: 'Connections', icon: Plug, count: 1 },
-  { id: 'watch', label: 'Watch', icon: Radio, count: 1 },
-  { id: 'history', label: 'API history', icon: Code, count: 14 },
+  {
+    id: 'connections',
+    label: 'Connections',
+    icon: Plug,
+    count: sampleConnections.filter((connection) => !connection.revoked).length,
+  },
+  { id: 'watch', label: 'Watch', icon: Radio, count: sampleChannels.length },
+  {
+    id: 'history',
+    label: 'API history',
+    icon: Code,
+    count: sampleRequests.length,
+  },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
