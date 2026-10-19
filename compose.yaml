@@ -1,6 +1,6 @@
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.3
+    image: ghcr.io/iktakahiro/calendarpit:0.9.4
     ports:
       - '127.0.0.1:4173:4173'
     volumes:
