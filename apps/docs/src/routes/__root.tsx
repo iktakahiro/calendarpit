@@ -22,7 +22,10 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
     ],
     links: [
+      { rel: 'icon', href: sitePath('favicon.ico'), sizes: '32x32' },
       { rel: 'icon', href: sitePath('favicon.svg'), type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', href: sitePath('apple-touch-icon.png') },
+      { rel: 'manifest', href: sitePath('site.webmanifest') },
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
       {
         rel: 'preconnect',
@@ -31,7 +34,7 @@ export const Route = createRootRoute({
       },
       {
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Noto+Sans+JP:wght@400..700&family=Roboto+Mono:wght@400..600&display=swap',
+        href: 'https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Roboto+Mono:wght@400..600&display=swap',
       },
     ],
   }),

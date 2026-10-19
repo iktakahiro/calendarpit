@@ -45,7 +45,6 @@
   );
   --font-sans: 'Roboto Mono', ui-monospace, monospace;
   --font-mono: 'Roboto Mono', ui-monospace, monospace;
-  --mark-paper: #f2f1ec;
   --mark-signal: #e5531a;
   --grid-dot: rgb(22 23 26 / 0.07);
   --danger-line: #ebcbc9;
@@ -103,8 +102,6 @@
   --info-wash: #253449;
   --shadow: 0 1px 3px rgb(0 0 0 / 0.25);
   --shadow-lift: 0 12px 32px -12px rgb(0 0 0 / 0.65);
-  --mark-paper: #222326;
-  --mark-signal: #b44316;
   --grid-dot: rgb(241 238 231 / 0.06);
   --danger-line: #674044;
   --danger-surface: #302225;
@@ -271,19 +268,15 @@ input[type='time'] {
   padding: 0 6px;
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: block;
   width: fit-content;
   border-radius: 6px;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-.brand-mark {
-  width: 28px;
-  height: 28px;
   color: var(--ink);
+}
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 22px;
 }
 .live {
   display: flex;

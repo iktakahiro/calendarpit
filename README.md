@@ -1,4 +1,9 @@
-# Calendarpit
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="apps/docs/src/assets/logo-dark.svg">
+    <img src="apps/docs/src/assets/logo-light.svg" alt="Calendarpit" height="32">
+  </picture>
+</h1>
 
 A local calendar service for development and repeatable tests. Build calendar
 integrations without a real Google account, provider credentials, or an external

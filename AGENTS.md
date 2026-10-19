@@ -12,7 +12,7 @@
 - Treat `apps/docs/src/content/docs/scope.mdx` as the product scope; distinguish implemented behavior from planned behavior.
 - The documentation site (`apps/docs`) is user-facing only and is published in English (root locale) and Japanese (`ja/`). Contributor and maintainer material lives in `docs/`. Keep a Japanese page in step with its English page, with the same slug and the same code blocks.
 - Explicitly reject unsupported API features. Never silently degrade a recurring event into a single event.
-- Keep runtime assets local except for Google Fonts with system-font fallbacks: Roboto Mono in the admin UI and documentation code, and Geist and Noto Sans JP in documentation prose. Calendar and OAuth behavior must not require real Google credentials or network access to Google.
+- Keep runtime assets local except for Google Fonts with system-font fallbacks: Roboto Mono in the admin UI and documentation code, and Geist in documentation prose, with Japanese on system fonts. Calendar and OAuth behavior must not require real Google credentials or network access to Google.
 - Bind to loopback by default. A non-loopback host must be explicitly configured.
 - Use the 1Password MCP server for any work with 1Password developer environments.
 - Use the built-in in-app browser (`iab`) for browser interaction unless another browser is explicitly requested.

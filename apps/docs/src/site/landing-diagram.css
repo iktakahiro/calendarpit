@@ -174,18 +174,8 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-  .mark-tile {
+  .mark-cell {
     fill: var(--lp-ink);
-  }
-  .mark-line {
-    fill: none;
-    stroke: var(--lp-paper);
-    stroke-width: 2.5;
-    stroke-linecap: round;
-  }
-  .mark-faint {
-    stroke-width: 2;
-    stroke-opacity: 0.6;
   }
   .mark-signal {
     fill: var(--lp-signal);

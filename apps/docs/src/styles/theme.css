@@ -4,17 +4,28 @@
 
 @theme {
   --font-sans:
-    'Geist', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif;
+    'Geist', -apple-system, BlinkMacSystemFont, 'Hiragino Sans',
+    'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', Meiryo,
+    'Segoe UI', sans-serif;
   --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 1rem;
-  letter-spacing: -0.04em;
+}
+/* The lockup ships in light and dark variants; show the one for the theme. */
+.site-logo {
+  display: block;
+  width: auto;
+  height: 1.375rem;
+}
+.site-logo[data-theme='dark'],
+.dark .site-logo[data-theme='light'] {
+  display: none;
+}
+.dark .site-logo[data-theme='dark'] {
+  display: block;
 }
 .skip-link {
   position: fixed;
@@ -104,4 +115,11 @@
 .page-description,
 .hero-description {
   color: var(--lead);
+}
+
+/* Body copy uses the light weight. Japanese falls back to system fonts, where
+   300 maps to Hiragino Sans W3, its regular text weight on macOS. */
+.prose,
+.hero-description {
+  font-weight: 300;
 }

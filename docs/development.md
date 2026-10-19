@@ -149,8 +149,9 @@ The build-time renderer does not run in production.
   and code blocks from `src/site/mdx-components.tsx`. Tabs use `forceMount` to keep
   inactive examples in generated HTML. Each page has its own JS chunk.
 - Documentation typography, spacing, and colors use the Fumadocs preset. Google
-  Fonts provides variable Geist for Latin text, Noto Sans JP for Japanese, and
-  Roboto Mono for code, all with system fallbacks.
+  Fonts provides variable Geist for Latin text and Roboto Mono for code, both
+  with system fallbacks. Japanese uses system fonts (Hiragino Sans, Yu Gothic,
+  Meiryo). Body copy uses the light (300) weight.
 - Custom branding and motion are confined to the landing page. Motion adapts
   MIT-licensed Magic UI components (`src/site/motion/`, notices in
   `apps/docs/THIRD_PARTY_NOTICES.md`): an animated hero grid, a workbench that

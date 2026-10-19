@@ -200,23 +200,35 @@ export function LandingDiagram({ japanese }: { japanese: boolean }) {
           <div className='pit-head'>
             <svg
               className='mark'
-              viewBox='0 0 40 40'
+              viewBox='4 4 56 56'
               aria-hidden='true'
               focusable='false'
             >
-              <rect className='mark-tile' width='40' height='40' rx='10' />
-              <path className='mark-line' d='M10 12.5h20' />
+              <rect className='mark-cell' x='4' y='4' width='16' height='16' />
+              <rect className='mark-cell' x='24' y='4' width='16' height='16' />
+              <rect className='mark-cell' x='44' y='4' width='16' height='16' />
+              <rect className='mark-cell' x='4' y='24' width='16' height='16' />
               <rect
-                className='mark-signal'
-                x='10'
-                y='17.5'
-                width='9'
-                height='12.5'
-                rx='2'
+                className='mark-cell'
+                x='44'
+                y='24'
+                width='16'
+                height='16'
               />
-              <path
-                className='mark-line mark-faint'
-                d='M23.5 19h6.5M23.5 24h6.5M23.5 29h3.5'
+              <rect className='mark-cell' x='4' y='44' width='16' height='16' />
+              <rect
+                className='mark-cell'
+                x='24'
+                y='44'
+                width='16'
+                height='16'
+              />
+              <rect
+                className='mark-cell mark-signal'
+                x='44'
+                y='44'
+                width='16'
+                height='16'
               />
             </svg>
             <div>
