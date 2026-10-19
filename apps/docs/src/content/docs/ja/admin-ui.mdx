@@ -161,7 +161,7 @@ description: Calendarpit の管理画面をブラウザで開き、アプリが�
 ### Test data
 
 - **Storage** には、ストレージの種類と SQLite のパス（または `:memory:`）が表示されます。
-- **Fixtures & reset** では [Fixture](/ja/fixtures/) を読み込めます。JSON を貼り付けるか **Open JSON file…** を選び、**Load fixture** を選びます。読み込むと、ユーザー、カレンダー、イベント、OAuth クライアントが置き換えられ、すべての接続が取り消されます。リセット基準は変わりません。
+- **Fixtures & reset** では [Fixture](/ja/fixtures/) を読み込めます。JSON を貼り付けるか **Open JSON file…** を選び、**Load fixture** を選びます。読み込むと、ユーザー、カレンダー、イベント、OAuth クライアントが置き換えられ、接続、リクエスト履歴、watch チャネルが消去されます。リセット基準は変わりません。
 - **Reset workspace** は起動時の Fixture を復元し、接続、リクエスト履歴、watch チャネルを消去します。
 - **Current state** には、ワークスペースの状態が認証情報を除いた JSON で表示されます。
 

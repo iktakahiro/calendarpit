@@ -11,7 +11,7 @@ import type { Locale } from './locale';
 const en = {
   'meta.title': 'Calendarpit · Local calendar lab',
   'meta.description':
-    'A local calendar service for development and repeatable tests.',
+    'A local Google Calendar API-compatible server for development and repeatable tests.',
   'notFound.title': 'Nothing scheduled here.',
   'notFound.link': 'Return to the workspace',
 
@@ -28,26 +28,26 @@ const en = {
   'section.history.label': 'API history',
   'section.history.eyebrow': 'Protocol log',
   'section.history.lede':
-    'Calendar and OAuth requests from your app, with headers and bodies.',
+    'Calendar API and OAuth requests that your app sent to Calendarpit, with request and response headers and bodies.',
   'section.watch.label': 'Watch',
   'section.watch.eyebrow': 'Notifications',
   'section.watch.lede':
-    'Inspect active subscriptions and webhook deliveries from all calendars.',
+    'Inspect the watch channels your app created and the notifications Calendarpit sent to them, across all calendars.',
   'section.connections.label': 'Connections',
   'section.connections.eyebrow': 'Integration',
   'section.connections.lede':
-    'Review permissions and revoke connections to test reconnection.',
+    'A connection is an OAuth grant: which test user granted which scopes to which OAuth client. Revoking it invalidates its tokens, so your app must ask the user to authorize again.',
   'section.users.label': 'Users',
   'section.users.eyebrow': 'Directory',
   'section.users.lede':
-    'Create and edit local test identities. No login or password required.',
+    'Create and edit test users. They have no password; choose one on the local consent page to sign in.',
   'section.calendars.label': 'Calendars',
   'section.calendars.eyebrow': 'Directory',
   'section.calendars.lede': 'Manage calendars for the selected test user.',
   'section.settings.label': 'Settings',
   'section.settings.eyebrow': 'Configuration',
   'section.settings.lede':
-    'Set your appearance and configure the local test workspace.',
+    'Choose the theme and language, load or reset test data, and manage OAuth clients.',
   'group.activity': 'Activity',
   'group.workspace': 'Workspace',
 
@@ -113,7 +113,7 @@ const en = {
   'day.deleteConfirm': 'Delete event',
   'day.emptyTitle': 'Nothing scheduled',
   'day.emptyDescription':
-    'No events on this date. Add one here, or create it from your app through the Calendar API.',
+    'No events on this date. Add one here, or have your app create one through the Calendar API.',
   'day.zoneAfter':
     '. End times are exclusive. Free events do not block availability.',
   'day.durationDays': (days: number) => (days === 1 ? '1 day' : `${days} days`),
@@ -178,7 +178,7 @@ const en = {
   'directory.user.emptyDescription': 'Add the first user using the form.',
   'directory.user.deleteTitle': 'Delete this user?',
   'directory.user.deleteDescription':
-    'The user and the data it owns are removed from the workspace. Reset restores the startup fixture.',
+    'The user, their calendars, and their events are removed, and their OAuth connections are revoked. Reset restores the startup fixture.',
   'directory.user.deleteConfirm': 'Delete user',
   'directory.user.name': 'Name',
   'directory.user.email': 'Email',
@@ -195,7 +195,7 @@ const en = {
     'Add the first calendar using the form.',
   'directory.calendar.deleteTitle': 'Delete this calendar?',
   'directory.calendar.deleteDescription':
-    'The calendar and the data it owns are removed from the workspace. Reset restores the startup fixture.',
+    'The calendar and its events are removed, and its watch channels are stopped. Reset restores the startup fixture.',
   'directory.calendar.deleteConfirm': 'Delete calendar',
   'directory.calendar.name': 'Calendar name',
   'directory.calendar.timeZone': 'Time zone',
@@ -215,21 +215,23 @@ const en = {
   'connections.revoked': 'Revoked',
   'connections.active': 'Active',
   'connections.revoke': 'Revoke',
-  'connections.revokedNotice': 'Connection revoked. Reconnect from your app.',
+  'connections.revokedNotice':
+    'Connection revoked. Its tokens no longer work; authorize again from your app.',
   'connections.empty': 'No connections yet',
   'connections.emptyDescription':
-    'Approve access from your app. To try it, start the SDK sample:',
+    'A connection appears when a test user approves your app on the consent page. To try it, start the SDK sample:',
 
   'watch.channels': 'Watch channels',
-  'watch.activeCount': (count: number) => `${count} active subscriptions`,
+  'watch.activeCount': (count: number) =>
+    `${count} active ${count === 1 ? 'channel' : 'channels'}`,
   'watch.expires': 'Expires ',
   'watch.watching': 'Watching',
-  'watch.emptyChannels': 'No active subscriptions',
+  'watch.emptyChannels': 'No active channels',
   'watch.emptyChannelsDescription':
-    'Channels created with events.watch or calendarList.watch appear here until they expire or are stopped.',
+    'Channels that your app creates with events.watch or calendarList.watch appear here until they expire or are stopped.',
   'watch.deliveries': 'Delivery log',
   'watch.deliveriesDescription':
-    'Push notifications sent to watch channels, newest first.',
+    'Push notifications that Calendarpit sent to watch channel addresses, newest first.',
   'watch.columnChannel': 'Channel / message',
   'watch.columnState': 'State',
   'watch.columnAttempts': 'Attempts',
@@ -248,7 +250,7 @@ const en = {
   'history.clear': 'Clear history',
   'history.cleared': 'History cleared.',
   'history.note':
-    'The latest 200 protocol requests, newest first. Credentials are masked.',
+    'The latest 200 Calendar API and OAuth requests, newest first. Credentials are masked.',
   'history.requests': 'API requests',
   'history.request': 'Request',
   'history.response': 'Response',
@@ -258,7 +260,7 @@ const en = {
   'history.copied': 'Copied',
   'history.waiting': 'Waiting for your app.',
   'history.waitingDescription':
-    'Calendar and OAuth calls appear here as they arrive.',
+    'Requests that your app sends to the Calendar API and OAuth endpoints appear here.',
   'history.noMatches': 'No matching requests',
   'history.noMatchesDescription': 'Change the filter to see more of the log.',
 
@@ -280,20 +282,20 @@ const en = {
   'settings.storageMemory': 'Temporary session. Restarting discards changes.',
   'settings.fixtures': 'Fixtures & reset',
   'settings.fixturesDescription':
-    'Load JSON with users, calendars, events, and OAuth clients. Loading replaces current state; reset restores the initial fixture.',
+    'Load JSON with users, calendars, events, and OAuth clients. Loading replaces the current state; reset restores the startup fixture.',
   'settings.fixtureJson': 'Fixture JSON',
   'settings.openFile': 'Open JSON file…',
   'settings.loadFixture': 'Load fixture',
   'settings.loadTitle': 'Load this fixture?',
   'settings.loadDescription':
-    'The fixture replaces the current users, calendars, events, and OAuth clients, and every connection is revoked.',
+    'The fixture replaces the current users, calendars, events, and OAuth clients, and clears connections, request history, and watch channels.',
   'settings.fixtureLoaded': 'Fixture loaded.',
   'settings.reset': 'Reset workspace',
   'settings.resetDescription':
-    'Restore initial data and clear connections, history, and watch channels.',
+    'Restore the startup fixture and clear connections, request history, and watch channels.',
   'settings.resetTitle': 'Reset the workspace?',
   'settings.resetConfirmDescription':
-    'The startup fixture is restored, and connections, protocol history, and watch channels are cleared.',
+    'The startup fixture is restored, and connections, request history, and watch channels are cleared.',
   'settings.resetDone': 'Startup state restored.',
   'settings.currentState': 'Current state',
   'settings.stateNote': (revision: string) =>
@@ -339,8 +341,8 @@ export type TextKey = {
 const ja = {
   'meta.title': 'Calendarpit · ローカルカレンダーラボ',
   'meta.description':
-    '開発と再現可能なテストのためのローカルカレンダーサービス。',
-  'notFound.title': 'ここには何も予定されていません。',
+    '開発とテストで使う、Google Calendar API 互換のローカルサーバー。',
+  'notFound.title': 'ページが見つかりません。',
   'notFound.link': 'ワークスペースに戻る',
 
   'shell.skip': 'コンテンツへスキップ',
@@ -349,33 +351,33 @@ const ja = {
   'shell.loading': 'ワークスペースを読み込んでいます…',
   'shell.yourSchedule': 'スケジュール',
   'shell.primary': 'プライマリ',
-  'shell.createUser': 'テストユーザーを作成して始めましょう。',
+  'shell.createUser': 'まずテストユーザーを作成してください。',
 
   'section.schedule.label': 'スケジュール',
   'section.schedule.eyebrow': 'スケジュール',
   'section.history.label': 'API 履歴',
   'section.history.eyebrow': 'プロトコルログ',
   'section.history.lede':
-    'アプリからの Calendar と OAuth のリクエストを、ヘッダーとボディつきで確認します。',
+    'アプリが Calendar API と OAuth で Calendarpit に送ったリクエストと、そのレスポンスをヘッダーとボディを含めて確認します。',
   'section.watch.label': 'Watch',
   'section.watch.eyebrow': '通知',
   'section.watch.lede':
-    'すべてのカレンダーの有効なサブスクリプションと Webhook 配信を確認します。',
+    'アプリが作成した watch チャネルと、Calendarpit がそのチャネルに送った通知を確認します。すべてのカレンダーが対象です。',
   'section.connections.label': '接続',
   'section.connections.eyebrow': '連携',
   'section.connections.lede':
-    '権限を確認し、接続を取り消して再接続をテストします。',
+    '接続は OAuth 認可で、どのテストユーザーがどの OAuth クライアントにどのスコープを許可したかを表します。取り消すとその接続のトークンが無効になり、アプリはユーザーにもう一度認可を求める必要があります。',
   'section.users.label': 'ユーザー',
   'section.users.eyebrow': 'ディレクトリ',
   'section.users.lede':
-    'ローカルのテスト用 ID を作成・編集します。ログインやパスワードは不要です。',
+    'テストユーザーを作成・編集します。パスワードはなく、ローカルの同意画面でユーザーを選んでサインインします。',
   'section.calendars.label': 'カレンダー',
   'section.calendars.eyebrow': 'ディレクトリ',
   'section.calendars.lede': '選択中のテストユーザーのカレンダーを管理します。',
   'section.settings.label': '設定',
   'section.settings.eyebrow': '構成',
   'section.settings.lede':
-    '表示を設定し、ローカルのテスト用ワークスペースを構成します。',
+    'テーマと言語の選択、テストデータの読み込みとリセット、OAuth クライアントの管理を行います。',
   'group.activity': 'アクティビティ',
   'group.workspace': 'ワークスペース',
 
@@ -429,20 +431,20 @@ const ja = {
   'day.freeCount': (count: number) => `空き ${count}`,
   'day.now': '現在',
   'day.clockChange':
-    'これらのイベントは時刻の切り替え（夏時間）をまたぎます。24 時間の概要は表示しません。下のイベント時刻と経過時間を参照してください。',
+    'この日のイベントは夏時間などによる時刻の切り替えをまたぐため、24 時間のトラックは表示しません。各イベントの時刻と所要時間は下の一覧で確認してください。',
   'day.overview': (timed: number, allDay: number) =>
     `その日の概要: 時刻指定のイベント ${timed} 件、終日のイベント ${allDay} 件。`,
   'day.until': (date: string) => `${date} まで`,
   'day.deleteLabel': (name: string) => `${name} を削除`,
   'day.deleteTitle': 'このイベントを削除しますか？',
   'day.deleteDescription': (name: string, calendar: string) =>
-    `${name} を ${calendar} から削除します。このカレンダーを watch しているクライアントに通知が送られます。`,
+    `${name} を ${calendar} から削除します。このカレンダーの watch チャネルには通知が送られます。`,
   'day.deleteConfirm': 'イベントを削除',
-  'day.emptyTitle': '予定はありません',
+  'day.emptyTitle': 'イベントはありません',
   'day.emptyDescription':
-    'この日にはイベントがありません。ここで追加するか、アプリから Calendar API で作成してください。',
+    'この日のイベントはありません。ここで追加するか、アプリから Calendar API で作成してください。',
   'day.zoneAfter':
-    ' の時刻で表示しています。終了時刻はその時刻を含みません。空きのイベントは空き時間をふさぎません。',
+    ' の時刻で表示しています。終了時刻はイベントの期間に含みません。「空き」のイベントは、空き時間の計算で予定として扱いません。',
   'day.durationDays': (days: number) => `${days} 日`,
   'day.durationTime': (hours: number, minutes: number) =>
     hours
@@ -458,9 +460,9 @@ const ja = {
   'week.newEventAt': (time: string, weekday: string, date: string) =>
     `${date}（${weekday}）${time} に新しいイベント`,
   'week.zoneAfter':
-    ' の時刻で表示しています。枠を選ぶとイベントを追加できます。',
+    ' の時刻で表示しています。空いている枠を選ぶと、その時刻にイベントを追加できます。',
   'week.clockChange':
-    'この週には時刻の切り替えがあるため、グリッドはその差だけずれます。正確な時刻は日表示で確認できます。',
+    'この週は夏時間などで時刻が切り替わるため、グリッド上の位置はその時差の分ずれます。正確な時刻は日表示で確認してください。',
 
   'event.editor': 'イベントエディタ',
   'event.edit': 'イベントを編集',
@@ -487,7 +489,8 @@ const ja = {
   'event.errorEnd': '終了を入力してください。',
   'event.errorEndTime': '終了時刻を入力してください。',
   'event.errorOrder': '終了は開始より後にしてください。',
-  'event.errorProperties': '拡張プロパティは JSON オブジェクトにしてください。',
+  'event.errorProperties':
+    '拡張プロパティは JSON オブジェクトで入力してください。',
 
   'directory.userList': 'ユーザーディレクトリ',
   'directory.users': 'テストユーザー',
@@ -511,7 +514,7 @@ const ja = {
     'フォームから最初のユーザーを追加してください。',
   'directory.user.deleteTitle': 'このユーザーを削除しますか？',
   'directory.user.deleteDescription':
-    'ユーザーとそのユーザーが持つデータをワークスペースから削除します。リセットすると起動時の Fixture に戻ります。',
+    'ユーザーと、そのユーザーのカレンダーとイベントを削除し、OAuth 接続を取り消します。リセットすると起動時の Fixture に戻ります。',
   'directory.user.deleteConfirm': 'ユーザーを削除',
   'directory.user.name': '名前',
   'directory.user.email': 'メールアドレス',
@@ -528,7 +531,7 @@ const ja = {
     'フォームから最初のカレンダーを追加してください。',
   'directory.calendar.deleteTitle': 'このカレンダーを削除しますか？',
   'directory.calendar.deleteDescription':
-    'カレンダーとそのカレンダーが持つデータをワークスペースから削除します。リセットすると起動時の Fixture に戻ります。',
+    'カレンダーとそのイベントを削除し、このカレンダーの watch チャネルを停止します。リセットすると起動時の Fixture に戻ります。',
   'directory.calendar.deleteConfirm': 'カレンダーを削除',
   'directory.calendar.name': 'カレンダー名',
   'directory.calendar.timeZone': 'タイムゾーン',
@@ -549,22 +552,21 @@ const ja = {
   'connections.active': '有効',
   'connections.revoke': '取り消す',
   'connections.revokedNotice':
-    '接続を取り消しました。アプリから再接続してください。',
+    '接続を取り消しました。この接続のトークンは使えなくなったため、アプリからもう一度認可してください。',
   'connections.empty': '接続はまだありません',
   'connections.emptyDescription':
-    'アプリからアクセスを許可してください。試すには SDK サンプルを起動します:',
+    'テストユーザーが同意画面でアプリへのアクセスを許可すると、接続がここに表示されます。試すには SDK サンプルを起動します:',
 
   'watch.channels': 'Watch チャネル',
-  'watch.activeCount': (count: number) =>
-    `有効なサブスクリプション ${count} 件`,
+  'watch.activeCount': (count: number) => `有効なチャネル ${count} 件`,
   'watch.expires': '有効期限 ',
   'watch.watching': '監視中',
-  'watch.emptyChannels': '有効なサブスクリプションはありません',
+  'watch.emptyChannels': '有効なチャネルはありません',
   'watch.emptyChannelsDescription':
-    'events.watch や calendarList.watch で作成したチャネルが、期限切れか停止するまでここに表示されます。',
+    'アプリが events.watch や calendarList.watch で作成したチャネルは、期限切れになるか停止されるまでここに表示されます。',
   'watch.deliveries': '配信ログ',
   'watch.deliveriesDescription':
-    'watch チャネルに送ったプッシュ通知です。新しい順に表示します。',
+    'Calendarpit が watch チャネルのアドレスに送ったプッシュ通知を、新しい順に表示します。',
   'watch.columnChannel': 'チャネル / メッセージ',
   'watch.columnState': '状態',
   'watch.columnAttempts': '試行回数',
@@ -582,7 +584,7 @@ const ja = {
   'history.clear': '履歴を消去',
   'history.cleared': '履歴を消去しました。',
   'history.note':
-    '直近 200 件のプロトコルリクエストを新しい順に表示します。認証情報はマスクされます。',
+    '直近 200 件の Calendar API と OAuth のリクエストを新しい順に表示します。トークンなどの認証情報はマスクされます。',
   'history.requests': 'API リクエスト',
   'history.request': 'リクエスト',
   'history.response': 'レスポンス',
@@ -592,10 +594,9 @@ const ja = {
   'history.copied': 'コピーしました',
   'history.waiting': 'アプリからのリクエストを待っています。',
   'history.waitingDescription':
-    'Calendar と OAuth の呼び出しが届くと、ここに表示されます。',
+    'アプリが Calendar API と OAuth のエンドポイントに送ったリクエストが、ここに表示されます。',
   'history.noMatches': '一致するリクエストはありません',
-  'history.noMatchesDescription':
-    '絞り込み条件を変えると、ほかのログも表示されます。',
+  'history.noMatchesDescription': '絞り込み条件を変更してください。',
 
   'settings.sections': '設定のセクション',
   'settings.appearance': '表示',
@@ -616,20 +617,20 @@ const ja = {
     '一時的なセッションです。再起動すると変更は破棄されます。',
   'settings.fixtures': 'Fixture とリセット',
   'settings.fixturesDescription':
-    'ユーザー、カレンダー、イベント、OAuth クライアントを含む JSON を読み込みます。読み込むと現在の状態が置き換えられます。リセットすると最初の Fixture に戻ります。',
+    'ユーザー、カレンダー、イベント、OAuth クライアントを含む JSON を読み込みます。読み込むと現在の状態が置き換わります。リセットすると起動時の Fixture に戻ります。',
   'settings.fixtureJson': 'Fixture JSON',
   'settings.openFile': 'JSON ファイルを開く…',
   'settings.loadFixture': 'Fixture を読み込む',
   'settings.loadTitle': 'この Fixture を読み込みますか？',
   'settings.loadDescription':
-    '現在のユーザー、カレンダー、イベント、OAuth クライアントが Fixture で置き換えられ、すべての接続が取り消されます。',
+    '現在のユーザー、カレンダー、イベント、OAuth クライアントを Fixture の内容で置き換え、接続、リクエスト履歴、watch チャネルを消去します。',
   'settings.fixtureLoaded': 'Fixture を読み込みました。',
   'settings.reset': 'ワークスペースをリセット',
   'settings.resetDescription':
-    '最初のデータに戻し、接続、履歴、watch チャネルを消去します。',
+    '起動時の Fixture に戻し、接続、リクエスト履歴、watch チャネルを消去します。',
   'settings.resetTitle': 'ワークスペースをリセットしますか？',
   'settings.resetConfirmDescription':
-    '起動時の Fixture が復元され、接続、プロトコル履歴、watch チャネルが消去されます。',
+    '起動時の Fixture が復元され、接続、リクエスト履歴、watch チャネルが消去されます。',
   'settings.resetDone': '起動時の状態に戻しました。',
   'settings.currentState': '現在の状態',
   'settings.stateNote': (revision: string) =>
@@ -649,7 +650,7 @@ const ja = {
   'clients.deleteConfirm': 'クライアントを削除',
   'clients.empty': 'OAuth クライアントはありません',
   'clients.emptyDescription':
-    'クライアントを追加すると、同意フローを使えるようになります。',
+    'クライアントを追加すると、アプリが OAuth の同意フローを使えるようになります。',
   'clients.id': 'クライアント ID',
   'clients.secret': 'クライアントシークレット',
   'clients.keepSecret': '空欄のままにすると現在のシークレットを維持します',
