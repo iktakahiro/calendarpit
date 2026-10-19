@@ -428,6 +428,13 @@ input[type='time'] {
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
+.rail-nav-group {
+  display: grid;
+  gap: 2px;
+}
+.rail-nav-group .rail-label {
+  padding: 14px 10px 6px;
+}
 .rail-nav button {
   display: flex;
   align-items: center;
@@ -1849,6 +1856,15 @@ pre {
     padding: 8px 16px 10px;
     overflow-x: auto;
     scrollbar-width: none;
+  }
+  .rail-nav-group {
+    display: flex;
+    gap: 4px;
+    padding-left: 4px;
+    border-left: 1px solid var(--line);
+  }
+  .rail-nav-group .rail-label {
+    display: none;
   }
   .rail-nav button {
     flex: none;

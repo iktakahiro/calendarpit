@@ -3,14 +3,19 @@ import { Select } from '@cloudflare/kumo/components/select';
 import { BrandLogo } from '../../../components/brand-logo';
 import { Icon } from '../../../components/icon';
 import type { Selection } from '../../workspace/models/selection';
-import { sections, type SectionId } from '../models/sections';
+import {
+  sectionGroups,
+  sections,
+  type Section,
+  type SectionId,
+} from '../models/sections';
 
 /** Connection state of the live data polling. */
 export type LiveStatus = 'connecting' | 'live' | 'offline';
 
 /**
- * The sidebar: live status, user and calendar pickers, section navigation
- * with counts, and the storage mode.
+ * The sidebar: live status, user and calendar pickers, grouped section
+ * navigation with counts, and the storage mode.
  */
 export function Rail({
   snapshot,
@@ -46,6 +51,21 @@ export function Rail({
     ...(activeConnections > 0 ? { connections: activeConnections } : {}),
     ...(channels > 0 ? { watch: channels } : {}),
   };
+  const navButton = (s: Section) => (
+    <button
+      key={s.id}
+      type='button'
+      className={section === s.id ? 'active' : ''}
+      aria-current={section === s.id ? 'page' : undefined}
+      onClick={() => openSection(s.id)}
+    >
+      <Icon name={s.icon} />
+      <span className='nav-label'>{s.label}</span>
+      {counts[s.id] !== undefined && (
+        <span className='count'>{counts[s.id]}</span>
+      )}
+    </button>
+  );
   return (
     <aside className='rail'>
       <div className='rail-head'>
@@ -131,20 +151,19 @@ export function Rail({
         </div>
       </div>
       <nav className='rail-nav' aria-label='Workspace sections'>
-        {sections.map((s) => (
-          <button
-            key={s.id}
-            type='button'
-            className={section === s.id ? 'active' : ''}
-            aria-current={section === s.id ? 'page' : undefined}
-            onClick={() => openSection(s.id)}
+        {sections.filter((s) => !s.group).map(navButton)}
+        {sectionGroups.map((g) => (
+          <div
+            key={g.id}
+            className='rail-nav-group'
+            role='group'
+            aria-labelledby={`nav-group-${g.id}`}
           >
-            <Icon name={s.icon} />
-            <span className='nav-label'>{s.label}</span>
-            {counts[s.id] !== undefined && (
-              <span className='count'>{counts[s.id]}</span>
-            )}
-          </button>
+            <p className='rail-label' id={`nav-group-${g.id}`}>
+              {g.label}
+            </p>
+            {sections.filter((s) => s.group === g.id).map(navButton)}
+          </div>
         ))}
       </nav>
       <div className='rail-foot'>
