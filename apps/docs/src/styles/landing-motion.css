@@ -135,13 +135,20 @@
   opacity: 0;
 }
 
-/* Magic Card: a radial light on the border and inside, at the pointer. */
-.landing:not([data-motion='off']) .landing-body .grid > [data-card] {
+/* Magic Card: on link cards, a radial light on the border and inside, at the
+   pointer. Static cards stay still. */
+.landing:not([data-motion='off']) .landing-body .grid > [data-card][href] {
   position: relative;
   isolation: isolate;
 }
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]::before,
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]::after {
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card][href]::before,
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card][href]::after {
   content: '';
   position: absolute;
   z-index: -1;
@@ -150,7 +157,10 @@
   pointer-events: none;
   transition: opacity 300ms;
 }
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]::before {
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card][href]::before {
   inset: -1px;
   border: 1px solid transparent;
   background: radial-gradient(
@@ -164,7 +174,10 @@
   mask-clip: padding-box, border-box;
   mask-composite: intersect;
 }
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]::after {
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card][href]::after {
   inset: 0;
   background: radial-gradient(
     260px circle at var(--pointer-x, -999px) var(--pointer-y, -999px),
@@ -172,8 +185,14 @@
     transparent 100%
   );
 }
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]:hover::before,
-.landing:not([data-motion='off']) .landing-body .grid > [data-card]:hover::after {
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card][href]:hover::before,
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card][href]:hover::after {
   opacity: 1;
 }
 
