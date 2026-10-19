@@ -1,38 +1,38 @@
 ---
 title: Admin UI
 icon: LayoutDashboard
-description: Use the Calendarpit admin UI in the browser to see what your app wrote, trace its requests and webhooks, revoke connections, and prepare test data.
+description: Use the Calendarpit admin UI in the browser to inspect events written through the Calendar API, trace requests and webhook deliveries, revoke OAuth connections, and edit test data.
 ---
 
-The admin UI is a browser view of the local workspace. Keep it open next to your app while you develop. You can see what your app wrote, read each request it sent, and change the data for the next test.
+The admin UI is a browser interface for the local Calendarpit workspace. Keep it open while your app runs to inspect events your app creates or updates through the Calendar API, examine every request and webhook delivery, and edit test data between runs.
 
-It is served at the root of the same origin as the API. The default URL is `http://127.0.0.1:4173/`. You do not need to sign in.
+It is served at the root of the same origin as the API (`http://127.0.0.1:4173/` by default) and requires no sign-in.
 
 <AdminScreen
   view='schedule-week'
-  caption='The admin UI with the Work calendar of the test user Alex Morgan in week view.'
+  caption='The admin UI showing the Work calendar of test user Alex Morgan in week view.'
 />
 
 ## Layout
 
-The left rail sets the context for every screen:
+The left rail controls the context for every screen:
 
-- **Live**: The admin UI polls `GET /__calendarpit/state` and request history every 2 seconds. Changes made by your app appear without a reload. The indicator turns to **Disconnected** when the server stops responding.
-- **Test user** and **Calendars**: Select the user and calendar that the screens show. The selection is kept in the URL (`?user=<id>&calendar=<id>`), so you can bookmark it or share it.
-- **Sections**: **Schedule** comes first. **Activity** groups what your app did: API history, Watch, and Connections. **Workspace** groups the test data it runs against: Users, Calendars, and Settings. The counts show history entries, active watch channels, and active connections.
-- **Storage**: The footer shows `SQLite` or `In-memory`, and the server address. See [Storage and restarts](/storage/).
+- **Live**: The admin UI polls `GET /__calendarpit/state` and request history every 2 seconds. Changes your app makes through the Calendar API appear without a page reload. The indicator switches to **Disconnected** if the server stops responding.
+- **Test user** and **Calendars**: Select which test user and calendar the screens display. The selection is stored in the URL (`?user=<id>&calendar=<id>`), so you can bookmark or share it.
+- **Sections**: **Schedule** is at the top. **Activity** groups what your app did: **API history**, **Watch**, and **Connections**. **Workspace** groups the test data your app runs against: **Users**, **Calendars**, and **Settings**. The badge counts show recorded history entries, active watch channels, and active OAuth connections.
+- **Storage**: The footer shows the storage mode (`SQLite` or `In-memory`) and the server address. See [Storage and restarts](/storage/).
 
-Each section header has a **Refresh** button that reloads the workspace right away.
+Each screen header has a **Refresh** button that reloads the workspace state immediately.
 
-| Route          | Screen          | Use it to                                                            |
-| -------------- | --------------- | -------------------------------------------------------------------- |
-| `/`            | **Schedule**    | View, create, edit, and delete events.                               |
-| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth traffic.             |
-| `/watch`       | **Watch**       | Inspect watch channels and webhook deliveries (read-only).           |
-| `/connections` | **Connections** | Inspect and revoke OAuth grants.                                     |
-| `/users`       | **Users**       | Create, edit, and delete test users.                                 |
-| `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.                  |
-| `/settings`    | **Settings**    | Theme, language, storage, fixtures, reset, state, and OAuth clients. |
+| Route          | Screen          | Use it to                                                                                |
+| -------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `/`            | **Schedule**    | View, create, edit, and delete events in the selected calendar.                          |
+| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth requests and responses.                  |
+| `/watch`       | **Watch**       | Inspect active watch channels and webhook deliveries (read-only).                        |
+| `/connections` | **Connections** | Inspect and revoke OAuth authorizations (grants).                                        |
+| `/users`       | **Users**       | Create, edit, and delete test users.                                                     |
+| `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.                                      |
+| `/settings`    | **Settings**    | Theme, language, storage mode, fixtures, workspace reset, state JSON, and OAuth clients. |
 
 <Callout type="warn">
 
@@ -42,29 +42,29 @@ The admin UI has no authentication. Calendarpit binds to `127.0.0.1` by default.
 
 ## Check the events your app writes
 
-**Schedule** shows the events in the selected calendar. To create the calendars themselves, use [Calendars](#manage-test-users-and-calendars).
+**Schedule** shows the events in the selected calendar, including events your app creates or updates in Calendarpit through the Calendar API. To create or configure the calendars themselves, use [Calendars](#manage-test-users-and-calendars).
 
 The default date is `2026-10-19`, the date of the built-in fixture's planning event.
 
-- **Day** shows a 24-hour track and the list of events. **Week** shows a time grid from Sunday to Saturday.
-- Use the arrows, the date picker, and **Today** to move between dates. The URL keeps the date and the layout (`?date=2026-10-19&view=week`).
-- Times are shown in the calendar's time zone. End times are exclusive. Busy events are solid. Free (transparent) events are hatched or outlined and do not block availability.
-- A recurring series appears once, at its first occurrence. It is not expanded. Stored exceptions appear on their own dates.
+- **Day** shows a 24-hour timeline and the event list for that day. **Week** shows a 7-day time grid from Sunday to Saturday.
+- Use the arrows, the date picker, and **Today** to move between dates. The URL keeps both the date and the view (`?date=2026-10-19&view=week`).
+- Times are displayed in the selected calendar's time zone. End times are exclusive. Busy events are solid; free (transparent) events are hatched or outlined and do not block availability in `freeBusy` queries.
+- A recurring series appears once, at its first occurrence, and is not expanded in the schedule view. Stored exception instances appear on their own dates.
 
 <AdminScreen
   view='schedule-day'
-  caption='Day view: the 24-hour track with the current time, and the list of events.'
+  caption='Day view: the 24-hour timeline with the current time indicator, alongside the event list.'
 />
 
 ### Create and edit events
 
-Select an event to open it in the editor, or select **New event**. In week view, select an empty slot to create an event at that time.
+Select an existing event to open it in the editor, or select **New event**. In week view, select an empty time slot to start a new event at that time.
 
-The editor covers the summary, the all-day toggle, start and end, availability (busy or free), location, description, and extended properties as JSON.
+The editor edits the summary, all-day toggle, start and end times, availability (busy or free), location, description, and extended properties (JSON).
 
 <AdminScreen
   view='event-editor'
-  caption='The event editor opens next to the schedule. The URL keeps the open event (?event=planning).'
+  caption='The event editor opens next to the schedule. The URL tracks the open event (?event=planning).'
 />
 
 <Callout type="warn">
@@ -72,77 +72,77 @@ The editor covers the summary, the all-day toggle, start and end, availability (
 Saving an event in the editor overwrites it with only the fields shown in the form:
 
 - Attendees, colors, and other fields set through the Calendar API are removed.
-- A recurring event loses its `recurrence`.
+- A recurring event loses its `recurrence` rule and becomes a single event.
 - Custom reminders reset to the default (`reminders: { useDefault: true }`).
 
-Use the Calendar API to edit those events. See [Scope](/scope/).
+Use the Calendar API to edit events that rely on those fields. See [Scope and limitations](/scope/).
 
 </Callout>
 
 ## Manage test users and calendars
 
-Test users are local identities. They have no password. Your app signs in as one of them on the [local consent page](/oauth/).
+Test users are local identities with no password. When your app starts the OAuth flow, you pick a test user on the [local consent page](/oauth/) to sign in as that user.
 
-**Users** lists every test user with their email and number of calendars. Select a user to edit the name and email.
+**Users** lists every test user with their email address and calendar count. Select a user to edit their display name and email address.
 
-- Deleting a user also deletes their calendars and events.
-- Deleting a user also revokes their OAuth connections, which stops their watch channels.
+- Deleting a user also deletes all of their calendars and events.
+- Deleting a user also revokes their OAuth connections, invalidating their tokens and stopping their watch channels.
 
-**Calendars** manages the calendars that the selected user owns, not their events. Create, rename, and delete calendars, and set each calendar's IANA time zone (`Asia/Tokyo` by default) and which calendar is primary.
+**Calendars** manages the calendars owned by the selected user (not the events inside them). Create, rename, and delete calendars, set each calendar's IANA time zone (`Asia/Tokyo` by default), and choose which calendar is primary.
 
-- The primary calendar is the one that the `primary` calendar ID resolves to in the Calendar API.
-- Changing a calendar's time zone invalidates sync tokens issued without an explicit `timeZone` parameter. See [Incremental sync](/sync/).
+- The primary calendar is the calendar that the special `primary` calendar ID resolves to in the Calendar API.
+- Changing a calendar's time zone invalidates incremental sync tokens that were issued without an explicit `timeZone` parameter. See [Incremental sync](/sync/).
 
 <AdminScreen
   view='calendars'
-  caption="Calendars: edit the name, time zone, and primary flag of the selected user's calendars."
+  caption="Calendars: edit the name, IANA time zone, and primary setting of the selected user's calendars."
 />
 
 ## Trace your app's requests
 
-**API history** records the latest 200 Calendar API and OAuth exchanges, newest first. Use it to see exactly what your SDK sent and what Calendarpit answered.
+**API history** records the latest 200 Calendar API and OAuth requests your app sent to Calendarpit, newest first. Use it to inspect the exact request your SDK or HTTP client sent and the response Calendarpit returned.
 
-- Each row shows the status, method, path, area (such as `calendar` or `oauth`), and time.
-- Select a row to read the request and response headers and bodies. Use **Copy** to copy one as JSON.
-- Credentials, such as the `Authorization` header, tokens, client secrets, and authorization codes, are masked as `[REDACTED]`.
+- Each row shows the HTTP status, method, path, area (such as `calendar` or `oauth`), and timestamp.
+- Select a row to inspect the request and response headers and bodies. Select **Copy** to copy a payload as JSON.
+- Credentials, such as the `Authorization` header, access and refresh tokens, client secrets, and authorization codes, are masked as `[REDACTED]`.
 - Filter by method, path, or status, or select **Errors** to show only responses with status `400` or higher.
-- **Clear history** empties the list.
+- **Clear history** deletes all recorded entries.
 
 <AdminScreen
   view='history'
-  caption='A lookup of a missing event, expanded. The response is the Google API error envelope.'
+  caption='An expanded GET request for a missing event, showing the request headers and the 404 Google API error response.'
 />
 
-[Troubleshooting](/troubleshooting/) explains common errors and their fixes.
+See [Troubleshooting](/troubleshooting/) for common error responses and how to fix them.
 
 ## Inspect watch notifications
 
-**Watch** is a read-only view of push notifications. It covers channels from all calendars.
+**Watch** is a read-only view of push notifications across all calendars.
 
-- **Watch channels** lists active channels with their calendar (or the calendar list), callback address, and expiry.
-- **Delivery log** lists the latest 200 deliveries with the channel and message number, the resource state (`sync` or `exists`), the number of attempts, the time, and the result. The result is `queued`, `delivered`, `failed`, or `cancelled`, with the last HTTP status from your endpoint.
+- **Watch channels** lists active channels with their target calendar (or `CalendarList`), your app's callback URL, and the channel expiration time.
+- **Delivery log** lists the latest 200 webhook deliveries with the channel ID and message number, the resource state (`sync` or `exists`), the attempt count, the timestamp, and the delivery status (`queued`, `delivered`, `failed`, or `cancelled`) along with the last HTTP status your endpoint returned.
 
 <AdminScreen
   view='watch'
-  caption='A delivery that the endpoint answered with 503 failed after three attempts.'
+  caption='The Watch screen showing active channels and a webhook delivery that failed after 3 attempts with HTTP 503.'
 />
 
-In automated tests, wait for deliveries with `POST /__calendarpit/deliveries/drain` instead of watching this screen. See [Watch notifications](/watch/).
+In automated tests, call `POST /__calendarpit/deliveries/drain` to wait for in-flight deliveries to finish instead of polling this screen. See [Watch notifications](/watch/).
 
 ## Test reconnection
 
-**Connections** lists OAuth grants by test user and OAuth client, with their scopes and grant time.
+In **Connections**, each connection is an OAuth authorization (grant), created when a test user approves your app on the consent page. The screen shows which test user authorized which OAuth client, the granted scopes, and when. Access and refresh tokens are issued against this grant.
 
-Select **Revoke** on an active grant to test how your app recovers. Revoking a grant invalidates its tokens and stops its watch channels:
+Select **Revoke** on an active connection to test how your app handles token revocation. Revoking a connection deletes its access tokens, refresh tokens, and authorization codes, and stops any watch channels created under that grant:
 
-- The next Calendar API request with the old access token fails with `401 authError`.
-- A refresh with the old refresh token fails with `invalid_grant`.
+- Subsequent Calendar API requests with the old access token fail with `401 authError`.
+- Token refresh requests at `POST /oauth/token` with the old refresh token fail with `400 invalid_grant`.
 
-Your app should send the user through the [OAuth flow](/oauth/) again.
+Because both tokens stop working, your app must send the user through the [OAuth flow](/oauth/) again to obtain a new grant.
 
 <AdminScreen
   view='connections'
-  caption='Connections: one active grant and one revoked grant for sample-app.'
+  caption='Connections: one active OAuth authorization and one revoked authorization for sample-app.'
 />
 
 ## Prepare test data
@@ -160,25 +160,25 @@ The language applies to interface text only: navigation, headings, buttons, form
 
 ### Test data
 
-- **Storage** shows the mode and the SQLite path, or `:memory:`.
-- **Fixtures & reset** loads a [fixture](/fixtures/). Paste JSON or select **Open JSON file…**, then select **Load fixture**. Loading replaces users, calendars, events, and OAuth clients, and revokes every connection. It does not change the reset baseline.
-- **Reset workspace** restores the startup fixture and clears connections, request history, and watch channels.
-- **Current state** shows the workspace as JSON, without credentials.
+- **Storage** shows the active storage mode and the SQLite file path (or `:memory:`).
+- **Fixtures & reset** loads a [fixture](/fixtures/). Paste JSON or select **Open JSON file…**, then select **Load fixture**. Loading a fixture replaces all users, calendars, events, and OAuth clients, and revokes all OAuth connections, without changing the startup reset baseline.
+- **Reset workspace** restores the startup fixture and clears all OAuth connections, request history, and watch channels.
+- **Current state** displays the current workspace data as JSON, with credentials omitted.
 
-Both actions ask for confirmation first. Scripts can do the same with the [Test control API](/test-control/).
+Both **Load fixture** and **Reset workspace** ask for confirmation before running. Automated tests can perform the same operations through the [Test control API](/test-control/).
 
 <AdminScreen
   view='test-data'
-  caption='Settings → Test data: the storage mode, fixture loading, and workspace reset.'
+  caption='Settings → Test data: storage mode, fixture loader, and workspace reset.'
 />
 
 ### OAuth clients
 
-Add, edit, and delete OAuth clients without reloading the fixture. Use it to add a callback URL or rotate a secret. Users, events, and connections stay as they are. See [Connect your app](/connect/).
+Add, edit, or delete OAuth clients without reloading the fixture—for example, to add a redirect URI or change a client secret. Adding or editing a client keeps users, calendars, events, and existing OAuth connections intact; deleting a client revokes its connections. See [Connect your app](/connect/).
 
 <AdminScreen
   view='oauth-clients'
-  caption='Settings → OAuth clients lists each client and its redirect URIs.'
+  caption='Settings → OAuth clients lists each registered client and its allowed redirect URIs.'
 />
 
 ## Fonts and network access
