@@ -132,7 +132,6 @@
 }
 .hero-description {
   max-width: 670px;
-  color: var(--color-fd-muted-foreground);
   font-size: 1.0625rem;
   line-height: 1.8;
 }
