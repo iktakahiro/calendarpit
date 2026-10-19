@@ -6,20 +6,20 @@ description: リポジトリをクローンせずに Calendarpit を起動し、
 
 ## Calendarpit を起動する
 
-Homebrew でインストールして起動します。
-
-```sh
-brew install iktakahiro/tap/calendarpit
-calendarpit serve
-```
-
-Docker を使う場合は次のとおりです。
+Docker で起動します。
 
 ```sh
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
   ghcr.io/iktakahiro/calendarpit:latest
+```
+
+Homebrew を使う場合は、インストールしてから起動します。
+
+```sh
+brew install iktakahiro/tap/calendarpit
+calendarpit serve
 ```
 
 どちらのコマンドでも、API、ローカル OAuth サーバー、管理画面が同じオリジンで起動します。
