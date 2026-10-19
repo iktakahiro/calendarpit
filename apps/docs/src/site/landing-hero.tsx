@@ -43,15 +43,14 @@ export function LandingHero({ page }: { page: PageMetadata }) {
       )}
       <div className='hero-copy'>
         <p className='eyebrow hero-rise' style={{ '--rise': -3 }}>
-          <span className='eyebrow-orb' aria-hidden='true' />
           <span className='eyebrow-chip'>
-            {japanese ? '開発者向け' : 'For developers'}
+            <span className='eyebrow-orb' aria-hidden='true' />
+            MIT License
           </span>
           <span className='eyebrow-text'>
-            {japanese
-              ? 'カレンダー連携アプリと AI エージェント'
-              : 'Calendar apps and AI agents'}
+            Built for apps and AI agents that use Google Calendar
           </span>
+          {motion && <BorderBeam size={64} duration={7} />}
         </p>
         <h1>
           {before}
