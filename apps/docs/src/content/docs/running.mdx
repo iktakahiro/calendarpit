@@ -135,6 +135,11 @@ The admin UI is served at the root of the same origin as the API. The default UR
 - Use the left rail to switch the selected test user and calendar (`?user=<id>&calendar=<id>`).
 - The left rail also shows whether storage is `SQLite` or `In-memory`.
 
+<AdminScreen
+  view='schedule-week'
+  caption='The left rail switches the test user and calendar, and shows the storage mode.'
+/>
+
 <Callout type="info">
 
 The admin UI loads the Roboto Mono font from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`). It falls back to system fonts when offline. Calendar API and OAuth operations never contact Google and need no internet access.
@@ -175,11 +180,21 @@ Use the Calendar API to edit those events.
 - Deleting a user also deletes their calendars and events.
 - Deleting a user also revokes their OAuth connections, which stops their watch channels.
 
+<AdminScreen
+  view='users'
+  caption='Users lists the test identities. Select one to edit its name and email.'
+/>
+
 ### Calendars
 
 - List, create, edit, and delete calendars for the selected test user.
 - Set the IANA time zone. The default is `Asia/Tokyo`.
 - Choose the primary calendar.
+
+<AdminScreen
+  view='calendars'
+  caption="Calendars edits the name, time zone, and primary flag of the selected user's calendars."
+/>
 
 ### Connections
 
@@ -187,16 +202,31 @@ Use the Calendar API to edit those events.
 - Revoke active grants. Revoking a grant stops its watch channels.
 - See [Local OAuth](/oauth/).
 
+<AdminScreen
+  view='connections'
+  caption='Connections shows each grant with its scopes. Revoke an active grant to test reconnection.'
+/>
+
 ### Watch
 
 - Read-only view of active watch channels and the webhook delivery log.
 - See [Watch notifications](/watch/).
+
+<AdminScreen
+  view='watch'
+  caption='Watch lists active channels and the webhook delivery log.'
+/>
 
 ### API history
 
 - Inspect the latest 200 Calendar API and OAuth exchanges. Credentials are masked.
 - Filter exchanges by text, or show only HTTP `>= 400` errors.
 - Clear the history.
+
+<AdminScreen
+  view='history'
+  caption='API history with a failed request expanded to show its headers and bodies.'
+/>
 
 ### Settings
 
@@ -206,3 +236,8 @@ Use the Calendar API to edit those events.
 - Reset the workspace to its reset baseline.
 - Inspect the current state JSON (**Test data**).
 - View registered OAuth clients and redirect URIs (**OAuth clients**).
+
+<AdminScreen
+  view='oauth-clients'
+  caption='The OAuth clients tab in Settings lists each client and its redirect URIs.'
+/>

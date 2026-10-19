@@ -3,8 +3,12 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 import type { MDXComponents } from 'mdx/types';
 import Link from 'fumadocs-core/link';
+import { AdminScreen, AdminShowcase } from './admin-preview/admin-preview';
 
-/** Standard Fumadocs components available to all English and Japanese MDX. */
+/**
+ * Standard Fumadocs components and admin UI previews available to all English
+ * and Japanese MDX.
+ */
 export const mdxComponents = {
   ...defaultComponents,
   Tabs,
@@ -12,4 +16,6 @@ export const mdxComponents = {
   Steps,
   Step,
   Link,
+  AdminScreen,
+  AdminShowcase,
 } satisfies MDXComponents;

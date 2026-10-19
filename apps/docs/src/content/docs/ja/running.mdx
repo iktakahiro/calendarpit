@@ -135,6 +135,11 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 - 左側のナビゲーションで、表示するテストユーザーとカレンダー（`?user=<id>&calendar=<id>`）を切り替えられます。
 - 左側のナビゲーションでは、ストレージが `SQLite` か `In-memory` かも確認できます。
 
+<AdminScreen
+  view='schedule-week'
+  caption='左側のナビゲーションでテストユーザーとカレンダーを切り替え、ストレージの種類も確認できます。'
+/>
+
 <Callout type="info">
 
 管理画面は Google Fonts（`fonts.googleapis.com` と `fonts.gstatic.com`）から Roboto Mono フォントを読み込みます。オフラインのときはシステムフォントを使います。Calendar API と OAuth の処理は Google に接続せず、インターネット接続も必要ありません。
@@ -175,11 +180,21 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 - ユーザーを削除すると、そのユーザーのカレンダーとイベントも削除されます。
 - ユーザーを削除すると OAuth 認可も取り消され、関連する watch チャネルも停止します。
 
+<AdminScreen
+  view='users'
+  caption='Users ではテストユーザーを一覧表示し、選択したユーザーの名前とメールアドレスを編集できます。'
+/>
+
 ### Calendars
 
 - 選択中のテストユーザーについて、カレンダーの一覧表示、作成、編集、削除を行います。
 - IANA タイムゾーンを設定します。デフォルトは `Asia/Tokyo` です。
 - プライマリカレンダーを選択します。
+
+<AdminScreen
+  view='calendars'
+  caption='Calendars では、選択中のユーザーのカレンダー名、タイムゾーン、プライマリ設定を編集できます。'
+/>
 
 ### Connections
 
@@ -187,16 +202,31 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 - 有効な認可を取り消せます。取り消すと、関連する watch チャネルも停止します。
 - 詳しくは[ローカル OAuth](/ja/oauth/)を参照してください。
 
+<AdminScreen
+  view='connections'
+  caption='Connections では認可ごとのスコープを確認でき、有効な認可を取り消して再接続をテストできます。'
+/>
+
 ### Watch
 
 - 有効な watch チャネルと Webhook の配信ログを読み取り専用で確認します。
 - 詳しくは[watch 通知](/ja/watch/)を参照してください。
+
+<AdminScreen
+  view='watch'
+  caption='Watch では有効なチャネルと Webhook の配信ログを確認できます。'
+/>
 
 ### API history
 
 - 直近 200 件の Calendar API と OAuth のリクエスト履歴を確認します。認証情報はマスクされています。
 - テキストで絞り込んだり、HTTP `>= 400` のエラーのみを表示したりできます。
 - 履歴を消去できます。
+
+<AdminScreen
+  view='history'
+  caption='失敗したリクエストを展開し、ヘッダーとボディを表示した API history。'
+/>
 
 ### Settings
 
@@ -206,3 +236,8 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 - ワークスペースをリセット基準（起動時の状態）にリセットします。
 - 現在の状態 JSON を確認します（**Test data**）。
 - 登録済みの OAuth クライアントとリダイレクト URI を確認します（**OAuth clients**）。
+
+<AdminScreen
+  view='oauth-clients'
+  caption='Settings の OAuth clients タブには、各クライアントとリダイレクト URI が表示されます。'
+/>
