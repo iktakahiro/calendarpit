@@ -1,12 +1,11 @@
 {
-  "caption": "Google SDK はそのまま使い、接続先だけを 127.0.0.1 の Calendarpit に向けます。",
   "yourApp": {
     "label": "アプリ",
     "sub": "Google SDK とテスト"
   },
   "calendarpit": {
     "label": "Calendarpit",
-    "sub": "ローカルサーバー (127.0.0.1)"
+    "sub": "ローカルサーバー"
   },
   "google": {
     "label": "Google Calendar",

@@ -1,3 +1,5 @@
+import { BorderBeam } from '../motion/border-beam';
+import { useLandingMotion } from '../motion/landing-motion';
 import { AdminShell, BrowserFrame } from './admin-window';
 import { adminViews, type AdminView } from './admin-views';
 import './admin-preview.css';
@@ -44,53 +46,55 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
     {
       view: 'schedule-week',
       label: 'Schedule',
-      text: 'Events your app writes to Calendarpit through the Calendar API appear within 2 seconds. Add or edit events here to set up the next test.',
+      text: 'Events your app creates or updates appear within 2 seconds. Edit them here to set up test data.',
     },
     {
       view: 'history',
       label: 'API history',
-      text: 'Inspect the method, status, headers, and bodies of every Calendar API and OAuth request your app sent, with credentials masked. Filter for error responses to see why a call failed.',
+      text: 'Every Calendar API and OAuth request, with its status, headers, and body. Filter for errors to see why a call failed.',
     },
     {
       view: 'watch',
       label: 'Watch',
-      text: "Check active watch channels and each webhook delivery to your app's callback URL, with its attempt count and the HTTP status your endpoint returned.",
+      text: 'Active watch channels and each webhook delivery, with its attempt count and the HTTP status your endpoint returned.',
     },
     {
       view: 'connections',
       label: 'Connections',
-      text: 'A connection is an OAuth grant: which test user granted which scopes to which OAuth client. Revoke one to invalidate its tokens and test how your app asks the user to authorize again.',
+      text: 'OAuth grants by test user, client, and scope. Revoke one to test how your app handles reauthorization.',
     },
   ],
   ja: [
     {
       view: 'schedule-week',
       label: 'スケジュール',
-      text: 'アプリが Calendar API で Calendarpit に作成・更新した予定は、2 秒以内にここへ表示されます。予定を追加・編集して、次のテストのデータを用意できます。',
+      text: 'アプリが作成・更新した予定が 2 秒以内に表示されます。ここで予定を編集して、テストデータを用意できます。',
     },
     {
       view: 'history',
       label: 'API 履歴',
-      text: 'アプリが送信した Calendar API と OAuth の各リクエストについて、メソッド、ステータス、ヘッダー、ボディを確認できます（認証情報はマスクされます）。エラーレスポンスだけに絞り込んで失敗の原因を調べられます。',
+      text: 'Calendar API と OAuth のリクエストを、ステータス、ヘッダー、ボディつきで確認できます。エラーだけに絞り込んで原因を調べられます。',
     },
     {
       view: 'watch',
       label: 'Watch',
-      text: '有効な watch チャネルと、アプリのコールバック URL への Webhook 配信を確認できます。配信ごとに、試行回数とエンドポイントが返した HTTP ステータスが表示されます。',
+      text: '有効な watch チャネルと Webhook の配信履歴です。試行回数と、エンドポイントが返した HTTP ステータスを確認できます。',
     },
     {
       view: 'connections',
       label: '接続',
-      text: '接続は OAuth の認可（grant）です。どのテストユーザーが、どの OAuth クライアントに、どのスコープを許可したかを確認できます。接続を取り消すとトークンが無効になるので、アプリがユーザーに再認可を求める処理をテストできます。',
+      text: 'テストユーザー、OAuth クライアント、スコープごとの認可の一覧です。取り消すと、アプリの再認可の処理をテストできます。',
     },
   ],
 };
 
 /**
  * Landing page tour of the admin UI: each screen in turn, with its name and
- * one sentence on what it is for.
+ * one sentence on what it is for. With landing motion on, a border beam
+ * circles each screen, staggered so the screens do not pulse in step.
  */
 export function AdminShowcase({ lang = 'en' }: { lang?: 'en' | 'ja' }) {
+  const motion = useLandingMotion();
   return (
     <ol className='admin-showcase not-prose'>
       {showcaseCopy[lang].map((item, index) => (
@@ -102,7 +106,12 @@ export function AdminShowcase({ lang = 'en' }: { lang?: 'en' | 'ja' }) {
             <h3>{item.label}</h3>
             <p>{item.text}</p>
           </div>
-          <AdminPreview view={item.view} />
+          <div className='admin-showcase-frame'>
+            <AdminPreview view={item.view} />
+            {motion && (
+              <BorderBeam size={120} duration={12} delay={index * 3} />
+            )}
+          </div>
         </li>
       ))}
     </ol>

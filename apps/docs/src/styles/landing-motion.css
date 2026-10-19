@@ -131,26 +131,17 @@
 }
 
 /* Shared accents. */
-@keyframes led-pulse {
-  50% {
-    box-shadow: 0 0 0 4px
-      color-mix(in srgb, var(--color-fd-primary) 22%, transparent);
-  }
-}
-.landing:not([data-motion='off']) .workbench-led {
-  animation: led-pulse 2.4s ease-in-out infinite;
-}
 .landing [data-reveal='pending'] {
   opacity: 0;
 }
 
 /* Magic Card: a radial light on the border and inside, at the pointer. */
-.landing:not([data-motion='off']) .landing-body [data-card] {
+.landing:not([data-motion='off']) .landing-body .grid > [data-card] {
   position: relative;
   isolation: isolate;
 }
-.landing:not([data-motion='off']) .landing-body [data-card]::before,
-.landing:not([data-motion='off']) .landing-body [data-card]::after {
+.landing:not([data-motion='off']) .landing-body .grid > [data-card]::before,
+.landing:not([data-motion='off']) .landing-body .grid > [data-card]::after {
   content: '';
   position: absolute;
   z-index: -1;
@@ -159,7 +150,7 @@
   pointer-events: none;
   transition: opacity 300ms;
 }
-.landing:not([data-motion='off']) .landing-body [data-card]::before {
+.landing:not([data-motion='off']) .landing-body .grid > [data-card]::before {
   inset: -1px;
   border: 1px solid transparent;
   background: radial-gradient(
@@ -173,7 +164,7 @@
   mask-clip: padding-box, border-box;
   mask-composite: intersect;
 }
-.landing:not([data-motion='off']) .landing-body [data-card]::after {
+.landing:not([data-motion='off']) .landing-body .grid > [data-card]::after {
   inset: 0;
   background: radial-gradient(
     260px circle at var(--pointer-x, -999px) var(--pointer-y, -999px),
@@ -181,8 +172,14 @@
     transparent 100%
   );
 }
-.landing:not([data-motion='off']) .landing-body [data-card]:hover::before,
-.landing:not([data-motion='off']) .landing-body [data-card]:hover::after {
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card]:hover::before,
+.landing:not([data-motion='off'])
+  .landing-body
+  .grid
+  > [data-card]:hover::after {
   opacity: 1;
 }
 
