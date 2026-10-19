@@ -7,46 +7,85 @@ Calendarpit has a local management API under `/__calendarpit`. Use it to seed da
 
 ## Request rules
 
-- **Base path:** All management endpoints start with `/__calendarpit` (for example, `http://127.0.0.1:4173/__calendarpit/reset`).
-- **No authentication:** Management endpoints do not use a bearer token. Calendarpit is a local development server and binds to loopback by default. If you bind to a non-loopback address (for example inside a container), anyone who can reach the port can call these endpoints.
-- **`Content-Type: application/json` on writes:** Every request other than `GET` or `HEAD` must send a `Content-Type` header starting with `application/json` (case-sensitive). This includes `DELETE` routes and `POST` controls with no body. Requests without it fail with HTTP `415` (`unsupportedMediaType`). For `POST` controls with no request body, send an empty body or `{}`.
-- **Same-origin check:** A request fails with HTTP `403` (`forbidden`) if its `Origin` header does not match the server origin, or if it has `Sec-Fetch-Site: cross-site`. Non-browser clients such as `curl` and test runners usually omit `Origin`, so they are allowed. `/__calendarpit/health` skips these checks, so `GET` and `HEAD` readiness probes need no extra headers.
-- **Excluded from history:** Requests to `/__calendarpit/*` are not recorded in the protocol request history.
-- **Error format:** Management errors use the Google JSON error envelope with `domain: "calendarpit"`.
+- **Base path**: All management endpoints start with `/__calendarpit`. For example: `http://127.0.0.1:4173/__calendarpit/reset`.
+- **No authentication**: Management endpoints do not use a bearer token. Calendarpit is a local development server and binds to loopback by default.
+- **`Content-Type: application/json` on writes**: Every request other than `GET` or `HEAD` must send a `Content-Type` header that starts with `application/json` (case-sensitive).
+  - This includes `DELETE` routes and `POST` controls with no body, such as `/reset` and `/deliveries/drain`.
+  - Requests without the header fail with HTTP `415` (`unsupportedMediaType`).
+  - For `POST` controls with no request body, send an empty body or `{}`.
+- **Same-origin check**: A request fails with HTTP `403` (`forbidden`) in either case:
+  - Its `Origin` header does not match the server origin.
+  - It has `Sec-Fetch-Site: cross-site`.
+
+  Non-browser clients such as `curl` and test runners usually omit `Origin`, so they are allowed.
+
+- **Health check exemption**: `/__calendarpit/health` skips these checks. `GET` and `HEAD` readiness probes need no extra headers.
+- **Excluded from history**: Requests to `/__calendarpit/*` are not recorded in the protocol request history.
+- **Error format**: Management errors use the Google JSON error envelope with `domain: "calendarpit"`.
+
+<Callout type="warn">
+
+If you bind to a non-loopback address (for example, inside a container), anyone who can reach the port can call these endpoints.
+
+</Callout>
 
 ## Management endpoints
 
 All paths below are relative to `/__calendarpit`.
 
-| Method                             | Path                               | Behavior                                                                                                                                                                                                                |
-| ---------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET` / `HEAD`                     | `/health`                          | Return server `name` (`"Calendarpit"`), `version` (for example `0.9.0`), `stage`, `storage` (`"memory"` or `"sqlite"`), and capability flags (`calendar`, `oauth`, `watch`, `fixtures`). `HEAD` returns an empty `200`. |
-| `GET`                              | `/state`                           | Remove expired channels, then return a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, and `revision`. |
-| `POST`                             | `/fixtures`                        | Validate and replace users, calendars, events, and clients. Clear runtime state and invalidate connections (`200` snapshot).                                                                                            |
-| `POST`                             | `/reset`                           | Restore the startup fixture baseline and clear all runtime state (`200` snapshot).                                                                                                                                      |
-| `GET` / `DELETE`                   | `/history`                         | Return (`200`, oldest to newest) or clear (`204`) the latest 200 protocol requests.                                                                                                                                     |
-| `POST`                             | `/users`                           | Create a user (`name`, `email`, optional `id`). Returns `201`, or `409 duplicate` if the ID exists.                                                                                                                     |
-| `PATCH` / `DELETE`                 | `/users/{id}`                      | Edit (`name`, `email`; `id` is immutable) or delete (`204`) a user. Deleting a user also deletes the data they own.                                                                                                     |
-| `POST`                             | `/calendars`                       | Create a calendar (`userId`, `summary`, optional `timeZone`, `primary`, `id`). Returns `201`.                                                                                                                           |
-| `PATCH` / `DELETE`                 | `/calendars/{id}`                  | Edit or delete (`204`) a calendar. `id` and `userId` are immutable.                                                                                                                                                     |
-| `GET` / `POST`                     | `/calendars/{id}/events`           | List events or create an event (`200`). Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`.                                                                            |
-| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | Read, replace, patch, or delete (`204`, keeps a tombstone) an event.                                                                                                                                                    |
-| `POST`                             | `/connections/{id}/revoke`         | Revoke the connection's tokens and stop its watch channels (`204`).                                                                                                                                                     |
-| `POST`                             | `/deliveries/drain`                | Wait for pending webhook deliveries and their retries to finish, then return the delivery log array (`200`).                                                                                                            |
+| Method                             | Path                               | Behavior                                                                   |
+| ---------------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
+| `GET` / `HEAD`                     | `/health`                          | Return server information and capability flags.                            |
+| `GET`                              | `/state`                           | Return a snapshot of the server state.                                     |
+| `POST`                             | `/fixtures`                        | Validate and replace fixture data (`200` snapshot).                        |
+| `POST`                             | `/reset`                           | Restore the startup fixture baseline (`200` snapshot).                     |
+| `GET` / `DELETE`                   | `/history`                         | Return (`200`) or clear (`204`) the latest 200 protocol requests.          |
+| `POST`                             | `/users`                           | Create a user (`201`).                                                     |
+| `PATCH` / `DELETE`                 | `/users/{id}`                      | Edit or delete (`204`) a user.                                             |
+| `POST`                             | `/calendars`                       | Create a calendar (`201`).                                                 |
+| `PATCH` / `DELETE`                 | `/calendars/{id}`                  | Edit or delete (`204`) a calendar.                                         |
+| `GET` / `POST`                     | `/calendars/{id}/events`           | List events or create an event (`200`).                                    |
+| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | Read, replace, patch, or delete (`204`) an event.                          |
+| `POST`                             | `/connections/{id}/revoke`         | Revoke the connection's tokens and stop its watch channels (`204`).        |
+| `POST`                             | `/deliveries/drain`                | Wait for pending webhook deliveries, then return the delivery log (`200`). |
+
+### Endpoint details
+
+- **`/health`**: Returns the server `name` (`"Calendarpit"`), `version` (for example, `0.9.0`), `stage`, and `storage` (`"memory"` or `"sqlite"`). It also returns the capability flags `calendar`, `oauth`, `watch`, and `fixtures`. `HEAD` returns an empty `200`.
+- **`/state`**: Removes expired channels first. It then returns a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, and `revision`.
+- **`/fixtures`**: Validates and replaces users, calendars, events, and clients. It clears runtime state and invalidates connections.
+- **`/reset`**: Restores the startup fixture baseline and clears all runtime state.
+- **`/history`**: `GET` returns the requests ordered from oldest to newest.
+- **`/users`**: Accepts `name`, `email`, and an optional `id`. Returns `409 duplicate` if the ID already exists.
+- **`/users/{id}`**: `PATCH` edits `name` and `email`. `id` is immutable. Deleting a user also deletes the data they own.
+- **`/calendars`**: Accepts `userId`, `summary`, and optional `timeZone`, `primary`, and `id`.
+- **`/calendars/{id}`**: `id` and `userId` are immutable.
+- **`/calendars/{id}/events`**: Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`.
+- **`/calendars/{id}/events/{eventId}`**: `DELETE` keeps a tombstone.
+- **`/deliveries/drain`**: Also waits for the retries of pending deliveries. The response is the delivery log array.
 
 ### Cascades and admin writes
 
-- **User deletion:** Deleting a user revokes their OAuth connections and stops their watch channels. It also deletes their calendars and events without creating calendar tombstones.
-- **Calendar deletion and primary flag:** A user's first calendar becomes `primary: true` automatically. Setting `primary: true` on another calendar of the same user moves the flag to that calendar in one step. Unsetting `primary` directly returns `400`. Deleting a calendar:
+- **User deletion**: Deleting a user revokes their OAuth connections and stops their watch channels. It also deletes their calendars and events without creating calendar tombstones.
+- **Primary flag**: A user's first calendar becomes `primary: true` automatically.
+  - Setting `primary: true` on another calendar of the same user moves the flag to that calendar in one step.
+  - Unsetting `primary` directly returns `400`.
+- **Calendar deletion**: Deleting a calendar does the following:
   - Deletes the calendar's events and stops its event watch channels.
   - Records a `calendarList` tombstone with default list settings. Per-user customizations such as `summaryOverride` or `colorId` are dropped.
   - Makes another of the owner's calendars primary if the deleted calendar was primary. Calendarpit prefers a calendar that is still on the owner's calendar list.
-- **Calendar list notifications:** Admin calendar create (`POST /calendars`), edit (`PATCH /calendars/{id}`), and delete each queue an `exists` notification on the owner's `calendarList.watch` channels. An edit sends a notification even when nothing changes. Expect these extra deliveries if your test counts them.
-- **Admin event writes:** Event writes under `/__calendarpit/calendars/{id}/events` skip invitee restrictions, do not require `conferenceDataVersion=1`, and can set read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`). Updates keep the stored `organizer`, `creator`, and `iCalUID`. If an event already has `recurringEventId` and `originalStartTime`, updates keep those too.
+- **Calendar list notifications**: Each admin calendar create (`POST /calendars`), edit (`PATCH /calendars/{id}`), and delete queues an `exists` notification on the owner's `calendarList.watch` channels.
+  - An edit sends a notification even when nothing changes.
+  - Expect these extra deliveries if your test counts them.
+- **Admin event writes**: Event writes under `/__calendarpit/calendars/{id}/events` differ from Calendar API writes:
+  - They skip invitee restrictions.
+  - They do not require `conferenceDataVersion=1`.
+  - They can set read-only fields: `organizer`, `creator`, `iCalUID`, `recurringEventId`, and `originalStartTime`.
+  - Updates keep the stored `organizer`, `creator`, and `iCalUID`. If an event already has `recurringEventId` and `originalStartTime`, updates keep those too.
 
 ## Reset vs fixture load
 
-`POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` both replace stored data, save it immediately, and clear all runtime state. They load different data:
+`POST /__calendarpit/reset` and `POST /__calendarpit/fixtures` both replace stored data, save it immediately, and clear all runtime state. The difference is the data they load.
 
 | Behavior                          | `POST /__calendarpit/reset`        | `POST /__calendarpit/fixtures`                                         |
 | --------------------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
@@ -55,6 +94,8 @@ All paths below are relative to `/__calendarpit`.
 | Runtime state                     | Cleared                            | Cleared                                                                |
 
 Validation on `POST /__calendarpit/fixtures` is atomic. If any record is invalid, Calendarpit returns `400` and changes nothing.
+
+### What both endpoints clear
 
 Both endpoints stop all active [watch channels](/watch/) and abort their in-flight requests. They also clear:
 
@@ -65,11 +106,18 @@ Both endpoints stop all active [watch channels](/watch/) and abort their in-flig
 - Per-user calendar list settings: customizations made with `calendarList.insert`/`patch`/`update`, and removals made with `calendarList.delete`
 - Invitation notifications and all delivery log records
 
-After either call, old access tokens fail with `401` (`authError`) and old sync tokens fail with `410` (`fullSyncRequired`). Reset does not delete the SQLite database file or change the fixture file on disk.
+After either call:
+
+- Old access tokens fail with `401` (`authError`).
+- Old sync tokens fail with `410` (`fullSyncRequired`).
+
+Reset does not delete the SQLite database file. It does not change the fixture file on disk either.
 
 ## Request history and state export
 
-`GET /__calendarpit/history` returns the latest 200 requests served on `/calendar/v3/*`, `/oauth*`, and `/userinfo`, ordered from oldest to newest. Failed requests, such as `401` or `501` responses, are included.
+### Request history
+
+`GET /__calendarpit/history` returns the latest 200 requests served on `/calendar/v3/*`, `/oauth*`, and `/userinfo`. They are ordered from oldest to newest. Failed requests, such as `401` or `501` responses, are included.
 
 Calendarpit masks credentials in the history:
 
@@ -77,23 +125,26 @@ Calendarpit masks credentials in the history:
 - Credentials inside URLs are removed.
 - Strings longer than 12,000 characters are cut off and end with ` [truncated]`.
 
+### State export
+
 Use `GET /__calendarpit/state` for inspection only. You cannot load its output back with `POST /__calendarpit/fixtures`:
 
 - It omits client secrets. `clients` entries contain only `id` and `redirectUris`.
 - Channel tokens appear as `"[REDACTED]"`.
-- It includes runtime fields (`storage`, `connections`, `channels`, `deliveries`, `notifications`, `revision`), which `POST /__calendarpit/fixtures` rejects with `400` (`unsupportedFeature`).
+- It includes runtime fields (`storage`, `connections`, `channels`, `deliveries`, `notifications`, `revision`). `POST /__calendarpit/fixtures` rejects them with `400` (`unsupportedFeature`).
 - It does not include calendar list settings. Read those with `calendarList.list`/`get`.
 
 Keep your original fixture files for seeding and reloading.
 
 ## Writing repeatable tests
 
-- **Reset before each scenario:** Call `POST /__calendarpit/reset` before each test to restore the startup baseline. To load a specific fixture instead, call `POST /__calendarpit/fixtures`.
-- **Use fixed IDs:** Set explicit `id` values for users, calendars, events, and clients in your fixture file. Calendarpit generates missing IDs once at seed time. In `:memory:` mode, each new server process generates new IDs.
-- **Isolate parallel workers:** Run one Calendarpit process per test worker with `--port 0` and `--database :memory:`. You can also give each worker its own SQLite file.
-- **Read the port from stdout:** With `--port 0`, read the URL from the startup line `Admin  http://127.0.0.1:<port>/`. For example, match it with `/Admin\s+(http:\/\/[^\s]+)/`. Then poll `GET /__calendarpit/health` until it responds before running tests.
-- **Drain webhook deliveries instead of sleeping:** `POST /__calendarpit/deliveries/drain` waits for the deliveries pending when you call it, including their retries. `/reset` aborts in-progress webhook requests, though a receiver may still receive a request before it is aborted.
-- **Refetch after restarts:** When testing [SQLite restarts](/storage/), deliveries queued before shutdown are marked `cancelled` and are not sent again. Refetch the calendar state after the restart.
+- **Reset before each scenario**: Call `POST /__calendarpit/reset` before each test to restore the startup baseline. To load a specific fixture instead, call `POST /__calendarpit/fixtures`.
+- **Use fixed IDs**: Set explicit `id` values for users, calendars, events, and clients in your fixture file. Calendarpit generates missing IDs once at seed time. In `:memory:` mode, each new server process generates new IDs.
+- **Isolate parallel workers**: Run one Calendarpit process per test worker with `--port 0` and `--database :memory:`. You can also give each worker its own SQLite file.
+- **Read the port from stdout**: With `--port 0`, read the URL from the startup line `Admin  http://127.0.0.1:<port>/`. For example, match it with `/Admin\s+(http:\/\/[^\s]+)/`. Then poll `GET /__calendarpit/health` until it responds before you run tests.
+- **Drain webhook deliveries instead of sleeping**: `POST /__calendarpit/deliveries/drain` waits for the deliveries pending when you call it, including their retries.
+- **Expect aborted webhooks after reset**: `/reset` aborts in-progress webhook requests. A receiver may still receive a request before it is aborted.
+- **Refetch after restarts**: When you test [SQLite restarts](/storage/), deliveries queued before shutdown are marked `cancelled` and are not sent again. Refetch the calendar state after the restart.
 
 ```ts
 const baseUrl = 'http://127.0.0.1:4173';

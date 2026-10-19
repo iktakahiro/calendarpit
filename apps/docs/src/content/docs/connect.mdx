@@ -5,18 +5,32 @@ description: Point your app's OAuth and Google Calendar SDK clients at Calendarp
 
 ## Add a provider switch
 
-Starting Calendarpit does not intercept network traffic to Google. To use Calendarpit in local development or automated tests, add a provider switch to the code that creates your OAuth client and Google Calendar SDK client.
+Your app must choose Calendarpit explicitly. Starting Calendarpit does not intercept network traffic to Google.
+
+To use Calendarpit in local development or automated tests, add a provider switch. Put it in the code that creates your OAuth client and Google Calendar SDK client.
 
 Environment variable names such as `CALENDARPIT_URL` are conventions in your app. Google SDKs do not read `CALENDARPIT_URL` automatically. Your initialization code must read your configuration and pass the local URLs to the SDK.
 
 Keep your provider credentials separate:
 
 - Use Calendarpit access tokens and refresh tokens only with the local provider.
-- Keep real Google client secrets and tokens in your Google configuration. Never put real Google credentials in a fixture.
+- Keep real Google client secrets and tokens in your Google configuration.
+
+<Callout type="warn">
+
+Never put real Google credentials in a fixture.
+
+</Callout>
 
 ## Override every provider endpoint
 
-Changing only the Calendar API URL is not enough. If OAuth stays on its default endpoints, your app still sends browser redirects, token exchanges, or token refreshes to Google. Override all five endpoints together:
+Override all five endpoints together. Changing only the Calendar API URL is not enough.
+
+If OAuth stays on its default endpoints, your app still sends these requests to Google:
+
+- Browser redirects
+- Token exchanges
+- Token refreshes
 
 | Purpose                   | Local endpoint                          |
 | ------------------------- | --------------------------------------- |
@@ -26,13 +40,28 @@ Changing only the Calendar API URL is not enough. If OAuth stays on its default 
 | Calendar API root         | `http://127.0.0.1:4173/`                |
 | Token revocation          | `http://127.0.0.1:4173/oauth/revoke`    |
 
-The JavaScript Calendar SDK (`@googleapis/calendar`) appends `/calendar/v3/...` to `rootUrl`. Do not include `/calendar/v3` twice. Python, Go, and .NET expect the full service URL including `/calendar/v3/`. Java sets the root URL and service path separately. See [SDK examples](/sdks/).
+### Calendar API URL format by SDK
 
-A watch callback address points in the opposite direction: from Calendarpit to your app, such as `http://127.0.0.1:4175/notifications`. Calendarpit allows only loopback callback hosts (`127.0.0.1`, `localhost`, `[::1]`) unless you list extra hosts in `CALENDARPIT_WATCH_HOSTS`; see [Watch notifications](/watch/).
+Each SDK expects a different form of the Calendar API URL:
+
+- **JavaScript** (`@googleapis/calendar`): Appends `/calendar/v3/...` to `rootUrl`. Do not include `/calendar/v3` twice.
+- **Python, Go, and .NET**: Expect the full service URL, including `/calendar/v3/`.
+- **Java**: Sets the root URL and service path separately.
+
+See [SDK examples](/sdks/).
+
+### Watch callback address
+
+A watch callback address points in the opposite direction: from Calendarpit to your app. An example is `http://127.0.0.1:4175/notifications`.
+
+By default, Calendarpit allows only loopback callback hosts (`127.0.0.1`, `localhost`, `[::1]`). To allow extra hosts, list them in `CALENDARPIT_WATCH_HOSTS`. See [Watch notifications](/watch/).
 
 ## Register a test OAuth client
 
-Calendarpit checks `client_id` and `redirect_uri` at the authorization endpoint, and `client_id`, `client_secret`, and (for code exchange) `redirect_uri` at `/oauth/token`. Register your app in the `clients` array of your fixture:
+Register your app in the `clients` array of your fixture. Calendarpit checks these values:
+
+- **Authorization endpoint**: `client_id` and `redirect_uri`.
+- **`/oauth/token`**: `client_id` and `client_secret`, plus `redirect_uri` for code exchange.
 
 ```json
 {
@@ -46,10 +75,32 @@ Calendarpit checks `client_id` and `redirect_uri` at the authorization endpoint,
 }
 ```
 
-A fixture replaces the whole workspace. Include `users` and `calendars` alongside `clients`, and keep the `sample-app` entry if you use the sample app. A startup fixture applies only to a new database or a `:memory:` session. To change a running or persisted workspace, load the fixture with `POST /__calendarpit/fixtures` or start with a new database. A reset restores the startup fixture, not a fixture loaded through the API. To keep your client across resets, pass the fixture at startup (`--config` or `CALENDARPIT_CONFIG`) with a new database or `:memory:` session, or reload it after each reset. See [Fixtures](/fixtures/).
+Two fields need care:
 
-- `redirectUris` must contain your app's exact callback URL. Calendarpit matches `redirect_uri` by exact string equality, without port wildcards or trailing-slash normalization.
-- `secret` is required. Your app must send it as `client_secret` (or HTTP Basic) on every `/oauth/token` request, including PKCE flows.
+- **`redirectUris`** must contain your app's exact callback URL. Calendarpit matches `redirect_uri` by exact string equality. It does not apply port wildcards or trailing-slash normalization.
+- **`secret`** is required. Your app must send it as `client_secret` (or HTTP Basic) on every `/oauth/token` request, including PKCE flows.
+
+### How the fixture is applied
+
+A fixture replaces the whole workspace. Include `users` and `calendars` alongside `clients`. If you use the sample app, keep the `sample-app` entry.
+
+When the fixture takes effect depends on how you pass it:
+
+- **Startup fixture**: Applies only to a new database or a `:memory:` session.
+- **Running or persisted workspace**: Load the fixture with `POST /__calendarpit/fixtures`, or start with a new database.
+
+<Callout type="info">
+
+A reset restores the startup fixture, not a fixture loaded through the API. To keep your client across resets, do one of the following:
+
+- Pass the fixture at startup (`--config` or `CALENDARPIT_CONFIG`) with a new database or `:memory:` session.
+- Reload the fixture after each reset.
+
+</Callout>
+
+See [Fixtures](/fixtures/).
+
+### Built-in client
 
 The built-in default fixture registers one OAuth client for local testing:
 
@@ -61,7 +112,10 @@ For the full authorization code, refresh, `/userinfo`, and revocation flow, see 
 
 ## JavaScript OAuth and Calendar client
 
-With `@googleapis/calendar` and `google-auth-library`, configure `endpoints` on `OAuth2Client` and `rootUrl` on the Calendar client:
+With `@googleapis/calendar` and `google-auth-library`, configure two settings:
+
+- `endpoints` on `OAuth2Client`
+- `rootUrl` on the Calendar client
 
 ```ts
 import { calendar } from '@googleapis/calendar';
@@ -92,13 +146,35 @@ const { data } = await api.freebusy.query({
 console.log(data.calendars?.primary?.busy);
 ```
 
-Authorize the grant with scopes that cover all three calls in this example, such as `auth.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/calendar', 'email', 'profile'] })`. Narrower scopes such as `calendar.events` or `calendar.freebusy` do not cover `calendarList.list`, which requires `calendar`, `calendar.readonly`, `calendar.calendarlist`, or `calendar.calendarlist.readonly`. `/userinfo` requires `openid`, `email`, `profile`, or a `userinfo.*` scope. It returns `email` only with an email scope and `name` only with a profile scope. Refresh tokens are issued only with `access_type=offline`. See [Local OAuth](/oauth/) for the full scope list.
+### Scopes
 
-After you call `auth.setCredentials`, token refresh requests from `OAuth2Client` also use the local `oauth2TokenUrl`. Unless you also override `tokenInfoUrl` and the certificate URLs as the sample app does, `OAuth2Client` helpers such as `getTokenInfo` and `verifyIdToken` still call Google. Calendarpit does not support these endpoints or issue ID tokens, so do not call those helpers against the local provider. For Python, Go, and other languages, see [SDK examples](/sdks/).
+Authorize the grant with scopes that cover all three calls in this example. For example: `auth.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/calendar', 'email', 'profile'] })`.
+
+- **`calendarList.list`** requires `calendar`, `calendar.readonly`, `calendar.calendarlist`, or `calendar.calendarlist.readonly`. Narrower scopes such as `calendar.events` or `calendar.freebusy` do not cover it.
+- **`/userinfo`** requires `openid`, `email`, `profile`, or a `userinfo.*` scope. It returns `email` only with an email scope, and `name` only with a profile scope.
+- **Refresh tokens** are issued only with `access_type=offline`.
+
+See [Local OAuth](/oauth/) for the full scope list.
+
+### Token refresh and unsupported helpers
+
+After you call `auth.setCredentials`, token refresh requests from `OAuth2Client` also use the local `oauth2TokenUrl`.
+
+Other `OAuth2Client` helpers, such as `getTokenInfo` and `verifyIdToken`, still call Google. This changes only if you also override `tokenInfoUrl` and the certificate URLs, as the sample app does.
+
+<Callout type="warn">
+
+Calendarpit does not support these endpoints or issue ID tokens. Do not call those helpers against the local provider.
+
+</Callout>
+
+For Python, Go, and other languages, see [SDK examples](/sdks/).
 
 ## Reference sample app
 
-The repository includes an optional sample app using `@googleapis/calendar` and `google-auth-library`. It is not bundled with Calendarpit and is not needed to connect your own app. To try it, prepare a source checkout using the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md), then run these commands in separate terminals:
+The repository includes an optional sample app using `@googleapis/calendar` and `google-auth-library`. It is not bundled with Calendarpit. You do not need it to connect your own app.
+
+To try it, prepare a source checkout using the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md). Then run these commands in separate terminals:
 
 ```sh
 # Terminal 1: start the packaged server
@@ -108,10 +184,16 @@ calendarpit serve
 bun run sample:dev
 ```
 
-Calendarpit runs at `http://127.0.0.1:4173` and the sample app runs at `http://127.0.0.1:4175`. The sample app is a single-connection local demo that shows two patterns for your own integration:
+Calendarpit runs at `http://127.0.0.1:4173`, and the sample app runs at `http://127.0.0.1:4175`.
 
-- **State cookie verification**: It stores the OAuth `state` parameter in a 5-minute HttpOnly cookie (`sample_state`) and verifies it on `/callback` before exchanging the authorization code.
-- **Loopback-only outbound guard**: It blocks outbound SDK requests to hosts other than `127.0.0.1`, `localhost`, or `[::1]` and rejects HTTP redirects, preventing accidental requests to real Google servers.
+### Patterns to reuse
+
+The sample app is a single-connection local demo. It shows two patterns for your own integration:
+
+- **State cookie verification**: It stores the OAuth `state` parameter in a 5-minute HttpOnly cookie (`sample_state`). It verifies the value on `/callback` before exchanging the authorization code.
+- **Loopback-only outbound guard**: It blocks outbound SDK requests to hosts other than `127.0.0.1`, `localhost`, or `[::1]`. It also rejects HTTP redirects. Together, these prevent accidental requests to real Google servers.
+
+### Environment variables
 
 The sample app uses these environment variables:
 
@@ -126,13 +208,20 @@ The sample app uses these environment variables:
 | `USERINFO_URL`         | `${CALENDARPIT_URL}/userinfo`        |
 | `CALENDAR_API_URL`     | `${CALENDARPIT_URL}`                 |
 
-The sample app sets its revocation URL to `${CALENDARPIT_URL}/oauth/revoke` and its redirect URI to `http://127.0.0.1:<SAMPLE_PORT>/callback`. Because the built-in `sample-app` client registers only port `4175`, changing `SAMPLE_PORT` requires updating the client's `redirectUris` in a fixture.
+The sample app also sets these values:
+
+- Revocation URL: `${CALENDARPIT_URL}/oauth/revoke`
+- Redirect URI: `http://127.0.0.1:<SAMPLE_PORT>/callback`
+
+The built-in `sample-app` client registers only port `4175`. If you change `SAMPLE_PORT`, update the client's `redirectUris` in a fixture.
 
 ## Checklist for your app
 
-When maintaining a Calendarpit integration in your app, verify:
+When you maintain a Calendarpit integration in your app, verify:
 
-- **All endpoint overrides**: Confirm that authorization, token exchange, token refresh, user profile, Calendar API calls, and token revocation all use the local endpoints.
-- **Callback reachability**: Confirm that the browser can reach your app's OAuth `redirect_uri` and that Calendarpit can reach your app's watch webhook address. Set `CALENDARPIT_WATCH_HOSTS` if the webhook host is not loopback.
+- **All endpoint overrides**: Authorization, token exchange, token refresh, user profile, Calendar API calls, and token revocation all use the local endpoints.
+- **Callback reachability**:
+  - The browser can reach your app's OAuth `redirect_uri`.
+  - Calendarpit can reach your app's watch webhook address. If the webhook host is not loopback, set `CALENDARPIT_WATCH_HOSTS`.
 - **Full application flow**: Test your UI and background workers across login, event reads and writes, watch notifications, token refresh, revocation, and workspace reset.
 - **App-specific fixtures**: Keep your app's fixtures and E2E test scenarios in its own repository.

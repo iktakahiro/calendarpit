@@ -3,41 +3,54 @@ title: ローカル OAuth
 description: Calendarpit のローカル OAuth 2.0 認可コードフロー、トークンエンドポイント、対応スコープについて説明します。
 ---
 
-Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれており、Google Cloud プロジェクトや本物の Google アカウントなしでアプリをテストできます。認可時には、ローカルの同意画面のドロップダウンからテストユーザーを選択します。パスワードの入力は不要です。
+Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれています。Google Cloud プロジェクトや本物の Google アカウントがなくても、アプリをテストできます。
+
+認可時には、ローカルの同意画面のドロップダウンからテストユーザーを選択します。パスワードの入力は不要です。
 
 フローを開始する前に、アプリの OAuth クライアントと Google Calendar SDK の接続先を `http://127.0.0.1:4173` に設定してください。エンドポイントの設定方法は、[アプリを接続する](/ja/connect/)を参照してください。
 
 ## エンドポイント
 
-| メソッド | パス                                          | 用途                                                                                                                                                                                 |
-| -------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET`    | `/oauth/authorize`                            | 認可リクエストを検証し、ローカルの HTML 同意画面を表示します                                                                                                                         |
-| `POST`   | `/oauth/authorize`                            | 同意の選択結果（`approve` または `deny`）を送信し、`redirect_uri` へ `302` でリダイレクトします（同一オリジンのリクエストのみ。クロスサイトリクエストは `403 forbidden` を返します） |
-| `POST`   | `/oauth/token`                                | 認可コードまたはリフレッシュトークンをアクセストークンと交換します                                                                                                                   |
-| `POST`   | `/oauth/revoke`                               | アクセストークンまたはリフレッシュトークンと、その接続（grant）を失効させます                                                                                                        |
-| `GET`    | `/userinfo`                                   | 認可されたテストユーザーのプロフィールクレームを返します                                                                                                                             |
-| `POST`   | `/__calendarpit/connections/{grantId}/revoke` | 管理 API から接続を失効させます（`204`。管理 API のリクエスト規則が適用されます。詳細は[テスト制御 API](/ja/test-control/)を参照してください）                                       |
+| メソッド | パス                                          | 用途                                                                                            |
+| -------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `GET`    | `/oauth/authorize`                            | 認可リクエストを検証し、ローカルの HTML 同意画面を表示します                                    |
+| `POST`   | `/oauth/authorize`                            | 同意の選択結果（`approve` または `deny`）を送信し、`redirect_uri` へ `302` でリダイレクトします |
+| `POST`   | `/oauth/token`                                | 認可コードまたはリフレッシュトークンをアクセストークンと交換します                              |
+| `POST`   | `/oauth/revoke`                               | アクセストークンまたはリフレッシュトークンと、その接続（grant）を失効させます                   |
+| `GET`    | `/userinfo`                                   | 認可されたテストユーザーのプロフィールクレームを返します                                        |
+| `POST`   | `/__calendarpit/connections/{grantId}/revoke` | 管理 API から接続を失効させます（`204`）                                                        |
 
-ルーティングされるのは上記のパスのみです。`/oauth2/...` 配下の Google エンドポイント（`/oauth2/v4/token` や `/oauth2/v3/userinfo` など）や、`/oauth/*` に対する未対応の HTTP メソッドは、ステータス `501` と `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}` を返します。
+- `POST /oauth/authorize` は同一オリジンのリクエストのみ受け付けます。クロスサイトリクエストは `403 forbidden` を返します。
+- `POST /__calendarpit/connections/{grantId}/revoke` には、管理 API のリクエスト規則が適用されます。詳細は[テスト制御 API](/ja/test-control/)を参照してください。
+
+ルーティングされるのは上記のパスのみです。次のリクエストはステータス `501` を返します。
+
+- `/oauth2/...` 配下の Google エンドポイント（`/oauth2/v4/token` や `/oauth2/v3/userinfo` など）
+- `/oauth/*` に対する未対応の HTTP メソッド
+
+`501` のレスポンスボディは `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}` です。
 
 ## 認可コードフロー
 
-1. **Fixture に OAuth クライアントを登録します。** 起動時 Fixture の `clients` 配列に、`id`、`secret`、`redirectUris` を持つエントリを追加します。各リダイレクト URI は、フラグメントや userinfo を含まない `http:` または `https:` の絶対 URL である必要があります。起動時 Fixture が適用されるのは、新規データベースまたは `:memory:` セッションのみです。既存のデータベースファイルを使用している場合は、`POST /__calendarpit/fixtures` で Fixture を読み込む（次のリセットまでワークスペースのデータを置き換えます）か、新しいデータベースで起動してください。詳細は[Fixture](/ja/fixtures/)および[ストレージと再起動](/ja/storage/)を参照してください。デフォルトの Fixture（`--config` も `CALENDARPIT_CONFIG` も指定しない場合に使用されます）には、ID が `sample-app`、シークレットが `local-sample-secret`、リダイレクト URI が `http://127.0.0.1:4175/callback` のクライアントが含まれています。
+1. **Fixture に OAuth クライアントを登録します。** 起動時 Fixture の `clients` 配列に、`id`、`secret`、`redirectUris` を持つエントリを追加します。各リダイレクト URI は、フラグメントや userinfo を含まない `http:` または `https:` の絶対 URL である必要があります。
+   - 起動時 Fixture が適用されるのは、新規データベースまたは `:memory:` セッションのみです。
+   - 既存のデータベースファイルを使う場合は、`POST /__calendarpit/fixtures` で Fixture を読み込むか、新しいデータベースで起動してください。Fixture を読み込むと、次のリセットまでワークスペースのデータが置き換わります。詳細は[Fixture](/ja/fixtures/)と[ストレージと再起動](/ja/storage/)を参照してください。
+   - デフォルトの Fixture には、ID が `sample-app`、シークレットが `local-sample-secret`、リダイレクト URI が `http://127.0.0.1:4175/callback` のクライアントが含まれています。デフォルトの Fixture は、`--config` も `CALENDARPIT_CONFIG` も指定しない場合に使用されます。
 2. **ブラウザを `GET /oauth/authorize` へリダイレクトします。** `http://127.0.0.1:4173/oauth/authorize` に、以下のクエリパラメータを URL エンコードして付与します。
-   - `client_id`（必須）: 登録済みのクライアント ID（未登録の ID を指定すると `400 invalid_client` を返します）。
-   - `redirect_uri`（必須）: コールバック URL。クライアントの `redirectUris` のいずれかと文字列として完全一致する必要があります（ループバックポートのワイルドカードや末尾スラッシュの正規化は行いません。不一致の場合は `400 invalid_request` を返します）。
+   - `client_id`（必須）: 登録済みのクライアント ID です。未登録の ID は `400 invalid_client` を返します。
+   - `redirect_uri`（必須）: コールバック URL です。クライアントの `redirectUris` のいずれかと、文字列として完全一致する必要があります。ループバックポートのワイルドカードや末尾スラッシュの正規化は行いません。一致しない場合は `400 invalid_request` を返します。
    - `response_type`（必須）: `code` を指定します。
-   - `scope`（必須）: 対応しているスコープをスペース区切りで指定します（[スコープ](#スコープ)を参照）。
+   - `scope`（必須）: 対応しているスコープをスペース区切りで指定します。[スコープ](#スコープ)を参照してください。
    - `state`（任意）: ユーザーのブラウザセッションに紐づくランダムな値です。指定した場合、リダイレクト時にそのまま返されます。
    - `access_type`（任意）: `online` または `offline`。リフレッシュトークンを受け取るには `access_type=offline` を指定します。
-   - `code_challenge` および `code_challenge_method`（任意）: PKCE パラメータです。使用する場合は、`code_challenge_method` に `S256` を、`code_challenge` に 43 文字の base64url ダイジェストを指定する必要があります。
+   - `code_challenge` および `code_challenge_method`（任意）: PKCE パラメータです。使用する場合、`code_challenge_method` は `S256` にします。`code_challenge` は 43 文字の base64url ダイジェストにする必要があります。
    - `prompt`（任意）: `consent`、`select_account`、`consent select_account`、`select_account consent` のいずれかを受け付けます。同意画面は常に表示されます。
    - `include_granted_scopes`（任意）: 指定する場合は `false` でなければなりません。
-3. **同意画面で承認または拒否します。** 同意画面には、ワークスペース内のすべてのテストユーザー（`Name · email`）と、要求されたスコープ文字列の一覧が表示されます。テストユーザーを選択し、**Approve** または **Deny** をクリックします。
+3. **同意画面で承認または拒否します。** 同意画面には、ワークスペース内のすべてのテストユーザー（`Name · email`）と、要求されたスコープ文字列が表示されます。テストユーザーを選択し、**Approve** または **Deny** をクリックします。
    - **Approve** をクリックすると、新しい接続（grant）が作成され、`<redirect_uri>?state=<state>&code=<code>` へリダイレクト（`302`）されます。
    - **Deny** をクリックすると、`<redirect_uri>?state=<state>&error=access_denied` へリダイレクト（`302`）されます。
 4. **コールバックハンドラで `state` を検証します。** クエリパラメータの `state` と、リダイレクト前に保存しておいたセッションの値を比較します。`error=access_denied` が含まれている場合は処理を中断し、`/oauth/token` は呼び出さないでください。
-5. **`POST /oauth/token` で認可コードを交換します。** `application/x-www-form-urlencoded` 形式のボディに、`grant_type=authorization_code`、`code`、`redirect_uri`（ステップ 2 と同一のもの）、クライアント認証情報、および `code_verifier`（PKCE を使用した場合）を含めて送信します。エンドポイントは以下の JSON を返します。
+5. **`POST /oauth/token` で認可コードを交換します。** `application/x-www-form-urlencoded` 形式のボディで送信します。`grant_type=authorization_code`、`code`、`redirect_uri`（ステップ 2 と同一の値）、クライアント認証情報、PKCE を使用した場合は `code_verifier` を含めます。認証情報については[クライアント認証](#クライアント認証)を参照してください。エンドポイントは以下の JSON を返します。
    ```json
    {
      "access_token": "...",
@@ -52,7 +65,16 @@ Calendarpit にはローカルの OAuth 2.0 認可サーバーが含まれてお
 
 ## HTTP リクエスト例
 
-この例ではクライアントの値とトークンをシェル変数で渡します。`PIT_CLIENT_ID`、`PIT_CLIENT_SECRET`、`PIT_REDIRECT_URI` にクライアントの値を、`PIT_CODE` にコールバックで受け取った認可コードを設定します。トークン交換の後、`PIT_REFRESH_TOKEN` に返された `refresh_token` を、`CALENDARPIT_ACCESS_TOKEN` に `access_token` を設定します。PKCE を使用した場合は、コード交換時に `--data-urlencode "code_verifier=$PIT_VERIFIER"` も渡してください。Profile のリクエストには、`openid`、`email`、`profile`、`userinfo.*` のいずれかのスコープが必要です。
+この例では、クライアントの値とトークンをシェル変数で渡します。
+
+- `PIT_CLIENT_ID`、`PIT_CLIENT_SECRET`、`PIT_REDIRECT_URI`: クライアントの値。
+- `PIT_CODE`: コールバックで受け取った認可コード。
+- `PIT_REFRESH_TOKEN`: トークン交換で返された `refresh_token`。
+- `CALENDARPIT_ACCESS_TOKEN`: トークン交換で返された `access_token`。
+
+PKCE を使用した場合は、コード交換時に `--data-urlencode "code_verifier=$PIT_VERIFIER"` も渡してください。
+
+Profile のリクエストには、`openid`、`email`、`profile`、`userinfo.*` のいずれかのスコープが必要です。
 
 <Tabs items={["Exchange","Refresh","Profile","Revoke"]}>
 
@@ -98,38 +120,71 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 </Tabs>
 
-## クライアント認証・有効期限・失効
+## クライアント認証、有効期限、失効
 
 ### クライアント認証
 
-`POST /oauth/token` のすべての呼び出し（`authorization_code` および `refresh_token`）では、PKCE を使用している場合でもクライアント認証が必須です。シークレットを持たないパブリッククライアントには対応していません。認証情報は以下の 2 通りの方法で指定できます。
+`POST /oauth/token` のすべての呼び出しで、クライアント認証が必須です。`authorization_code` と `refresh_token` のどちらも対象で、PKCE を使用している場合も同様です。シークレットを持たないパブリッククライアントには対応していません。
 
-- **フォームフィールド（`client_secret_post`）:** URL エンコードされたボディに `client_id` と `client_secret` を含めます。
-- **HTTP Basic（`client_secret_basic`）:** `Authorization: Basic <base64(urlencode(client_id):urlencode(client_secret))>` ヘッダーを送信します。両方が送信された場合は、`Authorization` ヘッダーが優先されます。
+認証情報は次の 2 通りの方法で指定できます。
 
-`POST /oauth/token` は、`Content-Type` ヘッダーの値にかかわらず、常にボディを `application/x-www-form-urlencoded` としてパースします。JSON ボディは読み取られません。JSON を送信すると、リクエストは `400 invalid_client` で失敗します（認証情報を HTTP Basic で渡している場合は `400 unsupported_grant_type` で失敗します）。
+- **フォームフィールド（`client_secret_post`）**: URL エンコードされたボディに `client_id` と `client_secret` を含めます。
+- **HTTP Basic（`client_secret_basic`）**: `Authorization: Basic <base64(urlencode(client_id):urlencode(client_secret))>` ヘッダーを送信します。
+
+両方を送信した場合は、`Authorization` ヘッダーが優先されます。
+
+<Callout type='warn'>
+  `POST /oauth/token` は、`Content-Type` ヘッダーの値にかかわらず、常にボディを
+  `application/x-www-form-urlencoded` としてパースします。JSON
+  ボディは読み取られません。JSON を送信すると `400 invalid_client`
+  で失敗します。認証情報を HTTP Basic で渡している場合は `400
+  unsupported_grant_type` で失敗します。
+</Callout>
 
 ### 有効期限と永続化
 
 | 対象                 | 有効期限                                                                              | 1 回限り | 再起動後の保持（SQLite）   |
 | -------------------- | ------------------------------------------------------------------------------------- | -------- | -------------------------- |
-| 保留中の同意 nonce   | 5 分（保留数の上限は 1,000 件。超過時は `429 rateLimitExceeded`）                     | はい     | いいえ                     |
-| 認可コード           | 60 秒（`client_id` と `redirect_uri` に紐づく）                                       | はい     | いいえ                     |
+| 保留中の同意 nonce   | 5 分                                                                                  | はい     | いいえ                     |
+| 認可コード           | 60 秒                                                                                 | はい     | いいえ                     |
 | アクセストークン     | 1 時間（`expires_in: 3600`）                                                          | いいえ   | はい（元の有効期限を維持） |
 | リフレッシュトークン | 有効期限なし（失効、テストユーザーの削除、リセット、または Fixture 読み込みまで有効） | いいえ   | はい                       |
 | 接続（grant）        | 失効、テストユーザーの削除、リセット、または Fixture 読み込みまで有効                 | いいえ   | はい                       |
 
-`:memory:` モードでは、プロセスが終了するとすべての OAuth の状態が失われます。詳細は[ストレージと再起動](/ja/storage/)を参照してください。
+- 保留中の同意は最大 1,000 件です。超過すると `429 rateLimitExceeded` を返します。
+- 認可コードは、その `client_id` と `redirect_uri` に紐づきます。
+- `:memory:` モードでは、プロセスが終了するとすべての OAuth の状態が失われます。詳細は[ストレージと再起動](/ja/storage/)を参照してください。
 
-### リフレッシュと失効
+### リフレッシュ
 
-- **リフレッシュ:** `grant_type=refresh_token` は新しい `access_token`（`expires_in: 3600`）を発行します。`refresh_token` の返却やローテーションは行われず、既存のリフレッシュトークンが引き続き有効です。リフレッシュリクエストに `scope` を含める場合は、認可時のスペース区切りのスコープ文字列と完全一致する必要があります。一致しない場合は `400 invalid_scope` で失敗します。
-- **失効（`POST /oauth/revoke`）:** `token` フォームフィールド（または `?token=` クエリパラメータ）にアクセストークンまたはリフレッシュトークンを渡します。クライアント認証は不要です。どちらのトークンを失効させても接続（grant）全体が失効し、その接続に紐づくすべてのアクセストークン、リフレッシュトークン、認可コードが削除され、watch チャネルが停止します。未知のトークンを渡した場合は空のボディで `200` を返し、`token` が未指定、空、または空白のみの場合は `400 invalidParameter` を返します。
-- **その他の無効化トリガー:** 管理画面からの接続の失効（`POST /__calendarpit/connections/{grantId}/revoke`）やテストユーザーの削除（`DELETE /__calendarpit/users/{id}`）を行うと、対象の接続またはユーザーのトークンが無効化され、watch チャネルが停止します。`POST /__calendarpit/reset` または `POST /__calendarpit/fixtures` を呼び出すと、すべての接続、トークン、認可コード、保留中の同意が削除され、すべての watch チャネルが停止します。詳細は[テスト制御 API](/ja/test-control/)を参照してください。
+`grant_type=refresh_token` は新しい `access_token`（`expires_in: 3600`）を発行します。
+
+- `refresh_token` の返却やローテーションは行いません。既存のリフレッシュトークンが引き続き有効です。
+- リフレッシュリクエストに `scope` を含める場合は、認可時のスペース区切りのスコープ文字列と完全一致する必要があります。一致しない場合は `400 invalid_scope` で失敗します。
+
+### 失効
+
+トークンを失効させるには、`POST /oauth/revoke` を呼び出します。
+
+- `token` フォームフィールド、または `?token=` クエリパラメータに、アクセストークンまたはリフレッシュトークンを渡します。
+- クライアント認証は不要です。
+- どちらのトークンを失効させても、接続（grant）全体が失効します。その接続のアクセストークン、リフレッシュトークン、認可コードがすべて削除され、watch チャネルが停止します。
+- 未知のトークンを渡した場合は、空のボディで `200` を返します。
+- `token` が未指定、空、または空白のみの場合は `400 invalidParameter` を返します。
+
+次の操作でもトークンが無効になります。
+
+- **接続の失効**（管理画面、`POST /__calendarpit/connections/{grantId}/revoke`）: その接続のトークンが無効化され、watch チャネルが停止します。
+- **テストユーザーの削除**（`DELETE /__calendarpit/users/{id}`）: そのユーザーのトークンが無効化され、watch チャネルが停止します。
+- **リセットまたは Fixture の読み込み**（`POST /__calendarpit/reset` または `POST /__calendarpit/fixtures`）: すべての接続、トークン、認可コード、保留中の同意が削除され、すべての watch チャネルが停止します。
+
+詳細は[テスト制御 API](/ja/test-control/)を参照してください。
 
 ## スコープ
 
 すべての `GET /oauth/authorize` リクエストには、対応しているスコープを少なくとも 1 つ含める必要があります。それ以外のスコープを要求すると `400 invalid_scope` を返します。
+
+### Calendar API のスコープ
 
 | スコープ                                                         | 許可される操作                                                                                                                                                                     |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -142,27 +197,54 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 | `https://www.googleapis.com/auth/calendar.calendars.readonly`    | `calendars.get`                                                                                                                                                                    |
 | `https://www.googleapis.com/auth/calendar.freebusy`              | `freebusy.query`                                                                                                                                                                   |
 | `https://www.googleapis.com/auth/calendar.events.freebusy`       | `freebusy.query`                                                                                                                                                                   |
-| `openid`                                                         | `GET /userinfo` — `{ sub, id }` を返します（どちらもテストユーザー ID が設定されます）                                                                                             |
-| `email`, `https://www.googleapis.com/auth/userinfo.email`        | `GET /userinfo` — `{ sub, id }` に加えて `email`、`verified_email: true`、`email_verified: true` を返します                                                                        |
-| `profile`, `https://www.googleapis.com/auth/userinfo.profile`    | `GET /userinfo` — `{ sub, id }` に加えて `name` を返します                                                                                                                         |
 
-アクセストークンが未指定、期限切れ、または失効している場合は、`WWW-Authenticate: Bearer` ヘッダーとともに `401`（`authError`）を返します。有効なトークンであっても、そのエンドポイントに必要なスコープが含まれていない場合は `403`（`insufficientPermissions`）を返します。また、`channels.stop` にはチャネルを開いた接続（grant）のトークンが必要であり、別の接続のトークンでは `404`（`notFound`）を返します。`/oauth/*` エンドポイントとは異なり、`GET /userinfo` および Calendar API エンドポイントは Google API のエラーエンベロープ形式でエラーを返します。詳細は[トラブルシューティング](/ja/troubleshooting/)を参照してください。
+### プロフィールのスコープ
 
-`openid` スコープは、`{ sub, id }` を返す `GET /userinfo` へのアクセスのみを許可します。Calendarpit は `/oauth/token` から `id_token` を返さず、`/.well-known/openid-configuration` や JWKS の配信も行いません。また、`/userinfo` のレスポンスに `picture`、`given_name`、`family_name`、`locale` は含まれません。
+これらのスコープでは `GET /userinfo` を呼び出せます。レスポンスには常に `{ sub, id }` が含まれ、どちらにもテストユーザー ID が設定されます。
+
+| スコープ                                                      | `GET /userinfo` のレスポンス                                         |
+| ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `openid`                                                      | `{ sub, id }`                                                        |
+| `email`, `https://www.googleapis.com/auth/userinfo.email`     | `email`、`verified_email: true`、`email_verified: true` が加わります |
+| `profile`, `https://www.googleapis.com/auth/userinfo.profile` | `name` が加わります                                                  |
+
+<Callout type="info">
+`openid` スコープは、`{ sub, id }` を返す `GET /userinfo` へのアクセスのみを許可します。Calendarpit は次のことを行いません。
+
+- `/oauth/token` から `id_token` を返す
+- `/.well-known/openid-configuration` や JWKS を配信する
+- `/userinfo` のレスポンスに `picture`、`given_name`、`family_name`、`locale` を含める
+
+</Callout>
+
+### トークンとスコープのエラー
+
+| 条件                                                   | レスポンス                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------- |
+| アクセストークンが未指定、期限切れ、または失効している | `401`（`authError`）と `WWW-Authenticate: Bearer` ヘッダー |
+| 有効なトークンに、エンドポイントに必要なスコープがない | `403`（`insufficientPermissions`）                         |
+| 別の接続のトークンで `channels.stop` を呼び出した      | `404`（`notFound`）                                        |
+
+`channels.stop` には、チャネルを開いた接続（grant）のトークンが必要です。
+
+`/oauth/*` エンドポイントとは異なり、`GET /userinfo` と Calendar API エンドポイントは Google API のエラーエンベロープ形式でエラーを返します。詳細は[トラブルシューティング](/ja/troubleshooting/)を参照してください。
 
 ## 未対応の OAuth 機能
 
-`GET /oauth/authorize` でのバリデーションエラーは、`redirect_uri` へリダイレクトせず、ブラウザに直接ステータス `400` の JSON レスポンス（`{"error": "<reason>", "error_description": "<message>"}`）を返します。
+`GET /oauth/authorize` のバリデーションエラーは、ブラウザに直接返されます。`redirect_uri` へはリダイレクトしません。レスポンスはステータス `400` の JSON（`{"error": "<reason>", "error_description": "<message>"}`）です。
 
 - **未登録の `client_id`**: `400 invalid_client`（`"Unknown client."`）を返します。
-- **未登録の `redirect_uri`**（クライアントの `redirectUris` のいずれとも文字列として完全一致しないもの）: `400 invalid_request`（`"Unregistered redirect URI."`）を返します。
-- **未知の認可パラメータ**（`nonce`、`login_hint`、`hd`、`request`、`request_uri`、`enable_granular_consent` など）: `400 unsupported_feature` を返します。
-- **非対話型の同意**（`prompt=none`、またはステップ 2 に記載された 4 つ以外の `prompt` 値）: `400 unsupported_feature` を返します。
+- **未登録の `redirect_uri`**: `400 invalid_request`（`"Unregistered redirect URI."`）を返します。クライアントの `redirectUris` のいずれとも文字列として完全一致しない値が対象です。
+- **未知の認可パラメータ**: `400 unsupported_feature` を返します。`nonce`、`login_hint`、`hd`、`request`、`request_uri`、`enable_granular_consent` などが該当します。
+- **非対話型の同意**: `400 unsupported_feature` を返します。`prompt=none`、またはステップ 2 に記載した 4 つ以外の `prompt` 値が該当します。
 - **増分認可（Incremental authorization）**（`include_granted_scopes=true`）: `400 unsupported_feature` を返します。
 - **その他のレスポンスタイプ**（`response_type=code` 以外）: `400 unsupported_response_type` を返します。
 - **PKCE の `plain` メソッド**: `400 invalid_request` を返します。
-- **一覧にないスコープ**（`calendar.events.owned`、`calendar.app.created`、`calendar.settings.readonly`、`calendar.acls`、または書き込みスコープの `calendar.calendars` など）: `400 invalid_scope` を返します。
-- **`POST /oauth/token` での未対応の grant type**: クライアント認証の成功後に `400 unsupported_grant_type` を返します。
-- **API キー（`key=` クエリパラメータ）**: API リクエストのシステムパラメータとして受け付けられますが、Bearer トークン認証の代わりにはなりません。
+- **一覧にないスコープ**: `400 invalid_scope` を返します。`calendar.events.owned`、`calendar.app.created`、`calendar.settings.readonly`、`calendar.acls`、書き込みスコープの `calendar.calendars` などが該当します。
+
+その他の OAuth の制限:
+
+- **未対応の grant type**: `POST /oauth/token` は、クライアント認証の成功後に `400 unsupported_grant_type` を返します。
+- **API キー（`key=` クエリパラメータ）**: API リクエストのシステムパラメータとして受け付けますが、Bearer トークン認証の代わりにはなりません。
 
 未対応の Google 機能の一覧については、[対応範囲と制限](/ja/scope/)を参照してください。

@@ -1,5 +1,6 @@
 ---
 title: Quick start
+icon: Rocket
 description: Start Calendarpit without cloning a repository and connect your application.
 ---
 
@@ -21,13 +22,38 @@ docker run --rm \
   ghcr.io/iktakahiro/calendarpit:0.9.0
 ```
 
-No Google account, Google Cloud project, external database, `.env` file, or provider credentials are needed. Both commands start the API, local OAuth server, and admin UI on the same origin. Compose and standalone downloads are covered in [Installation](/installation/).
+Both commands start the API, the local OAuth server, and the admin UI on the same origin.
+
+You do not need any of the following:
+
+- A Google account or Google Cloud project
+- An external database
+- A `.env` file
+- Provider credentials
+
+For Compose and standalone downloads, see [Installation](/installation/).
 
 ## Open the admin UI
 
-Open `http://127.0.0.1:4173`. The built-in fixture includes test users `alex` and `sam`, three calendars, and a planning event on `2026-10-19`. Changes made through the API appear automatically.
+Open `http://127.0.0.1:4173`. Changes made through the API appear there automatically.
 
-The CLI saves data in `.calendarpit/calendarpit.sqlite` under your current directory. Docker saves it in the mounted volume. For disposable tests, pass `--database :memory:` to the CLI or `-e CALENDARPIT_DATABASE=:memory:` to Docker. See [Storage and restarts](/storage/).
+The built-in fixture includes:
+
+- Test users `alex` and `sam`
+- Three calendars
+- A planning event on `2026-10-19`
+
+### Where data is stored
+
+- **CLI**: `.calendarpit/calendarpit.sqlite` under your current directory.
+- **Docker**: the mounted volume.
+
+For disposable tests, use in-memory storage:
+
+- **CLI**: pass `--database :memory:`.
+- **Docker**: pass `-e CALENDARPIT_DATABASE=:memory:`.
+
+See [Storage and restarts](/storage/).
 
 ## Check the health endpoint
 
@@ -50,16 +76,25 @@ curl http://127.0.0.1:4173/__calendarpit/health
 }
 ```
 
-Version 0.9.0 is a preview. Its supported compatibility scope is documented, and the API may change before 1.0.
+<Callout type="info">
+
+Version 0.9.0 is a preview. Its supported compatibility scope is documented, but the API may change before 1.0.
+
+</Callout>
 
 ## Connect your app
 
-Follow [Connect your app](/connect/) to point your SDK and OAuth flow at Calendarpit. Use [Fixtures](/fixtures/) to register local client credentials and exact callback URIs. The built-in `sample-app` / `local-sample-secret` credentials are public test values with callback `http://127.0.0.1:4175/callback`.
+1. Follow [Connect your app](/connect/) to point your SDK and OAuth flow at Calendarpit.
+2. Use [Fixtures](/fixtures/) to register local client credentials and exact callback URIs.
 
-The optional source sample walks through approval, event creation, FreeBusy, watch delivery, and revocation. See the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md) for setup. The sample is separate from the distributed server.
+The built-in `sample-app` / `local-sample-secret` credentials are public test values. Their callback is `http://127.0.0.1:4175/callback`.
+
+### Optional source sample
+
+The source sample walks through approval, event creation, FreeBusy, watch delivery, and revocation. It is separate from the distributed server. For setup, see the [development guide](https://github.com/iktakahiro/calendarpit/blob/main/docs/development.md).
 
 ## Next steps
 
-- [Run and configure](/running/) — ports, fixtures, and environment variables.
-- [Test control API](/test-control/) — reset state and drain deliveries between tests.
-- [Scope and limitations](/scope/) — implemented compatibility and explicit exclusions.
+- [Run and configure](/running/): ports, fixtures, and environment variables.
+- [Test control API](/test-control/): reset state and drain deliveries between tests.
+- [Scope and limitations](/scope/): implemented compatibility and explicit exclusions.

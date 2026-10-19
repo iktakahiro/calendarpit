@@ -3,44 +3,224 @@ title: Events, recurrence and time
 description: How Calendarpit expands recurring events, simulates invitations and meetings locally, and handles time zones, DST, and free/busy intervals.
 ---
 
-Calendarpit expands recurring series, syncs invitations between local test users, and calculates time ranges and free/busy intervals locally. For supported endpoints and fields, see [Calendar API compatibility](/compatibility/).
+Calendarpit handles these locally:
+
+- expanding recurring series
+- syncing invitations between local test users
+- calculating time ranges and free/busy intervals
+
+For supported endpoints and fields, see [Calendar API compatibility](/compatibility/).
 
 ## Recurrence
 
-In `events.list`, `singleEvents=false` (default) returns series masters and stored exceptions; `singleEvents=true` expands occurrences.
+You can read a recurring event as a series or as expanded occurrences.
 
-`GET /calendar/v3/calendars/{calendarId}/events/{eventId}/instances` always returns expanded occurrences for one series (with `singleEvents=false`, cancelled exceptions appear without `showDeleted`). It accepts the `events.list` parameters (such as `timeMin`, `timeMax`, `showDeleted`, `maxResults`, `pageToken`, and `timeZone`) plus `originalStart`, rejects `syncToken`, and omits `nextSyncToken`.
+In `events.list`, `singleEvents` controls the shape:
 
-Each instance carries `recurringEventId`, `originalStartTime`, and a deterministic ID (`<seriesId>_<YYYYMMDDTHHMMSSZ>` in UTC for timed events, or `<seriesId>_<YYYYMMDD>` for all-day events). On `/events/{instanceId}`, `GET` returns the occurrence even if no exception is stored; `PUT` and `PATCH` store it as an exception; `DELETE` stores a cancelled exception. Updating a master updates its instances and cancels stored exceptions the new rule no longer produces; deleting a master cancels its exceptions. With `singleEvents=true`, [incremental sync](/sync/) reports removed occurrences as `cancelled`. `freebusy.query` uses the same expansion.
+- **`singleEvents=false`** (default): returns series masters and stored exceptions.
+- **`singleEvents=true`**: expands occurrences.
 
-### Rules, limits, and DST
+### The instances endpoint
 
-`recurrence` accepts 1–20 `RRULE`, `EXRULE`, `RDATE`, or `EXDATE` lines (an empty array stores a non-recurring event). Other lines (such as `DTSTART`), missing or sub-daily `FREQ` (`HOURLY`, `MINUTELY`, `SECONDLY`), unlisted uppercase rule parts (such as `BYHOUR`), or duplicate rule parts return `400 unsupportedFeature`. Malformed parts or invalid values, combinations, or line counts return `400 invalidParameter`.
+`GET /calendar/v3/calendars/{calendarId}/events/{eventId}/instances` always returns expanded occurrences for one series.
 
-| Aspect              | Supported behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FREQ`              | `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Rule parts          | `INTERVAL` (1–10000), `COUNT` (1–10000) or `UNTIL` (not both), `BYDAY` (`MO`–`SU`, optional `±1`–`5` on `MONTHLY`/`YEARLY`), `BYMONTHDAY` (`±1`–`31`), `BYMONTH` (`1`–`12`), `BYSETPOS` (`±1`–`366`), `WKST`                                                                                                                                                                                                                                                                                                                                                  |
-| Time zone & `UNTIL` | Timed series require `start.timeZone`. Timed `UNTIL` must be UTC (`...Z`). All-day `UNTIL` is a date.                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `RDATE` / `EXDATE`  | Timed series allow `;TZID=<zone>`. All-day series require `;VALUE=DATE`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Limits              | At most 10,000 instances per expansion (per request window, or for the whole series when there is no `timeMax`), and at most 100 years (366×100 days) from `DTSTART` for finite series expanded without `timeMax`, `timeMin`, and `timeMax` (`400 unsupportedFeature` if exceeded). Unbounded series (no `COUNT`/`UNTIL`) require `timeMax` when expanding (`singleEvents=true`) or when `timeMin` is passed to `events.list`. One series over a limit fails the whole list or `freeBusy` request. Deleted series still count; send `timeMax` or reset state. |
-| DST                 | Rules keep wall-clock time in `start.timeZone`. Nonexistent local times (spring-forward gap) fail with `400 unsupportedFeature` when an expansion reaches the gap occurrence (`instances`, `events.list` with `singleEvents=true` or with `timeMin`/`timeMax`, instance IDs for occurrences within about two days of the gap, and `freeBusy`). The insert itself succeeds; the error fails the whole request. Ambiguous times (fall-back fold) use the earlier pre-transition offset, such as `-04:00` in New York.                                           |
+- With `singleEvents=false`, cancelled exceptions appear without `showDeleted`.
+- It accepts the `events.list` parameters, plus `originalStart`. Examples include `timeMin`, `timeMax`, `showDeleted`, `maxResults`, `pageToken`, and `timeZone`.
+- It rejects `syncToken`.
+- It omits `nextSyncToken`.
+
+### Instance IDs and exceptions
+
+Each instance carries `recurringEventId`, `originalStartTime`, and a deterministic ID:
+
+- **Timed events**: `<seriesId>_<YYYYMMDDTHHMMSSZ>`, in UTC.
+- **All-day events**: `<seriesId>_<YYYYMMDD>`.
+
+On `/events/{instanceId}`, each method works on a single occurrence:
+
+| Method         | Behavior                                                |
+| -------------- | ------------------------------------------------------- |
+| `GET`          | Returns the occurrence, even if no exception is stored. |
+| `PUT`, `PATCH` | Stores the occurrence as an exception.                  |
+| `DELETE`       | Stores a cancelled exception.                           |
+
+Changes to the master affect its occurrences:
+
+- Updating a master updates its instances. It also cancels stored exceptions that the new rule no longer produces.
+- Deleting a master cancels its exceptions.
+
+Expansion also applies to other features:
+
+- With `singleEvents=true`, [incremental sync](/sync/) reports removed occurrences as `cancelled`.
+- `freebusy.query` uses the same expansion.
+
+### Rules and validation
+
+`recurrence` accepts 1–20 `RRULE`, `EXRULE`, `RDATE`, or `EXDATE` lines. An empty array stores a non-recurring event.
+
+These return `400 unsupportedFeature`:
+
+- other lines, such as `DTSTART`
+- a missing `FREQ`
+- a sub-daily `FREQ` (`HOURLY`, `MINUTELY`, `SECONDLY`)
+- uppercase rule parts not listed below, such as `BYHOUR`
+- duplicate rule parts
+
+These return `400 invalidParameter`:
+
+- malformed parts
+- invalid values, combinations, or line counts
+
+Supported rule parts:
+
+| Rule part    | Supported values                                                       |
+| ------------ | ---------------------------------------------------------------------- |
+| `FREQ`       | `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`                                 |
+| `INTERVAL`   | 1–10000                                                                |
+| `COUNT`      | 1–10000. Use `COUNT` or `UNTIL`, not both.                             |
+| `UNTIL`      | Timed `UNTIL` must be UTC (`...Z`). All-day `UNTIL` is a date.         |
+| `BYDAY`      | `MO`–`SU`. On `MONTHLY` and `YEARLY`, an optional `±1`–`5` is allowed. |
+| `BYMONTHDAY` | `±1`–`31`                                                              |
+| `BYMONTH`    | `1`–`12`                                                               |
+| `BYSETPOS`   | `±1`–`366`                                                             |
+| `WKST`       | Supported                                                              |
+
+Time zone requirements:
+
+- **Timed series**: require `start.timeZone`.
+- **`RDATE` and `EXDATE`**: Timed series allow `;TZID=<zone>`. All-day series require `;VALUE=DATE`.
+
+### Expansion limits
+
+Expansion has two limits. Exceeding either returns `400 unsupportedFeature`.
+
+- **Instance count**: At most 10,000 instances per expansion. The count applies per request window, or to the whole series when there is no `timeMax`.
+- **Time span**: At most 100 years (366×100 days) from `DTSTART`. This applies to finite series expanded without `timeMax`, and to `timeMin` and `timeMax`.
+
+Unbounded series (no `COUNT` or `UNTIL`) require `timeMax` in these cases:
+
+- when expanding (`singleEvents=true`)
+- when `timeMin` is passed to `events.list`
+
+<Callout type="warn">
+
+One series over a limit fails the whole list or `freeBusy` request. Deleted series still count. Send `timeMax` or reset state.
+
+</Callout>
+
+### Daylight saving time (DST)
+
+Rules keep wall-clock time in `start.timeZone`.
+
+**Nonexistent local times** (the spring-forward gap) fail with `400 unsupportedFeature` when an expansion reaches the gap occurrence. This affects:
+
+- `instances`
+- `events.list` with `singleEvents=true` or with `timeMin`/`timeMax`
+- instance IDs for occurrences within about two days of the gap
+- `freeBusy`
+
+The insert itself succeeds. The error fails the whole request.
+
+**Ambiguous times** (the fall-back fold) use the earlier, pre-transition offset, such as `-04:00` in New York.
 
 ## Invitations, reminders, and local meetings
 
 Calendarpit never sends email or calls Google Meet.
 
-- **Invitations:** `attendees` accepts up to 200 unique emails (`displayName`, `optional`, `resource`, `additionalGuests`, `comment`, and `responseStatus`: `needsAction`, `accepted`, `tentative`, `declined`). Inviting a local test user with a primary calendar writes a copy (same `id` and `iCalUID`) to that calendar. Organizer updates and cancellations propagate to copies and trigger [watch notifications](/watch/); removing an attendee cancels their copy. `reminders` and `extendedProperties.private` stay per-copy; `extendedProperties.shared` comes from the organizer.
-- **RSVP and invitee edits:** Invitees must use `PATCH` (`PUT` returns `403 forbiddenForNonOrganizer`) and may only edit their own `responseStatus` and `comment` (or set `attendeesOmitted: true` with only their own entry), plus `reminders`, `colorId`, `transparency`, and `extendedProperties`. RSVP changes update the organizer and other copies (an RSVP to one instance of a series creates an exception in the organizer's calendar). Declining sets the invitee's copy to `transparent` (other `attendees` patches reset it to `opaque`). The next organizer update overwrites `colorId` and `transparency` changes on a copy.
-- **Guest flags:** `guestsCanModify` (`false`), `guestsCanInviteOthers` (`true`), and `guestsCanSeeOtherGuests` (`true`) round-trip as booleans, and only the organizer can change them. They are stored only and do not change what invitees may edit.
-- **`sendUpdates`:** `all` records one entry per write with all attendees except the organizer in `recipients` (including removed attendees; for an invitee's `REPLY`, the recipient is the organizer). `externalOnly` records only recipients who are not local users. Entries (`REQUEST`, `CANCEL`, or `REPLY`) appear in `GET /__calendarpit/state` under `notifications` (last 200; see [Test control API](/test-control/)). `none` (default) records nothing. Local copies sync regardless.
-- **Reminders:** `{ useDefault: boolean, overrides?: [{ method: "email" | "popup", minutes: 0..40320 }] }` (max 5 overrides when `useDefault: false`). Stored only; never fired.
-- **Conference data:** Non-null `conferenceData` requires `?conferenceDataVersion=1`. A `hangoutsMeet` `createRequest.requestId` generates a deterministic ID, `hangoutLink`, and a `video` entry point at `https://meet.calendarpit.invalid/<id>`. `conferenceData: null` clears it.
+### Invitations
+
+`attendees` accepts up to 200 unique emails. Each attendee supports `displayName`, `optional`, `resource`, `additionalGuests`, `comment`, and `responseStatus`. `responseStatus` is one of `needsAction`, `accepted`, `tentative`, or `declined`.
+
+Inviting a local test user with a primary calendar writes a copy to that calendar. The copy has the same `id` and `iCalUID`.
+
+- Organizer updates and cancellations propagate to copies and trigger [watch notifications](/watch/).
+- Removing an attendee cancels their copy.
+- `reminders` and `extendedProperties.private` stay per-copy.
+- `extendedProperties.shared` comes from the organizer.
+
+### RSVP and invitee edits
+
+Invitees must use `PATCH`. `PUT` returns `403 forbiddenForNonOrganizer`.
+
+Invitees may only edit:
+
+- their own `responseStatus` and `comment`, or set `attendeesOmitted: true` with only their own entry
+- `reminders`
+- `colorId`
+- `transparency`
+- `extendedProperties`
+
+Effects of invitee edits:
+
+- RSVP changes update the organizer and other copies.
+- An RSVP to one instance of a series creates an exception in the organizer's calendar.
+- Declining sets the invitee's copy to `transparent`. Other `attendees` patches reset it to `opaque`.
+- The next organizer update overwrites `colorId` and `transparency` changes on a copy.
+
+### Guest flags
+
+| Flag                      | Default |
+| ------------------------- | ------- |
+| `guestsCanModify`         | `false` |
+| `guestsCanInviteOthers`   | `true`  |
+| `guestsCanSeeOtherGuests` | `true`  |
+
+- These flags round-trip as booleans.
+- Only the organizer can change them.
+- They are stored only. They do not change what invitees may edit.
+
+### `sendUpdates`
+
+| Value            | What Calendarpit records                                                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `all`            | One entry per write. `recipients` holds all attendees except the organizer, including removed attendees. For an invitee's `REPLY`, the recipient is the organizer. |
+| `externalOnly`   | Only recipients who are not local users.                                                                                                                           |
+| `none` (default) | Nothing.                                                                                                                                                           |
+
+- Entries (`REQUEST`, `CANCEL`, or `REPLY`) appear in `GET /__calendarpit/state` under `notifications`. It keeps the last 200. See [Test control API](/test-control/).
+- Local copies sync regardless of `sendUpdates`.
+
+### Reminders
+
+- **Shape**: `{ useDefault: boolean, overrides?: [{ method: "email" | "popup", minutes: 0..40320 }] }`.
+- **Limit**: At most 5 overrides when `useDefault: false`.
+- **Behavior**: Reminders are stored only. They never fire.
+
+### Conference data
+
+- Non-null `conferenceData` requires `?conferenceDataVersion=1`.
+- A `hangoutsMeet` `createRequest.requestId` generates a deterministic ID, a `hangoutLink`, and a `video` entry point at `https://meet.calendarpit.invalid/<id>`.
+- `conferenceData: null` clears it.
 
 ## Time semantics and free/busy
 
-Event intervals are half-open `[start, end)`, with `end` after `start`. List filters match `start < timeMax` and `end > timeMin`, so adjacent events do not overlap.
+Event intervals are half-open `[start, end)`. `end` must be after `start`.
 
-- **All-day events:** `start.date` and exclusive `end.date` (`YYYY-MM-DD`) use midnight in the calendar's time zone, including on 23-hour and 25-hour DST days.
-- **Timed events:** `dateTime` requires a UTC offset/`Z` or IANA `timeZone`. Unoffset local times in a DST gap or overlap return `400`. Responses format `dateTime` with a numeric offset in the requested `timeZone` (or the calendar's zone). The response's `timeZone` is also the requested or calendar zone, not the event's stored zone.
-- **Free/busy (`POST /calendar/v3/freeBusy`):** Queries up to 50 calendars and returns busy ranges formatted in `timeZone` (default `UTC`). It expands recurring series, excludes `transparent` (free, including declined invitations) and `cancelled` (deleted) events, merges overlapping or adjacent intervals, and clips them to `[timeMin, timeMax)`. Unknown or unowned calendars return a per-calendar `notFound` error with `busy: []`.
+List filters match `start < timeMax` and `end > timeMin`. As a result, adjacent events do not overlap.
+
+### All-day events
+
+- `start.date` and exclusive `end.date` use `YYYY-MM-DD`.
+- They use midnight in the calendar's time zone.
+- This also holds on 23-hour and 25-hour DST days.
+
+### Timed events
+
+- `dateTime` requires a UTC offset or `Z`, or an IANA `timeZone`.
+- Unoffset local times in a DST gap or overlap return `400`.
+- Responses format `dateTime` with a numeric offset in the requested `timeZone`, or in the calendar's zone.
+- The response's `timeZone` is also the requested or calendar zone. It is not the event's stored zone.
+
+### Free/busy
+
+`POST /calendar/v3/freeBusy` queries up to 50 calendars. It returns busy ranges formatted in `timeZone` (default `UTC`).
+
+When it computes busy ranges, it:
+
+- expands recurring series
+- excludes `transparent` events (free, including declined invitations)
+- excludes `cancelled` (deleted) events
+- merges overlapping or adjacent intervals
+- clips them to `[timeMin, timeMax)`
+
+Unknown or unowned calendars return a per-calendar `notFound` error with `busy: []`.
