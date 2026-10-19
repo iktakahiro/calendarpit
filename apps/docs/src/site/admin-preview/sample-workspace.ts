@@ -46,12 +46,6 @@ export const sampleCalendars = [
   },
 ];
 
-/** Every test user, as the users screen lists them. */
-export const sampleUsers = [
-  { ...sampleUser, calendars: 2 },
-  { id: 'sam', name: 'Sam Rivera', email: 'sam@example.test', calendars: 1 },
-];
-
 /** Preview week: Sunday 2026-10-18 through Saturday 2026-10-24. */
 export const sampleWeek = [
   { weekday: 'Sun', date: 18 },

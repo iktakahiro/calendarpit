@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   Signal,
   Trash2,
-  Users,
   X,
 } from 'lucide-react';
 import type { AdminSection } from './admin-window';
@@ -33,7 +32,6 @@ import {
   sampleRequests,
   sampleToday,
   sampleUser,
-  sampleUsers,
   sampleWeek,
 } from './sample-workspace';
 
@@ -42,7 +40,6 @@ export type AdminView =
   | 'schedule-week'
   | 'schedule-day'
   | 'event-editor'
-  | 'users'
   | 'calendars'
   | 'connections'
   | 'watch'
@@ -94,16 +91,6 @@ export const adminViews: Record<AdminView, ViewDefinition> = {
     path: '/?event=planning',
     shell: scheduleShell,
     body: () => <EventEditing />,
-  },
-  users: {
-    path: '/users',
-    shell: {
-      section: 'users',
-      eyebrow: 'Directory',
-      title: 'Users',
-      lede: 'Create and edit local test identities. No login or password required.',
-    },
-    body: () => <UserDirectory />,
   },
   calendars: {
     path: '/calendars',
@@ -454,7 +441,7 @@ function EventEditor() {
 /** One entry in a directory list: a title and up to two detail lines. */
 type DirectoryEntry = { id: string; title: string; lines: string[] };
 
-/** List-and-editor layout shared by the users and calendars screens. */
+/** List-and-editor layout of the calendars screen. */
 function Directory({
   listTitle,
   listSub,
@@ -468,7 +455,7 @@ function Directory({
   listSub: string;
   listIcon: ReactNode;
   entries: DirectoryEntry[];
-  /** Entity name in the editor, such as `user`. */
+  /** Entity name in the editor, such as `calendar`. */
   kind: string;
   fields: { label: string; value: string }[];
   /** Optional checkbox under the fields, such as the primary calendar. */
@@ -499,9 +486,7 @@ function Directory({
       <div className='am-panel'>
         <div className='am-panel-head'>
           <div>
-            <div className='am-eyebrow'>
-              {kind === 'user' ? 'Test user' : 'Calendar'}
-            </div>
+            <div className='am-eyebrow'>{kind}</div>
             <strong>Edit {kind}</strong>
             <small>{selected?.id}</small>
           </div>
@@ -535,29 +520,6 @@ function Directory({
         </div>
       </div>
     </div>
-  );
-}
-
-function UserDirectory() {
-  return (
-    <Directory
-      listTitle='Test users'
-      listSub={`${sampleUsers.length} users in this workspace`}
-      listIcon={<Users />}
-      entries={sampleUsers.map((user) => ({
-        id: user.id,
-        title: user.name,
-        lines: [
-          user.email,
-          `${user.calendars} ${user.calendars === 1 ? 'calendar' : 'calendars'}`,
-        ],
-      }))}
-      kind='user'
-      fields={[
-        { label: 'Name', value: sampleUser.name },
-        { label: 'Email', value: sampleUser.email },
-      ]}
-    />
   );
 }
 

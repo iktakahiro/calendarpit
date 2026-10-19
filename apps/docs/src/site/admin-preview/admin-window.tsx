@@ -87,7 +87,7 @@ export function BrowserFrame({
 
 /**
  * The admin UI shell: sidebar with the selected user and calendar, section
- * navigation, storage mode, and the section header.
+ * navigation, and the section header. The storage footer is left out.
  */
 export function AdminShell({
   section,
@@ -145,13 +145,6 @@ export function AdminShell({
               {count !== undefined && <span className='am-count'>{count}</span>}
             </span>
           ))}
-        </div>
-        <div className='am-rail-foot'>
-          <span>
-            <span className='am-tag'>In-memory</span> Changes live here until
-            you reset or restart.
-          </span>
-          <code>127.0.0.1:4173</code>
         </div>
       </div>
       <div className='am-main'>

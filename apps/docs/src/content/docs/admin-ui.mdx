@@ -28,7 +28,7 @@ Each section header has a **Refresh** button that reloads the workspace right aw
 | -------------- | --------------- | ---------------------------------------------------------- |
 | `/`            | **Schedule**    | View, create, edit, and delete events.                     |
 | `/users`       | **Users**       | Create, edit, and delete test users.                       |
-| `/calendars`   | **Calendars**   | Manage calendars for the selected test user.               |
+| `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.        |
 | `/connections` | **Connections** | Inspect and revoke OAuth grants.                           |
 | `/watch`       | **Watch**       | Inspect watch channels and webhook deliveries (read-only). |
 | `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth traffic.   |
@@ -42,7 +42,9 @@ The admin UI has no authentication. Calendarpit binds to `127.0.0.1` by default.
 
 ## Check the events your app writes
 
-**Schedule** shows the events of the selected calendar. The default date is `2026-10-19`, the date of the built-in fixture's planning event.
+**Schedule** shows the events in the selected calendar. To create the calendars themselves, use [Calendars](#manage-test-users-and-calendars).
+
+The default date is `2026-10-19`, the date of the built-in fixture's planning event.
 
 - **Day** shows a 24-hour track and the list of events. **Week** shows a time grid from Sunday to Saturday.
 - Use the arrows, the date picker, and **Today** to move between dates. The URL keeps the date and the layout (`?date=2026-10-19&view=week`).
@@ -86,12 +88,10 @@ Test users are local identities. They have no password. Your app signs in as one
 - Deleting a user also deletes their calendars and events.
 - Deleting a user also revokes their OAuth connections, which stops their watch channels.
 
-<AdminScreen
-  view='users'
-  caption='Users: select a test user to edit it, or create a new one.'
-/>
+**Calendars** manages the calendars that the selected user owns, not their events. Create, rename, and delete calendars, and set each calendar's IANA time zone (`Asia/Tokyo` by default) and which calendar is primary.
 
-**Calendars** lists the selected user's calendars. You can set the name, the IANA time zone (`Asia/Tokyo` by default), and which calendar is primary.
+- The primary calendar is the one that the `primary` calendar ID resolves to in the Calendar API.
+- Changing a calendar's time zone invalidates sync tokens issued without an explicit `timeZone` parameter. See [Incremental sync](/sync/).
 
 <AdminScreen
   view='calendars'

@@ -307,20 +307,6 @@
   background: rgb(255 255 255 / 0.14);
   color: var(--am-surface);
 }
-.am-rail-foot {
-  display: grid;
-  gap: 6px;
-  margin-top: auto;
-  padding: 10px 4px 0;
-  border-top: 1px solid var(--am-line);
-  color: var(--am-muted);
-  font-size: 10px;
-  line-height: 1.55;
-}
-.am-rail-foot code {
-  color: var(--am-ink-2);
-  font-size: 9.5px;
-}
 .am-main {
   min-width: 0;
   padding: 18px 20px 22px;
