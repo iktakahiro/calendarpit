@@ -7,7 +7,7 @@ description: Calendarpit の起動、OAuth、Calendar API、同期、watch、管
 
 原因を調べるときは、管理画面の **API history**（`http://127.0.0.1:4173/history`）を開きます。
 
-- 直近 200 件の Calendar API と OAuth のやり取りを確認できます。
+- 直近200件の Calendar API と OAuth のやり取りを確認できます。
 - 各エントリには HTTP メソッド、パス、ステータスコード、ヘッダー、マスク済みのリクエストボディとレスポンスボディが記録されます。
 - **Errors** トグルを使うと、ステータスが `400` 以上のレスポンスだけを表示できます。
 
@@ -99,7 +99,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 
 - **エラー**: `Calendarpit: Each user with calendars must have exactly one primary calendar.`
 - **原因**: 起動時 Fixture の検証に失敗しました。
-- **対処**: カレンダーを持つ各ユーザーに、`"primary": true` のカレンダーを必ず 1 つ設定します。[Fixture のルール](/ja/fixtures/)を参照してください。
+- **対処**: カレンダーを持つ各ユーザーに、`"primary": true` のカレンダーを必ず1つ設定します。[Fixture のルール](/ja/fixtures/)を参照してください。
 
 ### 再起動しても Fixture の変更が反映されない
 
@@ -175,18 +175,18 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 
 - **エラー**: `invalid_grant`: `Invalid, expired, or mismatched authorization code.`
 - **原因**: 次のいずれかです。
-  - 認可コードが発行から 60 秒を過ぎている。
-  - 認可コードがすでに 1 回使われている。
+  - 認可コードが発行から60秒を過ぎている。
+  - 認可コードがすでに1回使われている。
   - `redirect_uri` がないか、`/oauth/authorize` のときと違う。
   - クライアントが違う。
   - 接続が取り消された。
   - サーバーが再起動した。
-- **対処**: 60 秒以内に 1 回だけ交換します。`/oauth/authorize` で使ったものと同じ `redirect_uri` とクライアントを使います。
+- **対処**: 60秒以内に1回だけ交換します。`/oauth/authorize` で使ったものと同じ `redirect_uri` とクライアントを使います。
 
 ### PKCE の verifier が不正
 
 - **エラー**: `invalid_grant`: `Invalid PKCE verifier.`
-- **原因**: `code_verifier` が `S256` の `code_challenge` と一致しないか、`[A-Za-z0-9._~-]` の 43〜128 文字になっていません。
+- **原因**: `code_verifier` が `S256` の `code_challenge` と一致しないか、`[A-Za-z0-9._~-]` の 43〜128文字になっていません。
 - **対処**: `S256` のチャレンジを計算したときの元の verifier 文字列を送ります。
 
 ### リフレッシュトークンが不正
@@ -241,22 +241,22 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 - **原因**: 次のいずれかです。
   - `code_challenge_method=S256` なしで `code_challenge` を送った（`plain` の場合も含む）。
   - `code_challenge` なしで `code_challenge_method` を送った。
-  - `code_challenge` が 43 文字の base64url になっていない。
-- **対処**: `code_challenge_method=S256` と、43 文字の base64url のチャレンジを使います。
+  - `code_challenge` が43文字の base64url になっていない。
+- **対処**: `code_challenge_method=S256` と、43文字の base64url のチャレンジを使います。
 
 ### 同意リクエストの期限切れ、または使用済み
 
 - **エラー**: `invalid_request`: `Consent request expired or already used.`
 - **原因**: 次のいずれかです。
-  - 同意画面を 5 分を超えて開いたままにした。
-  - 同意画面を 2 回送信した。
+  - 同意画面を5分を超えて開いたままにした。
+  - 同意画面を2回送信した。
   - 送信前にサーバーが再起動した。
 - **対処**: `/oauth/authorize` から新しい認可リクエストを始めます。
 
 ### 保留中の同意リクエストが多すぎる
 
 - **エラー**: `429 rateLimitExceeded`: `Too many pending consent requests.`
-- **原因**: 保留中の同意リクエストがすでに 1,000 件あります。各リクエストは 5 分で期限切れになります。通常はテスト内のループが原因です。
+- **原因**: 保留中の同意リクエストがすでに1,000件あります。各リクエストは5分で期限切れになります。通常はテスト内のループが原因です。
 - **対処**: 同意リクエストを完了させるか、新しく開くのをやめます。またはワークスペースをリセットします。
 
 ## Calendar API と SDK
@@ -266,7 +266,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 - **エラー**: `401 authError`: `Invalid or expired access token.`
 - **原因**: 次のいずれかです。
   - `Authorization: Bearer` ヘッダーがないか、形式が不正。
-  - アクセストークンの期限切れ（有効期間 1 時間）。
+  - アクセストークンの期限切れ（有効期間1時間）。
   - 接続の取り消し。
   - ワークスペースのリセット、または Fixture の読み込み。
   - インメモリのサーバーの再起動。
@@ -390,7 +390,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
   - ルールにほかの iCalendar の行（`DTSTART`）を含めた。
   - 夏時間の切り替えで存在しない時刻に当たる回がある。
   - 終わりのないルールを `timeMax` なしで展開した。
-  - 展開が 10,000 インスタンスか 100 年を超えた。
+  - 展開が10,000インスタンスか100年を超えた。
 - **対処**: 対応している `DAILY`、`WEEKLY`、`MONTHLY`、`YEARLY` のルールを使います。`timeMax` を指定し、範囲も狭くします。詳しくは[イベント、繰り返し、時刻の扱い](/ja/recurrence/)を参照してください。
 
 ### `singleEvents` なしの `orderBy=startTime`
@@ -463,7 +463,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 ### リクエストボディが大きすぎる
 
 - **エラー**: `413 payloadTooLarge`: `Request body too large.`
-- **原因**: リクエストボディが 1,048,576 バイト（1 MiB）を超えています。
+- **原因**: リクエストボディが1,048,576バイト（1 MiB）を超えています。
 - **対処**: ペイロードを小さくします。
 
 ### `maxResults` が範囲外
@@ -483,8 +483,8 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 
 - **エラー**: `410 fullSyncRequired`: `Sync token is invalid or expired. Perform a full synchronization.`
 - **原因**: 次のいずれかです。
-  - `syncToken` が 7 日より古い。
-  - ワークスペース内のトークンが 100 個を超え、`syncToken` が破棄された。
+  - `syncToken` が7日より古い。
+  - ワークスペース内のトークンが100個を超え、`syncToken` が破棄された。
   - `syncToken` が別のカレンダーやユーザーのものである。
   - リセット、Fixture の読み込み、インメモリでの再起動で `syncToken` が消えた。
 - **対処**: ローカルの同期状態を破棄し、`syncToken` なしの `events.list` でフル同期をやり直します。詳しくは[差分同期](/ja/sync/)を参照してください。
@@ -511,7 +511,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 
 - **エラー**: `410 invalidPageToken`: `Invalid or expired page token.` または `Invalid or stale page token.`
 - **原因**: ページトークンが無効になっています。
-  - イベントの `pageToken` が期限切れになった（有効期間 1 時間）、破棄された（固定されたページが 1,000 を超えた）、またはクエリのオプションの変更やサーバーの再起動・リセットで無効になった。
+  - イベントの `pageToken` が期限切れになった（有効期間1時間）、破棄された（固定されたページが1,000を超えた）、またはクエリのオプションの変更やサーバーの再起動・リセットで無効になった。
   - ワークスペースのデータに書き込みがあった後に、`calendarList` の `pageToken` を使った。
 - **対処**: 最初のページから一覧を取得し直します。
 
@@ -539,7 +539,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 - **原因**: 次のいずれかです。
   - `type` が `"web_hook"` ではない。
   - `id` が `[A-Za-z0-9_-]{1,64}` に一致しない。
-  - `token` が 256 文字を超えるか、改行を含む。
+  - `token` が256文字を超えるか、改行を含む。
   - `expiration` が未来の Unix ミリ秒の整数ではない。
 - **対処**: `events.watch` か `calendarList.watch` のリクエストボディで、不正なフィールドを直します。
 
@@ -551,7 +551,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 
 ### watch は成功するが、アプリに通知が届かない
 
-- **原因**: Webhook の受信側への配信に失敗しています。3 回試しても失敗すると、その配信は `failed` になります。受信側が次のいずれかに当たると、その試行は失敗します。
+- **原因**: Webhook の受信側への配信に失敗しています。3回試しても失敗すると、その配信は `failed` になります。受信側が次のいずれかに当たると、その試行は失敗します。
   - 接続できない。
   - 2,000 ms 以内に応答しない。
   - `200`、`201`、`202`、`204` 以外のステータスを返す。3xx のリダイレクトはたどりません。
@@ -565,7 +565,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
   - コールバックのホストが許可されなくなった状態で再起動すると、チャネルが消えます。
   - リセット、Fixture の読み込み、接続の取り消しでは、チャネルが停止します。
   - カレンダーを削除すると、そのカレンダーのイベントのチャネルが停止します。
-  - チャネルの期限が切れました。期限はデフォルトで 24 時間、最大 7 日です。
+  - チャネルの期限が切れました。期限はデフォルトで24時間、最大7日です。
 - **対処**: 再起動の後は状態を取得し直します。チャネルが停止したか期限切れになっている場合は、新しい watch チャネルを登録します。
 
 ### `channels.stop` でチャネルが見つからない

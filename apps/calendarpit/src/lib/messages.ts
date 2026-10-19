@@ -405,7 +405,7 @@ const ja = {
   'common.untitled': '（無題のイベント）',
   'common.allDay': '終日',
   'common.zoneBefore': '',
-  'common.events': (count: number) => `${count} 件のイベント`,
+  'common.events': (count: number) => `${count}件のイベント`,
 
   'schedule.dateNavigation': '日付の移動',
   'schedule.previousDay': '前の日',
@@ -431,9 +431,9 @@ const ja = {
   'day.freeCount': (count: number) => `空き ${count}`,
   'day.now': '現在',
   'day.clockChange':
-    'この日のイベントは夏時間などによる時刻の切り替えをまたぐため、24 時間のトラックは表示しません。各イベントの時刻と所要時間は下の一覧で確認してください。',
+    'この日のイベントは夏時間などによる時刻の切り替えをまたぐため、24時間のトラックは表示しません。各イベントの時刻と所要時間は下の一覧で確認してください。',
   'day.overview': (timed: number, allDay: number) =>
-    `その日の概要: 時刻指定のイベント ${timed} 件、終日のイベント ${allDay} 件。`,
+    `その日の概要: 時刻指定のイベント${timed}件、終日のイベント${allDay}件。`,
   'day.until': (date: string) => `${date} まで`,
   'day.deleteLabel': (name: string) => `${name} を削除`,
   'day.deleteTitle': 'このイベントを削除しますか？',
@@ -445,13 +445,13 @@ const ja = {
     'この日のイベントはありません。ここで追加するか、アプリから Calendar API で作成してください。',
   'day.zoneAfter':
     ' の時刻で表示しています。終了時刻はイベントの期間に含みません。「空き」のイベントは、空き時間の計算で予定として扱いません。',
-  'day.durationDays': (days: number) => `${days} 日`,
+  'day.durationDays': (days: number) => `${days}日`,
   'day.durationTime': (hours: number, minutes: number) =>
     hours
       ? minutes
-        ? `${hours} 時間 ${minutes} 分`
-        : `${hours} 時間`
-      : `${minutes} 分`,
+        ? `${hours}時間${minutes}分`
+        : `${hours}時間`
+      : `${minutes}分`,
 
   'week.weeklyEvents': 'その週のイベント',
   'week.range': (first: string, last: string, year: string) =>
@@ -495,12 +495,12 @@ const ja = {
   'directory.userList': 'ユーザーディレクトリ',
   'directory.users': 'テストユーザー',
   'directory.usersInWorkspace': (count: number) =>
-    `このワークスペースのユーザー ${count} 人`,
-  'directory.calendarCount': (count: number) => `カレンダー ${count} 件`,
+    `このワークスペースのユーザー${count}人`,
+  'directory.calendarCount': (count: number) => `カレンダー${count}件`,
   'directory.calendarList': 'カレンダーディレクトリ',
   'directory.userCalendars': (name: string) => `${name} のカレンダー`,
   'directory.calendarsForUser': (count: number) =>
-    `このユーザーのカレンダー ${count} 件`,
+    `このユーザーのカレンダー${count}件`,
   'directory.createUserFirst': '先にユーザーを作成してください',
   'directory.calendarNeedsUser':
     'カレンダーはいずれかのテストユーザーに属します。',
@@ -558,7 +558,7 @@ const ja = {
     'テストユーザーが同意画面でアプリへのアクセスを許可すると、接続がここに表示されます。試すには SDK サンプルを起動します:',
 
   'watch.channels': 'Watch チャネル',
-  'watch.activeCount': (count: number) => `有効なチャネル ${count} 件`,
+  'watch.activeCount': (count: number) => `有効なチャネル${count}件`,
   'watch.expires': '有効期限 ',
   'watch.watching': '監視中',
   'watch.emptyChannels': '有効なチャネルはありません',
@@ -572,7 +572,7 @@ const ja = {
   'watch.columnAttempts': '試行回数',
   'watch.columnTime': '時刻',
   'watch.columnStatus': '結果',
-  'watch.attempts': (count: number) => `${count} 回`,
+  'watch.attempts': (count: number) => `${count}回`,
   'watch.emptyDeliveries': '配信はまだありません',
   'watch.emptyDeliveriesDescription': '通知はここに表示されます。',
 
@@ -584,7 +584,7 @@ const ja = {
   'history.clear': '履歴を消去',
   'history.cleared': '履歴を消去しました。',
   'history.note':
-    '直近 200 件の Calendar API と OAuth のリクエストを新しい順に表示します。トークンなどの認証情報はマスクされます。',
+    '直近200件の Calendar API と OAuth のリクエストを新しい順に表示します。トークンなどの認証情報はマスクされます。',
   'history.requests': 'API リクエスト',
   'history.request': 'リクエスト',
   'history.response': 'レスポンス',
@@ -654,14 +654,14 @@ const ja = {
   'clients.id': 'クライアント ID',
   'clients.secret': 'クライアントシークレット',
   'clients.keepSecret': '空欄のままにすると現在のシークレットを維持します',
-  'clients.redirectUrisField': 'リダイレクト URI（1 行に 1 つ）',
+  'clients.redirectUrisField': 'リダイレクト URI（1行に1つ）',
   'clients.save': 'クライアントを保存',
   'clients.saved': 'OAuth クライアントを保存しました。',
   'clients.deleted': 'OAuth クライアントを削除しました。',
-  'clients.errorId': '1～128 文字の英数字、または @ . _ - を使ってください。',
+  'clients.errorId': '1～128文字の英数字、または @ . _ - を使ってください。',
   'clients.errorSecret': 'クライアントシークレットを入力してください。',
   'clients.errorRedirectMissing':
-    'リダイレクト URI を 1 つ以上入力してください。',
+    'リダイレクト URI を1つ以上入力してください。',
   'clients.errorRedirectInvalid':
     'フラグメントや認証情報を含まない、http または https の絶対 URL を使ってください。',
 } satisfies Messages;

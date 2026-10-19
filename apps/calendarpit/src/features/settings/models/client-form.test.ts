@@ -35,7 +35,7 @@ test('validateClientForm writes errors in the given language', () => {
       true,
       messages.ja,
     ),
-  ).toEqual({ redirectUris: 'リダイレクト URI を 1 つ以上入力してください。' });
+  ).toEqual({ redirectUris: 'リダイレクト URI を1つ以上入力してください。' });
 });
 
 test('clientPayload trims lines and keeps a blank secret on edit', () => {
