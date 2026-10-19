@@ -3,11 +3,19 @@ title: Troubleshooting
 description: Find the cause and fix for common startup, OAuth, Calendar API, sync, watch, and management API errors in Calendarpit.
 ---
 
-When a request fails, Calendarpit returns an explicit status code and error message instead of silently ignoring unsupported fields or parameters.
+When a request fails, Calendarpit returns an explicit status code and error message. It does not silently ignore unsupported fields or parameters.
 
-Open **API history** (`http://127.0.0.1:4173/history`) in the admin UI to inspect the latest 200 Calendar API and OAuth exchanges. Each entry records the HTTP method, path, status code, headers, and masked request and response bodies. Use the **Errors** toggle to filter for responses with status `400` or higher.
+To investigate a failure, open **API history** (`http://127.0.0.1:4173/history`) in the admin UI:
+
+- It shows the latest 200 Calendar API and OAuth exchanges.
+- Each entry records the HTTP method, path, status code, headers, and masked request and response bodies.
+- The **Errors** toggle filters for responses with status `400` or higher.
+
+Each entry on this page follows the same pattern: the exact **Error** output (when there is one), the likely **Cause**, and the **Fix**.
 
 ## Error response formats
+
+### Google API error envelope
 
 Calendar API routes (`/calendar/v3/*`), `/userinfo`, and management API routes (`/__calendarpit/*`) return the Google API error envelope:
 
@@ -31,7 +39,13 @@ Calendar API routes (`/calendar/v3/*`), `/userinfo`, and management API routes (
 - `401` responses include the `WWW-Authenticate: Bearer` header.
 - `400` validation errors without a more specific reason use `"reason": "invalidParameter"`.
 
-OAuth routes (`/oauth/*` and `/oauth2/*`) return the OAuth error format. Most errors are HTTP `400`. Unimplemented paths return `501`, too many pending consent requests return `429`, and a cross-origin consent submission returns `403`:
+### OAuth error format
+
+OAuth routes (`/oauth/*` and `/oauth2/*`) return the OAuth error format. Most errors are HTTP `400`, with these exceptions:
+
+- Unimplemented paths return `501`.
+- Too many pending consent requests return `429`.
+- A cross-origin consent submission returns `403`.
 
 ```json
 {
@@ -46,96 +60,522 @@ Validation errors on `GET /oauth/authorize` are returned directly in the browser
 
 CLI startup failures print `Calendarpit: <message>` to `stderr` and exit with code `1`. For Docker, inspect the server output with `docker compose logs calendarpit`.
 
-| Symptom                                                                             | Likely cause                                                                                                          | Fix                                                                                                                                                                                                   |
-| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Calendarpit: Failed to start server. Is port 4173 in use?`                         | Another process is listening on port `4173`.                                                                          | Stop it, choose `--port <n>`, or use `--port 0` and read the actual `Admin` URL. In Docker, change the host side of the mapping, for example `127.0.0.1:4174:4173`, and open port `4174`.             |
-| `Calendarpit: Database is already in use: <path>. Use a separate path or :memory:.` | Another process holds the lock on the same SQLite file.                                                               | Stop it, or give each process its own `--database` path or `:memory:`. See [Storage and restarts](/storage/).                                                                                         |
-| `Calendarpit: ENOENT: no such file or directory, open '<path>'`                     | The fixture path does not exist in the current working directory or inside the container.                             | Use a valid absolute path, or mount the file into Docker and pass its container path. See [Fixtures](/fixtures/).                                                                                     |
-| `Calendarpit: Each user with calendars must have exactly one primary calendar.`     | The startup fixture fails validation.                                                                                 | Give each user with calendars exactly one `"primary": true` calendar. See the [fixture rules](/fixtures/).                                                                                            |
-| Fixture edits have no effect after restart                                          | Startup fixtures only seed a new database; existing data and the reset baseline are retained.                         | Load the file via **Settings → Test data** or `POST /__calendarpit/fixtures` to replace current data. To use a new reset baseline, start with a new database path or `:memory:`.                      |
-| Data is missing after changing how Calendarpit starts                               | The working directory changed, a different database path or volume was used, or the previous session used `:memory:`. | Check `Data <path>` in startup output and **Settings → Test data**. Use the same absolute database path or Docker volume.                                                                             |
-| The browser, backend, or webhook receiver cannot connect in Docker                  | Loopback points to the requesting container itself; a browser cannot resolve a Compose service name.                  | Use the host-published URL in the browser and the service name between containers. Configure `CALENDARPIT_WATCH_HOSTS` for webhook receivers. See [container networking](/installation/).             |
-| A `CALENDARPIT_*` value seems ignored                                               | A CLI flag overrides the environment variable, or the variable was set on the host but not passed to Docker.          | Remove the overriding flag, or pass the variable with `docker run -e` / Compose `environment`. When changing the container port, also update its mapping and `CALENDARPIT_PORT` for the health check. |
-| Invalid option value, unknown option, or unknown command                            | The CLI received an invalid flag, empty value, or unsupported subcommand.                                             | Run `calendarpit --help`. Only `serve` is supported; ports must be integers from `0` to `65535`.                                                                                                      |
+### Port already in use
+
+- **Error**: `Calendarpit: Failed to start server. Is port 4173 in use?`
+- **Cause**: Another process is listening on port `4173`.
+- **Fix**: Stop that process, or choose another port with `--port <n>`. With `--port 0`, read the actual `Admin` URL. In Docker, change the host side of the mapping, for example `127.0.0.1:4174:4173`, and open port `4174`.
+
+### Database already in use
+
+- **Error**: `Calendarpit: Database is already in use: <path>. Use a separate path or :memory:.`
+- **Cause**: Another process holds the lock on the same SQLite file.
+- **Fix**: Stop that process, or give each process its own `--database` path or `:memory:`. See [Storage and restarts](/storage/).
+
+### Fixture file not found
+
+- **Error**: `Calendarpit: ENOENT: no such file or directory, open '<path>'`
+- **Cause**: The fixture path does not exist in the current working directory or inside the container.
+- **Fix**: Use a valid absolute path. In Docker, mount the file and pass its container path. See [Fixtures](/fixtures/).
+
+### Fixture fails validation
+
+- **Error**: `Calendarpit: Each user with calendars must have exactly one primary calendar.`
+- **Cause**: The startup fixture fails validation.
+- **Fix**: Give each user with calendars exactly one `"primary": true` calendar. See the [fixture rules](/fixtures/).
+
+### Fixture edits have no effect after restart
+
+- **Cause**: Startup fixtures only seed a new database. Existing data and the reset baseline are retained.
+- **Fix**:
+  - To replace current data, load the file via **Settings → Test data** or `POST /__calendarpit/fixtures`.
+  - To use a new reset baseline, start with a new database path or `:memory:`.
+
+### Data is missing after changing how Calendarpit starts
+
+- **Cause**: One of the following:
+  - The working directory changed.
+  - A different database path or volume was used.
+  - The previous session used `:memory:`.
+- **Fix**: Check `Data <path>` in startup output and **Settings → Test data**. Use the same absolute database path or Docker volume.
+
+### The browser, backend, or webhook receiver cannot connect in Docker
+
+- **Cause**: Loopback points to the requesting container itself. A browser cannot resolve a Compose service name.
+- **Fix**: Use the host-published URL in the browser and the service name between containers. For webhook receivers, configure `CALENDARPIT_WATCH_HOSTS`. See [container networking](/installation/).
+
+### A `CALENDARPIT_*` value seems ignored
+
+- **Cause**: A CLI flag overrides the environment variable, or the variable was set on the host but not passed to Docker.
+- **Fix**: Remove the overriding flag, or pass the variable with `docker run -e` or Compose `environment`. When you change the container port, also update its mapping and `CALENDARPIT_PORT` for the health check.
+
+### Invalid option value, unknown option, or unknown command
+
+- **Cause**: The CLI received an invalid flag, empty value, or unsupported subcommand.
+- **Fix**: Run `calendarpit --help`. Only `serve` is supported. Ports must be integers from `0` to `65535`.
 
 ## OAuth
 
-| Symptom                                                                | Likely cause                                                                                                                                                                                                                                       | Fix                                                                                                                                      |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| A real Google consent screen appears                                   | Your app's authorization URL still points to Google (`accounts.google.com`).                                                                                                                                                                       | Set the authorization URL to `http://127.0.0.1:4173/oauth/authorize`. See [Connect your app](/connect/).                                 |
-| Token exchange or refresh contacts Google                              | Your OAuth client still uses Google's token endpoint. Setting the Calendar API endpoint does not redirect OAuth calls.                                                                                                                             | Override the token URL to `http://127.0.0.1:4173/oauth/token` (and `/oauth/revoke` and `/userinfo` if used). See [Local OAuth](/oauth/). |
-| `501 unsupportedFeature` on `/oauth2/...` or `/oauth/tokeninfo`        | Your SDK is calling Google's default OAuth paths (`/oauth2/v4/token`, `/oauth2/v3/userinfo`, or `/oauth/tokeninfo`).                                                                                                                               | Override the endpoints explicitly to `/oauth/authorize`, `/oauth/token`, `/oauth/revoke`, and `/userinfo`.                               |
-| `invalid_request`: `Unregistered redirect URI.`                        | `redirect_uri` does not exactly match an entry in `clients[].redirectUris` (including `localhost` vs `127.0.0.1`, port, path, or trailing slash). Changing `SAMPLE_PORT` from `4175` also causes a mismatch with the built-in `sample-app` client. | Copy the exact `redirect_uri` string into `clients[].redirectUris` in your fixture.                                                      |
-| `invalid_client`: `Unknown client.`                                    | `client_id` is not registered in the fixture, or `POST /oauth/token` used a JSON body instead of `application/x-www-form-urlencoded` (with HTTP Basic authentication, a JSON body returns `unsupported_grant_type`).                               | Register the client in your fixture and send token requests as `application/x-www-form-urlencoded`.                                      |
-| `invalid_client`: `Invalid client secret.`                             | `client_secret` is missing or wrong. Calendarpit requires a client secret on every token request, including PKCE flows.                                                                                                                            | Send the matching `client_secret` in the form body or via HTTP Basic authentication.                                                     |
-| `invalid_grant`: `Invalid, expired, or mismatched authorization code.` | The code is older than 60 seconds, was already used once, `redirect_uri` is missing or differs from `/oauth/authorize`, the client differs, the connection was revoked, or the server restarted.                                                   | Exchange the code once within 60 seconds with the exact `redirect_uri` and client used at `/oauth/authorize`.                            |
-| `invalid_grant`: `Invalid PKCE verifier.`                              | `code_verifier` does not match the `S256` `code_challenge` or is not 43–128 characters of `[A-Za-z0-9._~-]`.                                                                                                                                       | Send the original verifier string used to compute the `S256` challenge.                                                                  |
-| `invalid_grant`: `Invalid refresh token.`                              | The connection was revoked, the user was deleted, the workspace was reset or a fixture was loaded, an in-memory server restarted, or the token belongs to another client.                                                                          | Run the authorization flow again to create a new connection.                                                                             |
-| `state` is missing or mismatches on callback                           | `state` was omitted from `/oauth/authorize` (it is echoed only when sent), or your app started on `localhost` and received the callback on `127.0.0.1` (cookies holding `state` are not shared across hostnames).                                  | Pass `state` on `/oauth/authorize` and use the same hostname (`127.0.0.1` or `localhost`) for both your app and its `redirect_uri`.      |
-| `invalid_scope`: `Unsupported or missing scope.`                       | `scope` is empty or includes an unsupported scope (such as `calendar.events.owned` or Drive scopes).                                                                                                                                               | Request only [supported scopes](/oauth/).                                                                                                |
-| `invalid_scope`: `Refresh scope changes are unsupported.`              | A `refresh_token` request included a `scope` parameter that does not exactly match the original grant string (including scope order).                                                                                                              | Omit `scope` when refreshing a token.                                                                                                    |
-| No `refresh_token` in the token response                               | `access_type=offline` was not sent on `/oauth/authorize`, or the response is from a `refresh_token` grant (refresh responses return a new `access_token` only; the original refresh token stays valid).                                            | Add `access_type=offline` to `/oauth/authorize` and keep the initial `refresh_token`.                                                    |
-| `unsupported_feature` on `/oauth/authorize`                            | The request included `prompt=none`, `include_granted_scopes=true`, or an unsupported parameter such as `nonce`, `login_hint`, `hd`, or `enable_granular_consent`.                                                                                  | Remove unsupported parameters and use interactive consent (`prompt=consent` or `prompt=select_account`).                                 |
-| `invalid_request`: `PKCE requires S256.` / `Missing PKCE challenge.`   | `code_challenge` was sent without `code_challenge_method=S256` (including `plain`), `code_challenge_method` was sent without `code_challenge`, or `code_challenge` is not 43 base64url characters.                                                 | Use `code_challenge_method=S256` with a 43-character base64url challenge.                                                                |
-| `invalid_request`: `Consent request expired or already used.`          | The consent page was left open longer than 5 minutes, submitted twice, or the server restarted before submission.                                                                                                                                  | Start a fresh authorization request at `/oauth/authorize`.                                                                               |
-| `429 rateLimitExceeded`: `Too many pending consent requests.`          | 1,000 consent requests are already pending (each expires after 5 minutes; usually caused by a loop in tests).                                                                                                                                      | Complete or stop opening consent requests, or reset the workspace.                                                                       |
+### A real Google consent screen appears
+
+- **Cause**: Your app's authorization URL still points to Google (`accounts.google.com`).
+- **Fix**: Set the authorization URL to `http://127.0.0.1:4173/oauth/authorize`. See [Connect your app](/connect/).
+
+### Token exchange or refresh contacts Google
+
+- **Cause**: Your OAuth client still uses Google's token endpoint. Setting the Calendar API endpoint does not redirect OAuth calls.
+- **Fix**: Override the token URL to `http://127.0.0.1:4173/oauth/token`. If you use `/oauth/revoke` and `/userinfo`, override them too. See [Local OAuth](/oauth/).
+
+### Google's default OAuth paths return `501`
+
+- **Error**: `501 unsupportedFeature` on `/oauth2/...` or `/oauth/tokeninfo`
+- **Cause**: Your SDK is calling Google's default OAuth paths: `/oauth2/v4/token`, `/oauth2/v3/userinfo`, or `/oauth/tokeninfo`.
+- **Fix**: Override the endpoints explicitly to `/oauth/authorize`, `/oauth/token`, `/oauth/revoke`, and `/userinfo`.
+
+### Unregistered redirect URI
+
+- **Error**: `invalid_request`: `Unregistered redirect URI.`
+- **Cause**: `redirect_uri` does not exactly match an entry in `clients[].redirectUris`.
+  - The match covers `localhost` vs `127.0.0.1`, port, path, and trailing slash.
+  - Changing `SAMPLE_PORT` from `4175` also causes a mismatch with the built-in `sample-app` client.
+- **Fix**: Copy the exact `redirect_uri` string into `clients[].redirectUris` in your fixture.
+
+### Unknown client
+
+- **Error**: `invalid_client`: `Unknown client.`
+- **Cause**: One of the following:
+  - `client_id` is not registered in the fixture.
+  - `POST /oauth/token` used a JSON body instead of `application/x-www-form-urlencoded`. With HTTP Basic authentication, a JSON body returns `unsupported_grant_type` instead.
+- **Fix**: Register the client in your fixture. Send token requests as `application/x-www-form-urlencoded`.
+
+### Invalid client secret
+
+- **Error**: `invalid_client`: `Invalid client secret.`
+- **Cause**: `client_secret` is missing or wrong. Calendarpit requires a client secret on every token request, including PKCE flows.
+- **Fix**: Send the matching `client_secret` in the form body or via HTTP Basic authentication.
+
+### Invalid authorization code
+
+- **Error**: `invalid_grant`: `Invalid, expired, or mismatched authorization code.`
+- **Cause**: One of the following:
+  - The code is older than 60 seconds.
+  - The code was already used once.
+  - `redirect_uri` is missing or differs from the one sent to `/oauth/authorize`.
+  - The client differs.
+  - The connection was revoked.
+  - The server restarted.
+- **Fix**: Exchange the code once within 60 seconds. Use the exact `redirect_uri` and client used at `/oauth/authorize`.
+
+### Invalid PKCE verifier
+
+- **Error**: `invalid_grant`: `Invalid PKCE verifier.`
+- **Cause**: `code_verifier` does not match the `S256` `code_challenge`, or is not 43–128 characters of `[A-Za-z0-9._~-]`.
+- **Fix**: Send the original verifier string used to compute the `S256` challenge.
+
+### Invalid refresh token
+
+- **Error**: `invalid_grant`: `Invalid refresh token.`
+- **Cause**: One of the following:
+  - The connection was revoked.
+  - The user was deleted.
+  - The workspace was reset or a fixture was loaded.
+  - An in-memory server restarted.
+  - The token belongs to another client.
+- **Fix**: Run the authorization flow again to create a new connection.
+
+### `state` is missing or mismatches on callback
+
+- **Cause**: One of the following:
+  - `state` was omitted from `/oauth/authorize`. It is echoed only when sent.
+  - Your app started on `localhost` and received the callback on `127.0.0.1`. Cookies holding `state` are not shared across hostnames.
+- **Fix**: Pass `state` on `/oauth/authorize`. Use the same hostname (`127.0.0.1` or `localhost`) for both your app and its `redirect_uri`.
+
+### Unsupported or missing scope
+
+- **Error**: `invalid_scope`: `Unsupported or missing scope.`
+- **Cause**: `scope` is empty or includes an unsupported scope, such as `calendar.events.owned` or Drive scopes.
+- **Fix**: Request only [supported scopes](/oauth/).
+
+### Scope changes on refresh
+
+- **Error**: `invalid_scope`: `Refresh scope changes are unsupported.`
+- **Cause**: A `refresh_token` request included a `scope` parameter that does not exactly match the original grant string. Scope order counts.
+- **Fix**: Omit `scope` when refreshing a token.
+
+### No `refresh_token` in the token response
+
+- **Cause**: One of the following:
+  - `access_type=offline` was not sent on `/oauth/authorize`.
+  - The response is from a `refresh_token` grant. Refresh responses return a new `access_token` only, and the original refresh token stays valid.
+- **Fix**: Add `access_type=offline` to `/oauth/authorize`, and keep the initial `refresh_token`.
+
+### Unsupported authorization parameters
+
+- **Error**: `unsupported_feature` on `/oauth/authorize`
+- **Cause**: The request included one of the following:
+  - `prompt=none`
+  - `include_granted_scopes=true`
+  - An unsupported parameter such as `nonce`, `login_hint`, `hd`, or `enable_granular_consent`
+- **Fix**: Remove unsupported parameters. Use interactive consent (`prompt=consent` or `prompt=select_account`).
+
+### Invalid PKCE challenge
+
+- **Error**: `invalid_request`: `PKCE requires S256.` or `Missing PKCE challenge.`
+- **Cause**: One of the following:
+  - `code_challenge` was sent without `code_challenge_method=S256` (including `plain`).
+  - `code_challenge_method` was sent without `code_challenge`.
+  - `code_challenge` is not 43 base64url characters.
+- **Fix**: Use `code_challenge_method=S256` with a 43-character base64url challenge.
+
+### Consent request expired or already used
+
+- **Error**: `invalid_request`: `Consent request expired or already used.`
+- **Cause**: One of the following:
+  - The consent page was left open longer than 5 minutes.
+  - The consent page was submitted twice.
+  - The server restarted before submission.
+- **Fix**: Start a fresh authorization request at `/oauth/authorize`.
+
+### Too many pending consent requests
+
+- **Error**: `429 rateLimitExceeded`: `Too many pending consent requests.`
+- **Cause**: 1,000 consent requests are already pending. Each expires after 5 minutes. A loop in tests usually causes this.
+- **Fix**: Complete pending consent requests or stop opening new ones, or reset the workspace.
 
 ## Calendar API and SDKs
 
-| Symptom                                                                                                                                                  | Likely cause                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Fix                                                                                                                                                                                                                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `401 authError`: `Invalid or expired access token.`                                                                                                      | Missing or malformed `Authorization: Bearer` header, access token expired (1-hour TTL), connection revoked, workspace reset or fixture loaded, in-memory server restarted, or a real Google token was sent.                                                                                                                                                                                                                                                                                                     | Refresh the token at `/oauth/token`, or authorize again after a reset, fixture load, or revocation.                                                                                                                                                                                         |
-| `403 insufficientPermissions`: `Insufficient scope.`                                                                                                     | The token lacks a required scope (for example, writing events with a `.readonly` scope, calling `calendarList.list` with only `calendar.events`, or calling `/userinfo` without `openid`, `email`, or `profile`).                                                                                                                                                                                                                                                                                               | Request a scope that covers the endpoint and re-authorize. See [Local OAuth](/oauth/).                                                                                                                                                                                                      |
-| `501 unsupportedFeature`: `Unsupported API endpoint or method.` (including doubled `/calendar/v3/calendar/v3/...` paths)                                 | You called an unimplemented Google endpoint (`acl`, `settings`, `colors`, `calendars.insert`, `events.move`), sent `HEAD` to an API path (event paths respond to `HEAD` with `405 methodNotAllowed`, `/calendars/{calendarId}` returns `Unsupported calendar operation.`, and an existing entry at `/users/me/calendarList/{calendarId}` returns `Unsupported calendar list operation.`), sent `POST` to `/users/me/calendarList/{calendarId}`, or misconfigured the SDK base URL so it doubled `/calendar/v3`. | Check [Calendar API compatibility](/compatibility/). For JS/TS (`@googleapis/calendar`), set `rootUrl` to `http://127.0.0.1:4173/`. For Java, set `rootUrl` to the origin and `servicePath` to `calendar/v3/`. For Python, Go, and C#, include `/calendar/v3/`. See [SDK examples](/sdks/). |
-| `501 unsupportedFeature`: `Unsupported calendar operation.` / `Unsupported calendar list operation.`                                                     | You called `PUT`, `PATCH`, `DELETE`, or `HEAD` on `/calendar/v3/calendars/{calendarId}`, or called an unsupported method such as `HEAD` or `OPTIONS` on an existing entry at `/calendar/v3/users/me/calendarList/{calendarId}` (`POST` there returns `Unsupported API endpoint or method.`).                                                                                                                                                                                                                    | Manage calendars in the admin UI or via `/__calendarpit/calendars`. For per-user display settings, use `calendarList.patch`. See [Test control API](/test-control/).                                                                                                                        |
-| `404 notFound`: `Calendar not found.`                                                                                                                    | Unknown calendar ID, a calendar owned by a different test user, `primary` for a user with no calendars, or a calendar removed from the user's list with `calendarList.delete` (calendar-list methods only).                                                                                                                                                                                                                                                                                                     | Use a calendar ID owned by the authenticated user, or authorize as that calendar's owner. Restore a removed list entry with `calendarList.insert`.                                                                                                                                          |
-| `404 notFound`: `Event not found.`                                                                                                                       | Unknown event ID in that calendar, or a call to `POST .../events/import` or `POST .../events/quickAdd` (without `text`), where `import` or `quickAdd` is treated as an event ID.                                                                                                                                                                                                                                                                                                                                | Check the event ID, and use `events.insert` instead of `import` or `quickAdd`.                                                                                                                                                                                                              |
-| `405 methodNotAllowed`: `Unsupported event method.` / `Unsupported instances operation.`                                                                 | Invalid HTTP verb for the event route (such as `HEAD`, `DELETE` on `/events`, `POST` on an existing `/events/{eventId}`, or a write to `/instances`).                                                                                                                                                                                                                                                                                                                                                           | Use the supported HTTP method and path.                                                                                                                                                                                                                                                     |
-| `400 unsupportedFeature`: `Unsupported query parameter: <key>`                                                                                           | Query parameter is not on the endpoint allowlist (such as `fields`, `q`, `eventTypes`, `sendNotifications`, `supportsAttachments`, `maxAttendees`, or `text`).                                                                                                                                                                                                                                                                                                                                                  | Remove the parameter and disable automatic `fields` partial-response masks in your SDK.                                                                                                                                                                                                     |
-| `400 unsupportedFeature`: `Unsupported field: <key>`                                                                                                     | Request body contains an unsupported field (such as `eventType`, `attachments`, `source`, or `htmlLink` on events, or an `items[]` entry with keys other than `id` on FreeBusy).                                                                                                                                                                                                                                                                                                                                | Strip unsupported fields before sending the request. See [Calendar API compatibility](/compatibility/).                                                                                                                                                                                     |
-| `400 invalidParameter`: `Only JSON responses are supported.`                                                                                             | Query included `alt=media` or `alt=proto`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Omit `alt` or use `alt=json`.                                                                                                                                                                                                                                                               |
-| `400`: `Expected an RFC3339 timestamp with an offset.` / `dateTime requires an offset or timeZone.`                                                      | `timeMin`, `timeMax`, `updatedMin`, or FreeBusy bounds lack `Z` or `±HH:MM`, or an event `dateTime` has neither an offset nor `timeZone`.                                                                                                                                                                                                                                                                                                                                                                       | Add `Z` or a `±HH:MM` offset, or supply `timeZone` on the event `start`/`end`.                                                                                                                                                                                                              |
-| `400`: `Invalid or ambiguous local time; supply an explicit offset.`                                                                                     | An offset-less `dateTime` falls inside a DST gap or overlap in `timeZone`.                                                                                                                                                                                                                                                                                                                                                                                                                                      | Include an explicit numeric offset on `dateTime`.                                                                                                                                                                                                                                           |
-| `400`: `Recurring timed events require start.timeZone.` / `Timed recurrence UNTIL must be UTC.`                                                          | A timed recurring event has no `start.timeZone`, or its `UNTIL` value does not end with `Z`.                                                                                                                                                                                                                                                                                                                                                                                                                    | Set `start.timeZone` and write timed `UNTIL` timestamps in UTC (`...Z`). See [Events, recurrence and time](/recurrence/).                                                                                                                                                                   |
-| `400 unsupportedFeature` on recurrence rules or expansion                                                                                                | Rule uses `HOURLY`/`MINUTELY`, an unsupported part (`BYHOUR`, `BYWEEKNO`, `BYYEARDAY`), another iCalendar line (`DTSTART`), a DST-gap occurrence, an unbounded rule without `timeMax`, or an expansion exceeding 10,000 instances or 100 years.                                                                                                                                                                                                                                                                 | Use supported `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY` rules and supply `timeMax` (and a narrower window). See [Events, recurrence and time](/recurrence/).                                                                                                                                |
-| `400`: `startTime ordering requires singleEvents=true.`                                                                                                  | `orderBy=startTime` was sent without `singleEvents=true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Add `singleEvents=true` to the `events.list` query.                                                                                                                                                                                                                                         |
-| `400`: `Event is not a recurring series.`                                                                                                                | `events.instances` was called on a non-recurring event.                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Call `events.instances` only on recurring series masters.                                                                                                                                                                                                                                   |
-| `400`: `<key> is read-only.`                                                                                                                             | A Calendar API write changed `organizer`, `creator`, `iCalUID`, `recurringEventId`, or `originalStartTime`, or a `calendarList` write changed `summary`, `timeZone`, `accessRole`, `primary`, `kind`, `deleted`, or `conferenceProperties`.                                                                                                                                                                                                                                                                     | Omit the field or send the existing value unchanged. For a per-user calendar name, set `summaryOverride`. To set custom organizer metadata, use [Fixtures](/fixtures/) or the [Test control API](/test-control/).                                                                           |
-| `400`: `conferenceData requires conferenceDataVersion=1.`                                                                                                | Event payload includes `conferenceData` without `?conferenceDataVersion=1`.                                                                                                                                                                                                                                                                                                                                                                                                                                     | Add `conferenceDataVersion=1` to the query string.                                                                                                                                                                                                                                          |
-| `403 cannotDeletePrimaryCalendar`: `Cannot remove the primary calendar from the calendar list.`                                                          | `calendarList.delete` was called on the user's primary calendar.                                                                                                                                                                                                                                                                                                                                                                                                                                                | Keep the primary calendar in the list, or hide it with `calendarList.patch` (`hidden: true` or `selected: false`).                                                                                                                                                                          |
-| `403 forbiddenForNonOrganizer`                                                                                                                           | An invitee (editing an invitation copy) used `PUT`, changed shared event fields, or edited another attendee.                                                                                                                                                                                                                                                                                                                                                                                                    | Use `PATCH` and update only your own `responseStatus`/`comment`, `reminders`, `colorId`, `transparency`, or `extendedProperties`.                                                                                                                                                           |
-| `409 duplicate`: `Duplicate event ID.` / `Invitation event ID conflicts with an existing local event.` / `Calendar already exists in the calendar list.` | `events.insert` reused an existing ID in that calendar, or an attendee invitation copy matched an event ID in the attendee's primary calendar with a different `iCalUID` (for example, set through a fixture or the Test control API; an event with the default `iCalUID` is overwritten). For calendar lists, `calendarList.insert` was called for a calendar already in the list (including `primary`).                                                                                                       | Use a unique event ID. Call `calendarList.insert` only for a calendar that is not in the list.                                                                                                                                                                                              |
-| `410 deleted`: `Event is already deleted.`                                                                                                               | `events.delete` was called on an event that is already `cancelled`.                                                                                                                                                                                                                                                                                                                                                                                                                                             | Treat `410` on delete as already deleted.                                                                                                                                                                                                                                                   |
-| `412 conditionNotMet`: `Event has changed.` / `Calendar list entry has changed.`                                                                         | The `If-Match` header does not match the current `etag` of the event or calendar-list entry.                                                                                                                                                                                                                                                                                                                                                                                                                    | Re-fetch with `events.get` or `calendarList.get` and retry.                                                                                                                                                                                                                                 |
-| `413 payloadTooLarge`: `Request body too large.`                                                                                                         | Request body exceeds 1,048,576 bytes (1 MiB).                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Reduce the payload size.                                                                                                                                                                                                                                                                    |
-| `400`: `maxResults must be between 1 and 2500.`                                                                                                          | `maxResults` is `0`, negative, or greater than `2500`.                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Set `maxResults` between `1` and `2500`.                                                                                                                                                                                                                                                    |
-| Python SDK fetches discovery documents from Google                                                                                                       | `googleapiclient.discovery.build` tried to download discovery metadata from Google.                                                                                                                                                                                                                                                                                                                                                                                                                             | Use `google-api-python-client` 2.x with `static_discovery=True` and `cache_discovery=False`, and do not set a remote discovery URL. See [SDK examples](/sdks/).                                                                                                                             |
+### Invalid or expired access token
+
+- **Error**: `401 authError`: `Invalid or expired access token.`
+- **Cause**: One of the following:
+  - The `Authorization: Bearer` header is missing or malformed.
+  - The access token expired (1-hour TTL).
+  - The connection was revoked.
+  - The workspace was reset or a fixture was loaded.
+  - An in-memory server restarted.
+  - A real Google token was sent.
+- **Fix**: Refresh the token at `/oauth/token`. After a reset, fixture load, or revocation, authorize again.
+
+### Insufficient scope
+
+- **Error**: `403 insufficientPermissions`: `Insufficient scope.`
+- **Cause**: The token lacks a required scope. For example:
+  - Writing events with a `.readonly` scope.
+  - Calling `calendarList.list` with only `calendar.events`.
+  - Calling `/userinfo` without `openid`, `email`, or `profile`.
+- **Fix**: Request a scope that covers the endpoint and re-authorize. See [Local OAuth](/oauth/).
+
+### Unsupported API endpoint or method
+
+- **Error**: `501 unsupportedFeature`: `Unsupported API endpoint or method.` This includes doubled `/calendar/v3/calendar/v3/...` paths.
+- **Cause**: One of the following:
+  - You called an unimplemented Google endpoint: `acl`, `settings`, `colors`, `calendars.insert`, or `events.move`.
+  - You sent `HEAD` to an API path. Some paths answer `HEAD` differently, as listed below.
+  - You sent `POST` to `/users/me/calendarList/{calendarId}`.
+  - The SDK base URL is misconfigured, so the SDK doubled `/calendar/v3`.
+- **Fix**: Check [Calendar API compatibility](/compatibility/). Set the SDK base URL as shown in the table below. See [SDK examples](/sdks/).
+
+`HEAD` returns a different error on these paths:
+
+- Event paths respond with `405 methodNotAllowed`.
+- `/calendars/{calendarId}` returns `Unsupported calendar operation.`
+- An existing entry at `/users/me/calendarList/{calendarId}` returns `Unsupported calendar list operation.`
+
+| SDK                            | Base URL setting                                                 |
+| ------------------------------ | ---------------------------------------------------------------- |
+| JS/TS (`@googleapis/calendar`) | Set `rootUrl` to `http://127.0.0.1:4173/`.                       |
+| Java                           | Set `rootUrl` to the origin and `servicePath` to `calendar/v3/`. |
+| Python, Go, and C#             | Include `/calendar/v3/`.                                         |
+
+### Unsupported calendar or calendar list operation
+
+- **Error**: `501 unsupportedFeature`: `Unsupported calendar operation.` or `Unsupported calendar list operation.`
+- **Cause**: One of the following:
+  - You called `PUT`, `PATCH`, `DELETE`, or `HEAD` on `/calendar/v3/calendars/{calendarId}`.
+  - You called an unsupported method such as `HEAD` or `OPTIONS` on an existing entry at `/calendar/v3/users/me/calendarList/{calendarId}`. `POST` there returns `Unsupported API endpoint or method.` instead.
+- **Fix**: Manage calendars in the admin UI or via `/__calendarpit/calendars`. For per-user display settings, use `calendarList.patch`. See [Test control API](/test-control/).
+
+### Calendar not found
+
+- **Error**: `404 notFound`: `Calendar not found.`
+- **Cause**: One of the following:
+  - The calendar ID is unknown.
+  - The calendar is owned by a different test user.
+  - You used `primary` for a user with no calendars.
+  - The calendar was removed from the user's list with `calendarList.delete`. This applies to calendar-list methods only.
+- **Fix**: Use a calendar ID owned by the authenticated user, or authorize as that calendar's owner. Restore a removed list entry with `calendarList.insert`.
+
+### Event not found
+
+- **Error**: `404 notFound`: `Event not found.`
+- **Cause**: One of the following:
+  - The event ID is unknown in that calendar.
+  - You called `POST .../events/import` or `POST .../events/quickAdd` (without `text`). Calendarpit treats `import` or `quickAdd` as an event ID.
+- **Fix**: Check the event ID. Use `events.insert` instead of `import` or `quickAdd`.
+
+### Unsupported event method
+
+- **Error**: `405 methodNotAllowed`: `Unsupported event method.` or `Unsupported instances operation.`
+- **Cause**: The HTTP verb is invalid for the event route. For example:
+  - `HEAD`
+  - `DELETE` on `/events`
+  - `POST` on an existing `/events/{eventId}`
+  - A write to `/instances`
+- **Fix**: Use the supported HTTP method and path.
+
+### Unsupported query parameter
+
+- **Error**: `400 unsupportedFeature`: `Unsupported query parameter: <key>`
+- **Cause**: The query parameter is not on the endpoint allowlist. Examples include `fields`, `q`, `eventTypes`, `sendNotifications`, `supportsAttachments`, `maxAttendees`, and `text`.
+- **Fix**: Remove the parameter. Disable automatic `fields` partial-response masks in your SDK.
+
+### Unsupported field
+
+- **Error**: `400 unsupportedFeature`: `Unsupported field: <key>`
+- **Cause**: The request body contains an unsupported field. For example:
+  - `eventType`, `attachments`, `source`, or `htmlLink` on events.
+  - An `items[]` entry with keys other than `id` on FreeBusy.
+- **Fix**: Strip unsupported fields before sending the request. See [Calendar API compatibility](/compatibility/).
+
+### Non-JSON response format
+
+- **Error**: `400 invalidParameter`: `Only JSON responses are supported.`
+- **Cause**: The query included `alt=media` or `alt=proto`.
+- **Fix**: Omit `alt` or use `alt=json`.
+
+### Timestamp without an offset
+
+- **Error**: `400`: `Expected an RFC3339 timestamp with an offset.` or `dateTime requires an offset or timeZone.`
+- **Cause**: One of the following:
+  - `timeMin`, `timeMax`, `updatedMin`, or FreeBusy bounds lack `Z` or `±HH:MM`.
+  - An event `dateTime` has neither an offset nor `timeZone`.
+- **Fix**: Add `Z` or a `±HH:MM` offset, or supply `timeZone` on the event `start`/`end`.
+
+### Invalid or ambiguous local time
+
+- **Error**: `400`: `Invalid or ambiguous local time; supply an explicit offset.`
+- **Cause**: An offset-less `dateTime` falls inside a DST gap or overlap in `timeZone`.
+- **Fix**: Include an explicit numeric offset on `dateTime`.
+
+### Recurring event time zone or `UNTIL` errors
+
+- **Error**: `400`: `Recurring timed events require start.timeZone.` or `Timed recurrence UNTIL must be UTC.`
+- **Cause**: A timed recurring event has no `start.timeZone`, or its `UNTIL` value does not end with `Z`.
+- **Fix**: Set `start.timeZone`. Write timed `UNTIL` timestamps in UTC (`...Z`). See [Events, recurrence and time](/recurrence/).
+
+### Unsupported recurrence rule or expansion
+
+- **Error**: `400 unsupportedFeature` on recurrence rules or expansion
+- **Cause**: One of the following:
+  - The rule uses `HOURLY` or `MINUTELY`.
+  - The rule uses an unsupported part: `BYHOUR`, `BYWEEKNO`, or `BYYEARDAY`.
+  - The rule includes another iCalendar line (`DTSTART`).
+  - An occurrence falls in a DST gap.
+  - An unbounded rule is expanded without `timeMax`.
+  - The expansion exceeds 10,000 instances or 100 years.
+- **Fix**: Use supported `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY` rules. Supply `timeMax` and a narrower window. See [Events, recurrence and time](/recurrence/).
+
+### `orderBy=startTime` without `singleEvents`
+
+- **Error**: `400`: `startTime ordering requires singleEvents=true.`
+- **Cause**: `orderBy=startTime` was sent without `singleEvents=true`.
+- **Fix**: Add `singleEvents=true` to the `events.list` query.
+
+### Event is not a recurring series
+
+- **Error**: `400`: `Event is not a recurring series.`
+- **Cause**: `events.instances` was called on a non-recurring event.
+- **Fix**: Call `events.instances` only on recurring series masters.
+
+### Read-only field changed
+
+- **Error**: `400`: `<key> is read-only.`
+- **Cause**: One of the following:
+  - A Calendar API write changed `organizer`, `creator`, `iCalUID`, `recurringEventId`, or `originalStartTime`.
+  - A `calendarList` write changed `summary`, `timeZone`, `accessRole`, `primary`, `kind`, `deleted`, or `conferenceProperties`.
+- **Fix**: Omit the field or send the existing value unchanged.
+  - For a per-user calendar name, set `summaryOverride`.
+  - To set custom organizer metadata, use [Fixtures](/fixtures/) or the [Test control API](/test-control/).
+
+### `conferenceData` without `conferenceDataVersion`
+
+- **Error**: `400`: `conferenceData requires conferenceDataVersion=1.`
+- **Cause**: The event payload includes `conferenceData` without `?conferenceDataVersion=1`.
+- **Fix**: Add `conferenceDataVersion=1` to the query string.
+
+### Cannot remove the primary calendar
+
+- **Error**: `403 cannotDeletePrimaryCalendar`: `Cannot remove the primary calendar from the calendar list.`
+- **Cause**: `calendarList.delete` was called on the user's primary calendar.
+- **Fix**: Keep the primary calendar in the list. To hide it, use `calendarList.patch` with `hidden: true` or `selected: false`.
+
+### Invitee edits are rejected
+
+- **Error**: `403 forbiddenForNonOrganizer`
+- **Cause**: An invitee editing an invitation copy did one of the following:
+  - Used `PUT`.
+  - Changed shared event fields.
+  - Edited another attendee.
+- **Fix**: Use `PATCH`. Update only your own `responseStatus`/`comment`, `reminders`, `colorId`, `transparency`, or `extendedProperties`.
+
+### Duplicate event or calendar list entry
+
+- **Error**: `409 duplicate` with one of these messages:
+  - `Duplicate event ID.`
+  - `Invitation event ID conflicts with an existing local event.`
+  - `Calendar already exists in the calendar list.`
+- **Cause**: One of the following:
+  - `events.insert` reused an existing ID in that calendar.
+  - An attendee invitation copy matched an event ID in the attendee's primary calendar with a different `iCalUID`. For example, the existing event's `iCalUID` was set through a fixture or the Test control API. An existing event with the default `iCalUID` is overwritten instead.
+  - `calendarList.insert` was called for a calendar already in the list, including `primary`.
+- **Fix**: Use a unique event ID. Call `calendarList.insert` only for a calendar that is not in the list.
+
+### Event is already deleted
+
+- **Error**: `410 deleted`: `Event is already deleted.`
+- **Cause**: `events.delete` was called on an event that is already `cancelled`.
+- **Fix**: Treat `410` on delete as already deleted.
+
+### `etag` mismatch
+
+- **Error**: `412 conditionNotMet`: `Event has changed.` or `Calendar list entry has changed.`
+- **Cause**: The `If-Match` header does not match the current `etag` of the event or calendar-list entry.
+- **Fix**: Re-fetch with `events.get` or `calendarList.get` and retry.
+
+### Request body too large
+
+- **Error**: `413 payloadTooLarge`: `Request body too large.`
+- **Cause**: The request body exceeds 1,048,576 bytes (1 MiB).
+- **Fix**: Reduce the payload size.
+
+### `maxResults` out of range
+
+- **Error**: `400`: `maxResults must be between 1 and 2500.`
+- **Cause**: `maxResults` is `0`, negative, or greater than `2500`.
+- **Fix**: Set `maxResults` between `1` and `2500`.
+
+### Python SDK fetches discovery documents from Google
+
+- **Cause**: `googleapiclient.discovery.build` tried to download discovery metadata from Google.
+- **Fix**: Use `google-api-python-client` 2.x with `static_discovery=True` and `cache_discovery=False`. Do not set a remote discovery URL. See [SDK examples](/sdks/).
 
 ## Incremental sync and pagination
 
-| Symptom                                                                                                                                                  | Likely cause                                                                                                                                                                                                        | Fix                                                                                                                                  |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `410 fullSyncRequired`: `Sync token is invalid or expired. Perform a full synchronization.`                                                              | The `syncToken` is older than 7 days, was evicted (more than 100 tokens in the workspace), belongs to another calendar or user, or was cleared by a reset, fixture load, or in-memory restart.                      | Discard local sync state and run a full `events.list` without `syncToken`. See [Incremental sync](/sync/).                           |
-| `400`: `Sync query options must match the initial synchronization.`                                                                                      | `singleEvents` or the effective `timeZone` (including a calendar time zone change when `timeZone` was omitted) differs from the initial sync.                                                                       | Repeat the exact `singleEvents` and `timeZone` options from the initial full sync.                                                   |
-| `400`: `<key> cannot be combined with syncToken.` / `Incremental synchronization must include deleted events.` / `instances does not support syncToken.` | `syncToken` was combined with `timeMin`, `timeMax`, `orderBy`, `updatedMin`, `iCalUID`, or extended property filters, sent with `showDeleted=false`, or used on `events.instances`.                                 | Send only `syncToken` (plus matching `singleEvents`, `timeZone`, `maxResults`, `pageToken`, or `showDeleted=true`) on `events.list`. |
-| `410 invalidPageToken`: `Invalid or expired page token.` / `Invalid or stale page token.`                                                                | An event `pageToken` expired (1-hour TTL), was evicted (over 1,000 frozen pages), query options changed, or the server restarted or reset; or a `calendarList` `pageToken` was used after any workspace data write. | Restart listing from the first page.                                                                                                 |
+### Sync token is invalid or expired
+
+- **Error**: `410 fullSyncRequired`: `Sync token is invalid or expired. Perform a full synchronization.`
+- **Cause**: One of the following:
+  - The `syncToken` is older than 7 days.
+  - The `syncToken` was evicted because the workspace has more than 100 tokens.
+  - The `syncToken` belongs to another calendar or user.
+  - A reset, fixture load, or in-memory restart cleared the `syncToken`.
+- **Fix**: Discard local sync state and run a full `events.list` without `syncToken`. See [Incremental sync](/sync/).
+
+### Sync query options changed
+
+- **Error**: `400`: `Sync query options must match the initial synchronization.`
+- **Cause**: `singleEvents` or the effective `timeZone` differs from the initial sync. When `timeZone` was omitted, a calendar time zone change also counts.
+- **Fix**: Repeat the exact `singleEvents` and `timeZone` options from the initial full sync.
+
+### Invalid `syncToken` combination
+
+- **Error**: `400` with one of these messages:
+  - `<key> cannot be combined with syncToken.`
+  - `Incremental synchronization must include deleted events.`
+  - `instances does not support syncToken.`
+- **Cause**: One of the following:
+  - `syncToken` was combined with `timeMin`, `timeMax`, `orderBy`, `updatedMin`, `iCalUID`, or extended property filters.
+  - `syncToken` was sent with `showDeleted=false`.
+  - `syncToken` was used on `events.instances`.
+- **Fix**: Send only `syncToken` on `events.list`. You may also send matching `singleEvents`, `timeZone`, `maxResults`, `pageToken`, or `showDeleted=true`.
+
+### Invalid or expired page token
+
+- **Error**: `410 invalidPageToken`: `Invalid or expired page token.` or `Invalid or stale page token.`
+- **Cause**: The page token is no longer valid.
+  - An event `pageToken` expired (1-hour TTL), was evicted (over 1,000 frozen pages), or was invalidated because query options changed or the server restarted or reset.
+  - A `calendarList` `pageToken` was used after any workspace data write.
+- **Fix**: Restart listing from the first page.
 
 ## Watch notifications
 
-| Symptom                                                                                                                   | Likely cause                                                                                                                                                                                                                                                                                                                 | Fix                                                                                                                                                                                                            |
-| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `400`: `Watch host is not allowed. Configure CALENDARPIT_WATCH_HOSTS explicitly.`                                         | The callback `address` hostname is not `127.0.0.1`, `[::1]`, or `localhost` (for example, `host.docker.internal` or a container service name).                                                                                                                                                                               | Start Calendarpit with `CALENDARPIT_WATCH_HOSTS=<host1>,<host2>` (hostnames only, without ports). See [Watch notifications](/watch/).                                                                          |
-| `400`: `Invalid watch callback URL.`                                                                                      | `address` is not `http:` or `https:`, or includes credentials or a `#fragment`.                                                                                                                                                                                                                                              | Use a plain `http://` or `https://` callback URL.                                                                                                                                                              |
-| `400`: `Only web_hook channels are supported.` / `Invalid channel ID.` / `Invalid channel token.` / `Invalid expiration.` | `type` is not `"web_hook"`, `id` does not match `[A-Za-z0-9_-]{1,64}`, `token` exceeds 256 characters or contains newlines, or `expiration` is not a future Unix millisecond integer.                                                                                                                                        | Fix the invalid field in the `events.watch` or `calendarList.watch` request body.                                                                                                                              |
-| `409 duplicate`: `Duplicate channel ID.`                                                                                  | Another active watch channel in the workspace already uses that `id`.                                                                                                                                                                                                                                                        | Generate a new unique `id` (such as a UUID) for each channel.                                                                                                                                                  |
-| Watch succeeds, but no notifications arrive at your app                                                                   | Your webhook receiver was unreachable, took more than 2,000 ms, or returned a status other than `200`, `201`, `202`, or `204` (3xx redirects are not followed). After 3 attempts, the delivery is marked `failed`.                                                                                                           | Check **Watch** (`http://127.0.0.1:4173/watch`) in the admin UI to inspect the delivery log status and HTTP status code. In tests, call `POST /__calendarpit/deliveries/drain` to wait for pending deliveries. |
-| Notifications stop arriving after restart, reset, or revocation                                                           | Restarting cancels queued deliveries, and an in-memory restart or a restart with a disallowed callback host drops channels. Resetting, loading a fixture, or revoking the connection stops channels, and deleting a calendar stops the event channels on that calendar. Channels also expire (default 24 hours, max 7 days). | Re-fetch state after a restart; if the channel was stopped or expired, register a new watch channel.                                                                                                           |
-| `404 notFound`: `Channel not found.` on `channels.stop`                                                                   | Wrong `resourceId`, an unknown channel ID, a channel already stopped or pruned after expiry, or `channels.stop` was called with a token from a different connection than the one that created the channel.                                                                                                                   | Call `channels.stop` with the creating connection's token and matching `resourceId`. An expired channel that has not yet been pruned still returns `204`; see [Watch notifications](/watch/).                  |
+### Watch host is not allowed
+
+- **Error**: `400`: `Watch host is not allowed. Configure CALENDARPIT_WATCH_HOSTS explicitly.`
+- **Cause**: The callback `address` hostname is not `127.0.0.1`, `[::1]`, or `localhost`. For example, it is `host.docker.internal` or a container service name.
+- **Fix**: Start Calendarpit with `CALENDARPIT_WATCH_HOSTS=<host1>,<host2>`. List hostnames only, without ports. See [Watch notifications](/watch/).
+
+### Invalid watch callback URL
+
+- **Error**: `400`: `Invalid watch callback URL.`
+- **Cause**: `address` is not `http:` or `https:`, or includes credentials or a `#fragment`.
+- **Fix**: Use a plain `http://` or `https://` callback URL.
+
+### Invalid channel fields
+
+- **Error**: `400` with one of these messages:
+  - `Only web_hook channels are supported.`
+  - `Invalid channel ID.`
+  - `Invalid channel token.`
+  - `Invalid expiration.`
+- **Cause**: One of the following:
+  - `type` is not `"web_hook"`.
+  - `id` does not match `[A-Za-z0-9_-]{1,64}`.
+  - `token` exceeds 256 characters or contains newlines.
+  - `expiration` is not a future Unix millisecond integer.
+- **Fix**: Fix the invalid field in the `events.watch` or `calendarList.watch` request body.
+
+### Duplicate channel ID
+
+- **Error**: `409 duplicate`: `Duplicate channel ID.`
+- **Cause**: Another active watch channel in the workspace already uses that `id`.
+- **Fix**: Generate a new unique `id` (such as a UUID) for each channel.
+
+### Watch succeeds, but no notifications arrive at your app
+
+- **Cause**: Delivery to your webhook receiver failed. After 3 attempts, the delivery is marked `failed`. An attempt fails when the receiver:
+  - Is unreachable.
+  - Takes more than 2,000 ms.
+  - Returns a status other than `200`, `201`, `202`, or `204`. 3xx redirects are not followed.
+- **Fix**: Open **Watch** (`http://127.0.0.1:4173/watch`) in the admin UI to inspect the delivery log status and HTTP status code. In tests, call `POST /__calendarpit/deliveries/drain` to wait for pending deliveries.
+
+### Notifications stop arriving after restart, reset, or revocation
+
+- **Cause**: One of the following:
+  - Restarting cancels queued deliveries.
+  - An in-memory restart drops channels.
+  - A restart with a disallowed callback host drops channels.
+  - Resetting, loading a fixture, or revoking the connection stops channels.
+  - Deleting a calendar stops the event channels on that calendar.
+  - The channel expired. Channels expire after 24 hours by default, and after 7 days at most.
+- **Fix**: Re-fetch state after a restart. If the channel was stopped or expired, register a new watch channel.
+
+### Channel not found on `channels.stop`
+
+- **Error**: `404 notFound`: `Channel not found.` on `channels.stop`
+- **Cause**: One of the following:
+  - The `resourceId` is wrong.
+  - The channel ID is unknown.
+  - The channel was already stopped, or pruned after expiry.
+  - `channels.stop` was called with a token from a different connection than the one that created the channel.
+- **Fix**: Call `channels.stop` with the creating connection's token and the matching `resourceId`. An expired channel that has not yet been pruned still returns `204`. See [Watch notifications](/watch/).
 
 ## Management API
 
-| Symptom                                                                                  | Likely cause                                                                                                                                                                           | Fix                                                                                                                                                  |
-| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `415 unsupportedMediaType`: `Management writes require application/json.`                | A `POST`, `PATCH`, `PUT`, or `DELETE` request to `/__calendarpit/*` (including bodyless calls like `/reset` or `/deliveries/drain`) was sent without `Content-Type: application/json`. | Include `-H 'Content-Type: application/json'` on every management write request. See [Test control API](/test-control/).                             |
-| `403 forbidden`: `Cross-origin management requests are not allowed.`                     | A browser script on another origin called `/__calendarpit/*`.                                                                                                                          | Call `/__calendarpit/*` from your test runner, CLI, or backend (without a cross-origin `Origin` header), or use the admin UI.                        |
-| `400 unsupportedFeature`: `Unsupported field: storage` on `POST /__calendarpit/fixtures` | You posted a `GET /__calendarpit/state` response directly as a fixture.                                                                                                                | Post a valid fixture object containing only `users`, `calendars`, `events`, and `clients` (with client `secret` values). See [Fixtures](/fixtures/). |
+### Management writes require JSON
+
+- **Error**: `415 unsupportedMediaType`: `Management writes require application/json.`
+- **Cause**: A `POST`, `PATCH`, `PUT`, or `DELETE` request to `/__calendarpit/*` was sent without `Content-Type: application/json`. This includes bodyless calls like `/reset` or `/deliveries/drain`.
+- **Fix**: Include `-H 'Content-Type: application/json'` on every management write request. See [Test control API](/test-control/).
+
+### Cross-origin management request
+
+- **Error**: `403 forbidden`: `Cross-origin management requests are not allowed.`
+- **Cause**: A browser script on another origin called `/__calendarpit/*`.
+- **Fix**: Call `/__calendarpit/*` from your test runner, CLI, or backend, without a cross-origin `Origin` header. Or use the admin UI.
+
+### State response posted as a fixture
+
+- **Error**: `400 unsupportedFeature`: `Unsupported field: storage` on `POST /__calendarpit/fixtures`
+- **Cause**: You posted a `GET /__calendarpit/state` response directly as a fixture.
+- **Fix**: Post a valid fixture object containing only `users`, `calendars`, `events`, and `clients`. Include the client `secret` values. See [Fixtures](/fixtures/).

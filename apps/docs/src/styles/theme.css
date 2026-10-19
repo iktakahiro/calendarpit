@@ -4,17 +4,28 @@
 
 @theme {
   --font-sans:
-    'Geist', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif;
+    'Geist', -apple-system, BlinkMacSystemFont, 'Hiragino Sans',
+    'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', Meiryo,
+    'Segoe UI', sans-serif;
   --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 1rem;
-  letter-spacing: -0.04em;
+}
+/* The lockup ships in light and dark variants; show the one for the theme. */
+.site-logo {
+  display: block;
+  width: auto;
+  height: 1.375rem;
+}
+.site-logo[data-theme='dark'],
+.dark .site-logo[data-theme='light'] {
+  display: none;
+}
+.dark .site-logo[data-theme='dark'] {
+  display: block;
 }
 .skip-link {
   position: fixed;
@@ -39,4 +50,76 @@
 }
 .not-found p {
   margin-block: 1.5rem;
+}
+
+/* Card descriptions sit closer to body text than the muted default, which
+   loses contrast on the card background. */
+[data-card] > p,
+[data-card] > div {
+  color: color-mix(
+    in oklab,
+    var(--color-fd-foreground) 72%,
+    var(--color-fd-muted-foreground)
+  );
+}
+
+/* Inline code carries the brand accent so identifiers stand out from prose.
+   Code inside links and headings keeps the surrounding color. */
+:root {
+  --inline-code: #b03f16;
+}
+.dark {
+  --inline-code: #ffa57c;
+}
+.prose :not(pre) > code:not(:where(.not-prose *)) {
+  border-color: color-mix(
+    in oklab,
+    var(--inline-code) 28%,
+    var(--color-fd-border)
+  );
+  background: color-mix(in oklab, var(--inline-code) 9%, transparent);
+  color: var(--inline-code);
+}
+.prose :is(a, h1, h2, h3, h4) > code {
+  color: inherit;
+}
+
+/* Text contrast: the Fumadocs neutral palette dims body text (92% white at
+   90% opacity) and muted text (70% at 80% opacity). Use near-white text and an
+   opaque, lighter muted tone in dark mode, and matching darker text in light
+   mode. */
+:root {
+  --color-fd-foreground: hsl(0, 0%, 3%);
+  --color-fd-muted-foreground: hsl(0, 0%, 36%);
+}
+.dark {
+  --color-fd-foreground: hsl(0, 0%, 97%);
+  --color-fd-card-foreground: hsl(0, 0%, 97%);
+  --color-fd-muted-foreground: hsl(0, 0%, 76%);
+}
+.dark #nd-sidebar {
+  --color-fd-muted-foreground: hsl(0, 0%, 80%);
+}
+.prose {
+  --tw-prose-body: var(--color-fd-foreground);
+}
+
+/* Page descriptions and the landing tagline use a desaturated brand tint
+   instead of neutral gray, so the lead reads warmer than body text. */
+:root {
+  --lead: #7d5545;
+}
+.dark {
+  --lead: #d6b8aa;
+}
+.page-description,
+.hero-description {
+  color: var(--lead);
+}
+
+/* Body copy uses the light weight. Japanese falls back to system fonts, where
+   300 maps to Hiragino Sans W3, its regular text weight on macOS. */
+.prose,
+.hero-description {
+  font-weight: 300;
 }

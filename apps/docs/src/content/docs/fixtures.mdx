@@ -5,13 +5,22 @@ description: Define test users, calendars, events, and OAuth clients in a JSON f
 
 A fixture is a JSON file that defines initial test data for Calendarpit: test users, calendars, events, and OAuth clients. Use a fixture to start your local server or test suite with a known dataset.
 
-Setting explicit `id` values in a fixture gives your tests fixed user, calendar, event, and OAuth client IDs. Your test assertions can check exact IDs instead of querying for generated values.
+Set explicit `id` values in a fixture to give your tests fixed user, calendar, event, and OAuth client IDs. Your test assertions can then check exact IDs instead of querying for generated values.
 
 ## Load a fixture at startup
 
-Pass a fixture file path with the `--config` CLI flag or the `CALENDARPIT_CONFIG` environment variable. If you omit both, Calendarpit loads a built-in default fixture matching `fixtures/default.json` in the repository (users `alex` and `sam`, calendars `alex-work`, `alex-personal`, and `sam-work`, one `planning` event, and the `sample-app` OAuth client).
+Pass a fixture file path with the `--config` CLI flag or the `CALENDARPIT_CONFIG` environment variable.
 
-Save the JSON example below as `calendarpit.fixture.json` and edit it for your test. Check prerequisites and publication status in [Installation](/installation/), then start from the directory containing the file:
+If you omit both, Calendarpit loads a built-in default fixture. It matches `fixtures/default.json` in the repository and contains:
+
+- Users `alex` and `sam`
+- Calendars `alex-work`, `alex-personal`, and `sam-work`
+- One `planning` event
+- The `sample-app` OAuth client
+
+### Start from the CLI
+
+Save the JSON example below as `calendarpit.fixture.json` and edit it for your test. Check prerequisites and publication status in [Installation](/installation/). Then start Calendarpit from the directory that contains the file:
 
 ```sh
 calendarpit serve \
@@ -20,6 +29,8 @@ calendarpit serve \
 
 Relative `--config` and `CALENDARPIT_CONFIG` paths resolve from the directory where you start Calendarpit.
 
+### Start in Docker or Compose
+
 In Docker, mount the existing file read-only and use its container path. This command uses POSIX shell syntax:
 
 ```sh
@@ -27,23 +38,57 @@ docker run --rm -p 127.0.0.1:4173:4173 \
   --mount "type=bind,source=$PWD/calendarpit.fixture.json,target=/fixtures/startup.json,readonly" \
   -e CALENDARPIT_CONFIG=/fixtures/startup.json \
   -e CALENDARPIT_DATABASE=:memory: \
-  ghcr.io/iktakahiro/calendarpit:0.9.0
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
-For Compose, add `./calendarpit.fixture.json:/fixtures/startup.json:ro` to the service's `volumes` and set `CALENDARPIT_CONFIG: /fixtures/startup.json` in `environment`. The host file must be readable by the container's non-root user. See [Run and configure](/running/) for startup options.
+For Compose, make two changes to the service:
+
+- Add `./calendarpit.fixture.json:/fixtures/startup.json:ro` to its `volumes`.
+- Set `CALENDARPIT_CONFIG: /fixtures/startup.json` in its `environment`.
+
+The host file must be readable by the container's non-root user. See [Run and configure](/running/) for startup options.
+
+### When the startup fixture applies
 
 A startup fixture seeds only a **new, empty** database:
 
-- In `--database :memory:` mode, the database is new on every process start, so the fixture always applies.
-- When a SQLite file already contains saved data, Calendarpit does not apply the fixture and prints no warning. It loads the saved data (including per-user calendar-list settings and deleted-calendar tombstones) and the original reset baseline. The path you pass must still point to a readable JSON file, or startup fails. Its contents are not validated in this case. See [Storage and restarts](/storage/) for details.
+- **`--database :memory:` mode**: The database is new on every process start, so the fixture always applies.
+- **SQLite file with saved data**: Calendarpit does not apply the fixture and prints no warning. It loads the saved data and the original reset baseline. The saved data includes per-user calendar-list settings and deleted-calendar tombstones.
 
-To load a different fixture at runtime or reset to the startup baseline between tests, use `POST /__calendarpit/fixtures` or `POST /__calendarpit/reset`. Both clear OAuth grants and tokens, per-user calendar-list settings, deleted-calendar tombstones, watch channels, deliveries, request history, sync tokens, and notifications. Reset restores the startup fixture, including default calendar-list entries with their startup etags. `GET /__calendarpit/state` omits client secrets, calendar-list settings, and tombstones, and cannot be reloaded as a fixture. See [Test control API](/test-control/).
+<Callout type='warn'>
+  Even when Calendarpit skips the fixture, the path you pass must still point to
+  a readable JSON file, or startup fails. Its contents are not validated in this
+  case.
+</Callout>
+
+See [Storage and restarts](/storage/) for details.
+
+### Load or reset at runtime
+
+Use the test control API to change data between tests:
+
+- `POST /__calendarpit/fixtures` loads a different fixture at runtime.
+- `POST /__calendarpit/reset` resets to the startup baseline. It restores the startup fixture, including default calendar-list entries with their startup etags.
+
+Both endpoints clear:
+
+- OAuth grants and tokens
+- Per-user calendar-list settings
+- Deleted-calendar tombstones
+- Watch channels
+- Deliveries
+- Request history
+- Sync tokens
+- Notifications
+
+`GET /__calendarpit/state` omits client secrets, calendar-list settings, and tombstones. You cannot reload its output as a fixture. See [Test control API](/test-control/).
 
 ## Root structure and example
 
 The root value of a fixture file must be a JSON object. It accepts four optional array keys: `users`, `calendars`, `events`, and `clients`. An empty object (`{}`) is a valid empty fixture.
 
-Each key, if present, must be an array (`"<key> must be an array."`). Any other key on the root object or inside a user, calendar, event, or client entry fails validation (`"Unsupported field: <key>"`, reason `unsupportedFeature`).
+- Each key, if present, must be an array. Otherwise validation fails with `"<key> must be an array."`.
+- Any other key fails validation with `"Unsupported field: <key>"` (reason `unsupportedFeature`). This applies to the root object and to every user, calendar, event, and client entry.
 
 ```json
 {
@@ -78,20 +123,43 @@ Each key, if present, must be an array (`"<key> must be an array."`). Any other 
 
 ## ID rules and validation
 
-IDs are optional for users, calendars, events, and clients. Users that own calendars and calendars that contain events need an explicit `id` so other entries can reference them.
+IDs are optional for users, calendars, events, and clients. However, users that own calendars and calendars that contain events need an explicit `id`, so other entries can reference them.
 
-- **Allowed characters**: ASCII letters, digits, `@`, `.`, `_`, and `-` (`^[a-zA-Z0-9@._-]{1,128}$`), up to 128 characters. An empty, whitespace-only, or non-string `id` fails with `"id must be a nonempty string."`. A nonempty string that does not match the pattern fails with `"Invalid ID."`. IDs from 129 to 10,000 characters fail with `"Invalid ID."`; longer values fail with `"id must be a nonempty string."`.
-- **Reserved ID**: `primary` is reserved and cannot be used as an ID (fails with `"Invalid ID."`).
-- **Uniqueness**: IDs within `users`, `calendars`, and `clients` must each be unique (`"Duplicate fixture ID."`). Event IDs must be unique within each calendar (`"Duplicate event ID."`); the same event ID can appear in different calendars.
-- **Generated IDs and baseline capture**: When an `id` is omitted, Calendarpit generates a UUID. Generated IDs and initial event metadata (`created`, `updated`, `etag`) are captured in the startup reset baseline at seed time, so repeated calls to `POST /__calendarpit/reset` reproduce the same data. SQLite preserves that baseline across process restarts; in `:memory:` mode, every new process generates fresh UUIDs and timestamps.
+- **Allowed characters**: ASCII letters, digits, `@`, `.`, `_`, and `-`, up to 128 characters (`^[a-zA-Z0-9@._-]{1,128}$`).
+- **Reserved ID**: `primary` is reserved and cannot be used as an ID.
+- **Uniqueness**: IDs must be unique within each of `users`, `calendars`, and `clients` (`"Duplicate fixture ID."`). Event IDs must be unique within each calendar (`"Duplicate event ID."`). The same event ID can appear in different calendars.
 
-Validation is atomic. Every owner and calendar reference must exist in the fixture. If any fixture rule fails, Calendarpit stops at the first error: at startup with a new database, the process prints `Calendarpit: <message>` and exits with code `1`; on `POST /__calendarpit/fixtures`, it returns `400` (`invalidParameter` or `unsupportedFeature`) and leaves existing data unchanged.
+### ID errors
+
+| `id` value                                      | Error                             |
+| ----------------------------------------------- | --------------------------------- |
+| Empty, whitespace-only, or not a string         | `"id must be a nonempty string."` |
+| Nonempty string that does not match the pattern | `"Invalid ID."`                   |
+| 129 to 10,000 characters                        | `"Invalid ID."`                   |
+| Longer than 10,000 characters                   | `"id must be a nonempty string."` |
+| `primary`                                       | `"Invalid ID."`                   |
+
+### Generated IDs and the reset baseline
+
+When you omit an `id`, Calendarpit generates a UUID.
+
+At seed time, Calendarpit captures generated IDs and initial event metadata (`created`, `updated`, `etag`) in the startup reset baseline. As a result, repeated calls to `POST /__calendarpit/reset` reproduce the same data.
+
+- SQLite preserves that baseline across process restarts.
+- In `:memory:` mode, every new process generates fresh UUIDs and timestamps.
+
+### Validation failures
+
+Validation is atomic. Every owner and calendar reference must exist in the fixture. If any fixture rule fails, Calendarpit stops at the first error:
+
+- **At startup with a new database**: The process prints `Calendarpit: <message>` and exits with code `1`.
+- **On `POST /__calendarpit/fixtures`**: Calendarpit returns `400` (`invalidParameter` or `unsupportedFeature`) and leaves existing data unchanged.
 
 ## Section reference
 
 ### `users`
 
-Defines test users that can approve access on the consent page and own calendars.
+Defines test users. A test user can approve access on the consent page and own calendars.
 
 | Field   | Required | Default        | Rules                                                                                           |
 | ------- | -------- | -------------- | ----------------------------------------------------------------------------------------------- |
@@ -101,7 +169,11 @@ Defines test users that can approve access on the consent page and own calendars
 
 ### `calendars`
 
-Defines calendars owned by fixture users. Every user that owns calendars must have **exactly one** calendar with `"primary": true` (else `"Each user with calendars must have exactly one primary calendar."`). A single calendar without `"primary": true` fails validation. Users without calendars are allowed; for those users, the `primary` calendar alias returns `404`.
+Defines calendars owned by fixture users.
+
+- Every user that owns calendars must have **exactly one** calendar with `"primary": true`. Otherwise validation fails with `"Each user with calendars must have exactly one primary calendar."`.
+- This includes a user with a single calendar. That calendar fails validation without `"primary": true`.
+- Users without calendars are allowed. For those users, the `primary` calendar alias returns `404`.
 
 | Field      | Required | Default        | Rules                                                                             |
 | ---------- | -------- | -------------- | --------------------------------------------------------------------------------- |
@@ -111,31 +183,43 @@ Defines calendars owned by fixture users. Every user that owns calendars must ha
 | `timeZone` | Optional | `"UTC"`        | Valid IANA time zone name (else `"Invalid IANA time zone."`).                     |
 | `primary`  | Optional | `false`        | Boolean (else `"primary must be boolean."`).                                      |
 
-Seeded calendars start on their owner's calendar list with default settings (`selected: true`, `colorId: "1"`). When you later modify calendars or users through the management API (see [Test control API](/test-control/)):
+Seeded calendars start on their owner's calendar list with default settings (`selected: true`, `colorId: "1"`).
 
-- Deleting a primary calendar makes the first remaining owned calendar on the calendar list the new primary calendar, or the first remaining owned calendar if none are on the list. The new primary calendar is put back on the list if needed, keeping its other list settings.
-- Setting `"primary": true` on another calendar transfers the flag atomically and puts that calendar back on the calendar list, keeping its other list settings.
-- Deleting a calendar drops its list settings and records a deleted-calendar tombstone (`deleted: true` with default list settings when `showDeleted=true`). A deleted primary calendar's tombstone keeps `primary: true`. Recreating a calendar with a previously deleted ID clears that tombstone and any saved list settings. Deleting a user revokes their OAuth grants (stopping their watch channels) and removes their calendars, events, and list settings without adding tombstones.
+You can later modify calendars or users through the management API (see [Test control API](/test-control/)). Calendarpit then behaves as follows:
+
+- **Delete a primary calendar**: The first remaining owned calendar on the calendar list becomes the new primary calendar. If none are on the list, the first remaining owned calendar becomes primary. The new primary calendar is put back on the list if needed, keeping its other list settings.
+- **Set `"primary": true` on another calendar**: The flag transfers atomically. That calendar is put back on the calendar list, keeping its other list settings.
+- **Delete a calendar**: Its list settings are dropped, and Calendarpit records a deleted-calendar tombstone. With `showDeleted=true`, the tombstone appears as `deleted: true` with default list settings. A deleted primary calendar's tombstone keeps `primary: true`. Recreating a calendar with a previously deleted ID clears that tombstone and any saved list settings.
+- **Delete a user**: Calendarpit revokes the user's OAuth grants, which stops their watch channels. It removes their calendars, events, and list settings without adding tombstones.
 
 ### `events`
 
-Defines initial events. Fixture events use the Calendar API event fields and validation rules (see [Calendar API compatibility](/compatibility/) and [Events, recurrence and time](/recurrence/)), plus `calendarId`. Read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`) may be set, and `conferenceData` does not require `conferenceDataVersion`. The request-only field `attendeesOmitted` is rejected (`"Unsupported field: attendeesOmitted"`). Seeding does not trigger API insert side effects: attendees do not receive invitation copies in their own calendars, and a `conferenceData.createRequest` does not generate a meeting link.
+Defines initial events. Fixture events use the Calendar API event fields and validation rules, plus `calendarId`. See [Calendar API compatibility](/compatibility/) and [Events, recurrence and time](/recurrence/).
 
-| Field                                                                      | Required | Default                                                                                                                                            | Rules                                                                                                                                                                                                                                                                             |
-| -------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `calendarId`                                                               | Required | —                                                                                                                                                  | Must match a calendar `id` in `calendars` (else `"Unknown event calendar."`).                                                                                                                                                                                                     |
-| `id`                                                                       | Optional | Generated UUID                                                                                                                                     | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique within the calendar.                                                                                                                                                                                                |
-| `start`, `end`                                                             | Required | —                                                                                                                                                  | Event start and end (`dateTime` or all-day `date`), same rules as the Calendar API.                                                                                                                                                                                               |
-| `organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime` | Optional | Calendar owner (`organizer`, `creator`), `<id>@calendarpit.local` (`iCalUID`), none (`recurringEventId`, `originalStartTime`; set both or neither) | Read-only in normal API requests, but may be set in fixtures (for example, to seed an external organizer or stored recurring exceptions). Setting only one of `recurringEventId` or `originalStartTime` fails with `"Instances require recurringEventId and originalStartTime."`. |
-| `sequence`                                                                 | Optional | `0`                                                                                                                                                | Non-negative integer (else `"Invalid sequence."`).                                                                                                                                                                                                                                |
-| `created`, `updated`, `etag`                                               | Ignored  | Generated at seed time                                                                                                                             | Provided values are ignored; new values are generated when seeding the fixture.                                                                                                                                                                                                   |
+- Read-only fields (`organizer`, `creator`, `iCalUID`, `recurringEventId`, `originalStartTime`) may be set.
+- `conferenceData` does not require `conferenceDataVersion`.
+- The request-only field `attendeesOmitted` is rejected (`"Unsupported field: attendeesOmitted"`).
+- Seeding does not trigger API insert side effects. Attendees do not receive invitation copies in their own calendars. A `conferenceData.createRequest` does not generate a meeting link.
+
+| Field                                   | Required | Default                  | Rules                                                                               |
+| --------------------------------------- | -------- | ------------------------ | ----------------------------------------------------------------------------------- |
+| `calendarId`                            | Required | —                        | Must match a calendar `id` in `calendars` (else `"Unknown event calendar."`).       |
+| `id`                                    | Optional | Generated UUID           | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique within the calendar.  |
+| `start`, `end`                          | Required | —                        | Event start and end (`dateTime` or all-day `date`), same rules as the Calendar API. |
+| `organizer`, `creator`                  | Optional | Calendar owner           | Read-only in normal API requests, but may be set in fixtures.                       |
+| `iCalUID`                               | Optional | `<id>@calendarpit.local` | Read-only in normal API requests, but may be set in fixtures.                       |
+| `recurringEventId`, `originalStartTime` | Optional | None                     | Read-only in normal API requests, but may be set in fixtures. Set both or neither.  |
+| `sequence`                              | Optional | `0`                      | Non-negative integer (else `"Invalid sequence."`).                                  |
+| `created`, `updated`, `etag`            | Ignored  | Generated at seed time   | Provided values are ignored; new values are generated when seeding the fixture.     |
+
+Setting read-only fields is useful, for example, to seed an external organizer or stored recurring exceptions. Setting only one of `recurringEventId` or `originalStartTime` fails with `"Instances require recurringEventId and originalStartTime."`.
 
 ### `clients`
 
-Defines OAuth clients for [Local OAuth](/oauth/). There is no `scopes` field per client; any client may request any supported scope.
+Defines OAuth clients for [Local OAuth](/oauth/). There is no `scopes` field per client. Any client may request any supported scope.
 
-| Field          | Required | Default        | Rules                                                                                                                                                     |
-| -------------- | -------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`           | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `clients`.                                                                           |
-| `secret`       | Required | —              | Nonempty string up to 10,000 characters.                                                                                                                  |
-| `redirectUris` | Required | —              | Nonempty array of absolute `http` or `https` URLs (up to 10,000 characters each) without fragments or credentials. Matched exactly at `/oauth/authorize`. |
+| Field          | Required | Default        | Rules                                                                                                                                                      |
+| -------------- | -------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`           | Optional | Generated UUID | 1–128 chars matching `[a-zA-Z0-9@._-]`; not `primary`. Unique across `clients`.                                                                            |
+| `secret`       | Required | —              | Nonempty string up to 10,000 characters.                                                                                                                   |
+| `redirectUris` | Required | —              | Nonempty array of absolute `http` or `https` URLs (up to 10,000 characters each), without fragments or credentials. Matched exactly at `/oauth/authorize`. |

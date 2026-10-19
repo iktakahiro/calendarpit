@@ -1,5 +1,6 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { sitePath } from './paths';
+import logoDark from '../assets/logo-dark.svg';
+import logoLight from '../assets/logo-light.svg';
 import { i18n, localeFromPath } from './i18n';
 
 /** Product navigation; Fumadocs supplies the locale selector and page tree. */
@@ -11,8 +12,22 @@ export function layoutOptions(slug: string): BaseLayoutProps {
     nav: {
       title: (
         <span className='site-brand'>
-          <img src={sitePath('favicon.svg')} width={28} height={28} alt='' />
-          Calendarpit
+          <img
+            className='site-logo'
+            data-theme='light'
+            src={logoLight}
+            width={182}
+            height={22}
+            alt='Calendarpit'
+          />
+          <img
+            className='site-logo'
+            data-theme='dark'
+            src={logoDark}
+            width={182}
+            height={22}
+            alt='Calendarpit'
+          />
         </span>
       ),
       url: home,

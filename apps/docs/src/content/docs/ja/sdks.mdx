@@ -3,22 +3,38 @@ title: SDK の使用例
 description: TypeScript、Python、Go、Java、C# の公式 Google Calendar クライアントの接続先を Calendarpit に変更します。
 ---
 
-アプリの公式 Google Calendar SDK クライアントの接続先を Calendarpit に変更します。Calendarpit 専用の SDK は不要です。以下の例では、カレンダーの一覧を取得し、FreeBusy を照会します。
+アプリの公式 Google Calendar SDK クライアントの接続先を Calendarpit に変更します。Calendarpit 専用の SDK は不要です。
+
+以下の例では、カレンダーの一覧を取得し、FreeBusy を照会します。
 
 ## SDK を呼び出す前に
 
-Calendarpit を起動します（例: `calendarpit serve`。[起動と設定](/ja/running/)を参照）。次に、`https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。取得したアクセストークン（有効期間は 1 時間）をシェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。この変数は各例のコードが明示的に読み取るもので、Google SDK の設定ではありません。
+先にアクセストークンと SDK パッケージを用意します。
+
+1. Calendarpit を起動します（例: `calendarpit serve`）。詳しくは[起動と設定](/ja/running/)を参照してください。
+2. `https://www.googleapis.com/auth/calendar` スコープで[ローカル OAuth フロー](/ja/oauth/)を完了します。リフレッシュトークンが必要な場合は `access_type=offline` を追加します。
+3. 取得したアクセストークンを、シェルの `CALENDARPIT_ACCESS_TOKEN` に設定します。トークンの有効期間は 1 時間です。
+4. 各タブに記載したパッケージをプロジェクトにインストールします。Calendarpit は言語ランタイムや SDK パッケージをインストールしません。
+
+`CALENDARPIT_ACCESS_TOKEN` は各例のコードが明示的に読み取る変数です。Google SDK の設定ではありません。
 
 <Callout>
 
-これらのコードは、既存のアクセストークンを渡して Calendar API リクエストを Calendarpit に送る方法を示します。認可のコールバックやトークンの自動更新は扱いません。トークンは `POST /oauth/token` で更新し、クライアントのトークンを差し替えるか、クライアントを作り直してください。サンプルアプリと OAuth クライアントの設定全体は[アプリを接続する](/ja/connect/)を参照してください。
+これらのコードは、既存のアクセストークンを渡します。Calendar API リクエストを Calendarpit に送る方法を示すためのものです。
+
+- 認可のコールバックやトークンの自動更新は扱いません。
+- トークンは `POST /oauth/token` で更新します。そのうえで、クライアントのトークンを差し替えるか、クライアントを作り直してください。
+
+サンプルアプリと OAuth クライアントの設定全体は[アプリを接続する](/ja/connect/)を参照してください。
 
 </Callout>
-各タブに記載したパッケージをプロジェクトにインストールしてください。Calendarpit は言語ランタイムや SDK パッケージをインストールしません。
 
 ## サービス URL を設定する
 
-エンドポイントの指定形式はライブラリごとに異なります。末尾のスラッシュは表のとおりに付けてください。Calendarpit を別のホストやポートで実行している場合は、すべての値の `127.0.0.1:4173` を置き換えます。
+エンドポイントの指定形式はライブラリごとに異なります。
+
+- 末尾のスラッシュは表のとおりに付けてください。
+- Calendarpit を別のホストやポートで実行している場合は、すべての値の `127.0.0.1:4173` を置き換えます。
 
 | 言語                    | SDK の設定                              | 値                                        |
 | ----------------------- | --------------------------------------- | ----------------------------------------- |
@@ -28,14 +44,24 @@ Calendarpit を起動します（例: `calendarpit serve`。[起動と設定](/j
 | Java                    | `setRootUrl` + `setServicePath`         | `http://127.0.0.1:4173/` + `calendar/v3/` |
 | C# / .NET               | `BaseClientService.Initializer.BaseUri` | `http://127.0.0.1:4173/calendar/v3/`      |
 
-どの FreeBusy の例も、Calendarpit に `POST /calendar/v3/freeBusy` を送信します。同じクライアントで呼び出すイベントの CRUD やカレンダーリストの操作も、このローカル URL に送られます。`calendarList` の `list`、`get`、`insert`、`patch`、`update`、`delete`、`watch` に対応しています。ただし、[Calendar API の互換性](/ja/compatibility/)に記載した単一オーナーの制限があります。SDK にほかのメソッドがあっても、対応しているのは互換性のページに記載した操作だけです。
+どの FreeBusy の例も、Calendarpit に `POST /calendar/v3/freeBusy` を送信します。同じクライアントで呼び出すイベントの CRUD やカレンダーリストの操作も、このローカル URL に送られます。
+
+`calendarList` では、`list`・`get`・`insert`・`patch`・`update`・`delete`・`watch` に対応しています。ただし、[Calendar API の互換性](/ja/compatibility/)に記載した単一オーナーの制限があります。
+
+<Callout type="warn">
+
+SDK にほかのメソッドがあっても、対応しているのは[Calendar API の互換性](/ja/compatibility/)に記載した操作だけです。
+
+</Callout>
 
 ## カレンダーを一覧表示して FreeBusy を照会する
 
 <Tabs items={["TypeScript / JavaScript","Python","Go","Java","C#","HTTP / curl"]}>
 <Tab value="TypeScript / JavaScript" forceMount>
 
-パッケージ: `@googleapis/calendar` と `google-auth-library`。Bun で実行するか、Node.js 22 以降で ES モジュール（`.mjs`）として実行します。一体型の `googleapis` パッケージでも `google.calendar({ version: 'v3', auth, rootUrl })` を使えます。
+- **パッケージ**: `@googleapis/calendar` と `google-auth-library`
+- **ランタイム**: Bun、または Node.js 22 以降で ES モジュール（`.mjs`）として実行します。
+- **一体型パッケージ**: `googleapis` でも `google.calendar({ version: 'v3', auth, rootUrl })` を使えます。
 
 ```ts
 import { calendar } from '@googleapis/calendar';
@@ -73,7 +99,9 @@ console.log(data.calendars?.primary?.busy ?? []);
 </Tab>
 <Tab value="Python" forceMount>
 
-パッケージ: `google-api-python-client`（2.x）と `google-auth`。`static_discovery=True` を指定すると、インストール済みのライブラリに同梱されたディスカバリドキュメントを使います。そのため、クライアントの作成時に Google からディスカバリ情報を取得しません。`api_endpoint` には `/calendar/v3/` のパスを含めます。
+- **パッケージ**: `google-api-python-client`（2.x）と `google-auth`
+- **ディスカバリ**: `static_discovery=True` を指定すると、インストール済みのライブラリに同梱されたディスカバリドキュメントを使います。そのため、クライアントの作成時に Google からディスカバリ情報を取得しません。
+- **エンドポイント**: `api_endpoint` には `/calendar/v3/` のパスを含めます。
 
 ```python
 import os
@@ -102,14 +130,20 @@ with build(
     print(result["calendars"]["primary"]["busy"])
 ```
 
-`Credentials` にリフレッシュトークンを渡す場合は、登録済みのクライアント ID、クライアントシークレット、`token_uri="http://127.0.0.1:4173/oauth/token"` も指定します。`scopes` は省略するか、許可されたスコープを同じ順序でそのまま渡してください。認可、userinfo、取り消しの URL は、アプリの[OAuth フロー](/ja/oauth/)で別に設定します。
+`Credentials` にリフレッシュトークンを渡す場合は、次のようにします。
+
+- 登録済みのクライアント ID、クライアントシークレット、`token_uri="http://127.0.0.1:4173/oauth/token"` も指定します。
+- `scopes` は省略するか、許可されたスコープを同じ順序でそのまま渡してください。
+
+認可、userinfo、取り消しの URL は、アプリの[OAuth フロー](/ja/oauth/)で別に設定します。
 
 参考: [同梱のディスカバリドキュメント](https://googleapis.github.io/google-api-python-client/docs/start.html#building-and-calling-a-service)、[エンドポイントの選択](https://github.com/googleapis/google-api-python-client/blob/main/googleapiclient/discovery.py)
 
 </Tab>
 <Tab value="Go" forceMount>
 
-モジュール: `google.golang.org/api` と `golang.org/x/oauth2`。クライアントが Google の Application Default Credentials を探さないように、トークンソースを明示的に渡します。
+- **モジュール**: `google.golang.org/api` と `golang.org/x/oauth2`
+- **認証情報**: トークンソースを明示的に渡します。こうすると、クライアントが Google の Application Default Credentials を探しません。
 
 ```go
 package main
@@ -164,14 +198,18 @@ func main() {
 }
 ```
 
-`StaticTokenSource` はトークンを更新しません。SDK に OAuth を管理させる場合は、`oauth2.Config.Endpoint.AuthURL` と `TokenURL` に Calendarpit の [OAuth エンドポイント](/ja/oauth/)を設定し、`config.TokenSource(ctx, token)` を渡します。
+`StaticTokenSource` はトークンを更新しません。SDK に OAuth を管理させる場合は、次のようにします。
+
+1. `oauth2.Config.Endpoint.AuthURL` と `TokenURL` に Calendarpit の [OAuth エンドポイント](/ja/oauth/)を設定します。
+2. `config.TokenSource(ctx, token)` を渡します。
 
 参考: [Calendar クライアント](https://pkg.go.dev/google.golang.org/api/calendar/v3)、[WithEndpoint](https://pkg.go.dev/google.golang.org/api/option#WithEndpoint)、[OAuth の設定](https://pkg.go.dev/golang.org/x/oauth2#Config)
 
 </Tab>
 <Tab value="Java" forceMount>
 
-アーティファクト: `com.google.apis:google-api-services-calendar`、`com.google.http-client:google-http-client`、`com.google.http-client:google-http-client-gson`。この例は Java 11 以降を前提にしています。
+- **アーティファクト**: `com.google.apis:google-api-services-calendar`、`com.google.http-client:google-http-client`、`com.google.http-client:google-http-client-gson`
+- **Java のバージョン**: この例は Java 11 以降を前提にしています。
 
 ```java
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -210,14 +248,17 @@ public class CalendarpitExample {
 }
 ```
 
-リクエストイニシャライザーで Bearer トークンのヘッダーを直接設定しています。トークンの取得と更新には[ローカル OAuth エンドポイント](/ja/oauth/)を使ってください。`setRootUrl` を設定しても、Google の認可用ヘルパーの接続先は変わりません。
+リクエストイニシャライザーで Bearer トークンのヘッダーを直接設定しています。トークンの取得と更新には[ローカル OAuth エンドポイント](/ja/oauth/)を使ってください。
+
+`setRootUrl` を設定しても、Google の認可用ヘルパーの接続先は変わりません。
 
 参考: [Calendar ビルダー](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/Calendar.Builder.html)、[FreeBusy リクエスト](https://googleapis.dev/java/google-api-services-calendar/latest/com/google/api/services/calendar/model/FreeBusyRequest.html)
 
 </Tab>
 <Tab value="C#" forceMount>
 
-NuGet パッケージ: `Google.Apis.Calendar.v3` と `Google.Apis.Auth`。トップレベルステートメントを使うコンソールアプリケーションで使います。
+- **NuGet パッケージ**: `Google.Apis.Calendar.v3` と `Google.Apis.Auth`
+- **プロジェクトの種類**: トップレベルステートメントを使うコンソールアプリケーション
 
 ```csharp
 using System;
@@ -257,7 +298,9 @@ foreach (var interval in result.Calendars["primary"].Busy)
     Console.WriteLine($"{interval.StartRaw} - {interval.EndRaw}");
 ```
 
-`FromAccessToken` はトークンを更新しません。[ローカルのトークンエンドポイント](/ja/oauth/)で更新し、認証情報を作り直してください。`BaseUri` が変えるのは Calendar API リクエストの接続先だけです。OAuth ヘルパーの接続先は変わりません。
+`FromAccessToken` はトークンを更新しません。[ローカルのトークンエンドポイント](/ja/oauth/)で更新し、認証情報を作り直してください。
+
+`BaseUri` が変えるのは Calendar API リクエストの接続先だけです。OAuth ヘルパーの接続先は変わりません。
 
 参考: [サービスのベース URI](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Services.BaseClientService.Initializer)、[アクセストークンによる認証情報](https://docs.cloud.google.com/dotnet/docs/reference/Google.Apis/latest/Google.Apis.Auth.OAuth2.GoogleCredential)、[FreeBusy リクエスト](https://googleapis.dev/dotnet/Google.Apis.Calendar.v3/latest/api/Google.Apis.Calendar.v3.Data.FreeBusyRequest.html)
 
@@ -284,10 +327,22 @@ curl --fail-with-body http://127.0.0.1:4173/calendar/v3/freeBusy \
 </Tab>
 </Tabs>
 
-`primary` は、認証済みのテストユーザーのプライマリカレンダーを指します。デフォルトの Fixture の Alex の場合、この照会では `Asia/Tokyo` で 2026 年 10 月 19 日 `10:00` から `11:00` までの busy 区間が 1 件返ります。管理画面でイベントを編集すると、次の FreeBusy の応答に反映されます。transparent のイベントとキャンセル済みのイベントは、busy 区間に含まれません。
+### 期待される結果
+
+`primary` は、認証済みのテストユーザーのプライマリカレンダーを指します。
+
+デフォルトの Fixture の Alex の場合、この照会では busy 区間が 1 件返ります。`Asia/Tokyo` で 2026 年 10 月 19 日 `10:00` から `11:00` までの区間です。
+
+管理画面でイベントを編集すると、次の FreeBusy の応答に反映されます。transparent のイベントとキャンセル済みのイベントは、busy 区間に含まれません。
 
 ## 検証状況
 
-自動化された E2E テストの対象は、[アプリを接続する](/ja/connect/)で説明している Bun/TypeScript のサンプルアプリだけです。このページの例は TypeScript の例も含めて公式クライアントの API をもとに書いたもので、このリポジトリの CI ではコンパイルも実行もしていません。
+自動化された E2E テストの対象は、[アプリを接続する](/ja/connect/)で説明している Bun/TypeScript のサンプルアプリだけです。
+
+<Callout type="warn">
+
+このページの例は、TypeScript の例も含めて公式クライアントの API をもとに書いたものです。このリポジトリの CI ではコンパイルも実行もしていません。
+
+</Callout>
 
 設定やリクエストでよくあるエラーについては、[トラブルシューティング](/ja/troubleshooting/)を参照してください。

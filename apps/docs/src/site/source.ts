@@ -3,6 +3,7 @@ import { loader } from 'fumadocs-core/source';
 import { pageSchema } from 'fumadocs-core/source/schema';
 import { z } from 'zod';
 import { i18n } from './i18n';
+import { navigationIcon } from './navigation-icons';
 
 /** Validated, lazily compiled MDX using the official Fumadocs content source. */
 export const docs = defineDocs({
@@ -21,6 +22,7 @@ export const source = loader({
   baseUrl: '/',
   source: docs.toFumadocsSource(),
   i18n,
+  icon: navigationIcon,
   url: (slugs, locale) => {
     const parts = [
       ...(locale && locale !== i18n.defaultLanguage ? [locale] : []),

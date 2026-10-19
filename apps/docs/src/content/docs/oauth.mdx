@@ -3,41 +3,54 @@ title: Local OAuth
 description: Use Calendarpit's local OAuth 2.0 authorization code flow, token endpoints, and supported scopes.
 ---
 
-Calendarpit includes a local OAuth 2.0 authorization server for testing your app without a Google Cloud project or real Google accounts. During authorization, you pick a test user from a dropdown on the local consent page without entering a password.
+Calendarpit includes a local OAuth 2.0 authorization server. Use it to test your app without a Google Cloud project or real Google accounts.
 
-Point your app's OAuth client and Google Calendar SDK at `http://127.0.0.1:4173` before starting the flow. See [Connect your app](/connect/) for endpoint configuration.
+During authorization, you pick a test user from a dropdown on the local consent page. You do not enter a password.
+
+Before you start the flow, point your app's OAuth client and Google Calendar SDK at `http://127.0.0.1:4173`. See [Connect your app](/connect/) for endpoint configuration.
 
 ## Endpoints
 
-| Method | Path                                          | Purpose                                                                                                                                                          |
-| ------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET`  | `/oauth/authorize`                            | Validate the authorization request and render the local HTML consent page                                                                                        |
-| `POST` | `/oauth/authorize`                            | Submit the consent decision (`approve` or `deny`) and redirect (`302`) to `redirect_uri` (same-origin requests only; cross-site requests return `403 forbidden`) |
-| `POST` | `/oauth/token`                                | Exchange an authorization code or refresh token for an access token                                                                                              |
-| `POST` | `/oauth/revoke`                               | Revoke an access token or refresh token and its connection                                                                                                       |
-| `GET`  | `/userinfo`                                   | Return profile claims for the authorized test user                                                                                                               |
-| `POST` | `/__calendarpit/connections/{grantId}/revoke` | Revoke a connection from the management API (`204`; management API request rules apply; see [Test control API](/test-control/))                                  |
+| Method | Path                                          | Purpose                                                                                  |
+| ------ | --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `GET`  | `/oauth/authorize`                            | Validate the authorization request and render the local HTML consent page                |
+| `POST` | `/oauth/authorize`                            | Submit the consent decision (`approve` or `deny`) and redirect (`302`) to `redirect_uri` |
+| `POST` | `/oauth/token`                                | Exchange an authorization code or refresh token for an access token                      |
+| `POST` | `/oauth/revoke`                               | Revoke an access token or refresh token and its connection                               |
+| `GET`  | `/userinfo`                                   | Return profile claims for the authorized test user                                       |
+| `POST` | `/__calendarpit/connections/{grantId}/revoke` | Revoke a connection from the management API (`204`)                                      |
 
-Only the paths above are routed. Google endpoints under `/oauth2/...` (such as `/oauth2/v4/token` or `/oauth2/v3/userinfo`) and unsupported HTTP methods on `/oauth/*` return `501` with `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}`.
+- `POST /oauth/authorize` accepts same-origin requests only. Cross-site requests return `403 forbidden`.
+- `POST /__calendarpit/connections/{grantId}/revoke` follows the management API request rules. See [Test control API](/test-control/).
+
+Only the paths above are routed. These requests return `501`:
+
+- Google endpoints under `/oauth2/...`, such as `/oauth2/v4/token` or `/oauth2/v3/userinfo`
+- Unsupported HTTP methods on `/oauth/*`
+
+The `501` response body is `{"error":"unsupportedFeature","error_description":"Unsupported API endpoint or method."}`.
 
 ## Authorization code flow
 
-1. **Register an OAuth client in your fixture.** Add an entry with `id`, `secret`, and `redirectUris` to the startup fixture's `clients` array. Each redirect URI must be an absolute `http:` or `https:` URL with no fragment or userinfo. The startup fixture seeds only a new database or a `:memory:` session. For an existing database file, load the fixture with `POST /__calendarpit/fixtures` (which replaces workspace data until the next reset) or start with a new database; see [Fixtures](/fixtures/) and [Storage and restarts](/storage/). The default fixture (used when neither `--config` nor `CALENDARPIT_CONFIG` is set) includes the client `sample-app` with secret `local-sample-secret` and redirect URI `http://127.0.0.1:4175/callback`.
+1. **Register an OAuth client in your fixture.** Add an entry with `id`, `secret`, and `redirectUris` to the startup fixture's `clients` array. Each redirect URI must be an absolute `http:` or `https:` URL with no fragment or userinfo.
+   - The startup fixture seeds only a new database or a `:memory:` session.
+   - For an existing database file, load the fixture with `POST /__calendarpit/fixtures`, or start with a new database. Loading a fixture replaces workspace data until the next reset. See [Fixtures](/fixtures/) and [Storage and restarts](/storage/).
+   - The default fixture includes the client `sample-app` with secret `local-sample-secret` and redirect URI `http://127.0.0.1:4175/callback`. Calendarpit uses the default fixture when neither `--config` nor `CALENDARPIT_CONFIG` is set.
 2. **Send the browser to `GET /oauth/authorize`.** Build a URL at `http://127.0.0.1:4173/oauth/authorize` with URL-encoded query parameters:
-   - `client_id` (required): Registered client ID (unknown IDs return `400 invalid_client`).
-   - `redirect_uri` (required): Callback URL. Must match one of the client's `redirectUris` by exact string comparison (no loopback port wildcards or trailing-slash normalization; mismatches return `400 invalid_request`).
+   - `client_id` (required): Registered client ID. Unknown IDs return `400 invalid_client`.
+   - `redirect_uri` (required): Callback URL. It must match one of the client's `redirectUris` by exact string comparison. There are no loopback port wildcards and no trailing-slash normalization. Mismatches return `400 invalid_request`.
    - `response_type` (required): Must be `code`.
-   - `scope` (required): Space-separated list of supported scopes (see [Scopes](#scopes)).
-   - `state` (optional): Random value tied to the user's browser session. Echoed back on the redirect when provided.
+   - `scope` (required): Space-separated list of supported scopes. See [Scopes](#scopes).
+   - `state` (optional): Random value tied to the user's browser session. When provided, it is echoed back on the redirect.
    - `access_type` (optional): `online` or `offline`. Set `access_type=offline` to receive a refresh token.
-   - `code_challenge` and `code_challenge_method` (optional): PKCE parameters. When used, `code_challenge_method` must be `S256` and `code_challenge` must be a 43-character base64url digest.
+   - `code_challenge` and `code_challenge_method` (optional): PKCE parameters. When used, `code_challenge_method` must be `S256`. `code_challenge` must be a 43-character base64url digest.
    - `prompt` (optional): Accepts `consent`, `select_account`, `consent select_account`, or `select_account consent`. The consent page is always displayed.
    - `include_granted_scopes` (optional): Must be `false` if present.
-3. **Approve or deny on the consent page.** The consent page lists all workspace test users (`Name · email`) and the requested scope strings. Choose a test user and click **Approve** or **Deny**:
+3. **Approve or deny on the consent page.** The page lists all workspace test users (`Name · email`) and the requested scope strings. Choose a test user and click **Approve** or **Deny**:
    - **Approve** creates a new connection (grant) and redirects (`302`) to `<redirect_uri>?state=<state>&code=<code>`.
    - **Deny** redirects (`302`) to `<redirect_uri>?state=<state>&error=access_denied`.
-4. **Verify `state` in your callback handler.** Compare the `state` query parameter against the session value stored before redirecting. If `error=access_denied` is present, stop and do not call `/oauth/token`.
-5. **Exchange the authorization code at `POST /oauth/token`.** Send an `application/x-www-form-urlencoded` body with `grant_type=authorization_code`, `code`, `redirect_uri` (identical to step 2), client credentials, and `code_verifier` (if PKCE was used). The endpoint returns JSON:
+4. **Verify `state` in your callback handler.** Compare the `state` query parameter with the session value you stored before redirecting. If `error=access_denied` is present, stop and do not call `/oauth/token`.
+5. **Exchange the authorization code at `POST /oauth/token`.** Send an `application/x-www-form-urlencoded` body. Include `grant_type=authorization_code`, `code`, `redirect_uri` (identical to step 2), client credentials, and `code_verifier` if you used PKCE. For credentials, see [Client authentication](#client-authentication). The endpoint returns JSON:
    ```json
    {
      "access_token": "...",
@@ -52,7 +65,16 @@ Only the paths above are routed. Google endpoints under `/oauth2/...` (such as `
 
 ## HTTP examples
 
-These examples use shell variables for your client values and tokens. Set `PIT_CLIENT_ID`, `PIT_CLIENT_SECRET`, and `PIT_REDIRECT_URI` to your client's values, and set `PIT_CODE` to the code received by its callback. After the token exchange, set `PIT_REFRESH_TOKEN` to the returned `refresh_token` and `CALENDARPIT_ACCESS_TOKEN` to the `access_token`. If you used PKCE, also pass `--data-urlencode "code_verifier=$PIT_VERIFIER"` when exchanging the code. The Profile request requires `openid`, `email`, `profile`, or one of the `userinfo.*` scopes.
+These examples use shell variables for your client values and tokens:
+
+- `PIT_CLIENT_ID`, `PIT_CLIENT_SECRET`, and `PIT_REDIRECT_URI`: your client's values.
+- `PIT_CODE`: the code that your callback received.
+- `PIT_REFRESH_TOKEN`: the `refresh_token` returned by the token exchange.
+- `CALENDARPIT_ACCESS_TOKEN`: the `access_token` returned by the token exchange.
+
+If you used PKCE, also pass `--data-urlencode "code_verifier=$PIT_VERIFIER"` when you exchange the code.
+
+The Profile request requires `openid`, `email`, `profile`, or one of the `userinfo.*` scopes.
 
 <Tabs items={["Exchange","Refresh","Profile","Revoke"]}>
 
@@ -102,34 +124,66 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 ### Client authentication
 
-Client authentication is required on every `POST /oauth/token` call (`authorization_code` and `refresh_token`), even when using PKCE. Public clients without a secret are not supported. You can supply credentials in two ways:
+Every `POST /oauth/token` call requires client authentication. This applies to both `authorization_code` and `refresh_token`, even when you use PKCE. Public clients without a secret are not supported.
 
-- **Form fields (`client_secret_post`):** Include `client_id` and `client_secret` in the URL-encoded body.
-- **HTTP Basic (`client_secret_basic`):** Send `Authorization: Basic <base64(urlencode(client_id):urlencode(client_secret))>`. If both are sent, the `Authorization` header takes precedence.
+You can supply credentials in two ways:
 
-`POST /oauth/token` always parses the body as `application/x-www-form-urlencoded` regardless of the `Content-Type` header. JSON bodies are not read, so sending JSON fails with `400 invalid_client` (or `400 unsupported_grant_type` when credentials come from HTTP Basic).
+- **Form fields (`client_secret_post`)**: Include `client_id` and `client_secret` in the URL-encoded body.
+- **HTTP Basic (`client_secret_basic`)**: Send `Authorization: Basic <base64(urlencode(client_id):urlencode(client_secret))>`.
+
+If you send both, the `Authorization` header takes precedence.
+
+<Callout type='warn'>
+  `POST /oauth/token` always parses the body as
+  `application/x-www-form-urlencoded`, regardless of the `Content-Type` header.
+  It does not read JSON bodies. Sending JSON fails with `400 invalid_client`, or
+  with `400 unsupported_grant_type` when credentials come from HTTP Basic.
+</Callout>
 
 ### Lifetimes and persistence
 
-| Item                  | Lifetime                                                          | Single use | Persisted in SQLite across restart |
-| --------------------- | ----------------------------------------------------------------- | ---------- | ---------------------------------- |
-| Pending consent nonce | 5 minutes (max 1,000 pending; `429 rateLimitExceeded` above that) | Yes        | No                                 |
-| Authorization code    | 60 seconds (bound to `client_id` and `redirect_uri`)              | Yes        | No                                 |
-| Access token          | 1 hour (`expires_in: 3600`)                                       | No         | Yes (with original expiry)         |
-| Refresh token         | No expiry until revoked, user deleted, reset, or fixture load     | No         | Yes                                |
-| Connection (grant)    | Until revoked, user deleted, reset, or fixture load               | No         | Yes                                |
+| Item                  | Lifetime                                                      | Single use | Persisted in SQLite across restart |
+| --------------------- | ------------------------------------------------------------- | ---------- | ---------------------------------- |
+| Pending consent nonce | 5 minutes                                                     | Yes        | No                                 |
+| Authorization code    | 60 seconds                                                    | Yes        | No                                 |
+| Access token          | 1 hour (`expires_in: 3600`)                                   | No         | Yes (with original expiry)         |
+| Refresh token         | No expiry until revoked, user deleted, reset, or fixture load | No         | Yes                                |
+| Connection (grant)    | Until revoked, user deleted, reset, or fixture load           | No         | Yes                                |
 
-In `:memory:` mode, all OAuth state is lost when the process exits. See [Storage and restarts](/storage/).
+- At most 1,000 consents can be pending. Above that, the response is `429 rateLimitExceeded`.
+- An authorization code is bound to its `client_id` and `redirect_uri`.
+- In `:memory:` mode, all OAuth state is lost when the process exits. See [Storage and restarts](/storage/).
 
-### Refresh and revocation
+### Refresh
 
-- **Refresh:** `grant_type=refresh_token` issues a new `access_token` (`expires_in: 3600`). It does not return or rotate the `refresh_token`; your existing refresh token stays valid. If you include `scope` in the refresh request, it must equal the original space-joined scope string exactly or the call fails with `400 invalid_scope`.
-- **Revoke (`POST /oauth/revoke`):** Pass an access token or refresh token in the `token` form field (or `?token=` query parameter). Client authentication is not required. Revoking either token revokes the entire grant, deletes all of its access tokens, refresh tokens, and authorization codes, and stops its watch channels. Passing an unknown token returns `200` with an empty body; a missing or blank `token` returns `400 invalidParameter`.
-- **Other invalidation triggers:** Revoking a connection in the admin UI (`POST /__calendarpit/connections/{grantId}/revoke`) or deleting the test user (`DELETE /__calendarpit/users/{id}`) invalidates the corresponding tokens and stops their watch channels. Calling `POST /__calendarpit/reset` or `POST /__calendarpit/fixtures` deletes all connections, tokens, authorization codes, and pending consents, and stops all watch channels. See [Test control API](/test-control/).
+`grant_type=refresh_token` issues a new `access_token` (`expires_in: 3600`).
+
+- It does not return or rotate the `refresh_token`. Your existing refresh token stays valid.
+- If you include `scope` in the refresh request, it must equal the original space-joined scope string exactly. Otherwise the call fails with `400 invalid_scope`.
+
+### Revocation
+
+To revoke a token, call `POST /oauth/revoke`:
+
+- Pass an access token or refresh token in the `token` form field, or in the `?token=` query parameter.
+- Client authentication is not required.
+- Revoking either token revokes the entire grant. It deletes all of the grant's access tokens, refresh tokens, and authorization codes, and stops its watch channels.
+- An unknown token returns `200` with an empty body.
+- A missing or blank `token` returns `400 invalidParameter`.
+
+Other actions also invalidate tokens:
+
+- **Revoke a connection** in the admin UI (`POST /__calendarpit/connections/{grantId}/revoke`): Invalidates the connection's tokens and stops its watch channels.
+- **Delete a test user** (`DELETE /__calendarpit/users/{id}`): Invalidates the user's tokens and stops their watch channels.
+- **Reset or load a fixture** (`POST /__calendarpit/reset` or `POST /__calendarpit/fixtures`): Deletes all connections, tokens, authorization codes, and pending consents, and stops all watch channels.
+
+See [Test control API](/test-control/).
 
 ## Scopes
 
 Every `GET /oauth/authorize` request must include at least one supported scope. Requesting any other scope returns `400 invalid_scope`.
+
+### Calendar API scopes
 
 | Scope                                                            | Allowed operations                                                                                                                                                                 |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -142,27 +196,54 @@ Every `GET /oauth/authorize` request must include at least one supported scope. 
 | `https://www.googleapis.com/auth/calendar.calendars.readonly`    | `calendars.get`                                                                                                                                                                    |
 | `https://www.googleapis.com/auth/calendar.freebusy`              | `freebusy.query`                                                                                                                                                                   |
 | `https://www.googleapis.com/auth/calendar.events.freebusy`       | `freebusy.query`                                                                                                                                                                   |
-| `openid`                                                         | `GET /userinfo` — returns `{ sub, id }` (both set to the test user ID)                                                                                                             |
-| `email`, `https://www.googleapis.com/auth/userinfo.email`        | `GET /userinfo` — adds `email`, `verified_email: true`, and `email_verified: true` to `{ sub, id }`                                                                                |
-| `profile`, `https://www.googleapis.com/auth/userinfo.profile`    | `GET /userinfo` — adds `name` to `{ sub, id }`                                                                                                                                     |
 
-Missing, expired, or revoked access tokens return `401` (`authError`) with a `WWW-Authenticate: Bearer` header. A valid token missing a required scope for the endpoint returns `403` (`insufficientPermissions`). `channels.stop` also requires the token to belong to the same connection (grant) that opened the channel; other connections receive `404` (`notFound`). Unlike `/oauth/*` endpoints, `GET /userinfo` and Calendar API endpoints return errors in the Google API error envelope; see [Troubleshooting](/troubleshooting/).
+### Profile scopes
 
-`openid` only grants access to `GET /userinfo` with `{ sub, id }`. Calendarpit does not return an `id_token` from `/oauth/token`, does not serve `/.well-known/openid-configuration` or JWKS, and does not include `picture`, `given_name`, `family_name`, or `locale` in `/userinfo`.
+These scopes allow `GET /userinfo`. The response always contains `{ sub, id }`, both set to the test user ID.
+
+| Scope                                                         | `GET /userinfo` response                                         |
+| ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `openid`                                                      | `{ sub, id }`                                                    |
+| `email`, `https://www.googleapis.com/auth/userinfo.email`     | Adds `email`, `verified_email: true`, and `email_verified: true` |
+| `profile`, `https://www.googleapis.com/auth/userinfo.profile` | Adds `name`                                                      |
+
+<Callout type="info">
+`openid` only grants access to `GET /userinfo` with `{ sub, id }`. Calendarpit does not:
+
+- return an `id_token` from `/oauth/token`
+- serve `/.well-known/openid-configuration` or JWKS
+- include `picture`, `given_name`, `family_name`, or `locale` in `/userinfo`
+
+</Callout>
+
+### Token and scope errors
+
+| Condition                                                | Response                                                     |
+| -------------------------------------------------------- | ------------------------------------------------------------ |
+| Missing, expired, or revoked access token                | `401` (`authError`) with a `WWW-Authenticate: Bearer` header |
+| Valid token missing a required scope for the endpoint    | `403` (`insufficientPermissions`)                            |
+| `channels.stop` with a token from a different connection | `404` (`notFound`)                                           |
+
+`channels.stop` requires the token to belong to the same connection (grant) that opened the channel.
+
+Unlike `/oauth/*` endpoints, `GET /userinfo` and Calendar API endpoints return errors in the Google API error envelope. See [Troubleshooting](/troubleshooting/).
 
 ## Unsupported OAuth features
 
-Validation errors on `GET /oauth/authorize` return a `400` JSON response (`{"error": "<reason>", "error_description": "<message>"}`) directly to the browser rather than redirecting to `redirect_uri`:
+`GET /oauth/authorize` returns validation errors directly to the browser. It does not redirect to `redirect_uri`. The response is `400` JSON: `{"error": "<reason>", "error_description": "<message>"}`.
 
-- **Unknown `client_id`** returns `400 invalid_client` ("Unknown client.").
-- **Unregistered `redirect_uri`** (any value not matching one of the client's `redirectUris` by exact string equality) returns `400 invalid_request` ("Unregistered redirect URI.").
-- **Unknown authorize parameters** (such as `nonce`, `login_hint`, `hd`, `request`, `request_uri`, or `enable_granular_consent`) return `400 unsupported_feature`.
-- **Non-interactive consent** (`prompt=none` or any `prompt` value other than the four listed in step 2) returns `400 unsupported_feature`.
-- **Incremental authorization** (`include_granted_scopes=true`) returns `400 unsupported_feature`.
-- **Other response types** (anything other than `response_type=code`) return `400 unsupported_response_type`.
-- **PKCE `plain` method** returns `400 invalid_request`.
-- **Unlisted scopes** (such as `calendar.events.owned`, `calendar.app.created`, `calendar.settings.readonly`, `calendar.acls`, or the write scope `calendar.calendars`) return `400 invalid_scope`.
-- **Other token grant types** on `POST /oauth/token` return `400 unsupported_grant_type` (after client authentication succeeds).
-- **API keys (`key=` query parameter)** are accepted as a system parameter on API requests but never replace bearer token authentication.
+- **Unknown `client_id`**: `400 invalid_client` ("Unknown client.").
+- **Unregistered `redirect_uri`**: `400 invalid_request` ("Unregistered redirect URI."). This covers any value that does not match one of the client's `redirectUris` by exact string equality.
+- **Unknown authorize parameters**: `400 unsupported_feature`. Examples are `nonce`, `login_hint`, `hd`, `request`, `request_uri`, and `enable_granular_consent`.
+- **Non-interactive consent**: `400 unsupported_feature`. This covers `prompt=none` and any `prompt` value other than the four listed in step 2.
+- **Incremental authorization** (`include_granted_scopes=true`): `400 unsupported_feature`.
+- **Other response types** (anything other than `response_type=code`): `400 unsupported_response_type`.
+- **PKCE `plain` method**: `400 invalid_request`.
+- **Unlisted scopes**: `400 invalid_scope`. Examples are `calendar.events.owned`, `calendar.app.created`, `calendar.settings.readonly`, `calendar.acls`, and the write scope `calendar.calendars`.
+
+Other OAuth limits:
+
+- **Other token grant types**: `POST /oauth/token` returns `400 unsupported_grant_type` after client authentication succeeds.
+- **API keys (`key=` query parameter)**: Accepted as a system parameter on API requests, but never replace bearer token authentication.
 
 See [Scope and limitations](/scope/) for a summary of all unsupported Google features.

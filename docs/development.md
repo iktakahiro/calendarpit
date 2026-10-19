@@ -136,7 +136,11 @@ The build-time renderer does not run in production.
   prefix; Japanese uses `/ja/`. Contributor material stays in this `docs/` folder.
 - `src/site/source.ts` uses Fumadocs MDX's async macro collection and source
   loader for schema validation, lazy content, and navigation. Each locale's
-  `meta.json` defines sidebar order and section labels. The official Vite plugin
+  `meta.json` defines sidebar order and structure, and
+  `src/site/navigation-tree.ts` builds it without moving files or changing
+  URLs: `---Label---` is a group label, `---[Icon]Name---` opens a collapsible
+  folder, and a bare `---` closes it. Page icons use the `icon` frontmatter
+  field, both resolved from the allowlist in `src/site/navigation-icons.tsx`. The official Vite plugin
   handles compilation and content updates; there is no custom MDX parser/cache.
 - `src/site/i18n.ts` configures the locales. Fumadocs supplies the language menu;
   `src/site/translations.ts` supplies Japanese UI labels. Add future languages
@@ -145,9 +149,15 @@ The build-time renderer does not run in production.
   and code blocks from `src/site/mdx-components.tsx`. Tabs use `forceMount` to keep
   inactive examples in generated HTML. Each page has its own JS chunk.
 - Documentation typography, spacing, and colors use the Fumadocs preset. Google
-  Fonts provides Geist for Latin text, Noto Sans JP for Japanese, and Roboto Mono
-  for code, all with system fallbacks. Custom branding is confined to the landing
-  page, whose hero and diagram render without an animation library.
+  Fonts provides variable Geist for Latin text and Roboto Mono for code, both
+  with system fallbacks. Japanese uses system fonts (Hiragino Sans, Yu Gothic,
+  Meiryo). Body copy uses the light (300) weight.
+- Custom branding and motion are confined to the landing page. Motion adapts
+  MIT-licensed Magic UI components (`src/site/motion/`, notices in
+  `apps/docs/THIRD_PARTY_NOTICES.md`): an animated hero grid, a workbench that
+  settles flat on scroll, and card glows with scroll reveals. Hero entrances are
+  CSS animations that start with the prerendered HTML; reduced motion turns all
+  motion off.
 - Each locale's `index.mdx` owns its landing content and hero frontmatter.
   `src/site/landing-hero.tsx` and `landing-diagram.tsx` render the introduction;
   diagram labels live in `src/components/landing/`.
