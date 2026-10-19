@@ -8,13 +8,17 @@ import { useHost } from '../../lib/use-host';
 import { useHistory } from '../history/hooks/use-history';
 import { useWorkspace } from '../workspace/hooks/use-workspace';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
+import { CommandButton } from '../command/components/command-button';
 import type { WorkspaceSearch } from '../workspace/models/workspace-search';
 import { Rail, type LiveStatus } from './components/rail';
+import { useShellCommands } from './hooks/use-shell-commands';
 import { sectionOf, type SectionId } from './models/sections';
 
 /**
- * The admin UI frame around every section: sidebar, section header with a
- * refresh action, and loading state.
+ * The admin UI frame around every section: sidebar, section header with the
+ * command palette and refresh actions, and loading state. It registers the
+ * commands available on every screen, so it must render inside
+ * `CommandProvider`.
  */
 export function WorkspaceShell({
   section,
@@ -22,6 +26,7 @@ export function WorkspaceShell({
   selectUser,
   selectCalendar,
   openSection,
+  createEvent,
   children,
 }: {
   section: SectionId;
@@ -29,6 +34,8 @@ export function WorkspaceShell({
   selectUser: (userId: string) => void;
   selectCalendar: (calendarId: string, showSchedule: boolean) => void;
   openSection: (section: SectionId) => void;
+  /** Opens the event editor for a new event on the schedule. */
+  createEvent: () => void;
   children: ReactNode;
 }) {
   const { query, snapshot, selection } = useWorkspace(search);
@@ -53,6 +60,17 @@ export function WorkspaceShell({
     : query.isSuccess
       ? 'live'
       : 'connecting';
+  useShellCommands({
+    snapshot,
+    selection,
+    section,
+    busy,
+    openSection,
+    selectUser,
+    selectCalendar,
+    createEvent,
+    refresh: () => refresh.mutate(),
+  });
   const meta = sectionOf(section);
   const { user, calendar } = selection;
   return (
@@ -98,6 +116,7 @@ export function WorkspaceShell({
             </p>
           </div>
           <div className='view-actions'>
+            <CommandButton />
             <Button
               variant='secondary'
               icon={<Icon name='arrowRotateRight' />}

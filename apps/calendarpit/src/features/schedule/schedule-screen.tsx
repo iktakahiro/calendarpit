@@ -13,6 +13,7 @@ import { DayView } from './components/day-view';
 import { WeekView } from './components/week-view';
 import { EventEditor } from './components/event-editor';
 import { useDeleteEvent } from './hooks/use-event-mutations';
+import { useScheduleCommands } from './hooks/use-schedule-commands';
 import { shiftDate, today } from './models/dates';
 import { eventsOn } from './models/day-layout';
 
@@ -51,6 +52,7 @@ export function ScheduleScreen({
   const remove = useDeleteEvent();
   const t = useMessages();
   const { user, calendar } = selection;
+  useScheduleCommands({ calendar, date, view, showDate, showView });
   const events = calendar
     ? eventsOn(snapshot.events, calendar.id, calendar.timeZone, date)
     : [];

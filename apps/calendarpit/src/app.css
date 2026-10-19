@@ -1808,6 +1808,99 @@ pre {
     transform: translateY(6px);
   }
 }
+/* Command palette */
+/* The input header already shows a focus ring. */
+.palette-input:focus-visible {
+  outline: none;
+}
+.shortcut-keys {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: auto;
+}
+button .shortcut-keys {
+  margin-left: 4px;
+}
+/* Kumo's highlight is too faint against the paper surface. */
+[role='option'][data-highlighted]:has(> .command-row) {
+  background: var(--sunken);
+  box-shadow: inset 2px 0 0 var(--signal);
+}
+.command-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+.command-row > .icon {
+  color: var(--muted);
+}
+.command-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.command-label small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.command-current {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--signal-wash);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 18px;
+  color: var(--signal-ink);
+}
+.command-row .command-current {
+  margin-left: auto;
+}
+.command-row .command-current + .shortcut-keys {
+  margin-left: 0;
+}
+.command-more {
+  margin-left: auto;
+  color: var(--faint);
+}
+.shortcut-keys + .command-more {
+  margin-left: 0;
+}
+.palette-back {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+.palette-back:hover {
+  color: var(--ink);
+  background: var(--hover);
+}
+.palette-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.palette-hints kbd {
+  margin-right: 2px;
+}
+@media (hover: none) {
+  button .shortcut-keys {
+    display: none;
+  }
+}
+
 @media (max-width: 1180px) {
   .schedule-layout.editing {
     grid-template-columns: minmax(0, 1fr);
