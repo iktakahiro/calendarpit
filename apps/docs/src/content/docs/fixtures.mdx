@@ -48,6 +48,35 @@ For Compose, make two changes to the service:
 
 The host file must be readable by the container's non-root user. See [Run and configure](/running/) for startup options.
 
+#### Share the host directory with the container runtime
+
+Docker Desktop, Colima, and other VM-based runtimes can bind-mount only the host directories they share with their VM. If the fixture is outside those directories, the container sees an empty directory instead of the file, and startup fails with `Fixture path is a directory, not a file`.
+
+- **Colima**: Only your home directory is shared by default. To share another directory, add it to `mounts` in `~/.colima/default/colima.yaml`, then restart Colima with `colima stop` and `colima start`. A nonempty `mounts` list replaces the default, so list your home directory too if you still need it.
+
+  ```yaml
+  mounts:
+    - location: ~
+      writable: true
+    - location: /Volumes/Work/my-app
+      writable: false
+  ```
+
+- **Docker Desktop**: Add the directory under **Settings → Resources → File sharing**.
+
+If you cannot change the shared directories, copy the fixture into the container before it starts instead of mounting it:
+
+```sh
+docker create --name calendarpit -p 127.0.0.1:4173:4173 \
+  -e CALENDARPIT_CONFIG=/app/startup.json \
+  -e CALENDARPIT_DATABASE=:memory: \
+  ghcr.io/iktakahiro/calendarpit:latest
+docker cp ./calendarpit.fixture.json calendarpit:/app/startup.json
+docker start calendarpit
+```
+
+The copied file must be readable by other users (for example, mode `644`). To load a fixture into a server that is already running, use `POST /__calendarpit/fixtures` instead. See [Load or reset at runtime](#load-or-reset-at-runtime).
+
 ### When the startup fixture applies
 
 A startup fixture seeds only a **new, empty** database:

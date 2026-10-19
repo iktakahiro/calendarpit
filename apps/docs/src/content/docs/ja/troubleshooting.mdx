@@ -74,9 +74,21 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 
 ### Fixture ファイルが見つからない
 
-- **エラー**: `Calendarpit: ENOENT: no such file or directory, open '<path>'`
+- **エラー**: `Calendarpit: Fixture file not found: <path>. …`
 - **原因**: Fixture のパスが作業ディレクトリ内、またはコンテナ内に存在しません。
 - **対処**: 正しい絶対パスを指定します。Docker ではファイルをマウントし、コンテナ内のパスを渡します。[Fixture](/ja/fixtures/)を参照してください。
+
+### Fixture のパスがディレクトリになっている
+
+- **エラー**: `Calendarpit: Fixture path is a directory, not a file: <path>`
+- **原因**: コンテナで、バインドマウントの元パスがコンテナランタイムの VM と共有されていないため、Docker がマウント先に空のディレクトリを作成しました。Colima でホームディレクトリ外のパスを指定すると発生します。ホスト上に存在しないパスを指定した場合も同じ結果になります。
+- **対処**: ホストのディレクトリをランタイムと共有する（Colima では `colima.yaml` の `mounts` に追加して再起動する）か、起動前に `docker cp` でファイルをコンテナにコピーします。[ホストのディレクトリをコンテナランタイムと共有する](/ja/fixtures/#ホストのディレクトリをコンテナランタイムと共有する)を参照してください。
+
+### Fixture ファイルを読み取れない・JSON として不正
+
+- **エラー**: `Calendarpit: Fixture file is not readable: <path>. …` または `Calendarpit: Fixture file is not valid JSON: <path> (<reason>)`
+- **原因**: コンテナの非 root ユーザーがファイルを読み取れないか、ファイルが正しい JSON ではありません。
+- **対処**: ほかのユーザーも読み取れるようにする（例: モード `644`）か、JSON の構文を修正します。
 
 ### Fixture の検証に失敗する
 
