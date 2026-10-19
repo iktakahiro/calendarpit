@@ -46,7 +46,8 @@ Each SDK expects a different form of the Calendar API URL:
 
 - **JavaScript** (`@googleapis/calendar`): Appends `/calendar/v3/...` to `rootUrl`. Do not include `/calendar/v3` twice.
 - **Python, Go, and .NET**: Expect the full service URL, including `/calendar/v3/`.
-- **Java**: Sets the root URL and service path separately.
+- **Kotlin** (Java client library): Sets the root URL and service path separately.
+- **PHP** (`google/apiclient`): Takes the origin as the `$rootUrl` constructor argument and appends `calendar/v3/`.
 
 See [SDK examples](/sdks/).
 
