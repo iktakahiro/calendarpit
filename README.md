@@ -17,13 +17,13 @@ limited; unsupported features return explicit errors. See
 
 ## Quick start
 
-Calendarpit **0.9.1** is available through Docker, Homebrew, and
-[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.1).
+Calendarpit **0.9.2** is available through Docker, Homebrew, and
+[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.2).
 
 With Docker:
 
 ```sh
-docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.1
+docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.2
 ```
 
 Or Homebrew:
@@ -171,7 +171,7 @@ Add this service to your project's `compose.yaml`:
 ```yaml
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.1
+    image: ghcr.io/iktakahiro/calendarpit:0.9.2
     ports:
       - '127.0.0.1:4173:4173'
     volumes:
