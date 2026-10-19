@@ -1,4 +1,3 @@
-import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { AdminShell, BrowserFrame } from './admin-window';
 import { adminViews, type AdminView } from './admin-views';
 import './admin-preview.css';
@@ -38,9 +37,9 @@ export function AdminScreen({
   );
 }
 
-type ShowcaseTab = { view: AdminView; label: string; text: string };
+type ShowcaseItem = { view: AdminView; label: string; text: string };
 
-const showcaseCopy: Record<'en' | 'ja', ShowcaseTab[]> = {
+const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
   en: [
     {
       view: 'schedule-week',
@@ -88,62 +87,24 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseTab[]> = {
 };
 
 /**
- * Landing page tour of the admin UI: a tab per screen, each with one sentence
- * on what the screen is for.
+ * Landing page tour of the admin UI: each screen in turn, with its name and
+ * one sentence on what it is for.
  */
 export function AdminShowcase({ lang = 'en' }: { lang?: 'en' | 'ja' }) {
-  const tabs = showcaseCopy[lang];
-  const [selected, setSelected] = useState(0);
-  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
-  const id = useId();
-  const current = tabs[selected] ?? tabs[0];
-  if (!current) return null;
-
-  const onKeyDown = (event: KeyboardEvent) => {
-    const step =
-      event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-    if (!step) return;
-    event.preventDefault();
-    const next = (selected + step + tabs.length) % tabs.length;
-    setSelected(next);
-    buttons.current[next]?.focus();
-  };
-
   return (
-    <div className='admin-showcase not-prose'>
-      <div
-        className='admin-showcase-tabs'
-        role='tablist'
-        aria-label={lang === 'ja' ? '管理画面の画面' : 'Admin UI screens'}
-        onKeyDown={onKeyDown}
-      >
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.view}
-            ref={(element) => {
-              buttons.current[index] = element;
-            }}
-            type='button'
-            role='tab'
-            id={`${id}-tab-${index}`}
-            aria-selected={index === selected}
-            aria-controls={`${id}-panel`}
-            tabIndex={index === selected ? 0 : -1}
-            onClick={() => setSelected(index)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div
-        className='admin-showcase-panel'
-        role='tabpanel'
-        id={`${id}-panel`}
-        aria-labelledby={`${id}-tab-${selected}`}
-      >
-        <p>{current.text}</p>
-        <AdminPreview view={current.view} />
-      </div>
-    </div>
+    <ol className='admin-showcase not-prose'>
+      {showcaseCopy[lang].map((item, index) => (
+        <li key={item.view} className='admin-showcase-item'>
+          <div className='admin-showcase-text'>
+            <span className='admin-showcase-index' aria-hidden='true'>
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <h3>{item.label}</h3>
+            <p>{item.text}</p>
+          </div>
+          <AdminPreview view={item.view} />
+        </li>
+      ))}
+    </ol>
   );
 }
