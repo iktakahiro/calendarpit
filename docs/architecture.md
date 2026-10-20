@@ -115,8 +115,11 @@ The admin UI uses Roboto Mono from Google Fonts with system-font fallbacks.
 Each section has its own route (`/`, `/users`, `/calendars`, `/connections`,
 `/watch`, `/history`, `/settings`). The selected user, calendar, date, and open
 event live in search params, so links and reloads restore the same view.
-TanStack Query reads the management API and polls every two seconds, so
-mutations from another application appear without reloading the page. Mutations
+TanStack Query reads the management API. The shell subscribes to the
+`/__calendarpit/changes` Server-Sent Events stream, which the workspace feeds
+from `persist()` whenever a saved snapshot differs, and invalidates the
+workspace queries on each event, so mutations from another application appear
+at once without reloading the page. A 30-second poll remains as a fallback. Mutations
 invalidate the workspace queries instead of refetching by hand. Forms use
 TanStack Form with one form-level validator each. Calendar operations use
 explicit management routes, not TanStack server functions.

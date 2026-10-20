@@ -15,11 +15,7 @@ fixture/reset controls, and masked request history. Compatibility is intentional
 limited; unsupported features return explicit errors. See
 [compatibility](apps/docs/src/content/docs/compatibility.mdx).
 
-
-
 https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
-
-
 
 ## Quick start
 
@@ -57,8 +53,8 @@ bun run sample:dev
 
 Open <http://127.0.0.1:4175>, connect a calendar, and approve a test user. Create an
 event, inspect busy intervals, start a watch, update/delete events, and revoke and
-reconnect. The default sample date is **October 19, 2026**. The admin UI polls for
-external changes every two seconds.
+reconnect. The default sample date is **October 19, 2026**. The admin UI shows
+external changes as soon as the server saves them.
 
 The built-in test client is `sample-app` / `local-sample-secret`, with callback
 `http://127.0.0.1:4175/callback`. The sample overrides authorization, token, user-info,

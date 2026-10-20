@@ -6,6 +6,7 @@ import { useMessages } from '../../components/language';
 import { useNotices } from '../../lib/notices';
 import { useHost } from '../../lib/use-host';
 import { useHistory } from '../history/hooks/use-history';
+import { useChangeStream } from '../workspace/hooks/use-change-stream';
 import { useWorkspace } from '../workspace/hooks/use-workspace';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { CommandButton } from '../command/components/command-button';
@@ -40,6 +41,7 @@ export function WorkspaceShell({
 }) {
   const { query, snapshot, selection } = useWorkspace(search);
   const history = useHistory();
+  const stream = useChangeStream();
   const queryClient = useQueryClient();
   const { succeed, fail } = useNotices();
   const t = useMessages();
@@ -55,11 +57,12 @@ export function WorkspaceShell({
     onError: fail,
   });
   const host = useHost();
-  const status: LiveStatus = query.isError
-    ? 'offline'
-    : query.isSuccess
-      ? 'live'
-      : 'connecting';
+  const status: LiveStatus =
+    query.isError || stream === 'offline'
+      ? 'offline'
+      : query.isSuccess && stream === 'open'
+        ? 'live'
+        : 'connecting';
   useShellCommands({
     snapshot,
     selection,

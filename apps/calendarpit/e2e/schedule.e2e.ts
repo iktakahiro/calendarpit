@@ -1,6 +1,25 @@
 import { expect, test, toast } from './support/fixtures';
 
 test.describe('schedule', () => {
+  test('shows changes from another application without polling', async ({
+    page,
+    request,
+  }) => {
+    await page.goto('/');
+    await expect(page.getByText('Weekly planning')).toBeVisible();
+    await expect(page.getByText('Live', { exact: true })).toBeVisible();
+
+    const deleted = await request.delete(
+      '/__calendarpit/calendars/alex-work/events/planning',
+      { data: {} },
+    );
+    expect(deleted.status()).toBe(204);
+    // Far shorter than the fallback poll, so only the change stream passes.
+    await expect(page.getByText('Weekly planning')).toHaveCount(0, {
+      timeout: 2000,
+    });
+  });
+
   test('creates, edits, and deletes an event', async ({ page }) => {
     await page.goto('/');
     await expect(

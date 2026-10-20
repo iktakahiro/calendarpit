@@ -17,7 +17,7 @@ description: Calendarpit の管理画面をブラウザで開き、Calendar API 
 
 左側のナビゲーションで、すべての画面に共通する表示対象を切り替えます。
 
-- **Live**: 管理画面は2秒ごとに `GET /__calendarpit/state` とリクエスト履歴をポーリングします。アプリが Calendar API で行った変更は、ページを再読み込みしなくても反映されます。サーバーが応答しなくなると **Disconnected** に変わります。
+- **Live**: 管理画面は `GET /__calendarpit/changes` を購読し、サーバーが変更を保存するとすぐに状態とリクエスト履歴を読み直します。アプリが Calendar API で行った変更は、ページを再読み込みしなくてもすぐに反映されます。フォールバックとして30秒ごとのポーリングも続けます。サーバーが応答しなくなると **Disconnected** に変わり、復旧すると自動で再接続します。
 - **Test user** と **Calendars**: 各画面に表示するテストユーザーとカレンダーを選択します。選択状態は URL（`?user=<id>&calendar=<id>`）に保持されるため、そのままブックマークや共有ができます。
 - **セクション**: 先頭は **Schedule** です。**Activity** にはアプリの動作を確認する **API history**、**Watch**、**Connections** が、**Workspace** にはテストデータを管理する **Users**、**Calendars**、**Settings** が並んでいます。バッジの数字は、記録された履歴の件数、有効な watch チャネル数、有効な OAuth 接続数を表します。
 - **ストレージ**: 下部にストレージモード（`SQLite` または `In-memory`）とサーバーのアドレスが表示されます。詳しくは[ストレージと再起動](/ja/storage/)を参照してください。

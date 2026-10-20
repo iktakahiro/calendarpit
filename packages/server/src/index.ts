@@ -8,7 +8,11 @@
  * @packageDocumentation
  */
 export { createCalendarpit, type Calendarpit } from './app';
-export { Workspace, type WorkspaceOptions } from './workspace/workspace';
+export {
+  Workspace,
+  type WorkspaceOptions,
+  type WorkspaceSignal,
+} from './workspace/workspace';
 export { resolveDatabase } from './workspace/persistence';
 export { defaultFixture, parseFixture } from './features/fixtures/fixture';
 export { redact } from './features/history/redaction';

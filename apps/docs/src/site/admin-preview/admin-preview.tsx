@@ -46,7 +46,7 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
     {
       view: 'schedule-week',
       label: 'Schedule',
-      text: 'Events your app creates or updates appear within 2 seconds. Edit them here to set up test data.',
+      text: 'Events your app creates or updates appear immediately. Edit them here to set up test data.',
     },
     {
       view: 'history',
@@ -68,7 +68,7 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
     {
       view: 'schedule-week',
       label: 'スケジュール',
-      text: 'アプリが作成・更新した予定が2秒以内に表示されます。ここで予定を編集して、テストデータを用意できます。',
+      text: 'アプリが作成・更新した予定がすぐに表示されます。ここで予定を編集して、テストデータを用意できます。',
     },
     {
       view: 'history',

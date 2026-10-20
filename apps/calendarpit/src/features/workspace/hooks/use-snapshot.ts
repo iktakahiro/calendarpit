@@ -2,7 +2,7 @@ import type { Snapshot } from '@calendarpit/server';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { managementApi } from '../../../lib/management-client';
 
-/** The workspace state query, polled so external changes appear live. */
+/** The workspace state query, refetched on each change stream event. */
 export const snapshotQuery = queryOptions({
   queryKey: ['workspace', 'state'],
   queryFn: () => managementApi<Snapshot>('/state'),
