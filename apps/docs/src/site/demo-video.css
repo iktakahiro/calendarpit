@@ -1,0 +1,23 @@
+.demo-video {
+  max-width: 48rem;
+  margin: 3.5rem auto 4rem;
+}
+.demo-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 12px;
+  background: #f3f1ec;
+  box-shadow: 0 24px 48px -28px rgb(22 23 26 / 0.45);
+}
+.dark .demo-video video {
+  box-shadow: 0 24px 48px -28px rgb(0 0 0 / 0.8);
+}
+@media (max-width: 640px) {
+  .demo-video {
+    margin-block: 2rem 3rem;
+  }
+}

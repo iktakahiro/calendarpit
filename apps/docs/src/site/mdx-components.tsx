@@ -12,6 +12,7 @@ import {
   Webhook,
 } from 'lucide-react';
 import { AdminScreen, AdminShowcase } from './admin-preview/admin-preview';
+import { DemoVideo } from './demo-video';
 
 /**
  * Standard Fumadocs components, admin UI previews, and the icons that landing
@@ -26,6 +27,7 @@ export const mdxComponents = {
   Link,
   AdminScreen,
   AdminShowcase,
+  DemoVideo,
   Ban,
   CalendarDays,
   KeyRound,
