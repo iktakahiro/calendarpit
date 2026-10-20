@@ -19,13 +19,13 @@ https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
 
 ## Quick start
 
-Calendarpit **0.9.4** is available through Docker, Homebrew, and
-[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.4).
+Calendarpit **0.9.5** is available through Docker, Homebrew, and
+[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.5).
 
 With Docker:
 
 ```sh
-docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.4
+docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.5
 ```
 
 Or Homebrew:
@@ -173,7 +173,7 @@ Add this service to your project's `compose.yaml`:
 ```yaml
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.4
+    image: ghcr.io/iktakahiro/calendarpit:0.9.5
     ports:
       - '127.0.0.1:4173:4173'
     volumes:
