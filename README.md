@@ -15,11 +15,7 @@ fixture/reset controls, and masked request history. Compatibility is intentional
 limited; unsupported features return explicit errors. See
 [compatibility](apps/docs/src/content/docs/compatibility.mdx).
 
-
-
 https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
-
-
 
 ## Quick start
 
