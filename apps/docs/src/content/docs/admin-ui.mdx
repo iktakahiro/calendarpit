@@ -17,7 +17,7 @@ It is served at the root of the same origin as the API (`http://127.0.0.1:4173/`
 
 The left rail controls the context for every screen:
 
-- **Live**: The admin UI polls `GET /__calendarpit/state` and request history every 2 seconds. Changes your app makes through the Calendar API appear without a page reload. The indicator switches to **Disconnected** if the server stops responding.
+- **Live**: The admin UI subscribes to `GET /__calendarpit/changes` and reloads the state and request history as soon as the server saves a change. Changes your app makes through the Calendar API appear immediately, without a page reload. It also polls every 30 seconds as a fallback. The indicator switches to **Disconnected** if the server stops responding, and the UI reconnects on its own.
 - **Test user** and **Calendars**: Select which test user and calendar the screens display. The selection is stored in the URL (`?user=<id>&calendar=<id>`), so you can bookmark or share it.
 - **Sections**: **Schedule** is at the top. **Activity** groups what your app did: **API history**, **Watch**, and **Connections**. **Workspace** groups the test data your app runs against: **Users**, **Calendars**, and **Settings**. The badge counts show recorded history entries, active watch channels, and active OAuth connections.
 - **Storage**: The footer shows the storage mode (`SQLite` or `In-memory`) and the server address. See [Storage and restarts](/storage/).

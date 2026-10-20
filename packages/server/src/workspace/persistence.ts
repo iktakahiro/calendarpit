@@ -81,16 +81,21 @@ export class Persistence {
     return row ? JSON.parse(row.state) : undefined;
   }
 
-  /** Saves the snapshot, skipping the write when nothing changed. */
-  write(state: unknown) {
+  /**
+   * Saves the snapshot, skipping the write when nothing changed.
+   *
+   * @returns Whether the snapshot differed from the last one read or written.
+   */
+  write(state: unknown): boolean {
     const value = JSON.stringify(state);
-    if (value === this.previous) return;
+    if (value === this.previous) return false;
     this.db
       .query(
         'INSERT INTO workspace (id, state) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET state = excluded.state',
       )
       .run(value);
     this.previous = value;
+    return true;
   }
 
   /** Closes the database and releases the instance lock. */

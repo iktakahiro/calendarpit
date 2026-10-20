@@ -37,6 +37,7 @@ All paths below are relative to `/__calendarpit`.
 | ---------------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
 | `GET` / `HEAD`                     | `/health`                          | Return server information and capability flags.                            |
 | `GET`                              | `/state`                           | Return a snapshot of the server state.                                     |
+| `GET`                              | `/changes`                         | Stream a `change` event whenever the saved state changes (SSE).            |
 | `POST`                             | `/fixtures`                        | Validate and replace fixture data (`200` snapshot).                        |
 | `POST`                             | `/reset`                           | Restore the startup fixture baseline (`200` snapshot).                     |
 | `GET` / `DELETE`                   | `/history`                         | Return (`200`) or clear (`204`) the latest 200 protocol requests.          |
@@ -55,6 +56,7 @@ All paths below are relative to `/__calendarpit`.
 
 - **`/health`**: Returns the server `name` (`"Calendarpit"`), `version`, `stage`, and `storage` (`"memory"` or `"sqlite"`). It also returns the capability flags `calendar`, `oauth`, `watch`, and `fixtures`. `HEAD` returns an empty `200`.
 - **`/state`**: Removes expired channels first. It then returns a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, and `revision`.
+- **`/changes`**: A [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) stream for `EventSource`. It sends a `change` event after any request or watch delivery changes the saved state, including Calendar API, OAuth, and management writes. Reads that change nothing send no event. Events carry no state, so read `/state` or `/history` again. Comment lines keep the connection open, and the stream ends when the server stops.
 - **`/fixtures`**: Validates and replaces users, calendars, events, and clients. It clears runtime state and invalidates connections.
 - **`/reset`**: Restores the startup fixture baseline and clears all runtime state.
 - **`/history`**: `GET` returns the requests ordered from oldest to newest.

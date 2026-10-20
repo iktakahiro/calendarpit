@@ -37,6 +37,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 | ---------------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
 | `GET` / `HEAD`                     | `/health`                          | サーバーの情報と機能フラグを返します。                                     |
 | `GET`                              | `/state`                           | サーバー状態のスナップショットを返します。                                 |
+| `GET`                              | `/changes`                         | 保存された状態が変わるたびに `change` イベントを送ります（SSE）。          |
 | `POST`                             | `/fixtures`                        | Fixture のデータを検証して置き換えます（`200` でスナップショット）。       |
 | `POST`                             | `/reset`                           | 起動時 Fixture のリセット基準を復元します（`200` でスナップショット）。    |
 | `GET` / `DELETE`                   | `/history`                         | 直近200件のプロトコルリクエストを取得（`200`）・クリア（`204`）します。    |
@@ -55,6 +56,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 
 - **`/health`**: サーバーの `name`（`"Calendarpit"`）、`version`、`stage`、`storage`（`"memory"` または `"sqlite"`）を返します。機能フラグ `calendar`、`oauth`、`watch`、`fixtures` も返します。`HEAD` は空の `200` を返します。
 - **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision` のスナップショットを返します。
+- **`/changes`**: `EventSource` 向けの [Server-Sent Events](https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events) ストリームです。Calendar API、OAuth、管理 API の書き込みや watch の配信によって保存された状態が変わると、`change` イベントを送ります。何も変えない読み取りではイベントを送りません。イベントに状態は含まれないため、`/state` や `/history` を読み直してください。コメント行で接続を維持し、サーバーが停止するとストリームは終了します。
 - **`/fixtures`**: ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします。
 - **`/reset`**: 起動時 Fixture のリセット基準を復元し、ランタイム状態をすべてクリアします。
 - **`/history`**: `GET` はリクエストを古い順に返します。

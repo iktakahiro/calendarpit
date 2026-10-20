@@ -12,7 +12,7 @@ import {
   type SectionId,
 } from '../models/sections';
 
-/** Connection state of the live data polling. */
+/** Connection state of the live updates: the change stream and data reads. */
 export type LiveStatus = 'connecting' | 'live' | 'offline';
 
 /**

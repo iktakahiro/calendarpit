@@ -60,6 +60,13 @@ type SavedState = {
   notifications?: Notification[];
 };
 
+/**
+ * What a {@link Workspace.subscribe} listener hears: `change` after a saved
+ * snapshot differs from the previous one, and `close` once when the workspace
+ * closes. Listeners are dropped after `close`.
+ */
+export type WorkspaceSignal = 'change' | 'close';
+
 /** Upper bound for retained history, delivery, and notification records. */
 export const recordLimit = 200;
 
@@ -76,6 +83,7 @@ export const recordLimit = 200;
 export class Workspace {
   private persistence: Persistence;
   private closed = false;
+  private listeners = new Set<(signal: WorkspaceSignal) => void>();
   /** Where the snapshot lives, for display in the admin UI. */
   readonly storage: { mode: 'sqlite' | 'memory'; path?: string };
   /** Current calendar data. */
@@ -184,8 +192,8 @@ export class Workspace {
   }
 
   /**
-   * Writes the snapshot when it differs from the last write. Does nothing
-   * after {@link close}.
+   * Writes the snapshot when it differs from the last write and then signals
+   * `change` to subscribers. Does nothing after {@link close}.
    */
   persist() {
     if (this.closed) return;
@@ -206,7 +214,27 @@ export class Workspace {
       calendarListEntries: this.calendarListEntries,
       notifications: this.notifications,
     };
-    this.persistence.write(state);
+    if (this.persistence.write(state)) this.signal('change');
+  }
+
+  /**
+   * Registers a listener for saved changes and for closing. Every request and
+   * background delivery persists through {@link persist}, so a `change` covers
+   * Calendar API, OAuth, watch, and management writes alike.
+   *
+   * @returns A function that removes the listener.
+   */
+  subscribe(listener: (signal: WorkspaceSignal) => void): () => void {
+    if (this.closed) {
+      listener('close');
+      return () => {};
+    }
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private signal(signal: WorkspaceSignal) {
+    for (const listener of [...this.listeners]) listener(signal);
   }
 
   /**
@@ -223,6 +251,8 @@ export class Workspace {
     } finally {
       this.closed = true;
       this.persistence.close();
+      this.signal('close');
+      this.listeners.clear();
     }
   }
 
