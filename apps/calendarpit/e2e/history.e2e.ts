@@ -68,10 +68,12 @@ test('clearing history asks first and is unavailable when empty', async ({
 
   await clear.click();
   await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toBeHidden();
   await expect(rows(page)).toHaveCount(3);
 
   await clear.click();
   await dialog.getByRole('button', { name: 'Clear history' }).click();
+  await expect(dialog).toBeHidden();
   await expect(toast(page, 'History cleared.')).toBeVisible();
   await expect(page.getByText('Waiting for your app.')).toBeVisible();
   await expect(clear).toBeDisabled();
