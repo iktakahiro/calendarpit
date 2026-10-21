@@ -11,11 +11,17 @@ export class ApiError extends Error {
    * @param reason - Machine-readable reason, such as `notFound` or an OAuth
    * error code like `invalid_grant`.
    * @param message - Human-readable explanation returned to the client.
+   * @param domain - Google error domain. Defaults to `calendarpit`. Simulated
+   * Calendar quotas use `usageLimits`, matching Google's quota errors.
+   * @param headers - Extra response headers, such as `Retry-After` on a quota
+   * error.
    */
   constructor(
     public status: number,
     public reason: string,
     message: string,
+    public domain = 'calendarpit',
+    public headers?: Record<string, string>,
   ) {
     super(message);
   }

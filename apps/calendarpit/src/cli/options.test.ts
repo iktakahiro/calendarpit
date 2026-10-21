@@ -93,3 +93,20 @@ test('database defaults, memory mode and flag precedence', () => {
   );
   expect(() => parseOptions([], { CALENDARPIT_DATABASE: ' ' })).toThrow();
 });
+
+test('rate limit mode accepts off, prod, and strict', () => {
+  expect(parseOptions(['--rate-limit', 'strict'])).toMatchObject({
+    rateLimitMode: 'strict',
+  });
+  expect(
+    parseOptions(['--rate-limit', 'off'], { CALENDARPIT_RATE_LIMIT: 'prod' }),
+  ).toMatchObject({ rateLimitMode: 'off' });
+  expect(parseOptions([], { CALENDARPIT_RATE_LIMIT: ' prod ' })).toMatchObject({
+    rateLimitMode: 'prod',
+  });
+  expect(parseOptions([])).not.toHaveProperty('rateLimitMode');
+  expect(() => parseOptions(['--rate-limit', 'high'])).toThrow(
+    'Rate limit mode must be off, prod, or strict.',
+  );
+  expect(() => parseOptions([], { CALENDARPIT_RATE_LIMIT: '' })).toThrow();
+});

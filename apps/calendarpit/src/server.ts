@@ -1,4 +1,8 @@
-import { createCalendarpit, resolveDatabase } from '@calendarpit/server';
+import {
+  createCalendarpit,
+  parseRateLimitMode,
+  resolveDatabase,
+} from '@calendarpit/server';
 import {
   createStartHandler,
   defaultStreamHandler,
@@ -14,12 +18,14 @@ const development = globalThis as typeof globalThis & {
   calendarpitDevelopmentRuntime?: ReturnType<typeof createCalendarpit>;
 };
 if (import.meta.env.DEV) development.calendarpitDevelopmentRuntime?.close();
+const rateLimitMode = parseRateLimitMode(process.env.CALENDARPIT_RATE_LIMIT);
 const runtime = createCalendarpit({
   fixture,
   database: resolveDatabase(process.env.CALENDARPIT_DATABASE),
   allowedWatchHosts: process.env.CALENDARPIT_WATCH_HOSTS?.split(',')
     .map((host) => host.trim())
     .filter(Boolean),
+  ...(rateLimitMode ? { rateLimitMode } : {}),
 });
 if (import.meta.env.DEV) development.calendarpitDevelopmentRuntime = runtime;
 export const close = () => runtime.close();

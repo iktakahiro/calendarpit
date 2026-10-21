@@ -40,7 +40,7 @@ Calendar API のルート（`/calendar/v3/*`）、`/userinfo`、管理 API の�
 }
 ```
 
-- トップレベルのエラーでは、`domain` は常に `"calendarpit"` です。`freebusy.query` レスポンスの中のカレンダーごとのエラーは `"domain": "global"` になります。
+- トップレベルのエラーでは、`domain` は `"calendarpit"` です。シミュレートした Calendar API のクォータエラーだけは、Google と同じ `"usageLimits"` です。`freebusy.query` レスポンスの中のカレンダーごとのエラーは `"domain": "global"` になります。
 - `401` レスポンスには `WWW-Authenticate: Bearer` ヘッダーが付きます。
 - より具体的な reason がない `400` の検証エラーは `"reason": "invalidParameter"` になります。
 
@@ -260,6 +260,12 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 - **対処**: 同意リクエストを完了させるか、新しく開くのをやめます。またはワークスペースをリセットします。
 
 ## Calendar API と SDK
+
+### シミュレートした Calendar API のレート制限
+
+- **エラー**: `403 userRateLimitExceeded`（`User Rate Limit Exceeded`）、`403` または `429` の `rateLimitExceeded`（`Rate Limit Exceeded`）、または `403 quotaExceeded`（`Calendar usage limits exceeded.`）。
+- **原因**: **Settings → Developer**、`--rate-limit`、または `CALENDARPIT_RATE_LIMIT` が `prod` か `strict` で、リクエストがそのモードの上限を超えています。`off` では起きません。同意リクエストの `429 rateLimitExceeded`: `Too many pending consent requests.` は、このクォータとは別です。
+- **対処**: モードを `off` にするか、`Retry-After` の時間だけ待つか、ワークスペースをリセットしてカウンタを消します。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
 
 ### アクセストークンが不正または期限切れ
 

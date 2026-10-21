@@ -527,3 +527,48 @@ test('calendar-list settings and watches survive restart and reset clears them',
   expect(current.app.workspace.calendarListEntries).toEqual([]);
   expect(current.app.workspace.channels.size).toBe(0);
 });
+
+test('the rate limit mode survives restart unless startup sets another', async () => {
+  const database = file();
+  const first = open(database);
+  const saved = await first.request('/__calendarpit/rate-limit', 'PUT', {
+    mode: 'strict',
+  });
+  expect(saved.status).toBe(200);
+  for (let i = 0; i < 4; i++)
+    expect(
+      (await first.request('/calendar/v3/users/me/calendarList')).status,
+    ).toBe(401);
+  expect(
+    (await first.request('/calendar/v3/users/me/calendarList')).status,
+  ).toBe(403);
+  first.app.close();
+
+  const second = open(database, {
+    fixture: { users: [], calendars: [], events: [], clients: [] },
+  });
+  const state = await (await second.request('/__calendarpit/state')).json();
+  expect(state.rateLimitMode).toBe('strict');
+  expect(
+    (await second.request('/calendar/v3/users/me/calendarList')).status,
+  ).toBe(401);
+  second.app.close();
+
+  const third = open(database, { rateLimitMode: 'off' });
+  expect(
+    (await (await third.request('/__calendarpit/state')).json()).rateLimitMode,
+  ).toBe('off');
+  third.app.close();
+
+  const db = new Database(database);
+  const row = db
+    .query<{ state: string }, []>('SELECT state FROM workspace WHERE id = 1')
+    .get()!;
+  const snapshot = JSON.parse(row.state) as { rateLimitMode?: string };
+  snapshot.rateLimitMode = 'high';
+  db.query('UPDATE workspace SET state = ? WHERE id = 1').run(
+    JSON.stringify(snapshot),
+  );
+  db.close();
+  expect(() => open(database)).toThrow('Unsupported saved rate limit mode.');
+});

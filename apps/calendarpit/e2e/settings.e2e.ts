@@ -101,6 +101,7 @@ test('the interface language can switch to Japanese and back', async ({
       .getByRole('button', { name: '設定' }),
   ).toBeVisible();
   await expect(page.getByRole('tab', { name: 'テストデータ' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: '開発者' })).toBeVisible();
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
@@ -115,6 +116,26 @@ test('the interface language can switch to Japanese and back', async ({
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page).toHaveTitle('Calendarpit · Local calendar lab');
   await expect(sectionLink(page, 'Settings')).toBeVisible();
+});
+
+test('the Calendar API rate limit mode is saved from Settings', async ({
+  page,
+}) => {
+  await page.goto('/settings');
+  await page.getByRole('tab', { name: 'Developer' }).click();
+  await expect(page.getByText('No simulated rate limiting.')).toBeVisible();
+  const mode = page.getByRole('combobox', { name: 'Mode' });
+  await mode.click();
+  await page.getByRole('option', { name: 'Strict' }).click();
+  await expect(toast(page, 'Rate limit mode saved.')).toBeVisible();
+  await expect(mode).toContainText('Strict');
+
+  await page.reload();
+  await page.getByRole('tab', { name: 'Developer' }).click();
+  await expect(page.getByRole('combobox', { name: 'Mode' })).toContainText(
+    'Strict',
+  );
+  await expect(page.getByText('4 requests per minute per user')).toBeVisible();
 });
 
 test.describe('with a Japanese browser', () => {

@@ -1,4 +1,5 @@
 import type { Snapshot } from '@calendarpit/server';
+import { Select } from '@cloudflare/kumo/components/select';
 import { Collapsible } from '@cloudflare/kumo/components/collapsible';
 import { InputArea } from '@cloudflare/kumo/components/input';
 import { Tabs } from '@cloudflare/kumo/primitives/tabs';
@@ -10,21 +11,25 @@ import { LanguageSwitcher, useMessages } from '../../components/language';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { ClientsPanel } from './components/clients-panel';
 import { useLoadFixture, useResetWorkspace } from './hooks/use-fixtures';
+import { useSetRateLimitMode } from './hooks/use-rate-limit';
 
 /**
- * Appearance and language, storage, fixtures and reset, and registered OAuth
- * clients.
+ * Appearance and language, Calendar API rate limits, storage, fixtures and
+ * reset, and registered OAuth clients.
  */
 export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
   const [fixture, setFixture] = useState('');
   const loadFixture = useLoadFixture();
   const reset = useResetWorkspace();
+  const setRateLimit = useSetRateLimitMode();
   const busy = useWorkspaceBusy();
   const t = useMessages();
+  const mode = snapshot.rateLimitMode;
   return (
     <Tabs.Root defaultValue='appearance' className='settings-content'>
       <Tabs.List className='settings-tabs' aria-label={t['settings.sections']}>
         <Tabs.Tab value='appearance'>{t['settings.appearance']}</Tabs.Tab>
+        <Tabs.Tab value='developer'>{t['settings.developer']}</Tabs.Tab>
         <Tabs.Tab value='data'>{t['settings.testData']}</Tabs.Tab>
         <Tabs.Tab value='clients'>{t['settings.clients']}</Tabs.Tab>
       </Tabs.List>
@@ -46,6 +51,49 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
               <span>{t['settings.language']}</span>
               <LanguageSwitcher />
             </div>
+          </div>
+        </section>
+      </Tabs.Panel>
+      <Tabs.Panel value='developer' className='stack settings-panel'>
+        <section className='panel' aria-labelledby='rate-limit-title'>
+          <header className='panel-head'>
+            <div>
+              <h2 id='rate-limit-title'>{t['settings.rateLimit']}</h2>
+              <p>{t['settings.rateLimitDescription']}</p>
+            </div>
+            <Icon name='gear' />
+          </header>
+          <div className='panel-body'>
+            <label className='field'>
+              <span id='rate-limit-label'>{t['settings.rateLimitMode']}</span>
+              <Select
+                aria-labelledby='rate-limit-label'
+                value={mode}
+                disabled={busy}
+                onValueChange={(value: Snapshot['rateLimitMode'] | null) => {
+                  if (value && value !== mode) setRateLimit.mutate(value);
+                }}
+                items={{
+                  off: t['settings.rateLimitOff'],
+                  prod: t['settings.rateLimitProd'],
+                  strict: t['settings.rateLimitStrict'],
+                }}
+              />
+            </label>
+            <ul className='settings-notes'>
+              <li>
+                <strong>{t['settings.rateLimitOff']}. </strong>
+                {t['settings.rateLimitOffDescription']}
+              </li>
+              <li>
+                <strong>{t['settings.rateLimitProd']}. </strong>
+                {t['settings.rateLimitProdDescription']}
+              </li>
+              <li>
+                <strong>{t['settings.rateLimitStrict']}. </strong>
+                {t['settings.rateLimitStrictDescription']}
+              </li>
+            </ul>
           </div>
         </section>
       </Tabs.Panel>

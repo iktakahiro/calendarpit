@@ -24,6 +24,7 @@ export function snapshot(workspace: Workspace) {
     deliveries: workspace.deliveries,
     notifications: workspace.notifications,
     revision: workspace.revision,
+    rateLimitMode: workspace.rateLimitMode,
   };
 }
 

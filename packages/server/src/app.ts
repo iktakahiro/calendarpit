@@ -28,6 +28,8 @@ import {
 } from './features/status/status-routes';
 import { userManagementRoutes } from './features/users/user-routes';
 import { canResumeChannel } from './features/watch/channel-operations';
+import { quotaManagementRoutes } from './features/quota/quota-routes';
+import { enforceCalendarRateLimit } from './features/quota/rate-limit-operations';
 import { drainDeliveries } from './features/watch/delivery-operations';
 import {
   watchGoogleRoutes,
@@ -51,6 +53,7 @@ const googleRoutes: Route[] = [
 /** The management API behind the same-origin and JSON guard. */
 const managementRoutes: Route[] = [
   ...statusManagementRoutes,
+  ...quotaManagementRoutes,
   ...historyManagementRoutes,
   ...fixtureManagementRoutes,
   ...watchManagementRoutes,
@@ -65,7 +68,7 @@ const managementRoutes: Route[] = [
  * page cannot change the workspace through the developer's browser.
  */
 async function route(context: RouteContext): Promise<Response> {
-  const { request, url } = context;
+  const { request, url, workspace } = context;
   const health = await dispatch(healthRoutes, context);
   if (health) return health;
   if (url.pathname.startsWith('/__calendarpit')) {
@@ -84,6 +87,10 @@ async function route(context: RouteContext): Promise<Response> {
       fail('Unknown management endpoint or method.', 404, 'notFound')
     );
   }
+  // Quota applies to every Calendar API path, before the handler runs, so a
+  // rejected request does not change workspace data.
+  if (url.pathname.startsWith('/calendar/v3'))
+    enforceCalendarRateLimit(workspace, request, url);
   return (
     (await dispatch(googleRoutes, context)) ??
     fail('Unsupported API endpoint or method.', 501, 'unsupportedFeature')

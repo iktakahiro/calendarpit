@@ -275,6 +275,7 @@ const en = {
 
   'settings.sections': 'Settings sections',
   'settings.appearance': 'Appearance',
+  'settings.developer': 'Developer',
   'settings.testData': 'Test data',
   'settings.clients': 'OAuth clients',
   'settings.appearanceDescription':
@@ -286,6 +287,19 @@ const en = {
   'settings.system': 'System',
   'settings.mode': (mode: string) => `${mode} mode`,
   'settings.systemLanguage': 'System language',
+  'settings.rateLimit': 'Calendar API rate limits',
+  'settings.rateLimitMode': 'Mode',
+  'settings.rateLimitDescription':
+    'Choose how Calendar API requests are limited. The choice is saved with the workspace.',
+  'settings.rateLimitOff': 'Off',
+  'settings.rateLimitProd': 'Prod-equivalent',
+  'settings.rateLimitStrict': 'Strict',
+  'settings.rateLimitOffDescription': 'No simulated rate limiting.',
+  'settings.rateLimitProdDescription':
+    '600 requests per minute per user, 10,000 per minute per project, and 60 writes per minute to one calendar.',
+  'settings.rateLimitStrictDescription':
+    '4 requests per minute per user, 12 per minute per project, 2 writes per minute to one calendar, and 20 requests per day.',
+  'settings.rateLimitSaved': 'Rate limit mode saved.',
   'settings.storage': 'Storage',
   'settings.storageSqlite': 'Changes are saved automatically across restarts.',
   'settings.storageMemory': 'Temporary session. Restarting discards changes.',
@@ -617,6 +631,7 @@ const ja = {
 
   'settings.sections': '設定のセクション',
   'settings.appearance': '表示',
+  'settings.developer': '開発者',
   'settings.testData': 'テストデータ',
   'settings.clients': 'OAuth クライアント',
   'settings.appearanceDescription':
@@ -628,6 +643,19 @@ const ja = {
   'settings.system': 'システム',
   'settings.mode': (mode: string) => `${mode}モード`,
   'settings.systemLanguage': 'システムの言語',
+  'settings.rateLimit': 'Calendar API のレート制限',
+  'settings.rateLimitMode': 'モード',
+  'settings.rateLimitDescription':
+    'Calendar API リクエストの制限方法を選びます。選択はワークスペースに保存されます。',
+  'settings.rateLimitOff': 'オフ',
+  'settings.rateLimitProd': '本番相当',
+  'settings.rateLimitStrict': '厳格',
+  'settings.rateLimitOffDescription': 'レート制限をシミュレートしません。',
+  'settings.rateLimitProdDescription':
+    'ユーザーごとに毎分600リクエスト、プロジェクトごとに毎分10,000リクエスト、1つのカレンダーへの書き込みは毎分60回です。',
+  'settings.rateLimitStrictDescription':
+    'ユーザーごとに毎分4リクエスト、プロジェクトごとに毎分12リクエスト、1つのカレンダーへの書き込みは毎分2回、1日あたり20リクエストです。',
+  'settings.rateLimitSaved': 'レート制限モードを保存しました。',
   'settings.storage': 'ストレージ',
   'settings.storageSqlite': '変更は自動で保存され、再起動後も残ります。',
   'settings.storageMemory':

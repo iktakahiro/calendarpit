@@ -1,13 +1,16 @@
 import type { Workspace } from '../../workspace/workspace';
+import { clearRateLimitUsage } from '../quota/rate-limit-operations';
 import { stopChannel } from '../watch/channel-operations';
 import { parseFixture } from './fixture';
 
 /**
  * Clears everything except calendar data and the startup fixture: grants,
  * tokens, codes, consents, history, sync and page tokens, tombstones,
- * notifications, calendar-list settings, deliveries, and channels.
+ * notifications, calendar-list settings, deliveries, and channels. The saved
+ * rate-limit mode stays; only its in-memory counters are cleared.
  */
 function clearRuntime(workspace: Workspace) {
+  clearRateLimitUsage(workspace);
   for (const channel of workspace.channels.values())
     stopChannel(workspace, channel);
   workspace.grants.clear();

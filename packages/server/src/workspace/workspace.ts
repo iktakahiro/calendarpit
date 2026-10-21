@@ -1,5 +1,6 @@
 import { fail } from '../shared/errors';
 import type { CalendarListSettings } from '../model/calendar-list';
+import type { RateLimitMode } from '../model/rate-limit';
 import type { Calendar } from '../model/directory';
 import type { Fixture } from '../model/fixture';
 import type { History } from '../model/history';
@@ -29,6 +30,12 @@ export type WorkspaceOptions = {
   accessTokenTtlMs?: number;
   /** Delay between watch delivery retries. Defaults to 100 ms. */
   retryDelayMs?: number;
+  /**
+   * Calendar API quota simulation. When set, replaces the mode saved in the
+   * database for this process and is written back. When omitted, the saved
+   * mode is kept, or `off` when the snapshot has none.
+   */
+  rateLimitMode?: RateLimitMode;
 };
 
 /**
@@ -58,6 +65,11 @@ type SavedState = {
   deletedCalendars?: Calendar[];
   calendarListEntries?: CalendarListSettings[];
   notifications?: Notification[];
+  /**
+   * Calendar API quota simulation. Missing on snapshots written before the
+   * setting existed; those reopen as `off`.
+   */
+  rateLimitMode?: RateLimitMode;
 };
 
 /**
@@ -121,6 +133,11 @@ export class Workspace {
   deliveries: Delivery[] = [];
   /** In-flight delivery tasks, awaited by `drain`. */
   pending = new Set<Promise<void>>();
+  /**
+   * Calendar API quota simulation. `off` does not limit requests. Saved with
+   * the workspace so it survives a SQLite restart.
+   */
+  rateLimitMode: RateLimitMode;
 
   /**
    * Opens the database and restores its snapshot, or seeds it from the
@@ -158,6 +175,7 @@ export class Workspace {
         this.deletedCalendars = saved.deletedCalendars ?? [];
         this.calendarListEntries = saved.calendarListEntries ?? [];
         this.notifications = saved.notifications ?? [];
+        this.rateLimitMode = readRateLimitMode(saved.rateLimitMode);
         // Deliveries never replay after a restart.
         this.deliveries = saved.deliveries.slice(-recordLimit).map((entry) => ({
           ...entry,
@@ -173,7 +191,9 @@ export class Workspace {
       } else {
         this.startup = rules.parseFixture(options.fixture, this.now());
         this.data = structuredClone(this.startup);
+        this.rateLimitMode = 'off';
       }
+      if (options.rateLimitMode) this.rateLimitMode = options.rateLimitMode;
       this.persist();
     } catch (error) {
       this.persistence.close();
@@ -213,6 +233,7 @@ export class Workspace {
       deletedCalendars: this.deletedCalendars,
       calendarListEntries: this.calendarListEntries,
       notifications: this.notifications,
+      rateLimitMode: this.rateLimitMode,
     };
     if (this.persistence.write(state)) this.signal('change');
   }
@@ -261,4 +282,17 @@ export class Workspace {
     this.revision = crypto.randomUUID();
     this.pages.clear();
   }
+}
+
+/**
+ * Reads a quota mode from a snapshot. A missing field is `off`, which is how
+ * databases created before the setting reopen.
+ *
+ * @throws Error when the field is present but not a known mode. Keep the
+ * accepted values in step with {@link RateLimitMode}.
+ */
+function readRateLimitMode(value: unknown): RateLimitMode {
+  if (value === undefined) return 'off';
+  if (value === 'off' || value === 'prod' || value === 'strict') return value;
+  throw new Error('Unsupported saved rate limit mode.');
 }
