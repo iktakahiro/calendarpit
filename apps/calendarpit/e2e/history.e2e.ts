@@ -43,6 +43,9 @@ test('history filters count matching requests and can be cleared', async ({
   await expect(
     page.getByText('Showing 1 of 3 requests. Credentials are masked.'),
   ).toBeVisible();
+  await expect(
+    page.getByRole('status').filter({ hasText: /^1 matching request$/ }),
+  ).toBeAttached();
 
   await statusFilter(page, 'Errors 0').click();
   await expect(page.getByText('No matching requests')).toBeVisible();

@@ -270,6 +270,8 @@ const en = {
   'history.clearFilters': 'Reset filters',
   'history.showing': (shown: number, total: number) =>
     `Showing ${shown} of ${total} ${total === 1 ? 'request' : 'requests'}. Credentials are masked.`,
+  'history.matches': (count: number) =>
+    `${count} matching ${count === 1 ? 'request' : 'requests'}`,
 
   'settings.sections': 'Settings sections',
   'settings.appearance': 'Appearance',
@@ -611,6 +613,7 @@ const ja = {
   'history.clearFilters': '絞り込みを解除',
   'history.showing': (shown: number, total: number) =>
     `リクエスト${total}件中${shown}件を表示します。トークンなどの認証情報はマスクされます。`,
+  'history.matches': (count: number) => `一致するリクエスト ${count}件`,
 
   'settings.sections': '設定のセクション',
   'settings.appearance': '表示',

@@ -26,13 +26,24 @@ export function HistoryScreen() {
   const locale = useLocale();
   const [query, setQuery] = useState('');
   const [errorsOnly, setErrorsOnly] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
   const rows = filterHistory(history, query, errorsOnly);
   const counts = countHistory(history, query);
   const filtering = errorsOnly || query.trim() !== '';
-  const clearFilters = () => {
-    setQuery('');
-    setErrorsOnly(false);
+  // The live region changes only here, on user input. New requests arrive
+  // through the change stream, and announcing each one would be noise.
+  const applyFilters = (nextQuery: string, nextErrorsOnly: boolean) => {
+    setQuery(nextQuery);
+    setErrorsOnly(nextErrorsOnly);
+    setAnnouncement(
+      nextErrorsOnly || nextQuery.trim() !== ''
+        ? t['history.matches'](
+            filterHistory(history, nextQuery, nextErrorsOnly).length,
+          )
+        : '',
+    );
   };
+  const clearFilters = () => applyFilters('', false);
   return (
     <>
       <div className='toolbar'>
@@ -44,7 +55,7 @@ export function HistoryScreen() {
             type='search'
             placeholder={t['history.filterPlaceholder']}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => applyFilters(e.target.value, errorsOnly)}
           />
         </label>
         <div
@@ -55,14 +66,14 @@ export function HistoryScreen() {
           <button
             type='button'
             aria-pressed={!errorsOnly}
-            onClick={() => setErrorsOnly(false)}
+            onClick={() => applyFilters(query, false)}
           >
             {t['history.all']} <span>{counts.all}</span>
           </button>
           <button
             type='button'
             aria-pressed={errorsOnly}
-            onClick={() => setErrorsOnly(true)}
+            onClick={() => applyFilters(query, true)}
           >
             {t['history.errors']} <span>{counts.errors}</span>
           </button>
@@ -78,14 +89,18 @@ export function HistoryScreen() {
           confirm={() => clear.mutate(undefined)}
         />
       </div>
-      <p className='toolbar-note' role='status'>
+      <p className='toolbar-note'>
         {filtering && history.length
           ? t['history.showing'](rows.length, history.length)
           : t['history.note']}
       </p>
+      <p className='sr-only' role='status'>
+        {announcement}
+      </p>
       <section className='history-list' aria-label={t['history.requests']}>
         {rows.length > 0 && (
-          <ol className='history-rows'>
+          // Safari VoiceOver drops list semantics when list-style is none.
+          <ol className='history-rows' role='list'>
             {rows.map((row) => (
               <Collapsible.Root
                 key={row.id}
