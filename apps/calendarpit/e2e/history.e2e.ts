@@ -40,11 +40,13 @@ test('history filters count matching requests and can be cleared', async ({
   await expect(rows(page)).toHaveCount(1);
   await expect(statusFilter(page, 'All 1')).toBeVisible();
   await expect(statusFilter(page, 'Errors 0')).toBeVisible();
-  await expect(page.getByText('Showing 1 of 3 requests.')).toBeVisible();
+  await expect(
+    page.getByText('Showing 1 of 3 requests. Credentials are masked.'),
+  ).toBeVisible();
 
   await statusFilter(page, 'Errors 0').click();
   await expect(page.getByText('No matching requests')).toBeVisible();
-  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await page.getByRole('button', { name: 'Reset filters' }).click();
   await expect(
     page.getByRole('searchbox', { name: 'Filter requests' }),
   ).toHaveValue('');
@@ -63,7 +65,7 @@ test('clearing history asks first and is unavailable when empty', async ({
   await page.goto('/history');
   const clear = page.getByRole('button', { name: 'Clear history' });
   const dialog = page.getByRole('alertdialog', {
-    name: 'Clear the API history?',
+    name: 'Clear history?',
   });
 
   await clear.click();
