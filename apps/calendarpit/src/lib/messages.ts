@@ -249,6 +249,9 @@ const en = {
   'history.errors': 'Errors',
   'history.clear': 'Clear history',
   'history.cleared': 'History cleared.',
+  'history.clearTitle': 'Clear the API history?',
+  'history.clearDescription':
+    'Every recorded request and response is removed. This cannot be undone.',
   'history.note':
     'The latest 200 Calendar API and OAuth requests, newest first. Credentials are masked.',
   'history.requests': 'API requests',
@@ -263,6 +266,9 @@ const en = {
     'Requests that your app sends to the Calendar API and OAuth endpoints appear here.',
   'history.noMatches': 'No matching requests',
   'history.noMatchesDescription': 'Change the filter to see more of the log.',
+  'history.clearFilters': 'Clear filters',
+  'history.showing': (shown: number, total: number) =>
+    `Showing ${shown} of ${total} ${total === 1 ? 'request' : 'requests'}.`,
 
   'settings.sections': 'Settings sections',
   'settings.appearance': 'Appearance',
@@ -583,6 +589,9 @@ const ja = {
   'history.errors': 'エラー',
   'history.clear': '履歴を消去',
   'history.cleared': '履歴を消去しました。',
+  'history.clearTitle': 'API 履歴を消去しますか？',
+  'history.clearDescription':
+    '記録されたリクエストとレスポンスをすべて削除します。元に戻せません。',
   'history.note':
     '直近200件の Calendar API と OAuth のリクエストを新しい順に表示します。トークンなどの認証情報はマスクされます。',
   'history.requests': 'API リクエスト',
@@ -597,6 +606,9 @@ const ja = {
     'アプリが Calendar API と OAuth のエンドポイントに送ったリクエストが、ここに表示されます。',
   'history.noMatches': '一致するリクエストはありません',
   'history.noMatchesDescription': '絞り込み条件を変更してください。',
+  'history.clearFilters': '絞り込みを解除',
+  'history.showing': (shown: number, total: number) =>
+    `${total}件中${shown}件を表示しています。`,
 
   'settings.sections': '設定のセクション',
   'settings.appearance': '表示',
