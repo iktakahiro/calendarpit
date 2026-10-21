@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@googleapis/calendar": "20.1.0",
-    "google-auth-library": "11.3.0"
+    "google-auth-library": "11.3.1"
   },
   "devDependencies": {
     "@calendarpit/server": "workspace:*",
