@@ -3,7 +3,7 @@ import type { RateLimitMode } from '../../model/rate-limit';
 /** Sliding window for the per-minute Calendar API quotas. */
 export const rateLimitMinuteMs = 60_000;
 
-/** Sliding window for the strict daily project ceiling. */
+/** Sliding window for the strict daily per-user ceiling. */
 export const rateLimitDayMs = 86_400_000;
 
 /**
@@ -16,12 +16,19 @@ export const rateLimitDayMs = 86_400_000;
 export type RateLimitBudgets = {
   /** Requests per sliding minute for the whole workspace, as one Cloud project. */
   perMinutePerProject: number;
-  /** Requests per sliding minute for one quota user. */
+  /**
+   * Requests per sliding minute for one quota user: `quotaUser` or
+   * `x-goog-quota-user` when sent, otherwise the access token's user.
+   */
   perMinutePerUser: number;
   /** Mutating requests per sliding minute against one calendar. */
   writesPerMinutePerCalendar: number;
-  /** Requests per sliding day for the project. */
-  perDayPerProject: number;
+  /**
+   * Requests per sliding day for one Google user, the access token's user.
+   * `quotaUser` does not change this bucket, because Google's Calendar usage
+   * limits apply to the Google user.
+   */
+  perDayPerUser: number;
 };
 
 /**
@@ -36,30 +43,31 @@ export type RateLimitBudgets = {
  * to one calendar in quick succession can be limited, without a published
  * figure. Prod uses 60 writes per minute per calendar for that operational
  * limit. Strict is intentionally lower so local tests can reach every
- * documented quota error.
+ * documented quota error. Its daily ceiling stands in for Google's per-user
+ * Calendar usage limits, which Google reports as `403 quotaExceeded`.
  */
 export const rateLimitBudgets: Record<RateLimitMode, RateLimitBudgets> = {
   off: {
     perMinutePerProject: Infinity,
     perMinutePerUser: Infinity,
     writesPerMinutePerCalendar: Infinity,
-    perDayPerProject: Infinity,
+    perDayPerUser: Infinity,
   },
   prod: {
     perMinutePerProject: 10_000,
     perMinutePerUser: 600,
     writesPerMinutePerCalendar: 60,
-    perDayPerProject: Infinity,
+    perDayPerUser: Infinity,
   },
   strict: {
     perMinutePerProject: 12,
     perMinutePerUser: 4,
     writesPerMinutePerCalendar: 2,
-    perDayPerProject: 20,
+    perDayPerUser: 20,
   },
 };
 
-/** Which counter a rejection came from, for `Retry-After`. */
+/** Which counter a rejection came from, for the `Retry-After` hint. */
 export type RateLimitBucket = 'day' | 'calendar' | 'user' | 'project';
 
 /**
@@ -68,13 +76,18 @@ export type RateLimitBucket = 'day' | 'calendar' | 'user' | 'project';
  * Reasons and status codes follow
  * https://developers.google.com/workspace/calendar/api/guides/errors:
  * `userRateLimitExceeded` is 403, per-calendar `rateLimitExceeded` is 403,
- * a short-interval `rateLimitExceeded` is 429, and `quotaExceeded` is 403.
+ * a short-interval `rateLimitExceeded` is 429, and `quotaExceeded` (the
+ * per-user Calendar usage limits) is 403.
  */
 export type RateLimitRejection = {
   status: 403 | 429;
   reason: 'userRateLimitExceeded' | 'rateLimitExceeded' | 'quotaExceeded';
   message: string;
-  /** Window that has to move before this request would be accepted. */
+  /**
+   * Window that has to move before this request would be accepted.
+   * Calendarpit uses it for a `Retry-After` hint; Google does not document
+   * that header for these errors.
+   */
   windowMs: number;
   bucket: RateLimitBucket;
 };
@@ -84,7 +97,8 @@ export type RateLimitUsage = {
   projectInMinute: number;
   userInMinute: number;
   calendarWritesInMinute: number;
-  projectInDay: number;
+  /** Requests the token's user made in the sliding day. */
+  userInDay: number;
   /** Whether this request mutates one calendar. */
   calendarWrite: boolean;
 };
@@ -124,8 +138,8 @@ const dailyLimit: RateLimitRejection = {
 /**
  * Decides whether one more Calendar API request exceeds `mode`.
  *
- * Daily usage is checked first, then per-calendar writes, then the per-user
- * minute quota, then the project minute quota. The first ceiling wins, which
+ * The per-user daily limit is checked first, then per-calendar writes, then
+ * the per-user minute quota, then the project minute quota. The first ceiling wins, which
  * matches Google's separate reasons for those limits.
  *
  * @returns The Google error to return, or `undefined` when the request fits.
@@ -135,7 +149,7 @@ export function rejectRateLimit(
   usage: RateLimitUsage,
 ): RateLimitRejection | undefined {
   const budgets = rateLimitBudgets[mode];
-  if (usage.projectInDay >= budgets.perDayPerProject) return dailyLimit;
+  if (usage.userInDay >= budgets.perDayPerUser) return dailyLimit;
   if (
     usage.calendarWrite &&
     usage.calendarWritesInMinute >= budgets.writesPerMinutePerCalendar

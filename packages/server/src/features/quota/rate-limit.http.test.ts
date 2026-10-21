@@ -122,6 +122,45 @@ describe('Calendar API rate limits', () => {
     await s.app.drain();
   });
 
+  test('strict resolves primary to the token user calendar for any quotaUser', async () => {
+    const s = setup({ rateLimitMode: 'strict' });
+    const { access_token: token } = await s.token();
+    for (const quotaUser of ['first', 'second'])
+      expect(
+        (
+          await s.request(
+            `${events}?quotaUser=${quotaUser}`,
+            'POST',
+            timed(`primary-${quotaUser}`),
+            token,
+          )
+        ).status,
+      ).toBe(200);
+    await quotaError(
+      await s.request(
+        `${events}?quotaUser=third`,
+        'POST',
+        timed('primary-third'),
+        token,
+        { 'x-goog-quota-user': 'fourth' },
+      ),
+      403,
+      'rateLimitExceeded',
+      'Rate Limit Exceeded',
+    );
+    await quotaError(
+      await s.request(
+        '/calendar/v3/calendars/alex-work/events?quotaUser=fifth',
+        'POST',
+        timed('alex-work-fifth'),
+        token,
+      ),
+      403,
+      'rateLimitExceeded',
+      'Rate Limit Exceeded',
+    );
+  });
+
   test('strict project quota is 429 and follows quotaUser across users', async () => {
     const s = setup({ rateLimitMode: 'strict' });
     const { access_token: token } = await s.token();
@@ -183,17 +222,17 @@ describe('Calendar API rate limits', () => {
     );
   });
 
-  test('strict daily ceiling is quotaExceeded after the minute windows move', async () => {
+  test('strict daily ceiling is quotaExceeded per token user, not per quotaUser', async () => {
     let now = 1_700_000_000_000;
     const s = setup({ rateLimitMode: 'strict', now: () => now });
-    const { access_token: token } = await s.token();
+    const { access_token: alex } = await s.token();
     const accept = async (count: number, start: number) => {
       for (let i = 0; i < count; i++) {
         const response = await s.request(
           `${list}?quotaUser=day-${start + i}`,
           'GET',
           undefined,
-          token,
+          alex,
         );
         expect(response.status).toBe(200);
       }
@@ -201,12 +240,23 @@ describe('Calendar API rate limits', () => {
     await accept(12, 0);
     now += 60_000;
     await accept(8, 12);
+    const blocked = await s.request(
+      `${list}?quotaUser=day-20`,
+      'GET',
+      undefined,
+      alex,
+    );
+    // The oldest of Alex's daily requests leaves the window one day after it
+    // was made, 60 seconds ago.
+    expect(blocked.headers.get('retry-after')).toBe(String(86_400 - 60));
     await quotaError(
-      await s.request(`${list}?quotaUser=day-20`, 'GET', undefined, token),
+      blocked,
       403,
       'quotaExceeded',
       'Calendar usage limits exceeded.',
     );
+    const { access_token: sam } = await s.token(undefined, 'sam');
+    expect((await s.request(list, 'GET', undefined, sam)).status).toBe(200);
   });
 
   test('a full minute window accepts again after 60 seconds', async () => {
@@ -220,12 +270,43 @@ describe('Calendar API rate limits', () => {
     expect((await s.request(list, 'GET', undefined, token)).status).toBe(200);
   });
 
-  test('anonymous requests share one user bucket', async () => {
-    const s = setup({ rateLimitMode: 'strict' });
-    for (let i = 0; i < 4; i++)
-      expect((await s.request(list)).status).toBe(401);
+  test('requests without a valid token get 401 and are not counted', async () => {
+    let now = 1_700_000_000_000;
+    const s = setup({
+      rateLimitMode: 'strict',
+      now: () => now,
+      accessTokenTtlMs: 60_000,
+    });
+    const { access_token: expired } = await s.token();
+    now += 60_000;
+    const { access_token: revoked } = await s.token();
+    expect((await s.form('/oauth/revoke', { token: revoked })).status).toBe(
+      200,
+    );
+    const credentials = [undefined, 'not-a-token', expired, revoked];
+    for (let i = 0; i < 25; i++)
+      for (const token of credentials) {
+        const response = await s.request(
+          `${events}?quotaUser=shared`,
+          'GET',
+          undefined,
+          token,
+        );
+        expect(response.status).toBe(401);
+        expect(response.headers.get('retry-after')).toBeNull();
+      }
+    const { access_token: token } = await s.token();
+    for (let i = 0; i < 4; i++) {
+      const response = await s.request(
+        `${events}?quotaUser=shared`,
+        'GET',
+        undefined,
+        token,
+      );
+      expect(response.status).toBe(200);
+    }
     await quotaError(
-      await s.request(list),
+      await s.request(`${events}?quotaUser=shared`, 'GET', undefined, token),
       403,
       'userRateLimitExceeded',
       'User Rate Limit Exceeded',
@@ -273,9 +354,14 @@ describe('Calendar API rate limits', () => {
   test('one workspace does not consume another workspace quota', async () => {
     const limited = setup({ rateLimitMode: 'strict' });
     const open = setup();
+    const { access_token: limitedToken } = await limited.token();
     for (let i = 0; i < 4; i++)
-      expect((await limited.request(list)).status).toBe(401);
-    expect((await limited.request(list)).status).toBe(403);
+      expect(
+        (await limited.request(list, 'GET', undefined, limitedToken)).status,
+      ).toBe(200);
+    expect(
+      (await limited.request(list, 'GET', undefined, limitedToken)).status,
+    ).toBe(403);
     const { access_token: token } = await open.token();
     for (let i = 0; i < 5; i++)
       expect((await open.request(list, 'GET', undefined, token)).status).toBe(

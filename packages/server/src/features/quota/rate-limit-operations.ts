@@ -15,15 +15,17 @@ import {
  * starts from an empty window, which matches a new local process.
  */
 type UsageLog = {
+  /** Sliding minute for the whole workspace. */
   project: number[];
+  /** Sliding minute per quota user. */
   users: Map<string, number[]>;
+  /** Sliding day per token user, kept only when a daily budget applies. */
+  days: Map<string, number[]>;
+  /** Sliding minute of writes per calendar id. */
   calendars: Map<string, number[]>;
 };
 
 const usageLogs = new WeakMap<Workspace, UsageLog>();
-
-/** Shared bucket for requests with no token and no `quotaUser`. */
-const anonymousQuotaUser = '\u0000anonymous';
 
 /**
  * Drops the in-memory quota windows for `workspace`.
@@ -51,12 +53,17 @@ export function setRateLimitMode(workspace: Workspace, mode: unknown) {
  * Counts one `/calendar/v3` request and rejects it when the active mode's
  * budget is already full.
  *
- * OAuth and the management API are not counted. The quota user is
- * `quotaUser` or `x-goog-quota-user` when that value is 1–40 characters,
- * otherwise the access token's user, otherwise one shared anonymous bucket.
- * `quotaUser` overrides the token user, as Google does for service accounts.
- * A rejected request is not counted. The response uses Google's `usageLimits`
- * domain and a `Retry-After` value for the window that blocked it.
+ * OAuth and the management API are not counted. A request without a valid
+ * access token (missing, unknown, expired, or revoked) is not counted either
+ * and is left to the route, which returns its usual `401`. For an
+ * authenticated request, the per-minute user bucket is `quotaUser` or
+ * `x-goog-quota-user` when that value is 1–40 characters, otherwise the
+ * token's user; `quotaUser` overrides the token user, as Google does for
+ * service accounts. The daily bucket and `primary` always use the token's
+ * user. A rejected request is not counted. The response uses Google's
+ * `usageLimits` domain. Calendarpit also adds a `Retry-After` hint for the
+ * window that blocked it; Google's documentation does not specify that
+ * header, so clients should still back off exponentially.
  *
  * @throws {@link ApiError} 403 `userRateLimitExceeded`, 403 or 429
  * `rateLimitExceeded`, or 403 `quotaExceeded` when the request does not fit.
@@ -68,34 +75,41 @@ export function enforceCalendarRateLimit(
 ) {
   const mode = workspace.rateLimitMode;
   if (mode === 'off') return;
+  const userId = authenticatedUserId(workspace, request);
+  if (!userId) return;
   const now = workspace.now();
   const log = usageLog(workspace);
-  const userKey = quotaUser(workspace, request, url);
+  const userKey = quotaUser(request, url) ?? userId;
   const calendarId = calendarWriteId(url.pathname, request.method);
   const calendarKey = calendarId
-    ? writeKey(workspace, calendarId, userKey)
+    ? writeKey(workspace, calendarId, userId)
     : undefined;
-  const projectWindow =
-    rateLimitBudgets[mode].perDayPerProject === Infinity
-      ? rateLimitMinuteMs
-      : rateLimitDayMs;
-  retain(log.project, now, projectWindow);
+  const daily = rateLimitBudgets[mode].perDayPerUser !== Infinity;
+  retain(log.project, now, rateLimitMinuteMs);
   const userStamps = prepare(log.users, userKey, now, rateLimitMinuteMs);
+  const dayStamps = daily
+    ? prepare(log.days, userId, now, rateLimitDayMs)
+    : undefined;
   const calendarStamps = calendarKey
     ? prepare(log.calendars, calendarKey, now, rateLimitMinuteMs)
     : undefined;
   const rejection = rejectRateLimit(mode, {
-    projectInMinute: countSince(log.project, now, rateLimitMinuteMs),
+    projectInMinute: log.project.length,
     userInMinute: userStamps.length,
     calendarWritesInMinute: calendarStamps?.length ?? 0,
-    projectInDay: countSince(log.project, now, rateLimitDayMs),
+    userInDay: dayStamps?.length ?? 0,
     calendarWrite: calendarKey !== undefined,
   });
   if (rejection) {
     remember(log.users, userKey, userStamps);
+    if (dayStamps) remember(log.days, userId, dayStamps);
     if (calendarKey && calendarStamps)
       remember(log.calendars, calendarKey, calendarStamps);
-    const stamps = stampsFor(rejection.bucket, log, userStamps, calendarStamps);
+    const stamps = stampsFor(rejection.bucket, log, {
+      user: userStamps,
+      day: dayStamps,
+      calendar: calendarStamps,
+    });
     throw new ApiError(
       rejection.status,
       rejection.reason,
@@ -111,6 +125,10 @@ export function enforceCalendarRateLimit(
   log.project.push(now);
   userStamps.push(now);
   log.users.set(userKey, userStamps);
+  if (dayStamps) {
+    dayStamps.push(now);
+    log.days.set(userId, dayStamps);
+  }
   if (calendarKey && calendarStamps) {
     calendarStamps.push(now);
     log.calendars.set(calendarKey, calendarStamps);
@@ -123,6 +141,7 @@ function usageLog(workspace: Workspace): UsageLog {
   const created: UsageLog = {
     project: [],
     users: new Map(),
+    days: new Map(),
     calendars: new Map(),
   };
   usageLogs.set(workspace, created);
@@ -133,12 +152,11 @@ function usageLog(workspace: Workspace): UsageLog {
  * Google's `quotaUser` is an arbitrary string of at most 40 characters, used
  * only for quota accounting. Longer or empty values are ignored.
  */
-function quotaUser(workspace: Workspace, request: Request, url: URL) {
-  const explicit =
+function quotaUser(request: Request, url: URL) {
+  return (
     acceptedQuotaUser(url.searchParams.get('quotaUser')) ??
-    acceptedQuotaUser(request.headers.get('x-goog-quota-user'));
-  if (explicit) return explicit;
-  return authenticatedUserId(workspace, request) ?? anonymousQuotaUser;
+    acceptedQuotaUser(request.headers.get('x-goog-quota-user'))
+  );
 }
 
 function acceptedQuotaUser(value: string | null) {
@@ -147,10 +165,10 @@ function acceptedQuotaUser(value: string | null) {
 }
 
 /**
- * The user id behind a still-valid bearer token.
+ * The user id behind a still-valid bearer token, or `undefined`.
  *
- * This does not call `authenticate`: a missing token must still be counted,
- * and authentication errors belong to the route that handles the request.
+ * This does not call `authenticate`: scope checks and authentication errors
+ * belong to the route that handles the request.
  */
 function authenticatedUserId(workspace: Workspace, request: Request) {
   const token = request.headers
@@ -164,6 +182,7 @@ function authenticatedUserId(workspace: Workspace, request: Request) {
   return grant.userId;
 }
 
+/** Resolves `primary` to the token user's primary calendar id. */
 function writeKey(workspace: Workspace, calendarId: string, userId: string) {
   if (calendarId !== 'primary') return calendarId;
   const owned = workspace.data.calendars.find(
@@ -200,21 +219,14 @@ function retain(stamps: number[], now: number, windowMs: number) {
   stamps.length = write;
 }
 
-function countSince(stamps: number[], now: number, windowMs: number) {
-  const cutoff = now - windowMs;
-  let count = 0;
-  for (const at of stamps) if (at > cutoff) count++;
-  return count;
-}
-
 function stampsFor(
   bucket: RateLimitBucket,
   log: UsageLog,
-  userStamps: number[],
-  calendarStamps: number[] | undefined,
+  stamps: { user: number[]; day?: number[]; calendar?: number[] },
 ) {
-  if (bucket === 'user') return userStamps;
-  if (bucket === 'calendar') return calendarStamps ?? [];
+  if (bucket === 'user') return stamps.user;
+  if (bucket === 'day') return stamps.day ?? [];
+  if (bucket === 'calendar') return stamps.calendar ?? [];
   return log.project;
 }
 

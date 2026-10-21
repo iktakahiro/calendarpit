@@ -11,7 +11,7 @@ const under: RateLimitUsage = {
   projectInMinute: 0,
   userInMinute: 0,
   calendarWritesInMinute: 0,
-  projectInDay: 0,
+  userInDay: 0,
   calendarWrite: false,
 };
 
@@ -23,7 +23,7 @@ describe('rejectRateLimit', () => {
         projectInMinute: 1_000_000,
         userInMinute: 1_000_000,
         calendarWritesInMinute: 1_000_000,
-        projectInDay: 1_000_000,
+        userInDay: 1_000_000,
         calendarWrite: true,
       }),
     ).toBeUndefined();
@@ -34,7 +34,7 @@ describe('rejectRateLimit', () => {
       perMinutePerProject: 10_000,
       perMinutePerUser: 600,
       writesPerMinutePerCalendar: 60,
-      perDayPerProject: Infinity,
+      perDayPerUser: Infinity,
     });
     expect(
       rejectRateLimit('prod', { ...under, userInMinute: 599 }),
@@ -66,7 +66,7 @@ describe('rejectRateLimit', () => {
       bucket: 'calendar',
     });
     expect(
-      rejectRateLimit('prod', { ...under, projectInDay: 1_000_000 }),
+      rejectRateLimit('prod', { ...under, userInDay: 1_000_000 }),
     ).toBeUndefined();
   });
 
@@ -75,13 +75,16 @@ describe('rejectRateLimit', () => {
       perMinutePerProject: 12,
       perMinutePerUser: 4,
       writesPerMinutePerCalendar: 2,
-      perDayPerProject: 20,
+      perDayPerUser: 20,
     });
     expect(
       rejectRateLimit('strict', {
         ...under,
-        projectInDay: 20,
-        userInMinute: 0,
+        userInDay: 20,
+        calendarWrite: true,
+        calendarWritesInMinute: 2,
+        userInMinute: 4,
+        projectInMinute: 12,
       }),
     ).toMatchObject({ status: 403, reason: 'quotaExceeded', bucket: 'day' });
     expect(

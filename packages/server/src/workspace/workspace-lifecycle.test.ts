@@ -535,12 +535,14 @@ test('the rate limit mode survives restart unless startup sets another', async (
     mode: 'strict',
   });
   expect(saved.status).toBe(200);
+  const { access_token } = await first.authorize();
+  const list = '/calendar/v3/users/me/calendarList';
   for (let i = 0; i < 4; i++)
     expect(
-      (await first.request('/calendar/v3/users/me/calendarList')).status,
-    ).toBe(401);
+      (await first.request(list, 'GET', undefined, access_token)).status,
+    ).toBe(200);
   expect(
-    (await first.request('/calendar/v3/users/me/calendarList')).status,
+    (await first.request(list, 'GET', undefined, access_token)).status,
   ).toBe(403);
   first.app.close();
 
@@ -550,8 +552,8 @@ test('the rate limit mode survives restart unless startup sets another', async (
   const state = await (await second.request('/__calendarpit/state')).json();
   expect(state.rateLimitMode).toBe('strict');
   expect(
-    (await second.request('/calendar/v3/users/me/calendarList')).status,
-  ).toBe(401);
+    (await second.request(list, 'GET', undefined, access_token)).status,
+  ).toBe(200);
   second.app.close();
 
   const third = open(database, { rateLimitMode: 'off' });

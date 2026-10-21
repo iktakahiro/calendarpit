@@ -87,8 +87,9 @@ async function route(context: RouteContext): Promise<Response> {
       fail('Unknown management endpoint or method.', 404, 'notFound')
     );
   }
-  // Quota applies to every Calendar API path, before the handler runs, so a
-  // rejected request does not change workspace data.
+  // Quota applies to every authenticated Calendar API path, before the
+  // handler runs, so a rejected request does not change workspace data.
+  // Requests without a valid token are not counted and get the route's 401.
   if (url.pathname.startsWith('/calendar/v3'))
     enforceCalendarRateLimit(workspace, request, url);
   return (
