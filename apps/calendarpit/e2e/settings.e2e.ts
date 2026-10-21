@@ -135,7 +135,11 @@ test('the Calendar API rate limit mode is saved from Settings', async ({
   await expect(page.getByRole('combobox', { name: 'Mode' })).toContainText(
     'Strict',
   );
-  await expect(page.getByText('4 requests per minute per user')).toBeVisible();
+  await expect(
+    page.getByText(
+      '4 requests per minute per user, 12 per minute per project, 2 writes per minute per calendar, and 20 requests per day per user.',
+    ),
+  ).toBeVisible();
 });
 
 test.describe('with a Japanese browser', () => {

@@ -70,7 +70,7 @@ All paths below are relative to `/__calendarpit`.
 - **`/calendars/{id}/events`**: Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`.
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` keeps a tombstone.
 - **`/deliveries/drain`**: Also waits for the retries of pending deliveries. The response is the delivery log array.
-- **`/rate-limit`**: `PUT` body is `{ "mode": "off" }`, `{ "mode": "prod" }`, or `{ "mode": "strict" }`. Unknown fields return `400 unsupportedFeature`. An unknown mode returns `400`. The mode is saved with the workspace. Changing it clears the in-memory counters. Reset and fixture load keep the mode and clear those counters. See [Calendar API rate limits](/running/#calendar-api-rate-limits).
+- **`/rate-limit`**: `PUT` body is `{ "mode": "off" }`, `{ "mode": "prod" }`, or `{ "mode": "strict" }`. Unknown fields return `400 unsupportedFeature`. An unknown mode returns `400`. The mode is saved with the workspace, and changing it clears the in-memory counters. See [Calendar API rate limits](/running/#calendar-api-rate-limits).
 
 ### Cascades and admin writes
 

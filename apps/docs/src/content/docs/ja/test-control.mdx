@@ -70,7 +70,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - **`/calendars/{id}/events`**: 一覧取得では `syncToken` を含む `events.list` のパラメータを使えます。一覧の各項目には `calendarId` が入ります。
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` しても削除済みレコードは残ります。
 - **`/deliveries/drain`**: 待機中の配信のリトライが終わるまで待ちます。レスポンスは配信ログの配列です。
-- **`/rate-limit`**: `PUT` のボディは `{ "mode": "off" }`、`{ "mode": "prod" }`、`{ "mode": "strict" }` のいずれかです。未知のフィールドは `400 unsupportedFeature`、未知のモードは `400` です。モードはワークスペースに保存されます。変更するとメモリ上のカウンタが消えます。リセットと Fixture の読み込みはモードを残し、カウンタを消します。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
+- **`/rate-limit`**: `PUT` のボディは `{ "mode": "off" }`、`{ "mode": "prod" }`、`{ "mode": "strict" }` のいずれかです。未知のフィールドは `400 unsupportedFeature`、未知のモードは `400` を返します。モードはワークスペースに保存され、変更するとメモリ上のカウンタがクリアされます。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
 
 ### 連鎖的な削除と管理 API からの書き込み
 
@@ -146,7 +146,7 @@ Calendarpit は、履歴の中の認証情報を次のようにマスクしま�
 
 ## 再現可能なテストの書き方
 
-- **シナリオごとにリセットする**: 各テストの前に `POST /__calendarpit/reset` を呼び出して、起動時の状態に戻します。特定の Fixture を読み込みたい場合は、代わりに `POST /__calendarpit/fixtures` を呼び出します。リセットと Fixture の読み込みはレート制限のカウンタを消し、`rateLimitMode` は残します。共有サーバーを制限なしで始めるには、`PUT /__calendarpit/rate-limit` に `{ "mode": "off" }` を送ってください。
+- **シナリオごとにリセットする**: 各テストの前に `POST /__calendarpit/reset` を呼び出して、起動時の状態に戻します。特定の Fixture を読み込みたい場合は、代わりに `POST /__calendarpit/fixtures` を呼び出します。リセットと Fixture の読み込みはレート制限のカウンタをクリアし、`rateLimitMode` は維持します。共有サーバーを制限なしの状態で始める必要がある場合は、`PUT /__calendarpit/rate-limit` に `{ "mode": "off" }` を送ってください。
 - **固定の ID を使う**: Fixture ファイルで、ユーザー、カレンダー、イベント、クライアントに `id` を明示してください。ID がない場合、Calendarpit はデータ投入時に一度だけ ID を生成します。`:memory:` モードでは、サーバープロセスを起動するたびに新しい ID が生成されます。
 - **並列ワーカーを分離する**: テストワーカーごとに、`--port 0` と `--database :memory:` を付けて Calendarpit のプロセスを1つずつ起動します。ワーカーごとに別の SQLite ファイルを使う方法もあります。
 - **ポートは標準出力から読み取る**: `--port 0` を使う場合は、起動時の行 `Admin  http://127.0.0.1:<port>/` から URL を読み取ります。たとえば `/Admin\s+(http:\/\/[^\s]+)/` でマッチできます。その後、`GET /__calendarpit/health` が応答するまでポーリングしてから、テストを始めてください。
