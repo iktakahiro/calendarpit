@@ -8,7 +8,7 @@ import { setRateLimitMode } from './rate-limit-operations';
 /**
  * `PUT /__calendarpit/rate-limit`. Sets the saved Calendar API quota mode.
  *
- * The body is `{ "mode": "off" | "prod" | "strict" }`. Unknown fields are
+ * The body is `{ "mode": "off" | "production" | "error-test" }`. Unknown fields are
  * rejected. Changing the mode clears the in-memory counters.
  */
 export const quotaManagementRoutes: Route[] = [

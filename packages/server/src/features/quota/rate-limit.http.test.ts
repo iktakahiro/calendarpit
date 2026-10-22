@@ -44,8 +44,8 @@ describe('Calendar API rate limits', () => {
       expect((await s.request(list, 'GET', undefined, token)).status).toBe(200);
   });
 
-  test('strict shares one per-user budget across calendarList, freeBusy, and events', async () => {
-    const s = setup({ rateLimitMode: 'strict' });
+  test('error-test shares one per-user budget across calendarList, freeBusy, and events', async () => {
+    const s = setup({ rateLimitMode: 'error-test' });
     const { access_token: token } = await s.token();
     const calls = [
       () => s.request(list, 'GET', undefined, token),
@@ -65,8 +65,8 @@ describe('Calendar API rate limits', () => {
     expect(oauth.status).toBe(400);
   });
 
-  test('strict limits writes per calendar, including watch, before the user quota', async () => {
-    const s = setup({ rateLimitMode: 'strict', deliver });
+  test('error-test limits writes per calendar, including watch, before the user quota', async () => {
+    const s = setup({ rateLimitMode: 'error-test', deliver });
     const { access_token: token } = await s.token();
     expect(
       (await s.request(events, 'POST', timed('write-primary'), token)).status,
@@ -122,8 +122,8 @@ describe('Calendar API rate limits', () => {
     await s.app.drain();
   });
 
-  test('strict resolves primary to the token user calendar for any quotaUser', async () => {
-    const s = setup({ rateLimitMode: 'strict' });
+  test('error-test resolves primary to the token user calendar for any quotaUser', async () => {
+    const s = setup({ rateLimitMode: 'error-test' });
     const { access_token: token } = await s.token();
     for (const quotaUser of ['first', 'second'])
       expect(
@@ -161,8 +161,8 @@ describe('Calendar API rate limits', () => {
     );
   });
 
-  test('strict project quota is 429 and follows quotaUser across users', async () => {
-    const s = setup({ rateLimitMode: 'strict' });
+  test('error-test project quota is 429 and follows quotaUser across users', async () => {
+    const s = setup({ rateLimitMode: 'error-test' });
     const { access_token: token } = await s.token();
     for (let i = 0; i < 12; i++) {
       const response = await s.request(
@@ -182,7 +182,7 @@ describe('Calendar API rate limits', () => {
   });
 
   test('x-goog-quota-user selects the per-user bucket and overlong values do not', async () => {
-    const s = setup({ rateLimitMode: 'strict' });
+    const s = setup({ rateLimitMode: 'error-test' });
     const { access_token: token } = await s.token();
     for (let i = 0; i < 4; i++) {
       const response = await s.request(list, 'GET', undefined, token, {
@@ -198,7 +198,7 @@ describe('Calendar API rate limits', () => {
       'userRateLimitExceeded',
       'User Rate Limit Exceeded',
     );
-    const fresh = setup({ rateLimitMode: 'strict' });
+    const fresh = setup({ rateLimitMode: 'error-test' });
     const { access_token: other } = await fresh.token();
     for (let i = 0; i < 4; i++) {
       const response = await fresh.request(
@@ -222,9 +222,9 @@ describe('Calendar API rate limits', () => {
     );
   });
 
-  test('strict daily ceiling is quotaExceeded per token user, not per quotaUser', async () => {
+  test('error-test daily ceiling is quotaExceeded per token user, not per quotaUser', async () => {
     let now = 1_700_000_000_000;
-    const s = setup({ rateLimitMode: 'strict', now: () => now });
+    const s = setup({ rateLimitMode: 'error-test', now: () => now });
     const { access_token: alex } = await s.token();
     const accept = async (count: number, start: number) => {
       for (let i = 0; i < count; i++) {
@@ -261,7 +261,7 @@ describe('Calendar API rate limits', () => {
 
   test('a full minute window accepts again after 60 seconds', async () => {
     let now = 1_700_000_000_000;
-    const s = setup({ rateLimitMode: 'strict', now: () => now });
+    const s = setup({ rateLimitMode: 'error-test', now: () => now });
     const { access_token: token } = await s.token();
     for (let i = 0; i < 4; i++)
       expect((await s.request(list, 'GET', undefined, token)).status).toBe(200);
@@ -273,7 +273,7 @@ describe('Calendar API rate limits', () => {
   test('requests without a valid token get 401 and are not counted', async () => {
     let now = 1_700_000_000_000;
     const s = setup({
-      rateLimitMode: 'strict',
+      rateLimitMode: 'error-test',
       now: () => now,
       accessTokenTtlMs: 60_000,
     });
@@ -316,11 +316,11 @@ describe('Calendar API rate limits', () => {
   test('changing the mode clears counters and reset keeps the mode', async () => {
     const s = setup();
     const { access_token: token } = await s.token();
-    const strict = await s.request('/__calendarpit/rate-limit', 'PUT', {
-      mode: 'strict',
+    const errorTest = await s.request('/__calendarpit/rate-limit', 'PUT', {
+      mode: 'error-test',
     });
-    expect(strict.status).toBe(200);
-    expect((await strict.json()).rateLimitMode).toBe('strict');
+    expect(errorTest.status).toBe(200);
+    expect((await errorTest.json()).rateLimitMode).toBe('error-test');
     for (let i = 0; i < 4; i++)
       expect((await s.request(list, 'GET', undefined, token)).status).toBe(200);
     expect((await s.request(list, 'GET', undefined, token)).status).toBe(403);
@@ -329,18 +329,20 @@ describe('Calendar API rate limits', () => {
     });
     expect((await off.json()).rateLimitMode).toBe('off');
     expect((await s.request(list, 'GET', undefined, token)).status).toBe(200);
-    await s.request('/__calendarpit/rate-limit', 'PUT', { mode: 'strict' });
+    await s.request('/__calendarpit/rate-limit', 'PUT', { mode: 'error-test' });
     for (let i = 0; i < 4; i++)
       expect((await s.request(list, 'GET', undefined, token)).status).toBe(200);
     expect((await s.request(list, 'GET', undefined, token)).status).toBe(403);
     const reset = await s.request('/__calendarpit/reset', 'POST', {});
-    expect((await reset.json()).rateLimitMode).toBe('strict');
+    expect((await reset.json()).rateLimitMode).toBe('error-test');
     const { access_token: next } = await s.token();
     expect((await s.request(list, 'GET', undefined, next)).status).toBe(200);
-    const invalid = await s.request('/__calendarpit/rate-limit', 'PUT', {
-      mode: 'high',
-    });
-    expect(invalid.status).toBe(400);
+    for (const mode of ['high', 'prod', 'strict']) {
+      const invalid = await s.request('/__calendarpit/rate-limit', 'PUT', {
+        mode,
+      });
+      expect(invalid.status).toBe(400);
+    }
     const extra = await s.request('/__calendarpit/rate-limit', 'PUT', {
       mode: 'off',
       limit: 1,
@@ -348,11 +350,11 @@ describe('Calendar API rate limits', () => {
     expect(extra.status).toBe(400);
     expect(
       (await (await s.request('/__calendarpit/state')).json()).rateLimitMode,
-    ).toBe('strict');
+    ).toBe('error-test');
   });
 
   test('one workspace does not consume another workspace quota', async () => {
-    const limited = setup({ rateLimitMode: 'strict' });
+    const limited = setup({ rateLimitMode: 'error-test' });
     const open = setup();
     const { access_token: limitedToken } = await limited.token();
     for (let i = 0; i < 4; i++)
@@ -369,8 +371,8 @@ describe('Calendar API rate limits', () => {
       );
   });
 
-  test('prod allows the published per-user minute and then returns userRateLimitExceeded', async () => {
-    const s = setup({ rateLimitMode: 'prod' });
+  test('production allows the published per-user minute and then returns userRateLimitExceeded', async () => {
+    const s = setup({ rateLimitMode: 'production' });
     const { access_token: token } = await s.token();
     for (let i = 0; i < 600; i++) {
       const response = await s.request(list, 'GET', undefined, token);
@@ -385,21 +387,21 @@ describe('Calendar API rate limits', () => {
     );
   }, 60_000);
 
-  test('prod returns 403 rateLimitExceeded on the 61st write to one calendar', async () => {
-    const s = setup({ rateLimitMode: 'prod' });
+  test('production returns 403 rateLimitExceeded on the 61st write to one calendar', async () => {
+    const s = setup({ rateLimitMode: 'production' });
     const { access_token: token } = await s.token();
     for (let i = 0; i < 60; i++) {
       const response = await s.request(
         events,
         'POST',
-        timed(`prod-${i}`),
+        timed(`production-${i}`),
         token,
       );
       expect(response.status).toBe(200);
       await response.body?.cancel();
     }
     await quotaError(
-      await s.request(events, 'POST', timed('prod-60'), token),
+      await s.request(events, 'POST', timed('production-60'), token),
       403,
       'rateLimitExceeded',
       'Rate Limit Exceeded',

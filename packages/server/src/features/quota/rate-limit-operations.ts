@@ -40,10 +40,12 @@ export function clearRateLimitUsage(workspace: Workspace) {
 /**
  * Saves `mode` and clears usage when it changes.
  *
- * @throws {@link ApiError} 400 when `mode` is not `off`, `prod`, or `strict`.
+ * @throws {@link ApiError} 400 when `mode` is not `off`, `production`, or
+ * `error-test`.
  */
 export function setRateLimitMode(workspace: Workspace, mode: unknown) {
-  if (!isRateLimitMode(mode)) fail('mode must be off, prod, or strict.');
+  if (!isRateLimitMode(mode))
+    fail('mode must be off, production, or error-test.');
   if (workspace.rateLimitMode === mode) return;
   workspace.rateLimitMode = mode;
   clearRateLimitUsage(workspace);

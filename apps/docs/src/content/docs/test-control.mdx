@@ -56,7 +56,7 @@ All paths below are relative to `/__calendarpit`.
 ### Endpoint details
 
 - **`/health`**: Returns the server `name` (`"Calendarpit"`), `version`, `stage`, and `storage` (`"memory"` or `"sqlite"`). It also returns the capability flags `calendar`, `oauth`, `watch`, and `fixtures`. `HEAD` returns an empty `200`.
-- **`/state`**: Removes expired channels first. It then returns a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, `revision`, and `rateLimitMode` (`off`, `prod`, or `strict`).
+- **`/state`**: Removes expired channels first. It then returns a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, `revision`, and `rateLimitMode` (`off`, `production`, or `error-test`).
 - **`/changes`**: A [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) stream for `EventSource`. It sends a `change` event after any request or watch delivery changes the saved state, including Calendar API, OAuth, and management writes. Reads that change nothing send no event. Events carry no state, so read `/state` or `/history` again. Comment lines keep the connection open, and the stream ends when the server stops.
 - **`/fixtures`**: Validates and replaces users, calendars, events, and clients. It clears runtime state and invalidates connections.
 - **`/reset`**: Restores the startup fixture baseline and clears all runtime state.
@@ -70,7 +70,7 @@ All paths below are relative to `/__calendarpit`.
 - **`/calendars/{id}/events`**: Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`.
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` keeps a tombstone.
 - **`/deliveries/drain`**: Also waits for the retries of pending deliveries. The response is the delivery log array.
-- **`/rate-limit`**: `PUT` body is `{ "mode": "off" }`, `{ "mode": "prod" }`, or `{ "mode": "strict" }`. Unknown fields return `400 unsupportedFeature`. An unknown mode returns `400`. The mode is saved with the workspace, and changing it clears the in-memory counters. See [Calendar API rate limits](/running/#calendar-api-rate-limits).
+- **`/rate-limit`**: `PUT` body is `{ "mode": "off" }`, `{ "mode": "production" }`, or `{ "mode": "error-test" }`. Unknown fields return `400 unsupportedFeature`. An unknown mode returns `400`. The mode is saved with the workspace, and changing it clears the in-memory counters. See [Calendar API rate limits](/running/#calendar-api-rate-limits).
 
 ### Cascades and admin writes
 

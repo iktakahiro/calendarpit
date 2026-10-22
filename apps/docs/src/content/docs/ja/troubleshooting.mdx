@@ -264,7 +264,7 @@ CLI で起動に失敗すると、`stderr` に `Calendarpit: <message>` を出�
 ### シミュレートされた Calendar API のレート制限
 
 - **エラー**: `403 userRateLimitExceeded`（`User Rate Limit Exceeded`）、`403` または `429` の `rateLimitExceeded`（`Rate Limit Exceeded`）、または `403 quotaExceeded`（`Calendar usage limits exceeded.`）。
-- **原因**: レート制限モード（**Settings → Developer**、`--rate-limit`、または `CALENDARPIT_RATE_LIMIT`）が `prod` または `strict` に設定されており、リクエストがそのモードの上限を超えています。`off` ではリクエストは制限されません。なお、同意リクエストのエラー `429 rateLimitExceeded`: `Too many pending consent requests.` はこのクォータによるものではありません。
+- **原因**: レート制限モード（**Settings → Developer**、`--rate-limit`、または `CALENDARPIT_RATE_LIMIT`）が `production` または `error-test` に設定されており、リクエストがそのモードの上限を超えています。`off` ではリクエストは制限されません。なお、同意リクエストのエラー `429 rateLimitExceeded`: `Too many pending consent requests.` はこのクォータによるものではありません。
 - **対処**: モードを `off` にするか、`Retry-After` の秒数だけ待つか、ワークスペースをリセットしてカウンタをクリアします。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
 
 ### アクセストークンが不正または期限切れ

@@ -264,7 +264,7 @@ CLI startup failures print `Calendarpit: <message>` to `stderr` and exit with co
 ### Simulated Calendar API rate limit
 
 - **Error**: `403 userRateLimitExceeded` (`User Rate Limit Exceeded`), `403` or `429 rateLimitExceeded` (`Rate Limit Exceeded`), or `403 quotaExceeded` (`Calendar usage limits exceeded.`).
-- **Cause**: The rate-limit mode (**Settings → Developer**, `--rate-limit`, or `CALENDARPIT_RATE_LIMIT`) is `prod` or `strict`, and the request exceeded that mode's limits. `off` does not limit requests. The separate consent error `429 rateLimitExceeded`: `Too many pending consent requests.` is not this quota.
+- **Cause**: The rate-limit mode (**Settings → Developer**, `--rate-limit`, or `CALENDARPIT_RATE_LIMIT`) is `production` or `error-test`, and the request exceeded that mode's limits. `off` does not limit requests. The separate consent error `429 rateLimitExceeded`: `Too many pending consent requests.` is not this quota.
 - **Fix**: Set the mode to `off`, wait for the `Retry-After` window, or reset the workspace to clear the counters. See [Calendar API rate limits](/running/#calendar-api-rate-limits).
 
 ### Invalid or expired access token

@@ -75,23 +75,32 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
                 }}
                 items={{
                   off: t['settings.rateLimitOff'],
-                  prod: t['settings.rateLimitProd'],
-                  strict: t['settings.rateLimitStrict'],
+                  production: t['settings.rateLimitProduction'],
+                  'error-test': t['settings.rateLimitErrorTest'],
                 }}
               />
             </label>
             <ul className='settings-notes'>
               <li>
-                <strong>{t['settings.rateLimitOff']}. </strong>
+                <strong>
+                  {t['settings.rateLimitOff']}
+                  {t['settings.rateLimitLabelSeparator']}
+                </strong>
                 {t['settings.rateLimitOffDescription']}
               </li>
               <li>
-                <strong>{t['settings.rateLimitProd']}. </strong>
-                {t['settings.rateLimitProdDescription']}
+                <strong>
+                  {t['settings.rateLimitProduction']}
+                  {t['settings.rateLimitLabelSeparator']}
+                </strong>
+                {t['settings.rateLimitProductionDescription']}
               </li>
               <li>
-                <strong>{t['settings.rateLimitStrict']}. </strong>
-                {t['settings.rateLimitStrictDescription']}
+                <strong>
+                  {t['settings.rateLimitErrorTest']}
+                  {t['settings.rateLimitLabelSeparator']}
+                </strong>
+                {t['settings.rateLimitErrorTestDescription']}
               </li>
             </ul>
           </div>

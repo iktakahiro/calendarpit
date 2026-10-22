@@ -285,14 +285,13 @@ export class Workspace {
 }
 
 /**
- * Reads a quota mode from a snapshot. A missing field is `off`, which is how
- * databases created before the setting reopen.
- *
- * @throws Error when the field is present but not a known mode. Keep the
- * accepted values in step with {@link RateLimitMode}.
+ * Reads a quota mode from a snapshot. A missing field or any value that is not
+ * a current mode is `off`, so databases created before the setting, or saved
+ * with mode names that no longer exist, reopen without limits.
+ * Keep the accepted values in step with {@link RateLimitMode}.
  */
 function readRateLimitMode(value: unknown): RateLimitMode {
-  if (value === undefined) return 'off';
-  if (value === 'off' || value === 'prod' || value === 'strict') return value;
-  throw new Error('Unsupported saved rate limit mode.');
+  if (value === 'off' || value === 'production' || value === 'error-test')
+    return value;
+  return 'off';
 }

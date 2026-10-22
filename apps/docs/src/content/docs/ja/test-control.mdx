@@ -56,7 +56,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 ### エンドポイントの詳細
 
 - **`/health`**: サーバーの `name`（`"Calendarpit"`）、`version`、`stage`、`storage`（`"memory"` または `"sqlite"`）を返します。機能フラグ `calendar`、`oauth`、`watch`、`fixtures` も返します。`HEAD` は空の `200` を返します。
-- **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision`、`rateLimitMode`（`off`、`prod`、`strict`）のスナップショットを返します。
+- **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision`、`rateLimitMode`（`off`、`production`、`error-test`）のスナップショットを返します。
 - **`/changes`**: `EventSource` 向けの [Server-Sent Events](https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events) ストリームです。Calendar API、OAuth、管理 API の書き込みや watch の配信によって保存された状態が変わると、`change` イベントを送ります。何も変えない読み取りではイベントを送りません。イベントに状態は含まれないため、`/state` や `/history` を読み直してください。コメント行で接続を維持し、サーバーが停止するとストリームは終了します。
 - **`/fixtures`**: ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします。
 - **`/reset`**: 起動時 Fixture のリセット基準を復元し、ランタイム状態をすべてクリアします。
@@ -70,7 +70,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - **`/calendars/{id}/events`**: 一覧取得では `syncToken` を含む `events.list` のパラメータを使えます。一覧の各項目には `calendarId` が入ります。
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` しても削除済みレコードは残ります。
 - **`/deliveries/drain`**: 待機中の配信のリトライが終わるまで待ちます。レスポンスは配信ログの配列です。
-- **`/rate-limit`**: `PUT` のボディは `{ "mode": "off" }`、`{ "mode": "prod" }`、`{ "mode": "strict" }` のいずれかです。未知のフィールドは `400 unsupportedFeature`、未知のモードは `400` を返します。モードはワークスペースに保存され、変更するとメモリ上のカウンタがクリアされます。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
+- **`/rate-limit`**: `PUT` のボディは `{ "mode": "off" }`、`{ "mode": "production" }`、`{ "mode": "error-test" }` のいずれかです。未知のフィールドは `400 unsupportedFeature`、未知のモードは `400` を返します。モードはワークスペースに保存され、変更するとメモリ上のカウンタがクリアされます。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
 
 ### 連鎖的な削除と管理 API からの書き込み
 

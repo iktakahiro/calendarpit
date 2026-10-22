@@ -3,7 +3,7 @@ import type { RateLimitMode } from '../../model/rate-limit';
 /** Sliding window for the per-minute Calendar API quotas. */
 export const rateLimitMinuteMs = 60_000;
 
-/** Sliding window for the strict daily per-user ceiling. */
+/** Sliding window for the `error-test` daily per-user ceiling. */
 export const rateLimitDayMs = 86_400_000;
 
 /**
@@ -34,17 +34,18 @@ export type RateLimitBudgets = {
 /**
  * Budgets for each mode.
  *
- * Prod uses the Calendar API quotas published for Cloud projects created on
- * or after 1 May 2026: 10,000 requests per minute per project and 600 per
- * minute per user per project, both on a sliding minute
+ * `production` roughly matches the Calendar API quotas published for Cloud
+ * projects created on or after 1 May 2026: 10,000 requests per minute per
+ * project and 600 per minute per user per project, both on a sliding minute
  * (https://developers.google.com/workspace/calendar/api/guides/quota).
  * The same page's 1,000,000 requests per day is a billing threshold, not a
- * rejection, so prod does not fail at that number. Google also says writes
- * to one calendar in quick succession can be limited, without a published
- * figure. Prod uses 60 writes per minute per calendar for that operational
- * limit. Strict is intentionally lower so local tests can reach every
- * documented quota error. Its daily ceiling stands in for Google's per-user
- * Calendar usage limits, which Google reports as `403 quotaExceeded`.
+ * rejection, so `production` does not fail at that number. Google also says
+ * writes to one calendar in quick succession can be limited, without a
+ * published figure. `production` uses an estimated 60 writes per minute per
+ * calendar for that operational limit. `error-test` is intentionally very low
+ * so local tests can reach every documented quota error quickly. Its daily
+ * ceiling stands in for Google's per-user Calendar usage limits, which Google
+ * reports as `403 quotaExceeded`.
  */
 export const rateLimitBudgets: Record<RateLimitMode, RateLimitBudgets> = {
   off: {
@@ -53,13 +54,13 @@ export const rateLimitBudgets: Record<RateLimitMode, RateLimitBudgets> = {
     writesPerMinutePerCalendar: Infinity,
     perDayPerUser: Infinity,
   },
-  prod: {
+  production: {
     perMinutePerProject: 10_000,
     perMinutePerUser: 600,
     writesPerMinutePerCalendar: 60,
     perDayPerUser: Infinity,
   },
-  strict: {
+  'error-test': {
     perMinutePerProject: 12,
     perMinutePerUser: 4,
     writesPerMinutePerCalendar: 2,
@@ -165,24 +166,24 @@ export function rejectRateLimit(
  *
  * @returns `undefined` when `value` is omitted, so the caller keeps the mode
  * saved in the workspace.
- * @throws Error when `value` is present but not `off`, `prod`, or `strict`.
+ * @throws Error when `value` is present but not `off`, `production`, or `error-test`.
  */
 export function parseRateLimitMode(
   value: string | undefined,
 ): RateLimitMode | undefined {
   if (value === undefined) return undefined;
   const mode = value.trim();
-  if (mode === 'off' || mode === 'prod' || mode === 'strict') return mode;
-  throw new Error('Rate limit mode must be off, prod, or strict.');
+  if (isRateLimitMode(mode)) return mode;
+  throw new Error('Rate limit mode must be off, production, or error-test.');
 }
 
 /**
  * Whether `value` is a saved or requested {@link RateLimitMode}.
  *
- * @returns `true` for `off`, `prod`, and `strict` only.
+ * @returns `true` for `off`, `production`, and `error-test` only.
  */
 export function isRateLimitMode(value: unknown): value is RateLimitMode {
-  return value === 'off' || value === 'prod' || value === 'strict';
+  return value === 'off' || value === 'production' || value === 'error-test';
 }
 
 /**

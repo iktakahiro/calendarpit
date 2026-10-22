@@ -77,15 +77,15 @@ The CLI prints an error to `stderr` and exits with code `1` on any of these:
 
 Command-line flags take precedence over environment variables.
 
-| CLI option            | Environment variable     | Default                           | Description                                                                                                                |
-| --------------------- | ------------------------ | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `--host <host>`       | `CALENDARPIT_HOST`       | `127.0.0.1`                       | Bind address. Non-loopback addresses (`0.0.0.0`, `::`) must be set explicitly.                                             |
-| `-p`, `--port <n>`    | `CALENDARPIT_PORT`       | `4173`                            | Listen port (`0`–`65535`). Use `0` to let the OS choose a free port.                                                       |
-| `--database <path>`   | `CALENDARPIT_DATABASE`   | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/storage/).        |
-| `--config <path>`     | `CALENDARPIT_CONFIG`     | Built-in fixture                  | Path to a JSON startup fixture. See [Fixtures](/fixtures/).                                                                |
-| `--rate-limit <mode>` | `CALENDARPIT_RATE_LIMIT` | `off`                             | Calendar API rate-limit simulation: `off`, `prod`, or `strict`. See [Calendar API rate limits](#calendar-api-rate-limits). |
-| `-h`, `--help`        | —                        | —                                 | Print help and exit.                                                                                                       |
-| `-v`, `--version`     | —                        | —                                 | Print the version and exit.                                                                                                |
+| CLI option            | Environment variable     | Default                           | Description                                                                                                                          |
+| --------------------- | ------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `--host <host>`       | `CALENDARPIT_HOST`       | `127.0.0.1`                       | Bind address. Non-loopback addresses (`0.0.0.0`, `::`) must be set explicitly.                                                       |
+| `-p`, `--port <n>`    | `CALENDARPIT_PORT`       | `4173`                            | Listen port (`0`–`65535`). Use `0` to let the OS choose a free port.                                                                 |
+| `--database <path>`   | `CALENDARPIT_DATABASE`   | `.calendarpit/calendarpit.sqlite` | SQLite database file path, or `:memory:` for a disposable in-memory session. See [Storage and restarts](/storage/).                  |
+| `--config <path>`     | `CALENDARPIT_CONFIG`     | Built-in fixture                  | Path to a JSON startup fixture. See [Fixtures](/fixtures/).                                                                          |
+| `--rate-limit <mode>` | `CALENDARPIT_RATE_LIMIT` | `off`                             | Calendar API rate-limit simulation: `off`, `production`, or `error-test`. See [Calendar API rate limits](#calendar-api-rate-limits). |
+| `-h`, `--help`        | —                        | —                                 | Print help and exit.                                                                                                                 |
+| `-v`, `--version`     | —                        | —                                 | Print the version and exit.                                                                                                          |
 
 Option details:
 
@@ -115,30 +115,30 @@ About `CALENDARPIT_WATCH_HOSTS`:
 
 Calendarpit can answer Calendar API requests with the same quota errors Google returns, so an app can exercise that path locally. The default is `off`: requests are not limited.
 
-Set the mode with `--rate-limit` or `CALENDARPIT_RATE_LIMIT`, or in **Settings → Developer**. Accepted values are `off`, `prod`, and `strict`. The mode is saved in the workspace and kept across SQLite restarts. On startup, an explicit flag or environment variable replaces the saved mode and is written back. When neither is set, Calendarpit keeps the saved mode, or `off` when the snapshot has none.
+Set the mode with `--rate-limit` or `CALENDARPIT_RATE_LIMIT`, or in **Settings → Developer**. Accepted values are `off`, `production`, and `error-test`. Any other value is rejected at startup. The mode is saved in the workspace and kept across SQLite restarts. On startup, an explicit flag or environment variable replaces the saved mode and is written back. When neither is set, Calendarpit keeps the saved mode. A snapshot without a mode, or with a saved value that is not one of these modes, loads as `off`.
 
 Reset and fixture load keep the mode and clear the in-memory counters. Counters also clear when the mode changes, and they are not restored after a process restart.
 
 Every `/calendar/v3` request with a valid access token counts, including `events`, `calendarList`, `freeBusy`, and `watch`. A request without a valid access token (missing, unknown, expired, or revoked) is not counted and gets the usual `401`. OAuth, `/userinfo`, and `/__calendarpit` do not count. `quotaUser` or `x-goog-quota-user` (1–40 characters) selects the per-user bucket and overrides the access token's user. Otherwise the token's user is used. `primary` resolves to the token user's primary calendar. A request that exceeds a limit is rejected and is not counted.
 
-`prod` follows the Calendar API quotas Google publishes for Cloud projects created on or after 1 May 2026 ([Usage limits](https://developers.google.com/workspace/calendar/api/guides/quota)):
+`production` roughly matches the Calendar API quotas Google publishes for Cloud projects created on or after 1 May 2026 ([Usage limits](https://developers.google.com/workspace/calendar/api/guides/quota)). It is approximate, not identical to Google's behavior:
 
-| Limit                          | `prod`          | Error                       |
+| Limit                          | `production`    | Error                       |
 | ------------------------------ | --------------- | --------------------------- |
 | Per minute per user            | 600 requests    | `403 userRateLimitExceeded` |
 | Per minute per project         | 10,000 requests | `429 rateLimitExceeded`     |
 | Writes per minute per calendar | 60 requests     | `403 rateLimitExceeded`     |
 
-Quotas use a sliding minute. The published 1,000,000 requests per day is a billing threshold, not a rejection, so `prod` does not fail at that number. Google also says writes to one calendar in quick succession can be limited, without a published figure. `prod` uses 60 writes per minute per calendar for that operational limit.
+Quotas use a sliding minute. The published 1,000,000 requests per day is a billing threshold, not a rejection, so `production` does not fail at that number. Google also says writes to one calendar in quick succession can be limited, without a published figure. `production` uses 60 writes per minute per calendar for that limit. This number is Calendarpit's estimate.
 
-`strict` is lower, so the same errors are easy to hit:
+`error-test` uses very low limits, so the same `403` and `429` errors happen quickly. Use it to check retry and backoff handling:
 
-| Limit                          | `strict`    | Error                       |
-| ------------------------------ | ----------- | --------------------------- |
-| Per minute per user            | 4 requests  | `403 userRateLimitExceeded` |
-| Per minute per project         | 12 requests | `429 rateLimitExceeded`     |
-| Writes per minute per calendar | 2 requests  | `403 rateLimitExceeded`     |
-| Per day per user               | 20 requests | `403 quotaExceeded`         |
+| Limit                          | `error-test` | Error                       |
+| ------------------------------ | ------------ | --------------------------- |
+| Per minute per user            | 4 requests   | `403 userRateLimitExceeded` |
+| Per minute per project         | 12 requests  | `429 rateLimitExceeded`     |
+| Writes per minute per calendar | 2 requests   | `403 rateLimitExceeded`     |
+| Per day per user               | 20 requests  | `403 quotaExceeded`         |
 
 Google uses `quotaExceeded` for per-user Calendar usage limits. The daily limit always counts the access token's user, even when `quotaUser` is sent.
 

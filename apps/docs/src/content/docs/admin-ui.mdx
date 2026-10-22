@@ -189,9 +189,9 @@ The language applies to interface text only: navigation, headings, buttons, form
 
 **Calendar API rate limits** sets how `/calendar/v3` requests are limited:
 
-- **Off** does not limit requests. This is the default.
-- **Prod-equivalent** uses Google's published per-minute quotas, plus a per-calendar write limit.
-- **Strict** uses lower limits so `403` and `429` quota errors are easy to reproduce.
+- **Off** (`off`) does not limit requests. This is the default.
+- **Production** (`production`) uses limits that roughly match Google's published quotas (approximate, not identical). The per-calendar write limit is Calendarpit's estimate, because Google does not publish one.
+- **Error testing** (`error-test`) uses very low limits so `403` and `429` quota errors happen quickly. Use it to check retry and backoff handling.
 
 The mode is saved with the workspace and persists across SQLite restarts. Reset and fixture load keep the mode and clear the current counters. Quota values, error bodies, and the `--rate-limit` / `CALENDARPIT_RATE_LIMIT` startup options are in [Run and configure](/running/#calendar-api-rate-limits).
 

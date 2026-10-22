@@ -29,17 +29,19 @@ describe('rejectRateLimit', () => {
     ).toBeUndefined();
   });
 
-  test('prod uses the published per-minute quotas and does not reject the daily billing threshold', () => {
-    expect(rateLimitBudgets.prod).toEqual({
+  test('production uses the published per-minute quotas and does not reject the daily billing threshold', () => {
+    expect(rateLimitBudgets.production).toEqual({
       perMinutePerProject: 10_000,
       perMinutePerUser: 600,
       writesPerMinutePerCalendar: 60,
       perDayPerUser: Infinity,
     });
     expect(
-      rejectRateLimit('prod', { ...under, userInMinute: 599 }),
+      rejectRateLimit('production', { ...under, userInMinute: 599 }),
     ).toBeUndefined();
-    expect(rejectRateLimit('prod', { ...under, userInMinute: 600 })).toEqual({
+    expect(
+      rejectRateLimit('production', { ...under, userInMinute: 600 }),
+    ).toEqual({
       status: 403,
       reason: 'userRateLimitExceeded',
       message: 'User Rate Limit Exceeded',
@@ -47,14 +49,14 @@ describe('rejectRateLimit', () => {
       bucket: 'user',
     });
     expect(
-      rejectRateLimit('prod', { ...under, projectInMinute: 10_000 }),
+      rejectRateLimit('production', { ...under, projectInMinute: 10_000 }),
     ).toMatchObject({
       status: 429,
       reason: 'rateLimitExceeded',
       bucket: 'project',
     });
     expect(
-      rejectRateLimit('prod', {
+      rejectRateLimit('production', {
         ...under,
         calendarWrite: true,
         calendarWritesInMinute: 60,
@@ -66,19 +68,19 @@ describe('rejectRateLimit', () => {
       bucket: 'calendar',
     });
     expect(
-      rejectRateLimit('prod', { ...under, userInDay: 1_000_000 }),
+      rejectRateLimit('production', { ...under, userInDay: 1_000_000 }),
     ).toBeUndefined();
   });
 
-  test('strict reports the ceiling that is already full', () => {
-    expect(rateLimitBudgets.strict).toEqual({
+  test('error-test reports the ceiling that is already full', () => {
+    expect(rateLimitBudgets['error-test']).toEqual({
       perMinutePerProject: 12,
       perMinutePerUser: 4,
       writesPerMinutePerCalendar: 2,
       perDayPerUser: 20,
     });
     expect(
-      rejectRateLimit('strict', {
+      rejectRateLimit('error-test', {
         ...under,
         userInDay: 20,
         calendarWrite: true,
@@ -88,7 +90,7 @@ describe('rejectRateLimit', () => {
       }),
     ).toMatchObject({ status: 403, reason: 'quotaExceeded', bucket: 'day' });
     expect(
-      rejectRateLimit('strict', {
+      rejectRateLimit('error-test', {
         ...under,
         calendarWrite: true,
         calendarWritesInMinute: 2,
@@ -100,10 +102,10 @@ describe('rejectRateLimit', () => {
       bucket: 'calendar',
     });
     expect(
-      rejectRateLimit('strict', { ...under, userInMinute: 4 }),
+      rejectRateLimit('error-test', { ...under, userInMinute: 4 }),
     ).toMatchObject({ status: 403, reason: 'userRateLimitExceeded' });
     expect(
-      rejectRateLimit('strict', {
+      rejectRateLimit('error-test', {
         ...under,
         projectInMinute: 12,
         userInMinute: 1,
@@ -121,15 +123,18 @@ describe('parseRateLimitMode', () => {
     expect(parseRateLimitMode(undefined)).toBeUndefined();
   });
 
-  test.each(['off', 'prod', 'strict'] as const)('accepts %s', (mode) => {
-    expect(parseRateLimitMode(` ${mode} `)).toBe(mode);
-  });
+  test.each(['off', 'production', 'error-test'] as const)(
+    'accepts %s',
+    (mode) => {
+      expect(parseRateLimitMode(` ${mode} `)).toBe(mode);
+    },
+  );
 
-  test.each(['', ' ', 'production', 'OFF', 'strictest'])(
+  test.each(['', ' ', 'prod', 'strict', 'OFF', 'Production'])(
     'rejects %j',
     (value) => {
       expect(() => parseRateLimitMode(value)).toThrow(
-        'Rate limit mode must be off, prod, or strict.',
+        'Rate limit mode must be off, production, or error-test.',
       );
     },
   );

@@ -292,13 +292,14 @@ const en = {
   'settings.rateLimitDescription':
     'Choose how Calendar API requests are limited. The mode is saved with the workspace.',
   'settings.rateLimitOff': 'Off',
-  'settings.rateLimitProd': 'Prod-equivalent',
-  'settings.rateLimitStrict': 'Strict',
+  'settings.rateLimitProduction': 'Production',
+  'settings.rateLimitErrorTest': 'Error testing',
   'settings.rateLimitOffDescription': 'No simulated rate limiting.',
-  'settings.rateLimitProdDescription':
-    '600 requests per minute per user, 10,000 per minute per project, and 60 writes per minute per calendar.',
-  'settings.rateLimitStrictDescription':
-    '4 requests per minute per user, 12 per minute per project, 2 writes per minute per calendar, and 20 requests per day per user.',
+  'settings.rateLimitProductionDescription':
+    "Limits roughly match Google's published quotas (approximate, not identical): 600 requests per minute per user, 10,000 per minute per project, and an estimated 60 writes per minute per calendar (not published by Google).",
+  'settings.rateLimitErrorTestDescription':
+    'Very low limits that trigger 403 and 429 errors quickly to test retry and backoff handling: 4 requests per minute per user, 12 per minute per project, 2 writes per minute per calendar, and 20 requests per day per user.',
+  'settings.rateLimitLabelSeparator': '. ',
   'settings.rateLimitSaved': 'Rate limit mode saved.',
   'settings.storage': 'Storage',
   'settings.storageSqlite': 'Changes are saved automatically across restarts.',
@@ -648,13 +649,14 @@ const ja = {
   'settings.rateLimitDescription':
     'Calendar API リクエストの制限方法を選びます。モードはワークスペースに保存されます。',
   'settings.rateLimitOff': 'オフ',
-  'settings.rateLimitProd': '本番相当',
-  'settings.rateLimitStrict': '厳格',
+  'settings.rateLimitProduction': '本番相当',
+  'settings.rateLimitErrorTest': 'エラー確認用',
   'settings.rateLimitOffDescription': 'レート制限をシミュレートしません。',
-  'settings.rateLimitProdDescription':
-    'ユーザーごとに毎分600リクエスト、プロジェクトごとに毎分10,000リクエスト、1つのカレンダーへの書き込みは毎分60リクエストです。',
-  'settings.rateLimitStrictDescription':
-    'ユーザーごとに毎分4リクエスト、プロジェクトごとに毎分12リクエスト、1つのカレンダーへの書き込みは毎分2リクエスト、ユーザーごとに1日20リクエストです。',
+  'settings.rateLimitProductionDescription':
+    'Google の公開クォータにほぼ準じた制限です（完全一致ではありません）。ユーザーごとに毎分600リクエスト、プロジェクトごとに毎分10,000リクエスト、1つのカレンダーへの書き込みは毎分60リクエスト（Google 非公開のため推定値）です。',
+  'settings.rateLimitErrorTestDescription':
+    'リトライやバックオフの処理を確認できるよう、403 / 429 エラーがすぐ発生する極端に低い制限です。ユーザーごとに毎分4リクエスト、プロジェクトごとに毎分12リクエスト、1つのカレンダーへの書き込みは毎分2リクエスト、ユーザーごとに1日20リクエストです。',
+  'settings.rateLimitLabelSeparator': '：',
   'settings.rateLimitSaved': 'レート制限モードを保存しました。',
   'settings.storage': 'ストレージ',
   'settings.storageSqlite': '変更は自動で保存され、再起動後も残ります。',
