@@ -3,13 +3,19 @@ import { Collapsible } from '@cloudflare/kumo/components/collapsible';
 import { Empty } from '@cloudflare/kumo/components/empty';
 import { Input } from '@cloudflare/kumo/components/input';
 import { useState } from 'react';
+import { ConfirmButton } from '../../components/confirm-button';
 import { Icon } from '../../components/icon';
 import { useLocale, useMessages } from '../../components/language';
-import { formatClock } from '../../lib/format';
+import { formatClock, formatTimestamp } from '../../lib/format';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { Payload } from './components/payload';
 import { useClearHistory, useHistory } from './hooks/use-history';
-import { area, filterHistory, statusClass } from './models/history-filter';
+import {
+  area,
+  countHistory,
+  filterHistory,
+  statusClass,
+} from './models/history-filter';
 
 /** The protocol log: recorded Calendar and OAuth requests from the app. */
 export function HistoryScreen() {
@@ -20,8 +26,24 @@ export function HistoryScreen() {
   const locale = useLocale();
   const [query, setQuery] = useState('');
   const [errorsOnly, setErrorsOnly] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
   const rows = filterHistory(history, query, errorsOnly);
-  const errors = history.filter((row) => row.status >= 400).length;
+  const counts = countHistory(history, query);
+  const filtering = errorsOnly || query.trim() !== '';
+  // The live region changes only here, on user input. New requests arrive
+  // through the change stream, and announcing each one would be noise.
+  const applyFilters = (nextQuery: string, nextErrorsOnly: boolean) => {
+    setQuery(nextQuery);
+    setErrorsOnly(nextErrorsOnly);
+    setAnnouncement(
+      nextErrorsOnly || nextQuery.trim() !== ''
+        ? t['history.matches'](
+            filterHistory(history, nextQuery, nextErrorsOnly).length,
+          )
+        : '',
+    );
+  };
+  const clearFilters = () => applyFilters('', false);
   return (
     <>
       <div className='toolbar'>
@@ -33,7 +55,7 @@ export function HistoryScreen() {
             type='search'
             placeholder={t['history.filterPlaceholder']}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => applyFilters(e.target.value, errorsOnly)}
           />
         </label>
         <div
@@ -44,61 +66,88 @@ export function HistoryScreen() {
           <button
             type='button'
             aria-pressed={!errorsOnly}
-            onClick={() => setErrorsOnly(false)}
+            onClick={() => applyFilters(query, false)}
           >
-            {t['history.all']} <span>{history.length}</span>
+            {t['history.all']} <span>{counts.all}</span>
           </button>
           <button
             type='button'
             aria-pressed={errorsOnly}
-            onClick={() => setErrorsOnly(true)}
+            onClick={() => applyFilters(query, true)}
           >
-            {t['history.errors']} <span>{errors}</span>
+            {t['history.errors']} <span>{counts.errors}</span>
           </button>
         </div>
-        <Button
+        <ConfirmButton
           className='toolbar-end'
-          variant='secondary'
+          label={t['history.clear']}
           icon={<Icon name='trash' />}
-          onClick={() => clear.mutate(undefined)}
-          disabled={busy}
-        >
-          {t['history.clear']}
-        </Button>
+          disabled={busy || !history.length}
+          title={t['history.clearTitle']}
+          description={t['history.clearDescription']}
+          confirmLabel={t['history.clear']}
+          confirm={() => clear.mutate(undefined)}
+        />
       </div>
-      <p className='toolbar-note'>{t['history.note']}</p>
+      <p className='toolbar-note'>
+        {filtering && history.length
+          ? t['history.showing'](rows.length, history.length)
+          : t['history.note']}
+      </p>
+      <p className='sr-only' role='status'>
+        {announcement}
+      </p>
       <section className='history-list' aria-label={t['history.requests']}>
-        {rows.map((row) => (
-          <Collapsible.Root key={row.id} className='history-row'>
-            <Collapsible.Trigger className='history-summary'>
-              <code className={`http-status ${statusClass(row.status)}`}>
-                {row.status}
-              </code>
-              <b className={`http-method method-${row.method.toLowerCase()}`}>
-                {row.method}
-              </b>
-              <span className='http-path'>{row.path}</span>
-              {area(row.path) && (
-                <span className='http-area'>{area(row.path)}</span>
-              )}
-              <time dateTime={row.time}>{formatClock(row.time, locale)}</time>
-            </Collapsible.Trigger>
-            <Collapsible.Panel>
-              <div className='history-detail'>
-                <Payload
-                  title={t['history.request']}
-                  copyLabel={t['history.copyRequest']}
-                  value={{ headers: row.headers, body: row.request }}
-                />
-                <Payload
-                  title={t['history.response']}
-                  copyLabel={t['history.copyResponse']}
-                  value={{ headers: row.responseHeaders, body: row.response }}
-                />
-              </div>
-            </Collapsible.Panel>
-          </Collapsible.Root>
-        ))}
+        {rows.length > 0 && (
+          // Safari VoiceOver drops list semantics when list-style is none.
+          <ol className='history-rows' role='list'>
+            {rows.map((row) => (
+              <Collapsible.Root
+                key={row.id}
+                className='history-row'
+                render={<li />}
+              >
+                <Collapsible.Trigger className='history-summary'>
+                  <code className={`http-status ${statusClass(row.status)}`}>
+                    {row.status}
+                  </code>
+                  <b
+                    className={`http-method method-${row.method.toLowerCase()}`}
+                  >
+                    {row.method}
+                  </b>
+                  <span className='http-path'>{row.path}</span>
+                  {area(row.path) && (
+                    <span className='http-area'>{area(row.path)}</span>
+                  )}
+                  <time
+                    dateTime={row.time}
+                    title={formatTimestamp(row.time, locale)}
+                  >
+                    {formatClock(row.time, locale)}
+                  </time>
+                </Collapsible.Trigger>
+                <Collapsible.Panel>
+                  <div className='history-detail'>
+                    <Payload
+                      title={t['history.request']}
+                      copyLabel={t['history.copyRequest']}
+                      value={{ headers: row.headers, body: row.request }}
+                    />
+                    <Payload
+                      title={t['history.response']}
+                      copyLabel={t['history.copyResponse']}
+                      value={{
+                        headers: row.responseHeaders,
+                        body: row.response,
+                      }}
+                    />
+                  </div>
+                </Collapsible.Panel>
+              </Collapsible.Root>
+            ))}
+          </ol>
+        )}
         {!history.length && (
           <Empty
             className='empty-state'
@@ -114,6 +163,11 @@ export function HistoryScreen() {
             icon={<Icon name='magnifier' />}
             title={t['history.noMatches']}
             description={t['history.noMatchesDescription']}
+            contents={
+              <Button variant='secondary' onClick={clearFilters}>
+                {t['history.clearFilters']}
+              </Button>
+            }
           />
         )}
       </section>
