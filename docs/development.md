@@ -121,8 +121,9 @@ health endpoint, and explicit API errors. It also verifies recovery after a forc
 process exit, memory-mode isolation, and reset persistence across restarts. No source
 or node_modules are needed.
 
-Use `--host`, `--port`, `--database`, `--help`, and `--version` on the CLI. Environment defaults
-are `CALENDARPIT_HOST` and `CALENDARPIT_PORT`; command-line flags take precedence.
+Use `--host`, `--port`, `--config`, `--database`, `--help`, and `--version` on the CLI.
+Environment defaults are `CALENDARPIT_HOST`, `CALENDARPIT_PORT`, `CALENDARPIT_CONFIG`, and
+`CALENDARPIT_DATABASE`; command-line flags take precedence.
 The default host is `127.0.0.1` and the default port is `4173`.
 
 ### Optional Docker setup
@@ -144,7 +145,7 @@ With Calendarpit running on port 4173, run `bun run sample:dev` from the checkou
 Open `http://127.0.0.1:4175`, connect a calendar, and approve a test user. Create
 an event, inspect busy intervals, start a watch, update and delete events, and
 revoke and reconnect. The sample's default event time is October 19, 2026. The
-admin UI polls for external changes every two seconds.
+admin UI shows external changes as soon as the server saves them.
 
 The built-in test client is `sample-app` / `local-sample-secret`, with callback
 `http://127.0.0.1:4175/callback`. The sample overrides the authorization, token,

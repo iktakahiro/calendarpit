@@ -18,6 +18,8 @@ agents and MCP tools that call the Google Calendar API. A test uses local OAuth
 and local calendar data, which takes the place of a real Google account, OAuth
 test users, and live calls to Google.
 
+https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
+
 <img src="docs/assets/admin-api-history.png" alt="API History in the Calendarpit admin UI. A Calendar API request is expanded, and the Authorization header is masked." width="900">
 
 <picture>
@@ -34,8 +36,8 @@ test users, and live calls to Google.
 - API history with credentials masked
 - An admin UI on the same origin as the API
 
-Calendarpit 0.9.4 is a preview: the documented subset works locally, and the
-API surface may still change before 1.0. Supported methods are listed in
+Calendarpit is a preview before 1.0: the documented subset works locally, and
+the API surface may still change. Supported methods are listed in
 the [compatibility reference](https://calendarpit.dev/compatibility/).
 Documentation is published in English and [Japanese](https://calendarpit.dev/ja/).
 
@@ -47,7 +49,7 @@ With Docker:
 docker run --rm \
   -p 127.0.0.1:4173:4173 \
   -v calendarpit-data:/data \
-  ghcr.io/iktakahiro/calendarpit:0.9.4
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 Or Homebrew:
@@ -59,8 +61,8 @@ calendarpit serve
 
 Open <http://127.0.0.1:4173>. The API, local OAuth, and admin UI share that
 origin. No Google credentials, environment file, or external database is
-needed. This version is also on
-[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.4).
+needed. The latest release is also on
+[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/latest).
 [Installation](https://calendarpit.dev/installation/) covers Compose, standalone
 downloads, networking, and updates.
 
@@ -100,7 +102,7 @@ Add this service to your project's `compose.yaml`:
 ```yaml
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.4
+    image: ghcr.io/iktakahiro/calendarpit:latest
     ports:
       - '127.0.0.1:4173:4173'
     volumes:
@@ -115,6 +117,9 @@ docker compose up -d calendarpit
 docker compose logs calendarpit
 docker compose down
 ```
+
+Images are tagged `latest` and with each release version. Pin a version tag
+when CI needs a fixed version.
 
 The container binds `0.0.0.0` and runs as a non-root user. The host port stays
 on loopback. The named volume keeps `/data/calendarpit.sqlite`;
@@ -140,8 +145,8 @@ take precedence over `CALENDARPIT_*` environment variables. See
 
 ## Built with
 
-Bun, TanStack Start, TanStack Router, TanStack Query, TanStack Form, Cloudflare
-Kumo, and Tailwind CSS 4.
+Bun, React 19, TanStack Start, TanStack Router, TanStack Query, TanStack Form,
+Cloudflare Kumo, Tailwind CSS 4, and SQLite via `bun:sqlite`.
 
 ## Contributing
 
