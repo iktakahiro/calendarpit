@@ -74,9 +74,7 @@ test('fixture errors appear by the field before confirmation and after server re
   const error = page.locator('#fixture-error');
   await fixture.fill('{"users": [}');
   await page.getByRole('button', { name: 'Load fixture', exact: true }).click();
-  await expect(error.getByRole('alert')).toHaveText(
-    'Enter valid JSON. Check quotes, commas, and brackets.',
-  );
+  await expect(error.getByRole('alert')).toHaveText('Enter valid JSON.');
   await expect(fixture).toHaveAttribute('aria-invalid', 'true');
   await expect(fixture).toHaveAttribute('aria-describedby', 'fixture-error');
   await expect(page.getByRole('alertdialog')).toHaveCount(0);
@@ -97,6 +95,7 @@ test('fixture errors appear by the field before confirmation and after server re
     '{"users": [], "calendars": [], "events": [], "clients": []}',
   );
   await expect(error).toBeEmpty();
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await page.getByRole('button', { name: 'Load fixture', exact: true }).click();
   await page
     .getByRole('alertdialog')
@@ -292,7 +291,7 @@ test.describe('with a Japanese browser', () => {
       .getByRole('button', { name: 'Fixture を読み込む', exact: true })
       .click();
     await expect(page.locator('#fixture-error').getByRole('alert')).toHaveText(
-      '有効な JSON を入力してください。引用符、カンマ、括弧を確認してください。',
+      '有効な JSON を入力してください。',
     );
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });
