@@ -122,9 +122,10 @@ health endpoint, and explicit API errors. It also verifies recovery after a forc
 process exit, memory-mode isolation, and reset persistence across restarts. No source
 or node_modules are needed.
 
-Use `--host`, `--port`, `--config`, `--database`, `--help`, and `--version` on the CLI.
-Environment defaults are `CALENDARPIT_HOST`, `CALENDARPIT_PORT`, `CALENDARPIT_CONFIG`, and
-`CALENDARPIT_DATABASE`; command-line flags take precedence.
+Use `--host`, `--port`, `--config`, `--database`, `--rate-limit`, `--help`, and
+`--version` on the CLI. Environment defaults are `CALENDARPIT_HOST`,
+`CALENDARPIT_PORT`, `CALENDARPIT_CONFIG`, `CALENDARPIT_DATABASE`, and
+`CALENDARPIT_RATE_LIMIT`; command-line flags take precedence.
 The default host is `127.0.0.1` and the default port is `4173`.
 
 ### Optional Docker setup

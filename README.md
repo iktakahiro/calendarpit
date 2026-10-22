@@ -27,6 +27,8 @@ https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
 - Watch notifications delivered to a callback you control
 - Fixtures and reset, so a run can start from the same data
 - API history with credentials masked
+- Optional Calendar API rate-limit simulation (`off` by default, `production`,
+  or `error-test`) that returns Google's quota errors
 - An admin UI on the same origin as the API, which shows changes as soon as the
   server saves them
 
@@ -134,8 +136,10 @@ Homebrew and standalone downloads run the same executable. It includes the
 server, admin UI, and Bun runtime. Calendarpit is not published to npm.
 Releases target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64. The
 default bind address is `127.0.0.1`; pass `--host` to change it. CLI flags
-take precedence over `CALENDARPIT_*` environment variables. See
-[Run and configure](https://calendarpit.dev/running/).
+take precedence over `CALENDARPIT_*` environment variables.
+`--rate-limit` or `CALENDARPIT_RATE_LIMIT` sets the
+[Calendar API rate-limit simulation](https://calendarpit.dev/running/#calendar-api-rate-limits).
+See [Run and configure](https://calendarpit.dev/running/).
 
 Homebrew and standalone CLI runs save to `.calendarpit/calendarpit.sqlite` in
 the current directory. See
