@@ -16,6 +16,47 @@ describe('redact', () => {
     });
   });
 
+  test('redacts an OAuth authorization code in a token exchange', () => {
+    expect(
+      redact({
+        grant_type: 'authorization_code',
+        code: '4/abc',
+        client_secret: 's',
+        code_verifier: 'v',
+      }),
+    ).toEqual({
+      grant_type: 'authorization_code',
+      code: '[REDACTED]',
+      client_secret: '[REDACTED]',
+      code_verifier: '[REDACTED]',
+    });
+  });
+
+  test.each([['403'], [{ value: 403 }], [[403]], [true], [null]])(
+    'redacts a code whose value is not a number: %p',
+    (code) => {
+      expect(redact({ Code: code })).toEqual({ Code: '[REDACTED]' });
+    },
+  );
+
+  test('keeps the numeric code of a Google API error response', () => {
+    const error = {
+      error: {
+        code: 403,
+        message: 'Rate Limit Exceeded',
+        errors: [
+          {
+            domain: 'usageLimits',
+            reason: 'rateLimitExceeded',
+            message: 'Rate Limit Exceeded',
+          },
+        ],
+        status: 'PERMISSION_DENIED',
+      },
+    };
+    expect(redact(error)).toEqual(error);
+  });
+
   test('truncates long strings', () => {
     const result = redact('x'.repeat(12001)) as string;
     expect(result).toHaveLength(12000 + ' [truncated]'.length);

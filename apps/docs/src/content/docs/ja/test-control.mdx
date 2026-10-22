@@ -130,6 +130,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 Calendarpit は、履歴の中の認証情報を次のようにマスクします。
 
 - 次のキーの値は `"[REDACTED]"` に置き換えられます: `authorization`、`cookie`、`set-cookie`、`client_secret`、`secret`、`access_token`、`refresh_token`、`id_token`、`code`、`code_verifier`、`code_challenge`、`consent`、`token`、`x-goog-channel-token`、`state`。ヘッダー、ボディ、クエリ文字列、`Location` や `Referer` の URL が対象です。
+- ただし、ボディ内の `code` は値が数値の場合はマスクされず、API エラーレスポンスの `"code": 403` のような数値のエラーコードはそのまま残ります。
 - URL に含まれる認証情報は削除されます。
 - 12,000文字を超える文字列は途中で切られ、末尾に ` [truncated]` が付きます。
 

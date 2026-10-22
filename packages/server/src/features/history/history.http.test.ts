@@ -13,6 +13,25 @@ describe('protocol history', () => {
     expect(log).not.toContain(t.refresh_token);
     expect(log).not.toContain('local-sample-secret');
     expect(log).toContain('[REDACTED]');
+    const exchange = s.app.workspace.history.find(
+      (entry) => entry.path === '/oauth/token',
+    );
+    expect(exchange?.request).toMatchObject({ code: '[REDACTED]' });
+  });
+
+  test('history keeps the numeric code of a Calendar API error', async () => {
+    const s = setup();
+    const t = await s.token();
+    const response = await s.request(
+      `${path}/missing`,
+      'GET',
+      undefined,
+      t.access_token,
+    );
+    expect(response.status).toBe(404);
+    expect(s.app.workspace.history.at(-1)?.response).toMatchObject({
+      error: { code: 404, errors: [{ reason: 'notFound' }] },
+    });
   });
 });
 

@@ -130,6 +130,7 @@ Reset does not delete the SQLite database file. It does not change the fixture f
 Calendarpit masks credentials in the history:
 
 - These keys are replaced with `"[REDACTED]"`: `authorization`, `cookie`, `set-cookie`, `client_secret`, `secret`, `access_token`, `refresh_token`, `id_token`, `code`, `code_verifier`, `code_challenge`, `consent`, `token`, `x-goog-channel-token`, and `state`. This applies to headers, bodies, query strings, and `Location` or `Referer` URLs.
+- However, in bodies, `code` is not masked when its value is a number, so numeric error codes such as `"code": 403` in API error responses stay visible.
 - Credentials inside URLs are removed.
 - Strings longer than 12,000 characters are cut off and end with ` [truncated]`.
 
