@@ -1,4 +1,134 @@
+import type { Route } from '@playwright/test';
 import { expect, sectionLink, test, toast } from './support/fixtures';
+
+test('Settings tabs preserve workspace selection, reload, and browser history', async ({
+  page,
+}) => {
+  await page.goto('/settings?user=sam&calendar=sam-work');
+  await expect(page.getByRole('tab', { name: 'Appearance' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  for (const [name, tab] of [
+    ['Developer', 'developer'],
+    ['Test data', 'data'],
+    ['OAuth clients', 'clients'],
+  ]) {
+    await page.getByRole('tab', { name }).click();
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get('tab'))
+      .toBe(tab);
+    expect(new URL(page.url()).searchParams.get('user')).toBe('sam');
+    expect(new URL(page.url()).searchParams.get('calendar')).toBe('sam-work');
+  }
+  await page.reload();
+  await expect(
+    page.getByRole('tab', { name: 'OAuth clients' }),
+  ).toHaveAttribute('aria-selected', 'true');
+  await page.goBack();
+  await expect(page.getByRole('tab', { name: 'Test data' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.goForward();
+  await expect(
+    page.getByRole('tab', { name: 'OAuth clients' }),
+  ).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('tab', { name: 'Appearance' }).click();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.has('tab'))
+    .toBe(false);
+  expect(new URL(page.url()).searchParams.get('user')).toBe('sam');
+  expect(new URL(page.url()).searchParams.get('calendar')).toBe('sam-work');
+});
+
+test('Settings links open the requested tab and unknown tabs fall back', async ({
+  page,
+}) => {
+  for (const [tab, name] of [
+    ['developer', 'Developer'],
+    ['data', 'Test data'],
+    ['clients', 'OAuth clients'],
+    ['unknown', 'Appearance'],
+  ]) {
+    await page.goto(`/settings?tab=${tab}`);
+    await expect(page.getByRole('tab', { name })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  }
+});
+
+test('fixture errors appear by the field before confirmation and after server rejection', async ({
+  page,
+}) => {
+  let requests = 0;
+  page.on('request', (request) => {
+    if (
+      request.method() === 'POST' &&
+      new URL(request.url()).pathname === '/__calendarpit/fixtures'
+    )
+      requests++;
+  });
+  await page.goto('/settings?tab=data');
+  const fixture = page.getByRole('textbox', { name: 'Fixture JSON' });
+  const error = page.locator('#fixture-error');
+  await fixture.fill('{"users": [}');
+  await page.getByRole('button', { name: 'Load fixture', exact: true }).click();
+  await expect(error.getByRole('alert')).toHaveText('Enter valid JSON.');
+  await expect(fixture).toHaveAttribute('aria-invalid', 'true');
+  await expect(fixture).toHaveAttribute('aria-describedby', 'fixture-error');
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  expect(requests).toBe(0);
+  await fixture.fill('{"users": "invalid"}');
+  await expect(error).toBeEmpty();
+  await expect(fixture).toHaveAttribute('aria-invalid', 'false');
+  await expect(fixture).not.toHaveAttribute('aria-describedby');
+  await page.getByRole('button', { name: 'Load fixture', exact: true }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Load fixture' })
+    .click();
+  await expect(error.getByRole('alert')).toHaveText('users must be an array.');
+  expect(requests).toBe(1);
+  await expect(fixture).toHaveAttribute('aria-invalid', 'true');
+  await fixture.fill(
+    '{"users": [], "calendars": [], "events": [], "clients": []}',
+  );
+  await expect(error).toBeEmpty();
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Load fixture', exact: true }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Load fixture' })
+    .click();
+  await expect(toast(page, 'Fixture loaded.')).toBeVisible();
+  await expect(error).toBeEmpty();
+});
+
+for (const [name, fail] of [
+  ['an empty 500 response', (route: Route) => route.fulfill({ status: 500 })],
+  ['a network failure', (route: Route) => route.abort()],
+] as const)
+  test(`${name} while loading a fixture shows the localized fallback`, async ({
+    page,
+  }) => {
+    await page.route('**/__calendarpit/fixtures', fail, { times: 1 });
+    await page.goto('/settings?tab=data');
+    await page
+      .getByRole('textbox', { name: 'Fixture JSON' })
+      .fill('{"users": []}');
+    await page
+      .getByRole('button', { name: 'Load fixture', exact: true })
+      .click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Load fixture' })
+      .click();
+    await expect(page.locator('#fixture-error').getByRole('alert')).toHaveText(
+      'Could not load the fixture. Check the fixture content.',
+    );
+  });
 
 test('reset restores the startup fixture after changes', async ({
   page,
@@ -175,5 +305,43 @@ test.describe('with a Japanese browser', () => {
     await page.getByRole('tab', { name: '開発者' }).click();
     for (const label of ['オフ：', '本番相当：', 'エラー確認用：'])
       await expect(page.getByText(label, { exact: true })).toBeVisible();
+  });
+
+  test('fixture syntax errors use Japanese beside the field', async ({
+    page,
+  }) => {
+    await page.goto('/settings?tab=data');
+    await page.getByRole('textbox', { name: 'Fixture JSON' }).fill('{');
+    await page
+      .getByRole('button', { name: 'Fixture を読み込む', exact: true })
+      .click();
+    await expect(page.locator('#fixture-error').getByRole('alert')).toHaveText(
+      '有効な JSON を入力してください。',
+    );
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
+  test('fixture load failures without a server message use Japanese', async ({
+    page,
+  }) => {
+    await page.goto('/settings?tab=data');
+    await page.route(
+      '**/__calendarpit/fixtures',
+      (route) => route.fulfill({ status: 500 }),
+      { times: 1 },
+    );
+    await page
+      .getByRole('textbox', { name: 'Fixture JSON' })
+      .fill('{"users": []}');
+    await page
+      .getByRole('button', { name: 'Fixture を読み込む', exact: true })
+      .click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Fixture を読み込む' })
+      .click();
+    await expect(page.locator('#fixture-error').getByRole('alert')).toHaveText(
+      'Fixture を読み込めませんでした。Fixture の内容を確認してください。',
+    );
   });
 });

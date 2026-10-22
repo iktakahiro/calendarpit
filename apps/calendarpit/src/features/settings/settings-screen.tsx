@@ -6,27 +6,49 @@ import { Tabs } from '@cloudflare/kumo/primitives/tabs';
 import { useState } from 'react';
 import { AppearanceSwitcher } from '../../components/appearance';
 import { ConfirmButton } from '../../components/confirm-button';
+import { FieldError } from '../../components/field-error';
 import { Icon } from '../../components/icon';
 import { LanguageSwitcher, useMessages } from '../../components/language';
+import { serverMessage } from '../../lib/management-client';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { ClientsPanel } from './components/clients-panel';
 import { useLoadFixture, useResetWorkspace } from './hooks/use-fixtures';
 import { useSetRateLimitMode } from './hooks/use-rate-limit';
+import { parseFixtureJson } from './models/fixture-json';
+import type { SettingsTab } from './models/settings-search';
 
 /**
  * Appearance and language, Calendar API rate limits, storage, fixtures and
  * reset, and registered OAuth clients.
  */
-export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
+export function SettingsScreen({
+  snapshot,
+  tab,
+  showTab,
+}: {
+  snapshot: Snapshot;
+  tab: SettingsTab;
+  showTab: (tab: SettingsTab) => void;
+}) {
   const [fixture, setFixture] = useState('');
+  const [fixtureError, setFixtureError] = useState('');
   const loadFixture = useLoadFixture();
   const reset = useResetWorkspace();
   const setRateLimit = useSetRateLimitMode();
   const busy = useWorkspaceBusy();
   const t = useMessages();
   const mode = snapshot.rateLimitMode;
+  const changeFixture = (text: string) => {
+    setFixture(text);
+    setFixtureError('');
+  };
+  const checkFixture = () => {
+    const result = parseFixtureJson(fixture, t);
+    setFixtureError(result.valid ? '' : result.error);
+    return result;
+  };
   return (
-    <Tabs.Root defaultValue='appearance' className='settings-content'>
+    <Tabs.Root value={tab} onValueChange={showTab} className='settings-content'>
       <Tabs.List className='settings-tabs' aria-label={t['settings.sections']}>
         <Tabs.Tab value='appearance'>{t['settings.appearance']}</Tabs.Tab>
         <Tabs.Tab value='developer'>{t['settings.developer']}</Tabs.Tab>
@@ -138,24 +160,32 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
               <span>{t['settings.fixtureJson']}</span>
               <InputArea
                 aria-label={t['settings.fixtureJson']}
+                aria-invalid={!!fixtureError}
+                aria-describedby={fixtureError ? 'fixture-error' : undefined}
+                variant={fixtureError ? 'error' : 'default'}
                 className='mono'
+                disabled={busy}
                 rows={8}
                 spellCheck={false}
                 value={fixture}
-                onChange={(e) => setFixture(e.target.value)}
+                onChange={(e) => changeFixture(e.target.value)}
                 placeholder='{"users": [], "calendars": [], "events": [], "clients": []}'
               />
+              <span id='fixture-error' hidden={!fixtureError}>
+                <FieldError errors={[fixtureError]} />
+              </span>
             </label>
             <div className='button-row'>
               <label className='file-button'>
                 <input
                   type='file'
                   accept='application/json,.json'
+                  disabled={busy}
                   className='sr-only'
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     e.target.value = '';
-                    if (file) void file.text().then(setFixture);
+                    if (file) void file.text().then(changeFixture);
                   }}
                 />
                 <Icon name='code' />
@@ -168,7 +198,19 @@ export function SettingsScreen({ snapshot }: { snapshot: Snapshot }) {
                 title={t['settings.loadTitle']}
                 description={t['settings.loadDescription']}
                 confirmLabel={t['settings.loadFixture']}
-                confirm={() => loadFixture.mutate(fixture)}
+                beforeOpen={() => checkFixture().valid}
+                confirm={() => {
+                  const result = checkFixture();
+                  if (result.valid)
+                    void loadFixture
+                      .mutateAsync(result.value)
+                      .catch((error: unknown) =>
+                        setFixtureError(
+                          serverMessage(error) ??
+                            t['settings.fixtureLoadError'],
+                        ),
+                      );
+                }}
               />
             </div>
             <div className='danger-zone'>

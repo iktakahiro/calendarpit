@@ -27,6 +27,8 @@ export type ConfirmButtonProps = {
   description: string;
   /** Label of the confirming button, naming the action rather than "OK". */
   confirmLabel: string;
+  /** Checks the action before opening; returning false keeps the dialog closed. */
+  beforeOpen?: () => boolean;
   confirm: () => void;
 } & (
   | {
@@ -63,12 +65,18 @@ export function ConfirmButton(props: ConfirmButtonProps) {
     title,
     description,
     confirmLabel,
+    beforeOpen,
     confirm,
   } = props;
   const t = useMessages();
   const shared = { variant, size, className, disabled, icon };
   return (
-    <Dialog.Root role='alertdialog'>
+    <Dialog.Root
+      role='alertdialog'
+      onOpenChange={(open, details) => {
+        if (open && beforeOpen && !beforeOpen()) details.cancel();
+      }}
+    >
       <Dialog.Trigger
         render={
           props.iconOnly ? (

@@ -2,13 +2,12 @@ import { managementApi } from '../../../lib/management-client';
 import { useWorkspaceMutation } from '../../workspace/hooks/use-workspace-mutation';
 
 /**
- * Replaces the workspace data with fixture JSON text. Invalid JSON and
- * invalid fixtures both surface as an error toast; nothing changes then.
+ * Replaces workspace data with parsed fixture JSON. Callers check syntax before
+ * confirmation and can catch mutateAsync failures to show server errors inline.
  */
 export const useLoadFixture = () =>
   useWorkspaceMutation(
-    async (text: string) =>
-      managementApi('/fixtures', 'POST', JSON.parse(text)),
+    async (fixture: unknown) => managementApi('/fixtures', 'POST', fixture),
     'settings.fixtureLoaded',
   );
 
