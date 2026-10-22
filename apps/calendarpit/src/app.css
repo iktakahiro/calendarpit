@@ -2103,6 +2103,9 @@ button .shortcut-keys {
     min-width: 44px;
     min-height: 44px;
   }
+  .client-list .scopes li {
+    padding: 4px 8px;
+  }
   .rail-context {
     grid-template-columns: minmax(0, 1fr);
   }
