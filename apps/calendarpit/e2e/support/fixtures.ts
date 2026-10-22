@@ -11,6 +11,10 @@ export const test = base.extend<{ cleanWorkspace: void }>({
         data: {},
       });
       expect(response.ok()).toBe(true);
+      const rateLimit = await request.put('/__calendarpit/rate-limit', {
+        data: { mode: 'off' },
+      });
+      expect(rateLimit.ok()).toBe(true);
       await use();
     },
     { auto: true },

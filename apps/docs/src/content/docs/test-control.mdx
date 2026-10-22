@@ -51,11 +51,12 @@ All paths below are relative to `/__calendarpit`.
 | `PATCH` / `DELETE`                 | `/clients/{id}`                    | Edit or delete (`204`) an OAuth client.                                    |
 | `POST`                             | `/connections/{id}/revoke`         | Revoke the connection's tokens and stop its watch channels (`204`).        |
 | `POST`                             | `/deliveries/drain`                | Wait for pending webhook deliveries, then return the delivery log (`200`). |
+| `PUT`                              | `/rate-limit`                      | Set the Calendar API rate-limit mode and return the snapshot (`200`).      |
 
 ### Endpoint details
 
 - **`/health`**: Returns the server `name` (`"Calendarpit"`), `version`, `stage`, and `storage` (`"memory"` or `"sqlite"`). It also returns the capability flags `calendar`, `oauth`, `watch`, and `fixtures`. `HEAD` returns an empty `200`.
-- **`/state`**: Removes expired channels first. It then returns a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, and `revision`.
+- **`/state`**: Removes expired channels first. It then returns a snapshot of `storage`, `users`, `calendars`, `events`, `clients` (without secrets), `connections`, `channels` (`token` redacted), `deliveries`, `notifications`, `revision`, and `rateLimitMode` (`off`, `production`, or `error-test`).
 - **`/changes`**: A [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) stream for `EventSource`. It sends a `change` event after any request or watch delivery changes the saved state, including Calendar API, OAuth, and management writes. Reads that change nothing send no event. Events carry no state, so read `/state` or `/history` again. Comment lines keep the connection open, and the stream ends when the server stops.
 - **`/fixtures`**: Validates and replaces users, calendars, events, and clients. It clears runtime state and invalidates connections.
 - **`/reset`**: Restores the startup fixture baseline and clears all runtime state.
@@ -69,6 +70,7 @@ All paths below are relative to `/__calendarpit`.
 - **`/calendars/{id}/events`**: Listing supports `events.list` parameters, including `syncToken`. Listed items include `calendarId`.
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` keeps a tombstone.
 - **`/deliveries/drain`**: Also waits for the retries of pending deliveries. The response is the delivery log array.
+- **`/rate-limit`**: `PUT` body is `{ "mode": "off" }`, `{ "mode": "production" }`, or `{ "mode": "error-test" }`. Unknown fields return `400 unsupportedFeature`. An unknown mode returns `400`. The mode is saved with the workspace, and changing it clears the in-memory counters. See [Calendar API rate limits](/running/#calendar-api-rate-limits).
 
 ### Cascades and admin writes
 
@@ -137,14 +139,14 @@ Use `GET /__calendarpit/state` for inspection only. You cannot load its output b
 
 - It omits client secrets. `clients` entries contain only `id` and `redirectUris`.
 - Channel tokens appear as `"[REDACTED]"`.
-- It includes runtime fields (`storage`, `connections`, `channels`, `deliveries`, `notifications`, `revision`). `POST /__calendarpit/fixtures` rejects them with `400` (`unsupportedFeature`).
+- It includes runtime fields (`storage`, `connections`, `channels`, `deliveries`, `notifications`, `revision`, `rateLimitMode`). `POST /__calendarpit/fixtures` rejects them with `400` (`unsupportedFeature`).
 - It does not include calendar list settings. Read those with `calendarList.list`/`get`.
 
 Keep your original fixture files for seeding and reloading.
 
 ## Writing repeatable tests
 
-- **Reset before each scenario**: Call `POST /__calendarpit/reset` before each test to restore the startup baseline. To load a specific fixture instead, call `POST /__calendarpit/fixtures`.
+- **Reset before each scenario**: Call `POST /__calendarpit/reset` before each test to restore the startup baseline. To load a specific fixture instead, call `POST /__calendarpit/fixtures`. Reset and fixture load clear rate-limit counters and keep `rateLimitMode`. Call `PUT /__calendarpit/rate-limit` with `{ "mode": "off" }` when a shared server must start unlimited.
 - **Use fixed IDs**: Set explicit `id` values for users, calendars, events, and clients in your fixture file. Calendarpit generates missing IDs once at seed time. In `:memory:` mode, each new server process generates new IDs.
 - **Isolate parallel workers**: Run one Calendarpit process per test worker with `--port 0` and `--database :memory:`. You can also give each worker its own SQLite file.
 - **Read the port from stdout**: With `--port 0`, read the URL from the startup line `Admin  http://127.0.0.1:<port>/`. For example, match it with `/Admin\s+(http:\/\/[^\s]+)/`. Then poll `GET /__calendarpit/health` until it responds before you run tests.

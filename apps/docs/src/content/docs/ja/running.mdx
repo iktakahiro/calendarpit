@@ -77,14 +77,15 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 
 コマンドラインフラグは環境変数より優先されます。
 
-| CLI オプション      | 環境変数               | デフォルト                        | 説明                                                                                                                                                |
-| ------------------- | ---------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--host <host>`     | `CALENDARPIT_HOST`     | `127.0.0.1`                       | バインドするアドレスです。ループバック以外（`0.0.0.0`、`::`）は明示的な指定が必要です。                                                             |
-| `-p`, `--port <n>`  | `CALENDARPIT_PORT`     | `4173`                            | リッスンするポート番号（`0`〜`65535`）です。`0` を指定すると OS が空きポートを割り当てます。                                                        |
-| `--database <path>` | `CALENDARPIT_DATABASE` | `.calendarpit/calendarpit.sqlite` | SQLite データベースファイルのパス、または使い捨てのインメモリセッション用の `:memory:` です。[ストレージと再起動](/ja/storage/)を参照してください。 |
-| `--config <path>`   | `CALENDARPIT_CONFIG`   | 組み込み Fixture                  | 起動時 Fixture の JSON ファイルのパスです。[Fixture](/ja/fixtures/)を参照してください。                                                             |
-| `-h`, `--help`      | —                      | —                                 | ヘルプを表示して終了します。                                                                                                                        |
-| `-v`, `--version`   | —                      | —                                 | バージョンを表示して終了します。                                                                                                                    |
+| CLI オプション        | 環境変数                 | デフォルト                        | 説明                                                                                                                                                                                 |
+| --------------------- | ------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--host <host>`       | `CALENDARPIT_HOST`       | `127.0.0.1`                       | バインドするアドレスです。ループバック以外（`0.0.0.0`、`::`）は明示的な指定が必要です。                                                                                              |
+| `-p`, `--port <n>`    | `CALENDARPIT_PORT`       | `4173`                            | リッスンするポート番号（`0`〜`65535`）です。`0` を指定すると OS が空きポートを割り当てます。                                                                                         |
+| `--database <path>`   | `CALENDARPIT_DATABASE`   | `.calendarpit/calendarpit.sqlite` | SQLite データベースファイルのパス、または使い捨てのインメモリセッション用の `:memory:` です。[ストレージと再起動](/ja/storage/)を参照してください。                                  |
+| `--config <path>`     | `CALENDARPIT_CONFIG`     | 組み込み Fixture                  | 起動時 Fixture の JSON ファイルのパスです。[Fixture](/ja/fixtures/)を参照してください。                                                                                              |
+| `--rate-limit <mode>` | `CALENDARPIT_RATE_LIMIT` | `off`                             | Calendar API のレート制限シミュレーションです。`off`、`production`、`error-test` のいずれかを指定します。[Calendar API のレート制限](#calendar-api-のレート制限)を参照してください。 |
+| `-h`, `--help`        | —                        | —                                 | ヘルプを表示して終了します。                                                                                                                                                         |
+| `-v`, `--version`     | —                        | —                                 | バージョンを表示して終了します。                                                                                                                                                     |
 
 オプションの補足:
 
@@ -109,6 +110,59 @@ CLI の構文は `calendarpit [serve] [options]` です。`serve` サブコマ�
 - 例: Docker 内で実行する場合の `host.docker.internal`
 - 環境変数でのみ設定できます。対応する CLI フラグはありません。
 - 詳しくは[watch 通知](/ja/watch/)を参照してください。
+
+### Calendar API のレート制限
+
+Calendarpit は、Calendar API のリクエストに Google と同じクォータエラーを返せます。アプリがローカルでその経路を試せます。デフォルトは `off` で、リクエストは制限されません。
+
+モードは `--rate-limit`、`CALENDARPIT_RATE_LIMIT`、または **Settings → Developer** で指定します。値は `off`、`production`、`error-test` です。それ以外の値は起動時にエラーになります。モードはワークスペースに保存され、SQLite では再起動後も維持されます。起動時にフラグまたは環境変数を明示すると、保存済みのモードを上書きしてワークスペースに保存します。どちらも指定しない場合は、保存済みのモードを使います。スナップショットにモードがない場合や、保存済みの値がこれらのモードのいずれでもない場合は `off` になります。
+
+リセットと Fixture の読み込みではモードは維持され、メモリ上のカウンタがクリアされます。モードを変更したときもカウンタはクリアされ、プロセスを再起動してもカウンタは復元されません。
+
+有効なアクセストークン付きの `/calendar/v3` へのリクエストはすべてカウントされます。`events`、`calendarList`、`freeBusy`、`watch` を含みます。有効なアクセストークンがないリクエスト（トークンなし、未知、期限切れ、取り消し済み）はカウントされず、通常どおり `401` を返します。OAuth、`/userinfo`、`/__calendarpit` はカウントされません。`quotaUser` または `x-goog-quota-user`（1〜40文字）がユーザーごとの枠を決め、アクセストークンのユーザーより優先されます。指定がなければトークンのユーザーの枠を使います。`primary` はトークンのユーザーのプライマリカレンダーを指します。上限を超えたリクエストは拒否され、カウントされません。
+
+`production` は、2026年5月1日以降に作成された Cloud プロジェクト向けに Google が公開している Calendar API のクォータにほぼ準じています（[Usage limits](https://developers.google.com/workspace/calendar/api/guides/quota)）。Google の動作と完全には一致しません。
+
+| 制限                                   | `production`     | エラー                      |
+| -------------------------------------- | ---------------- | --------------------------- |
+| ユーザーごと、1分あたり                | 600リクエスト    | `403 userRateLimitExceeded` |
+| プロジェクトごと、1分あたり            | 10,000リクエスト | `429 rateLimitExceeded`     |
+| 1つのカレンダーへの書き込み、1分あたり | 60リクエスト     | `403 rateLimitExceeded`     |
+
+クォータは直近1分のスライディングウィンドウです。公開されている1日あたり1,000,000リクエストは課金のしきい値であり、拒否には使われないため、`production` ではその件数で失敗しません。Google は、1つのカレンダーへ短時間に書き込むと制限される場合があると書いていますが、件数は公開していません。`production` では、その制限として1カレンダーあたり毎分60回の書き込みを使います。この件数は Calendarpit の推定値です。
+
+`error-test` は極端に低い制限で、同じ `403` / `429` エラーがすぐ発生します。リトライやバックオフの処理を確認するときに使います。
+
+| 制限                                   | `error-test` | エラー                      |
+| -------------------------------------- | ------------ | --------------------------- |
+| ユーザーごと、1分あたり                | 4リクエスト  | `403 userRateLimitExceeded` |
+| プロジェクトごと、1分あたり            | 12リクエスト | `429 rateLimitExceeded`     |
+| 1つのカレンダーへの書き込み、1分あたり | 2リクエスト  | `403 rateLimitExceeded`     |
+| ユーザーごと、1日あたり                | 20リクエスト | `403 quotaExceeded`         |
+
+Google は、ユーザーごとの Calendar の使用量上限に `quotaExceeded` を使います。1日の上限は、`quotaUser` を送った場合でも、常にアクセストークンのユーザーでカウントされます。
+
+上限は、1日の上限、カレンダーごとの書き込み、ユーザーごとの1分枠、プロジェクトごとの1分枠の順に判定されます。エラーボディは Google の `usageLimits` ドメインです（[Handle API errors](https://developers.google.com/workspace/calendar/api/guides/errors)）。
+
+```json
+{
+  "error": {
+    "code": 403,
+    "message": "User Rate Limit Exceeded",
+    "errors": [
+      {
+        "domain": "usageLimits",
+        "reason": "userRateLimitExceeded",
+        "message": "User Rate Limit Exceeded"
+      }
+    ]
+  }
+}
+```
+
+`rateLimitExceeded` のメッセージは `Rate Limit Exceeded`、`quotaExceeded` のメッセージは `Calendar usage limits exceeded.` です。
+
+Calendarpit は、これらのレスポンスにヒントとして `Retry-After` を付けます。Google のドキュメントではこのヘッダーは規定されていないため、クライアントは引き続き指数バックオフを使ってください。
 
 ### ループバックへのバインドと作業ディレクトリ
 

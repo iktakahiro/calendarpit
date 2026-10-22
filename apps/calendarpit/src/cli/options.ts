@@ -1,5 +1,9 @@
 import { parseArgs } from 'node:util';
-import { resolveDatabase } from '@calendarpit/server';
+import {
+  parseRateLimitMode,
+  resolveDatabase,
+  type RateLimitMode,
+} from '@calendarpit/server';
 
 export type CliOptions =
   | { command: 'help' }
@@ -10,6 +14,7 @@ export type CliOptions =
       port: number;
       config?: string;
       database: string;
+      rateLimitMode?: RateLimitMode;
     };
 
 export function parseOptions(
@@ -19,6 +24,7 @@ export function parseOptions(
     CALENDARPIT_PORT?: string;
     CALENDARPIT_CONFIG?: string;
     CALENDARPIT_DATABASE?: string;
+    CALENDARPIT_RATE_LIMIT?: string;
   } = {},
 ): CliOptions {
   const { values, positionals } = parseArgs({
@@ -32,6 +38,7 @@ export function parseOptions(
       config: { type: 'string' },
       database: { type: 'string' },
       port: { type: 'string', short: 'p' },
+      'rate-limit': { type: 'string' },
     },
   });
 
@@ -55,11 +62,15 @@ export function parseOptions(
   const config = values.config ?? env.CALENDARPIT_CONFIG;
   if (config !== undefined && !config.trim())
     throw new Error('Config path must not be empty.');
+  const rateLimitMode = parseRateLimitMode(
+    values['rate-limit'] ?? env.CALENDARPIT_RATE_LIMIT,
+  );
   return {
     command: 'serve',
     host,
     port: Number(rawPort),
     database: resolveDatabase(values.database ?? env.CALENDARPIT_DATABASE),
     ...(config ? { config } : {}),
+    ...(rateLimitMode ? { rateLimitMode } : {}),
   };
 }

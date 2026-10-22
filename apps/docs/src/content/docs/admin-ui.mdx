@@ -24,15 +24,15 @@ The left rail controls the context for every screen:
 
 Each screen header has a **Refresh** button that reloads the workspace state immediately.
 
-| Route          | Screen          | Use it to                                                                                |
-| -------------- | --------------- | ---------------------------------------------------------------------------------------- |
-| `/`            | **Schedule**    | View, create, edit, and delete events in the selected calendar.                          |
-| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth requests and responses.                  |
-| `/watch`       | **Watch**       | Inspect active watch channels and webhook deliveries (read-only).                        |
-| `/connections` | **Connections** | Inspect and revoke OAuth authorizations (grants).                                        |
-| `/users`       | **Users**       | Create, edit, and delete test users.                                                     |
-| `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.                                      |
-| `/settings`    | **Settings**    | Theme, language, storage mode, fixtures, workspace reset, state JSON, and OAuth clients. |
+| Route          | Screen          | Use it to                                                                                                          |
+| -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `/`            | **Schedule**    | View, create, edit, and delete events in the selected calendar.                                                    |
+| `/history`     | **API history** | Inspect and clear recent Calendar API and OAuth requests and responses.                                            |
+| `/watch`       | **Watch**       | Inspect active watch channels and webhook deliveries (read-only).                                                  |
+| `/connections` | **Connections** | Inspect and revoke OAuth authorizations (grants).                                                                  |
+| `/users`       | **Users**       | Create, edit, and delete test users.                                                                               |
+| `/calendars`   | **Calendars**   | Create and configure the selected user's calendars.                                                                |
+| `/settings`    | **Settings**    | Theme, language, Calendar API rate limits, storage mode, fixtures, workspace reset, state JSON, and OAuth clients. |
 
 <Callout type="warn">
 
@@ -174,7 +174,7 @@ Because both tokens stop working, your app must send the user through the [OAuth
 
 ## Prepare test data
 
-**Settings** has three tabs.
+**Settings** has four tabs.
 
 ### Appearance
 
@@ -184,6 +184,16 @@ Because both tokens stop working, your app must send the user through the [OAuth
 Both settings start as **System**, and nothing is stored until you choose. Your choice is stored in a cookie in your browser for a year, so the next page load renders in the chosen theme and language.
 
 The language applies to interface text only: navigation, headings, buttons, form labels, messages, and dates. Protocol data stays as Calendarpit sends and receives it: paths, HTTP methods and statuses, JSON, scopes, resource states, and IDs. The [local consent page](/oauth/) is always in English.
+
+### Developer
+
+**Calendar API rate limits** sets how `/calendar/v3` requests are limited:
+
+- **Off** (`off`) does not limit requests. This is the default.
+- **Production** (`production`) uses limits that roughly match Google's published quotas (approximate, not identical). The per-calendar write limit is Calendarpit's estimate, because Google does not publish one.
+- **Error testing** (`error-test`) uses very low limits so `403` and `429` quota errors happen quickly. Use it to check retry and backoff handling.
+
+The mode is saved with the workspace and persists across SQLite restarts. Reset and fixture load keep the mode and clear the current counters. Quota values, error bodies, and the `--rate-limit` / `CALENDARPIT_RATE_LIMIT` startup options are in [Run and configure](/running/#calendar-api-rate-limits).
 
 ### Test data
 

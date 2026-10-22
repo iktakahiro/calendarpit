@@ -33,29 +33,30 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 
 次の表のパスは、すべて `/__calendarpit` からの相対パスです。
 
-| メソッド                           | パス                               | 動作                                                                       |
-| ---------------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
-| `GET` / `HEAD`                     | `/health`                          | サーバーの情報と機能フラグを返します。                                     |
-| `GET`                              | `/state`                           | サーバー状態のスナップショットを返します。                                 |
-| `GET`                              | `/changes`                         | 保存された状態が変わるたびに `change` イベントを送ります（SSE）。          |
-| `POST`                             | `/fixtures`                        | Fixture のデータを検証して置き換えます（`200` でスナップショット）。       |
-| `POST`                             | `/reset`                           | 起動時 Fixture のリセット基準を復元します（`200` でスナップショット）。    |
-| `GET` / `DELETE`                   | `/history`                         | 直近200件のプロトコルリクエストを取得（`200`）・クリア（`204`）します。    |
-| `POST`                             | `/users`                           | ユーザーを作成します（`201`）。                                            |
-| `PATCH` / `DELETE`                 | `/users/{id}`                      | ユーザーを編集・削除（`204`）します。                                      |
-| `POST`                             | `/calendars`                       | カレンダーを作成します（`201`）。                                          |
-| `PATCH` / `DELETE`                 | `/calendars/{id}`                  | カレンダーを編集・削除（`204`）します。                                    |
-| `GET` / `POST`                     | `/calendars/{id}/events`           | イベントを一覧取得・作成（`200`）します。                                  |
-| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | イベントを取得・置き換え・部分更新・削除（`204`）します。                  |
-| `POST`                             | `/clients`                         | OAuth クライアントを登録します（`201`）。                                  |
-| `PATCH` / `DELETE`                 | `/clients/{id}`                    | OAuth クライアントを編集・削除（`204`）します。                            |
-| `POST`                             | `/connections/{id}/revoke`         | 接続のトークンを取り消し、その接続の watch チャネルを停止します（`204`）。 |
-| `POST`                             | `/deliveries/drain`                | 待機中の Webhook 配信が終わるまで待ち、配信ログを返します（`200`）。       |
+| メソッド                           | パス                               | 動作                                                                           |
+| ---------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
+| `GET` / `HEAD`                     | `/health`                          | サーバーの情報と機能フラグを返します。                                         |
+| `GET`                              | `/state`                           | サーバー状態のスナップショットを返します。                                     |
+| `GET`                              | `/changes`                         | 保存された状態が変わるたびに `change` イベントを送ります（SSE）。              |
+| `POST`                             | `/fixtures`                        | Fixture のデータを検証して置き換えます（`200` でスナップショット）。           |
+| `POST`                             | `/reset`                           | 起動時 Fixture のリセット基準を復元します（`200` でスナップショット）。        |
+| `GET` / `DELETE`                   | `/history`                         | 直近200件のプロトコルリクエストを取得（`200`）・クリア（`204`）します。        |
+| `POST`                             | `/users`                           | ユーザーを作成します（`201`）。                                                |
+| `PATCH` / `DELETE`                 | `/users/{id}`                      | ユーザーを編集・削除（`204`）します。                                          |
+| `POST`                             | `/calendars`                       | カレンダーを作成します（`201`）。                                              |
+| `PATCH` / `DELETE`                 | `/calendars/{id}`                  | カレンダーを編集・削除（`204`）します。                                        |
+| `GET` / `POST`                     | `/calendars/{id}/events`           | イベントを一覧取得・作成（`200`）します。                                      |
+| `GET` / `PUT` / `PATCH` / `DELETE` | `/calendars/{id}/events/{eventId}` | イベントを取得・置き換え・部分更新・削除（`204`）します。                      |
+| `POST`                             | `/clients`                         | OAuth クライアントを登録します（`201`）。                                      |
+| `PATCH` / `DELETE`                 | `/clients/{id}`                    | OAuth クライアントを編集・削除（`204`）します。                                |
+| `POST`                             | `/connections/{id}/revoke`         | 接続のトークンを取り消し、その接続の watch チャネルを停止します（`204`）。     |
+| `POST`                             | `/deliveries/drain`                | 待機中の Webhook 配信が終わるまで待ち、配信ログを返します（`200`）。           |
+| `PUT`                              | `/rate-limit`                      | Calendar API のレート制限モードを設定し、スナップショットを返します（`200`）。 |
 
 ### エンドポイントの詳細
 
 - **`/health`**: サーバーの `name`（`"Calendarpit"`）、`version`、`stage`、`storage`（`"memory"` または `"sqlite"`）を返します。機能フラグ `calendar`、`oauth`、`watch`、`fixtures` も返します。`HEAD` は空の `200` を返します。
-- **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision` のスナップショットを返します。
+- **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision`、`rateLimitMode`（`off`、`production`、`error-test`）のスナップショットを返します。
 - **`/changes`**: `EventSource` 向けの [Server-Sent Events](https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events) ストリームです。Calendar API、OAuth、管理 API の書き込みや watch の配信によって保存された状態が変わると、`change` イベントを送ります。何も変えない読み取りではイベントを送りません。イベントに状態は含まれないため、`/state` や `/history` を読み直してください。コメント行で接続を維持し、サーバーが停止するとストリームは終了します。
 - **`/fixtures`**: ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします。
 - **`/reset`**: 起動時 Fixture のリセット基準を復元し、ランタイム状態をすべてクリアします。
@@ -69,6 +70,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - **`/calendars/{id}/events`**: 一覧取得では `syncToken` を含む `events.list` のパラメータを使えます。一覧の各項目には `calendarId` が入ります。
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` しても削除済みレコードは残ります。
 - **`/deliveries/drain`**: 待機中の配信のリトライが終わるまで待ちます。レスポンスは配信ログの配列です。
+- **`/rate-limit`**: `PUT` のボディは `{ "mode": "off" }`、`{ "mode": "production" }`、`{ "mode": "error-test" }` のいずれかです。未知のフィールドは `400 unsupportedFeature`、未知のモードは `400` を返します。モードはワークスペースに保存され、変更するとメモリ上のカウンタがクリアされます。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
 
 ### 連鎖的な削除と管理 API からの書き込み
 
@@ -137,14 +139,14 @@ Calendarpit は、履歴の中の認証情報を次のようにマスクしま�
 
 - クライアントのシークレットが含まれません。`clients` には `id` と `redirectUris` だけが入ります。
 - チャネルのトークンは `"[REDACTED]"` と表示されます。
-- ランタイムのフィールド（`storage`、`connections`、`channels`、`deliveries`、`notifications`、`revision`）が含まれます。`POST /__calendarpit/fixtures` はこれらを `400`（`unsupportedFeature`）で拒否します。
+- ランタイムのフィールド（`storage`、`connections`、`channels`、`deliveries`、`notifications`、`revision`、`rateLimitMode`）が含まれます。`POST /__calendarpit/fixtures` はこれらを `400`（`unsupportedFeature`）で拒否します。
 - カレンダーリストの設定は含まれません。設定は `calendarList.list`/`get` で取得してください。
 
 データの投入や再読み込みには、元の Fixture ファイルを残しておき、それを使ってください。
 
 ## 再現可能なテストの書き方
 
-- **シナリオごとにリセットする**: 各テストの前に `POST /__calendarpit/reset` を呼び出して、起動時の状態に戻します。特定の Fixture を読み込みたい場合は、代わりに `POST /__calendarpit/fixtures` を呼び出します。
+- **シナリオごとにリセットする**: 各テストの前に `POST /__calendarpit/reset` を呼び出して、起動時の状態に戻します。特定の Fixture を読み込みたい場合は、代わりに `POST /__calendarpit/fixtures` を呼び出します。リセットと Fixture の読み込みはレート制限のカウンタをクリアし、`rateLimitMode` は維持します。共有サーバーを制限なしの状態で始める必要がある場合は、`PUT /__calendarpit/rate-limit` に `{ "mode": "off" }` を送ってください。
 - **固定の ID を使う**: Fixture ファイルで、ユーザー、カレンダー、イベント、クライアントに `id` を明示してください。ID がない場合、Calendarpit はデータ投入時に一度だけ ID を生成します。`:memory:` モードでは、サーバープロセスを起動するたびに新しい ID が生成されます。
 - **並列ワーカーを分離する**: テストワーカーごとに、`--port 0` と `--database :memory:` を付けて Calendarpit のプロセスを1つずつ起動します。ワーカーごとに別の SQLite ファイルを使う方法もあります。
 - **ポートは標準出力から読み取る**: `--port 0` を使う場合は、起動時の行 `Admin  http://127.0.0.1:<port>/` から URL を読み取ります。たとえば `/Admin\s+(http:\/\/[^\s]+)/` でマッチできます。その後、`GET /__calendarpit/health` が応答するまでポーリングしてから、テストを始めてください。

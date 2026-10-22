@@ -25,7 +25,8 @@ close the previous workspace before reopening the saved database.
 `bun run dev` always binds to `127.0.0.1:4173` with a strict port check.
 It does not accept Calendarpit CLI flags, `CALENDARPIT_HOST`, or `CALENDARPIT_PORT`;
 use the built CLI for a custom host or port. The dev server passes through
-`CALENDARPIT_DATABASE`, `CALENDARPIT_CONFIG`, and `CALENDARPIT_WATCH_HOSTS`.
+`CALENDARPIT_DATABASE`, `CALENDARPIT_CONFIG`, `CALENDARPIT_WATCH_HOSTS`, and
+`CALENDARPIT_RATE_LIMIT`.
 Workspace commands run from `apps/calendarpit`, so use absolute fixture paths
 such as `CALENDARPIT_CONFIG="$PWD/fixtures/default.json" bun run dev` when invoking
 them from the repository root.

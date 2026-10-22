@@ -43,11 +43,13 @@ Options:
   -p, --port <n>   Port (default: 4173; 0 selects an available port)
   --config <path> Seed a new database or memory session from a JSON fixture
   --database <path> SQLite file (default: .calendarpit/calendarpit.sqlite); :memory: for tests
+  --rate-limit <mode> Calendar API quotas: off (default), production, or error-test
   -h, --help       Show this help
   -v, --version    Show the version
 
 Environment:
   CALENDARPIT_HOST, CALENDARPIT_PORT, CALENDARPIT_CONFIG, CALENDARPIT_DATABASE
+  CALENDARPIT_RATE_LIMIT: off, production, or error-test. Overrides the saved mode
   CLI flags take precedence
   CALENDARPIT_WATCH_HOSTS: additional allowed callback hosts, comma-separated
 
@@ -61,6 +63,7 @@ export async function runCli(loadApplication: () => Promise<Application>) {
       CALENDARPIT_PORT: process.env.CALENDARPIT_PORT,
       CALENDARPIT_CONFIG: process.env.CALENDARPIT_CONFIG,
       CALENDARPIT_DATABASE: process.env.CALENDARPIT_DATABASE,
+      CALENDARPIT_RATE_LIMIT: process.env.CALENDARPIT_RATE_LIMIT,
     });
     if (options.command === 'help') {
       console.info(help);
@@ -73,6 +76,8 @@ export async function runCli(loadApplication: () => Promise<Application>) {
 
     if (options.config) process.env.CALENDARPIT_CONFIG = options.config;
     process.env.CALENDARPIT_DATABASE = options.database;
+    if (options.rateLimitMode)
+      process.env.CALENDARPIT_RATE_LIMIT = options.rateLimitMode;
     const application = await loadApplication();
     const server = Bun.serve({
       hostname: options.host,

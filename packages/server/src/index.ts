@@ -22,6 +22,12 @@ export {
   type ServerStatus,
 } from './features/status/server-status';
 export type { Snapshot } from './features/status/snapshot-operations';
+export type { RateLimitMode } from './model/rate-limit';
+export {
+  parseRateLimitMode,
+  rateLimitBudgets,
+  type RateLimitBudgets,
+} from './features/quota/rate-limit';
 export type { Calendar, User } from './model/directory';
 export type {
   Attendee,

@@ -101,6 +101,7 @@ test('the interface language can switch to Japanese and back', async ({
       .getByRole('button', { name: '設定' }),
   ).toBeVisible();
   await expect(page.getByRole('tab', { name: 'テストデータ' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: '開発者' })).toBeVisible();
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
@@ -115,6 +116,40 @@ test('the interface language can switch to Japanese and back', async ({
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page).toHaveTitle('Calendarpit · Local calendar lab');
   await expect(sectionLink(page, 'Settings')).toBeVisible();
+});
+
+test('the Calendar API rate limit mode is saved from Settings', async ({
+  page,
+}) => {
+  await page.goto('/settings');
+  await page.getByRole('tab', { name: 'Developer' }).click();
+  await expect(page.getByText('No simulated rate limiting.')).toBeVisible();
+  await expect(
+    page.getByText(
+      "Limits roughly match Google's published quotas (approximate, not identical): 600 requests per minute per user, 10,000 per minute per project, and an estimated 60 writes per minute per calendar (not published by Google).",
+    ),
+  ).toBeVisible();
+  const mode = page.getByRole('combobox', { name: 'Mode' });
+  await mode.click();
+  await expect(page.getByRole('option')).toHaveText([
+    'Off',
+    'Production',
+    'Error testing',
+  ]);
+  await page.getByRole('option', { name: 'Error testing' }).click();
+  await expect(toast(page, 'Rate limit mode saved.')).toBeVisible();
+  await expect(mode).toContainText('Error testing');
+
+  await page.reload();
+  await page.getByRole('tab', { name: 'Developer' }).click();
+  await expect(page.getByRole('combobox', { name: 'Mode' })).toContainText(
+    'Error testing',
+  );
+  await expect(
+    page.getByText(
+      'Very low limits that trigger 403 and 429 errors quickly to test retry and backoff handling: 4 requests per minute per user, 12 per minute per project, 2 writes per minute per calendar, and 20 requests per day per user.',
+    ),
+  ).toBeVisible();
 });
 
 test.describe('with a Japanese browser', () => {
@@ -133,5 +168,12 @@ test.describe('with a Japanese browser', () => {
         .getByRole('group', { name: 'リクエストのステータス' })
         .getByRole('button', { name: /すべて/ }),
     ).toBeVisible();
+  });
+
+  test('the rate limit modes use Japanese labels', async ({ page }) => {
+    await page.goto('/settings');
+    await page.getByRole('tab', { name: '開発者' }).click();
+    for (const label of ['オフ：', '本番相当：', 'エラー確認用：'])
+      await expect(page.getByText(label, { exact: true })).toBeVisible();
   });
 });

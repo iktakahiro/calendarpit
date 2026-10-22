@@ -33,12 +33,15 @@ export function errorResponse(error: unknown, oauth: boolean) {
             code: e.status,
             message: e.message,
             errors: [
-              { domain: 'calendarpit', reason: e.reason, message: e.message },
+              { domain: e.domain, reason: e.reason, message: e.message },
             ],
           },
         },
         e.status,
       );
   if (e.status === 401) response.headers.set('WWW-Authenticate', 'Bearer');
+  if (e.headers)
+    for (const [name, value] of Object.entries(e.headers))
+      response.headers.set(name, value);
   return response;
 }

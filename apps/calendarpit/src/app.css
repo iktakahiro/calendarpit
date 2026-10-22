@@ -1347,6 +1347,19 @@ input[type='time'] {
   outline: 2px solid var(--signal);
   outline-offset: -2px;
 }
+.settings-notes {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 13px;
+}
+.settings-notes strong {
+  color: var(--ink-2);
+  font-weight: 500;
+}
 .panel-head {
   display: flex;
   align-items: flex-start;

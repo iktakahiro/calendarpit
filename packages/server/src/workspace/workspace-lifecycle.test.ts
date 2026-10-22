@@ -527,3 +527,71 @@ test('calendar-list settings and watches survive restart and reset clears them',
   expect(current.app.workspace.calendarListEntries).toEqual([]);
   expect(current.app.workspace.channels.size).toBe(0);
 });
+
+test('the rate limit mode survives restart unless startup sets another', async () => {
+  const database = file();
+  const first = open(database);
+  const saved = await first.request('/__calendarpit/rate-limit', 'PUT', {
+    mode: 'error-test',
+  });
+  expect(saved.status).toBe(200);
+  const { access_token } = await first.authorize();
+  const list = '/calendar/v3/users/me/calendarList';
+  for (let i = 0; i < 4; i++)
+    expect(
+      (await first.request(list, 'GET', undefined, access_token)).status,
+    ).toBe(200);
+  expect(
+    (await first.request(list, 'GET', undefined, access_token)).status,
+  ).toBe(403);
+  first.app.close();
+
+  const second = open(database, {
+    fixture: { users: [], calendars: [], events: [], clients: [] },
+  });
+  const state = await (await second.request('/__calendarpit/state')).json();
+  expect(state.rateLimitMode).toBe('error-test');
+  expect(
+    (await second.request(list, 'GET', undefined, access_token)).status,
+  ).toBe(200);
+  second.app.close();
+
+  const third = open(database, { rateLimitMode: 'off' });
+  expect(
+    (await (await third.request('/__calendarpit/state')).json()).rateLimitMode,
+  ).toBe('off');
+  third.app.close();
+});
+
+test.each(['strict', 'prod', 'high'])(
+  'an unknown saved rate limit mode %j loads as off',
+  async (stored) => {
+    const database = file();
+    const first = open(database, { rateLimitMode: 'error-test' });
+    first.app.close();
+
+    const db = new Database(database);
+    const row = db
+      .query<{ state: string }, []>('SELECT state FROM workspace WHERE id = 1')
+      .get()!;
+    const snapshot = JSON.parse(row.state) as { rateLimitMode?: string };
+    snapshot.rateLimitMode = stored;
+    db.query('UPDATE workspace SET state = ? WHERE id = 1').run(
+      JSON.stringify(snapshot),
+    );
+    db.close();
+
+    const reopened = open(database);
+    expect(
+      (await (await reopened.request('/__calendarpit/state')).json())
+        .rateLimitMode,
+    ).toBe('off');
+    const { access_token } = await reopened.authorize();
+    const list = '/calendar/v3/users/me/calendarList';
+    for (let i = 0; i < 5; i++)
+      expect(
+        (await reopened.request(list, 'GET', undefined, access_token)).status,
+      ).toBe(200);
+    reopened.app.close();
+  },
+);
