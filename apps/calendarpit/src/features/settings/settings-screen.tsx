@@ -9,6 +9,7 @@ import { ConfirmButton } from '../../components/confirm-button';
 import { FieldError } from '../../components/field-error';
 import { Icon } from '../../components/icon';
 import { LanguageSwitcher, useMessages } from '../../components/language';
+import { serverMessage } from '../../lib/management-client';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
 import { ClientsPanel } from './components/clients-panel';
 import { useLoadFixture, useResetWorkspace } from './hooks/use-fixtures';
@@ -205,9 +206,8 @@ export function SettingsScreen({
                       .mutateAsync(result.value)
                       .catch((error: unknown) =>
                         setFixtureError(
-                          error instanceof Error
-                            ? error.message
-                            : t['settings.fixtureLoadError'],
+                          serverMessage(error) ??
+                            t['settings.fixtureLoadError'],
                         ),
                       );
                 }}

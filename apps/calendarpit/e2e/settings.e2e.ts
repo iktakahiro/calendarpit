@@ -1,3 +1,4 @@
+import type { Route } from '@playwright/test';
 import { expect, sectionLink, test, toast } from './support/fixtures';
 
 test('Settings tabs preserve workspace selection, reload, and browser history', async ({
@@ -104,6 +105,30 @@ test('fixture errors appear by the field before confirmation and after server re
   await expect(toast(page, 'Fixture loaded.')).toBeVisible();
   await expect(error).toBeEmpty();
 });
+
+for (const [name, fail] of [
+  ['an empty 500 response', (route: Route) => route.fulfill({ status: 500 })],
+  ['a network failure', (route: Route) => route.abort()],
+] as const)
+  test(`${name} while loading a fixture shows the localized fallback`, async ({
+    page,
+  }) => {
+    await page.route('**/__calendarpit/fixtures', fail, { times: 1 });
+    await page.goto('/settings?tab=data');
+    await page
+      .getByRole('textbox', { name: 'Fixture JSON' })
+      .fill('{"users": []}');
+    await page
+      .getByRole('button', { name: 'Load fixture', exact: true })
+      .click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Load fixture' })
+      .click();
+    await expect(page.locator('#fixture-error').getByRole('alert')).toHaveText(
+      'Could not load the fixture. Check the fixture content.',
+    );
+  });
 
 test('reset restores the startup fixture after changes', async ({
   page,
@@ -294,5 +319,29 @@ test.describe('with a Japanese browser', () => {
       '有効な JSON を入力してください。',
     );
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
+  test('fixture load failures without a server message use Japanese', async ({
+    page,
+  }) => {
+    await page.goto('/settings?tab=data');
+    await page.route(
+      '**/__calendarpit/fixtures',
+      (route) => route.fulfill({ status: 500 }),
+      { times: 1 },
+    );
+    await page
+      .getByRole('textbox', { name: 'Fixture JSON' })
+      .fill('{"users": []}');
+    await page
+      .getByRole('button', { name: 'Fixture を読み込む', exact: true })
+      .click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Fixture を読み込む' })
+      .click();
+    await expect(page.locator('#fixture-error').getByRole('alert')).toHaveText(
+      'Fixture を読み込めませんでした。Fixture の内容を確認してください。',
+    );
   });
 });
