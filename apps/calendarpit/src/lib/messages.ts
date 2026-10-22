@@ -308,6 +308,10 @@ const en = {
   'settings.fixturesDescription':
     'Load JSON with users, calendars, events, and OAuth clients. Loading replaces the current state; reset restores the startup fixture.',
   'settings.fixtureJson': 'Fixture JSON',
+  'settings.fixtureJsonError':
+    'Enter valid JSON. Check quotes, commas, and brackets.',
+  'settings.fixtureLoadError':
+    'Could not load the fixture. Check the data and try again.',
   'settings.openFile': 'Open JSON file…',
   'settings.loadFixture': 'Load fixture',
   'settings.loadTitle': 'Load this fixture?',
@@ -666,6 +670,10 @@ const ja = {
   'settings.fixturesDescription':
     'ユーザー、カレンダー、イベント、OAuth クライアントを含む JSON を読み込みます。読み込むと現在の状態が置き換わります。リセットすると起動時の Fixture に戻ります。',
   'settings.fixtureJson': 'Fixture JSON',
+  'settings.fixtureJsonError':
+    '有効な JSON を入力してください。引用符、カンマ、括弧を確認してください。',
+  'settings.fixtureLoadError':
+    'Fixture を読み込めませんでした。データを確認して、もう一度お試しください。',
   'settings.openFile': 'JSON ファイルを開く…',
   'settings.loadFixture': 'Fixture を読み込む',
   'settings.loadTitle': 'この Fixture を読み込みますか？',
