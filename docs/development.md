@@ -53,6 +53,7 @@ These commands need a source checkout and the setup above.
 | `bun run build`                | Build the admin client and server                               |
 | `bun run start -- --port 4175` | Start the built application on a custom port                    |
 | `bun run build:binary`         | Build and compile a standalone executable for the host platform |
+| `bun run test:e2e`             | Build the app and run Playwright browser tests                  |
 | `bun run smoke`                | Verify the compiled executable in an isolated directory         |
 | `bun run docs:check`           | Validate documentation                                          |
 
@@ -143,7 +144,7 @@ for cross-platform artifacts, GHCR, and Homebrew publication.
 
 With Calendarpit running on port 4173, run `bun run sample:dev` from the checkout.
 Open `http://127.0.0.1:4175`, connect a calendar, and approve a test user. Create
-an event, inspect busy intervals, start a watch, update and delete events, and
+an event, inspect free/busy, start a watch, update and delete events, and
 revoke and reconnect. The sample's default event time is October 19, 2026. The
 admin UI shows external changes as soon as the server saves them.
 
@@ -237,8 +238,9 @@ Turborepo includes both deployment settings in the docs build cache key.
 
 ## Conventions
 
-Use English for source code, comments, documentation, issues, and commit
-messages. Keep protocol behavior independent of UI components and application
+Use English for source code, comments, contributor documentation, issues, and
+commit messages. User documentation in `apps/docs` is published in English and
+Japanese. Keep protocol behavior independent of UI components and application
 consumers. Chronock is the first integration target; it contributes no
 application-specific data or logic to Calendarpit. See [AGENTS.md](../AGENTS.md)
 for repository guidance.

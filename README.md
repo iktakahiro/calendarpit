@@ -20,13 +20,6 @@ test users, and live calls to Google.
 
 https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
 
-<img src="docs/assets/admin-api-history.png" alt="API History in the Calendarpit admin UI. A Calendar API request is expanded, and the Authorization header is masked." width="900">
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/admin-schedule-week-dark.png">
-  <img src="docs/assets/admin-schedule-week.png" alt="Week view in the Calendarpit admin UI, with a planning event on Monday." width="900">
-</picture>
-
 ## What it does
 
 - Calendar and event APIs compatible with a subset of Google Calendar API v3, including free/busy
@@ -34,12 +27,20 @@ https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
 - Watch notifications delivered to a callback you control
 - Fixtures and reset, so a run can start from the same data
 - API history with credentials masked
-- An admin UI on the same origin as the API
+- An admin UI on the same origin as the API, which shows changes as soon as the
+  server saves them
 
 Calendarpit is a preview before 1.0: the documented subset works locally, and
 the API surface may still change. Supported methods are listed in
 the [compatibility reference](https://calendarpit.dev/compatibility/).
 Documentation is published in English and [Japanese](https://calendarpit.dev/ja/).
+
+<img src="docs/assets/admin-api-history.png" alt="API history in the Calendarpit admin UI, listing Calendar API and OAuth requests with their status codes." width="900">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/admin-schedule-week-dark.png">
+  <img src="docs/assets/admin-schedule-week.png" alt="Week view in the Calendarpit admin UI, showing the events of one week." width="900">
+</picture>
 
 ## Quick start
 
@@ -74,9 +75,6 @@ authorization, token, and Calendar API endpoints.
 [SDK examples](https://calendarpit.dev/sdks/) cover TypeScript, Python, Go,
 Kotlin, PHP, C#, and curl.
 
-A source checkout includes a separate Google SDK sample at port 4175. See the
-[development guide](docs/development.md).
-
 ## Fixtures and test control
 
 Save a fixture as `calendarpit.fixture.json`, then start from that directory:
@@ -90,10 +88,6 @@ Loading a fixture replaces current data. Reset restores the startup fixture and
 clears credentials, history, and watch state. See
 [Fixtures](https://calendarpit.dev/fixtures/) and the
 [test control API](https://calendarpit.dev/test-control/).
-
-Homebrew and standalone CLI runs save to `.calendarpit/calendarpit.sqlite` in
-the current directory. See
-[Storage and restarts](https://calendarpit.dev/storage/).
 
 ## Docker Compose
 
@@ -143,6 +137,10 @@ default bind address is `127.0.0.1`; pass `--host` to change it. CLI flags
 take precedence over `CALENDARPIT_*` environment variables. See
 [Run and configure](https://calendarpit.dev/running/).
 
+Homebrew and standalone CLI runs save to `.calendarpit/calendarpit.sqlite` in
+the current directory. See
+[Storage and restarts](https://calendarpit.dev/storage/).
+
 ## Built with
 
 Bun, React 19, TanStack Start, TanStack Router, TanStack Query, TanStack Form,
@@ -150,8 +148,9 @@ Cloudflare Kumo, Tailwind CSS 4, and SQLite via `bun:sqlite`.
 
 ## Contributing
 
-Setup, contributor commands, and release steps are in [docs/](docs/README.md).
-Start with the [development guide](docs/development.md).
+Setup, contributor commands, the Google SDK sample app (port 4175), and release
+steps are in [docs/](docs/README.md). Start with the
+[development guide](docs/development.md).
 
 ## License
 
