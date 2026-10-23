@@ -13,6 +13,15 @@ export type ScheduleSearch = {
 /** The date the built-in fixture's sample event falls on. */
 export const defaultDate = '2026-10-19';
 
+/** Rejects calendar and clock overflow by round-tripping a value through UTC. */
+function roundTripsUtc(value: string, suffix: string) {
+  const parsed = Date.parse(`${value}${suffix}`);
+  return (
+    !Number.isNaN(parsed) &&
+    new Date(parsed).toISOString().slice(0, value.length) === value
+  );
+}
+
 /** Validates raw search params, dropping anything malformed. */
 export function parseScheduleSearch(
   search: Record<string, unknown>,
@@ -20,7 +29,7 @@ export function parseScheduleSearch(
   const date =
     typeof search.date === 'string' &&
     /^\d{4}-\d{2}-\d{2}$/.test(search.date) &&
-    !Number.isNaN(Date.parse(`${search.date}T00:00:00Z`))
+    roundTripsUtc(search.date, 'T00:00:00Z')
       ? search.date
       : undefined;
   const event =
@@ -28,7 +37,8 @@ export function parseScheduleSearch(
   const view = search.view === 'week' ? 'week' : undefined;
   const at =
     typeof search.at === 'string' &&
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(search.at)
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(search.at) &&
+    roundTripsUtc(search.at, ':00Z')
       ? search.at
       : undefined;
   return { date, event, view, at };

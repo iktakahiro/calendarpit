@@ -14,7 +14,7 @@ import { WeekView } from './components/week-view';
 import { EventEditor } from './components/event-editor';
 import { useDeleteEvent } from './hooks/use-event-mutations';
 import { useScheduleCommands } from './hooks/use-schedule-commands';
-import { shiftDate, today } from './models/dates';
+import { shiftScheduleDate, today } from './models/dates';
 import { eventsOn } from './models/day-layout';
 
 /** The selected calendar's day: the day view plus the event editor. */
@@ -75,16 +75,24 @@ export function ScheduleScreen({
         >
           <Button
             shape='square'
-            aria-label={t['schedule.previousDay']}
+            aria-label={
+              t[
+                view === 'week'
+                  ? 'schedule.previousWeek'
+                  : 'schedule.previousDay'
+              ]
+            }
             icon={<Icon name='chevronLeft' />}
-            onClick={() => showDate(shiftDate(date, -1))}
+            onClick={() => showDate(shiftScheduleDate(date, view, -1))}
           />
           <DateField date={date} showDate={showDate} />
           <Button
             shape='square'
-            aria-label={t['schedule.nextDay']}
+            aria-label={
+              t[view === 'week' ? 'schedule.nextWeek' : 'schedule.nextDay']
+            }
             icon={<Icon name='chevronRight' />}
-            onClick={() => showDate(shiftDate(date, 1))}
+            onClick={() => showDate(shiftScheduleDate(date, view, 1))}
           />
         </div>
         <Button

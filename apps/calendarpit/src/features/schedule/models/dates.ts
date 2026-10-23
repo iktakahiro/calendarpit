@@ -9,6 +9,18 @@ export function shiftDate(date: string, days: number) {
 }
 
 /**
+ * Moves `date` (`YYYY-MM-DD`) forward (1) or backward (-1) by one period of
+ * `view`, independent of time zones.
+ */
+export function shiftScheduleDate(
+  date: string,
+  view: 'day' | 'week',
+  direction: -1 | 1,
+) {
+  return shiftDate(date, direction * (view === 'week' ? 7 : 1));
+}
+
+/**
  * Returns today's date in `timeZone`, or in the runtime's zone when no
  * calendar is selected.
  */
