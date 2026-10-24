@@ -5,27 +5,54 @@
   </picture>
 </h1>
 
-A local calendar service for development and repeatable tests. Build calendar
-integrations without a real Google account, provider credentials, or an external
-database.
+An open-source local Google Calendar API and OAuth server for development and tests.
 
-**Status: the documented scope is implemented locally.** Includes user/calendar/event management,
-Google-compatible event APIs and free/busy, local OAuth, watch notifications,
-fixture/reset controls, and masked request history. Compatibility is intentionally
-limited; unsupported features return explicit errors. See
-[compatibility](apps/docs/src/content/docs/compatibility.mdx).
+[![License: MIT](https://img.shields.io/github/license/iktakahiro/calendarpit)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/iktakahiro/calendarpit)](https://github.com/iktakahiro/calendarpit/releases/latest)
+[![Container](https://img.shields.io/badge/ghcr.io-iktakahiro%2Fcalendarpit-2496ED?logo=docker&logoColor=white)](https://github.com/iktakahiro/calendarpit/pkgs/container/calendarpit)
+
+**[Website](https://calendarpit.dev/)** · **[Docs](https://calendarpit.dev/quick-start/)** · **[Dev.to](https://dev.to/iktakahiro/i-built-an-open-source-local-google-calendar-api-and-oauth-server-for-testing-ai-agents-and-mcp-4319)**
+
+Calendarpit is a local server for testing calendar integrations, including AI
+agents and MCP tools that call the Google Calendar API. A test uses local OAuth
+and local calendar data, which takes the place of a real Google account, OAuth
+test users, and live calls to Google.
 
 https://github.com/user-attachments/assets/11db212a-89c9-4a04-8ff2-9711595e2f98
 
-## Quick start
+## What it does
 
-Calendarpit **0.9.5** is available through Docker, Homebrew, and
-[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/tag/v0.9.5).
+- Calendar and event APIs compatible with a subset of Google Calendar API v3, including free/busy
+- Local OAuth 2.0, with a consent page where you pick a test user
+- Watch notifications delivered to a callback you control
+- Fixtures and reset, so a run can start from the same data
+- API history with credentials masked
+- Optional Calendar API rate-limit simulation (`off` by default, `production`,
+  or `error-test`) that returns Google's quota errors
+- An admin UI on the same origin as the API, which shows changes as soon as the
+  server saves them
+
+Calendarpit is a preview before 1.0: the documented subset works locally, and
+the API surface may still change. Supported methods are listed in
+the [compatibility reference](https://calendarpit.dev/compatibility/).
+Documentation is published in English and [Japanese](https://calendarpit.dev/ja/).
+
+<img src="docs/assets/admin-api-history.png" alt="API history in the Calendarpit admin UI, listing Calendar API and OAuth requests with their status codes." width="900">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/admin-schedule-week-dark.png">
+  <img src="docs/assets/admin-schedule-week.png" alt="Week view in the Calendarpit admin UI, showing the events of one week." width="900">
+</picture>
+
+## Quick start
 
 With Docker:
 
 ```sh
-docker run --rm -p 127.0.0.1:4173:4173 -v calendarpit-data:/data ghcr.io/iktakahiro/calendarpit:0.9.5
+docker run --rm \
+  -p 127.0.0.1:4173:4173 \
+  -v calendarpit-data:/data \
+  ghcr.io/iktakahiro/calendarpit:latest
 ```
 
 Or Homebrew:
@@ -35,136 +62,34 @@ brew install iktakahiro/tap/calendarpit
 calendarpit serve
 ```
 
-Open <http://127.0.0.1:4173>. The API, local OAuth, and admin UI share one origin.
-No Google credentials, environment file, or external database is needed.
-See [installation](apps/docs/src/content/docs/installation.mdx) for Compose,
-standalone downloads, networking, and updates.
+Open <http://127.0.0.1:4173>. The API, local OAuth, and admin UI share that
+origin. No Google credentials, environment file, or external database is
+needed. The latest release is also on
+[GitHub Releases](https://github.com/iktakahiro/calendarpit/releases/latest).
+[Installation](https://calendarpit.dev/installation/) covers Compose, standalone
+downloads, networking, and updates.
 
-Contributor setup, including the docs preview, lives in [docs/](docs/README.md).
+## Connect your app
 
-## Try a calendar integration
+Point your Google SDK and OAuth flow at Calendarpit by overriding the
+authorization, token, and Calendar API endpoints.
+[Connect your app](https://calendarpit.dev/connect/) walks through that setup.
+[SDK examples](https://calendarpit.dev/sdks/) cover TypeScript, Python, Go,
+Kotlin, PHP, C#, and curl.
 
-From a source checkout prepared using the [development guide](docs/development.md),
-in another terminal:
+## Fixtures and test control
 
-```sh
-bun run sample:dev
-```
-
-Open <http://127.0.0.1:4175>, connect a calendar, and approve a test user. Create an
-event, inspect busy intervals, start a watch, update/delete events, and revoke and
-reconnect. The default sample date is **October 19, 2026**. The admin UI shows
-external changes as soon as the server saves them.
-
-The built-in test client is `sample-app` / `local-sample-secret`, with callback
-`http://127.0.0.1:4175/callback`. The sample overrides authorization, token, user-info,
-Calendar API, and revocation endpoints and blocks real Google requests. See
-[Connect your app](apps/docs/src/content/docs/connect.mdx) for consuming-app configuration.
-
-Save the JSON example from [Fixtures](apps/docs/src/content/docs/fixtures.mdx) as
-`calendarpit.fixture.json`, then start a temporary session from that directory:
+Save a fixture as `calendarpit.fixture.json`, then start from that directory:
 
 ```sh
 calendarpit serve --database :memory: --config ./calendarpit.fixture.json
 ```
 
-Relative fixture paths resolve from the directory where you start the CLI. Loading a fixture replaces
-current data; reset always restores the startup fixture and clears credentials,
-history and watch state. See [Fixtures](apps/docs/src/content/docs/fixtures.mdx) and [Test control API](apps/docs/src/content/docs/test-control.mdx).
-
-## Data storage
-
-Homebrew and standalone CLI runs save changes to
-`.calendarpit/calendarpit.sqlite` in the directory where you start Calendarpit.
-Run from your project directory, or pass an explicit database path.
-The startup log and **Settings → Test data → Storage** show the actual path.
-
-```sh
-# Temporary E2E session; no database files are written
-calendarpit serve --database :memory: --port 0
-
-# Choose a persistent workspace
-calendarpit serve --database ./.calendarpit/manual.sqlite
-```
-
-Existing databases reopen their saved data, connections, tokens, watch channels,
-and bounded history. A fixture seeds only a new database; reset restores that
-original baseline even after restarting. Loading a fixture replaces current data
-without changing the baseline. Each parallel worker must use `:memory:` or its own
-file. See [Storage and restarts](apps/docs/src/content/docs/storage.mdx).
-
-## Connect your application
-
-Point your existing Google SDK and OAuth flow at Calendarpit. See the docs for
-[Local OAuth](apps/docs/src/content/docs/oauth.mdx) and
-[SDK examples](apps/docs/src/content/docs/sdks.mdx) in TypeScript/JavaScript, Python, Go, Java,
-C#, and HTTP/curl, including calendar lists and FreeBusy queries.
-
-## Workspace
-
-```text
-apps/
-  calendarpit/          React admin UI, TanStack Start, Bun CLI
-  docs/                 User documentation site (English and Japanese)
-  sample/               Separate Bun app using the official Google SDK
-packages/
-  server/               Framework-independent API boundary and server logic
-  typescript-config/    Shared strict TypeScript settings
-```
-
-Contributor documentation (architecture, testing, development workflow) lives in
-[`docs/`](docs/README.md).
-
-The UI uses React 19, TanStack Start/Router, Kumo, Tailwind CSS 4, and Gravity
-UI Icons. TanStack Form manages the event editor. Bun provides the
-runtime, package manager, type checker, test runner, and executable compiler.
-Turborepo orchestrates workspace tasks; Oxlint and Oxfmt provide linting and
-formatting. Direct dependency versions and `bun.lock` are pinned.
-
-New dependency resolutions require a minimum release age of 48 hours via
-`bunfig.toml`. npm-check-updates uses the matching two-day cooldown in
-`.ncurc.json`. Existing locked versions are not re-evaluated by this policy.
-
-## Contributor commands
-
-These commands require a source checkout and the [development setup](docs/development.md).
-
-| Command                        | Purpose                                                         |
-| ------------------------------ | --------------------------------------------------------------- |
-| `bun run dev`                  | Local API/admin development server with HMR                     |
-| `bun run sample:dev`           | Separate Google SDK consumer at port 4175                       |
-| `bun run docs:dev`             | Documentation preview                                           |
-| `bun run validate`             | Lint, format check, `bun check`, and Bun tests                  |
-| `bun run fix`                  | Apply lint and formatting fixes                                 |
-| `bun run build`                | Build the admin client and server                               |
-| `bun run start -- --port 4175` | Start the built application on a custom port                    |
-| `bun run build:binary`         | Build and compile a standalone executable for the host platform |
-| `bun run smoke`                | Verify the compiled executable in an isolated directory         |
-| `bun run docs:check`           | Validate documentation                                          |
-
-## CLI and executable
-
-After installing with Homebrew or placing a standalone executable on your `PATH`:
-
-```sh
-calendarpit --help
-calendarpit --version
-calendarpit serve --port 4173 --database :memory:
-```
-
-Homebrew and standalone downloads run the same embedded executable.
-It includes the server, admin UI assets, and Bun runtime. No separate Node.js
-or Bun installation is needed. Calendarpit is not distributed through npm.
-Releases target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64.
-See [installation](apps/docs/src/content/docs/installation.mdx) for downloads,
-checksums, and upgrades, and [Run and configure](apps/docs/src/content/docs/running.mdx)
-for all flags and environment variables.
-
-The default bind address is `127.0.0.1`. Use `--host` explicitly to change it.
-CLI flags take precedence over `CALENDARPIT_*` environment variables. Port `0`
-requests an available port, which is printed on startup. The admin UI loads
-Roboto Mono from Google Fonts with system-font fallbacks; Calendar and OAuth
-operations remain local.
+A relative fixture path resolves from the directory where you start the CLI.
+Loading a fixture replaces current data. Reset restores the startup fixture and
+clears credentials, history, and watch state. See
+[Fixtures](https://calendarpit.dev/fixtures/) and the
+[test control API](https://calendarpit.dev/test-control/).
 
 ## Docker Compose
 
@@ -173,7 +98,7 @@ Add this service to your project's `compose.yaml`:
 ```yaml
 services:
   calendarpit:
-    image: ghcr.io/iktakahiro/calendarpit:0.9.5
+    image: ghcr.io/iktakahiro/calendarpit:latest
     ports:
       - '127.0.0.1:4173:4173'
     volumes:
@@ -189,21 +114,48 @@ docker compose logs calendarpit
 docker compose down
 ```
 
-The container binds `0.0.0.0` internally and runs as a non-root user. The host
-port stays on loopback. The named volume preserves `/data/calendarpit.sqlite`;
-`docker compose down -v` deletes it. Use `CALENDARPIT_DATABASE=:memory:` for
-disposable tests. Browsers use `http://127.0.0.1:4173`; another Compose service
-uses `http://calendarpit:4173`. See [installation](apps/docs/src/content/docs/installation.mdx)
-for OAuth and webhook networking.
+Images are tagged `latest` and with each release version. Pin a version tag
+when CI needs a fixed version.
 
-## Development conventions
+The container binds `0.0.0.0` and runs as a non-root user. The host port stays
+on loopback. The named volume keeps `/data/calendarpit.sqlite`;
+`docker compose down -v` deletes it. Use `CALENDARPIT_DATABASE=:memory:` for a
+disposable session. Browsers on the host use `http://127.0.0.1:4173`. Another
+Compose service uses `http://calendarpit:4173`. OAuth and webhook networking
+are in [Installation](https://calendarpit.dev/installation/).
 
-Use English for source, comments, documentation, issues, and commit messages.
-Keep protocol behavior independent from UI components and application consumers.
-Chronock is the first integration target; it contributes no application-specific
-data or logic to Calendarpit. See [AGENTS.md](AGENTS.md) for repository guidance.
+## CLI
 
-CI runs protocol/CLI and Google SDK HTTP integration tests. The separate release
-workflow builds and tests distribution artifacts, then publishes version tags
-to GHCR and GitHub Releases. Homebrew updates require tap credentials.
-See [Releasing](docs/releasing.md) for initial setup and publication status.
+```sh
+calendarpit --help
+calendarpit --version
+calendarpit serve --port 4173 --database :memory:
+```
+
+Homebrew and standalone downloads run the same executable. It includes the
+server, admin UI, and Bun runtime. Calendarpit is not published to npm.
+Releases target macOS arm64/x64, Linux glibc arm64/x64, and Windows x64. The
+default bind address is `127.0.0.1`; pass `--host` to change it. CLI flags
+take precedence over `CALENDARPIT_*` environment variables.
+`--rate-limit` or `CALENDARPIT_RATE_LIMIT` sets the
+[Calendar API rate-limit simulation](https://calendarpit.dev/running/#calendar-api-rate-limits).
+See [Run and configure](https://calendarpit.dev/running/).
+
+Homebrew and standalone CLI runs save to `.calendarpit/calendarpit.sqlite` in
+the current directory. See
+[Storage and restarts](https://calendarpit.dev/storage/).
+
+## Built with
+
+Bun, React 19, TanStack Start, TanStack Router, TanStack Query, TanStack Form,
+Cloudflare Kumo, Tailwind CSS 4, and SQLite via `bun:sqlite`.
+
+## Contributing
+
+Setup, contributor commands, the Google SDK sample app (port 4175), and release
+steps are in [docs/](docs/README.md). Start with the
+[development guide](docs/development.md).
+
+## License
+
+Calendarpit is released under the [MIT License](LICENSE).
