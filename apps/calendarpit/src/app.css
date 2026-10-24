@@ -794,7 +794,7 @@ input[type='time'] {
   color: var(--ink);
 }
 .week-day-head.today .week-daynum {
-  color: var(--signal);
+  color: var(--signal-ink);
 }
 .week-day-head.current {
   background: var(--sunken);
@@ -1043,6 +1043,9 @@ input[type='time'] {
   flex: 0 10 auto;
   font-size: 11.5px;
   color: var(--faint);
+}
+.event-row.selected .event-meta code {
+  color: var(--muted);
 }
 .event-tags {
   grid-area: tags;
