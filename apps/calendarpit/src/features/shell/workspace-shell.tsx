@@ -1,6 +1,7 @@
 import { Button } from '@cloudflare/kumo/components/button';
+import { Empty } from '@cloudflare/kumo/components/empty';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Icon } from '../../components/icon';
 import { useMessages } from '../../components/language';
 import { useNotices } from '../../lib/notices';
@@ -17,9 +18,8 @@ import { sectionOf, type SectionId } from './models/sections';
 
 /**
  * The admin UI frame around every section: sidebar, section header with the
- * command palette and refresh actions, and loading state. It registers the
- * commands available on every screen, so it must render inside
- * `CommandProvider`.
+ * command palette and refresh actions, and loading or error state. It registers
+ * the commands available on every screen, so it must render inside `CommandProvider`.
  */
 export function WorkspaceShell({
   section,
@@ -56,9 +56,21 @@ export function WorkspaceShell({
     onSuccess: () => succeed(t['shell.refreshed']),
     onError: fail,
   });
+  // A refetch without data resets the query to pending, so the failure count
+  // keeps the error and retry action visible across retries and polling.
+  const loadFailed = !snapshot && query.errorUpdateCount > 0;
+  const retryRef = useRef<HTMLButtonElement>(null);
+  const retryHadFocus = useRef(false);
+  // Loading disables the retry button and drops its focus; return focus once a
+  // failed retry re-enables it.
+  useEffect(() => {
+    if (refresh.isPending || !retryHadFocus.current) return;
+    retryHadFocus.current = false;
+    if (document.activeElement === document.body) retryRef.current?.focus();
+  }, [refresh.isPending]);
   const host = useHost();
   const status: LiveStatus =
-    query.isError || stream === 'offline'
+    query.isError || loadFailed || stream === 'offline'
       ? 'offline'
       : query.isSuccess && stream === 'open'
         ? 'live'
@@ -114,7 +126,9 @@ export function WorkspaceShell({
                     ]
                       .filter(Boolean)
                       .join(' · ')
-                  : t['shell.createUser']
+                  : loadFailed
+                    ? undefined
+                    : t['shell.createUser']
                 : meta.lede && t[meta.lede]}
             </p>
           </div>
@@ -132,6 +146,30 @@ export function WorkspaceShell({
         </header>
         {snapshot ? (
           children
+        ) : loadFailed ? (
+          <div role='alert'>
+            <Empty
+              className='panel empty-state'
+              icon={<Icon name='circleXmark' />}
+              title={t['shell.loadErrorTitle']}
+              description={t['shell.loadErrorDescription']}
+              contents={
+                <Button
+                  ref={retryRef}
+                  variant='primary'
+                  icon={<Icon name='arrowRotateRight' />}
+                  loading={refresh.isPending}
+                  onClick={(event) => {
+                    retryHadFocus.current =
+                      document.activeElement === event.currentTarget;
+                    refresh.mutate();
+                  }}
+                >
+                  {t['shell.tryAgain']}
+                </Button>
+              }
+            />
+          </div>
         ) : (
           <div className='loading' role='status'>
             <span className='live-dot' aria-hidden='true' />
