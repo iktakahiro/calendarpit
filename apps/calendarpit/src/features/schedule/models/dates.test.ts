@@ -3,6 +3,7 @@ import {
   fromPickerDate,
   longDate,
   shiftDate,
+  shiftScheduleDate,
   shortDate,
   today,
   toPickerDate,
@@ -17,6 +18,22 @@ test.each([
 ])('shiftDate(%s, %i) is %s', (date, days, expected) => {
   expect(shiftDate(date, days)).toBe(expected);
 });
+
+test.each([
+  ['2026-10-22', 'week', 1, '2026-10-29'],
+  ['2026-10-22', 'week', -1, '2026-10-15'],
+  ['2026-10-22', 'day', 1, '2026-10-23'],
+  ['2026-10-22', 'day', -1, '2026-10-21'],
+  ['2026-12-28', 'week', 1, '2027-01-04'],
+  ['2026-01-05', 'week', -1, '2025-12-29'],
+  ['2028-02-24', 'week', 1, '2028-03-02'],
+  ['2026-03-05', 'week', 1, '2026-03-12'],
+] as const)(
+  'shiftScheduleDate(%s, %s, %i) is %s',
+  (date, view, direction, expected) => {
+    expect(shiftScheduleDate(date, view, direction)).toBe(expected);
+  },
+);
 
 test('today uses the calendar zone', () => {
   const now = new Date('2026-10-19T20:00:00Z');

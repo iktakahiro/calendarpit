@@ -2,7 +2,7 @@ import type { Calendar } from '@calendarpit/server';
 import { useRegisterCommands } from '../../command/hooks/use-commands';
 import type { Command } from '../../command/models/command';
 import { parseDateQuery } from '../models/date-query';
-import { longDate, shiftDate, today } from '../models/dates';
+import { longDate, shiftScheduleDate, today } from '../models/dates';
 
 /** Suggestions the date prompt offers before anything is typed. */
 const suggestions = ['today', 'tomorrow', '+1w'];
@@ -25,7 +25,6 @@ export function useScheduleCommands({
   showView: (view: 'day' | 'week') => void;
 }) {
   const period = view === 'week' ? 'week' : 'day';
-  const step = view === 'week' ? 7 : 1;
   const todayDate = () => today(new Date(), calendar?.timeZone);
   const commands: Command[] = [
     {
@@ -43,7 +42,7 @@ export function useScheduleCommands({
       icon: 'chevronLeft',
       keywords: ['back', 'earlier'],
       shortcut: 'p',
-      run: () => showDate(shiftDate(date, -step)),
+      run: () => showDate(shiftScheduleDate(date, view, -1)),
     },
     {
       id: 'schedule.next',
@@ -52,7 +51,7 @@ export function useScheduleCommands({
       icon: 'chevronRight',
       keywords: ['forward', 'later'],
       shortcut: 'n',
-      run: () => showDate(shiftDate(date, step)),
+      run: () => showDate(shiftScheduleDate(date, view, 1)),
     },
     {
       id: 'schedule.day',

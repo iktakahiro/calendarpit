@@ -1,6 +1,31 @@
 import { expect, test, toast } from './support/fixtures';
 
 test.describe('schedule', () => {
+  test('moves the week view by a week from the toolbar', async ({ page }) => {
+    await page.goto('/?date=2026-10-22&view=week');
+    const week = page.getByRole('region', { name: 'Weekly events' });
+    await expect(
+      week.getByRole('heading', { name: 'Oct 18 – Oct 24, 2026' }),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Next week', exact: true }).click();
+
+    await expect(page).toHaveURL(/date=2026-10-29/);
+    await expect(page).toHaveURL(/view=week/);
+    await expect(
+      page.getByRole('button', { name: 'Schedule date: 2026-10-29' }),
+    ).toBeVisible();
+    await expect(
+      week.getByRole('heading', { name: 'Oct 25 – Oct 31, 2026' }),
+    ).toBeVisible();
+    await expect(
+      week.getByRole('button', { name: 'Sun 25', exact: true }),
+    ).toBeVisible();
+    await expect(
+      week.getByRole('button', { name: 'Sat 31', exact: true }),
+    ).toBeVisible();
+  });
+
   test('shows changes from another application without polling', async ({
     page,
     request,
