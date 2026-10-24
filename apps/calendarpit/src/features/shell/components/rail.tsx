@@ -5,6 +5,7 @@ import { Icon } from '../../../components/icon';
 import { useLocale, useMessages } from '../../../components/language';
 import { formatClock } from '../../../lib/format';
 import type { Selection } from '../../workspace/models/selection';
+import { useRailNavigation } from '../hooks/use-rail-navigation';
 import {
   sectionGroups,
   sections,
@@ -46,6 +47,7 @@ export function Rail({
 }) {
   const t = useMessages();
   const locale = useLocale();
+  const { navRef, overflow } = useRailNavigation(section);
   const { user, calendars, calendar } = selection;
   const activeConnections =
     snapshot?.connections.filter((c) => !c.revoked).length ?? 0;
@@ -155,22 +157,28 @@ export function Rail({
           )}
         </div>
       </div>
-      <nav className='rail-nav' aria-label={t['rail.sections']}>
-        {sections.filter((s) => !s.group).map(navButton)}
-        {sectionGroups.map((g) => (
-          <div
-            key={g.id}
-            className='rail-nav-group'
-            role='group'
-            aria-labelledby={`nav-group-${g.id}`}
-          >
-            <p className='rail-label' id={`nav-group-${g.id}`}>
-              {t[g.label]}
-            </p>
-            {sections.filter((s) => s.group === g.id).map(navButton)}
-          </div>
-        ))}
-      </nav>
+      <div
+        className='rail-nav-frame'
+        data-overflow-before={overflow.before || undefined}
+        data-overflow-after={overflow.after || undefined}
+      >
+        <nav ref={navRef} className='rail-nav' aria-label={t['rail.sections']}>
+          {sections.filter((s) => !s.group).map(navButton)}
+          {sectionGroups.map((g) => (
+            <div
+              key={g.id}
+              className='rail-nav-group'
+              role='group'
+              aria-labelledby={`nav-group-${g.id}`}
+            >
+              <p className='rail-label' id={`nav-group-${g.id}`}>
+                {t[g.label]}
+              </p>
+              {sections.filter((s) => s.group === g.id).map(navButton)}
+            </div>
+          ))}
+        </nav>
+      </div>
       <div className='rail-foot'>
         <p>
           <span className='memory-tag'>

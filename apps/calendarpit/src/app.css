@@ -1981,12 +1981,44 @@ button .shortcut-keys {
   .rail-foot {
     display: none;
   }
+  .rail-nav-frame {
+    position: relative;
+    margin: 0 -16px;
+    padding: 0 16px;
+    border-top: 1px solid var(--line);
+  }
+  /* Directional cues sit outside the scroll viewport and its focus outlines. */
+  .rail-nav-frame::before,
+  .rail-nav-frame::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border: solid var(--muted);
+    border-width: 0 1.5px 1.5px 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .rail-nav-frame::before {
+    left: 6px;
+    transform: translateY(-50%) rotate(135deg);
+  }
+  .rail-nav-frame::after {
+    right: 6px;
+    transform: translateY(-50%) rotate(-45deg);
+  }
+  .rail-nav-frame[data-overflow-before]::before,
+  .rail-nav-frame[data-overflow-after]::after {
+    visibility: visible;
+  }
   .rail-nav {
     display: flex;
     gap: 4px;
-    margin: 0 -16px;
-    padding: 8px 16px 10px;
+    padding: 8px 4px 10px;
+    border-top: 0;
     overflow-x: auto;
+    scroll-padding-inline: 4px;
     scrollbar-width: none;
   }
   .rail-nav-group {
