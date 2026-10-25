@@ -4,7 +4,7 @@ Run, validate, and package Calendarpit with Bun.
 
 ## Prerequisites
 
-Use Bun 1.4.3, pinned in `.bun-version` and the root `packageManager` field.
+Use Bun 1.4.4, pinned in `.bun-version` and the root `packageManager` field.
 This version includes the native `bun check` type checker. No external database,
 Google account, secrets, or environment file is needed for local use.
 
