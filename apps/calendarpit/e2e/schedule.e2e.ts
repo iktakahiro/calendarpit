@@ -46,7 +46,7 @@ test.describe('schedule', () => {
   });
 
   test('creates, edits, and deletes an event', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?date=2026-10-19');
     await expect(
       page.getByRole('heading', { name: 'Work calendar' }),
     ).toBeVisible();
@@ -54,6 +54,15 @@ test.describe('schedule', () => {
     await page.getByRole('button', { name: 'New event' }).first().click();
     const editor = page.getByRole('region', { name: 'Event editor' });
     await editor.getByLabel('Summary', { exact: true }).fill('Design review');
+    await editor
+      .getByRole('checkbox', { name: 'All-day event', exact: true })
+      .check();
+    await editor
+      .getByRole('checkbox', { name: 'All-day event', exact: true })
+      .uncheck();
+    await expect(
+      editor.getByRole('button', { name: 'End date: 2026-10-19' }),
+    ).toBeVisible();
     // The editor opens on the shown date, so only the times need changing.
     await editor.getByLabel('Start time', { exact: true }).fill('13:00');
     await editor.getByLabel('End time', { exact: true }).fill('14:30');
