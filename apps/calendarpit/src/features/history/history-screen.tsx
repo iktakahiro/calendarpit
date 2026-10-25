@@ -2,7 +2,7 @@ import { Button } from '@cloudflare/kumo/components/button';
 import { Collapsible } from '@cloudflare/kumo/components/collapsible';
 import { Empty } from '@cloudflare/kumo/components/empty';
 import { Input } from '@cloudflare/kumo/components/input';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ConfirmButton } from '../../components/confirm-button';
 import { Icon } from '../../components/icon';
 import { useLocale, useMessages } from '../../components/language';
@@ -19,7 +19,8 @@ import {
 
 /** The protocol log: recorded Calendar and OAuth requests from the app. */
 export function HistoryScreen() {
-  const { data: history = [] } = useHistory();
+  const historyQuery = useHistory();
+  const history = historyQuery.data ?? [];
   const clear = useClearHistory();
   const busy = useWorkspaceBusy();
   const t = useMessages();
@@ -27,6 +28,18 @@ export function HistoryScreen() {
   const [query, setQuery] = useState('');
   const [errorsOnly, setErrorsOnly] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const hasData = historyQuery.data !== undefined;
+  // Keep the error and retry action visible while a refetch resets the query
+  // to pending without data, including retries triggered by polling.
+  const loadFailed = !hasData && historyQuery.errorUpdateCount > 0;
+  const retryRef = useRef<HTMLButtonElement>(null);
+  const retryHadFocus = useRef(false);
+  // Disabling the retry button can drop focus; restore it after a failed retry.
+  useEffect(() => {
+    if (historyQuery.isFetching || !retryHadFocus.current) return;
+    retryHadFocus.current = false;
+    if (document.activeElement === document.body) retryRef.current?.focus();
+  }, [historyQuery.isFetching]);
   const rows = filterHistory(history, query, errorsOnly);
   const counts = countHistory(history, query);
   const filtering = errorsOnly || query.trim() !== '';
@@ -98,6 +111,36 @@ export function HistoryScreen() {
         {announcement}
       </p>
       <section className='history-list' aria-label={t['history.requests']}>
+        {loadFailed ? (
+          <div role='alert'>
+            <Empty
+              className='empty-state'
+              icon={<Icon name='circleXmark' />}
+              title={t['history.loadErrorTitle']}
+              description={t['shell.loadErrorDescription']}
+              contents={
+                <Button
+                  ref={retryRef}
+                  variant='primary'
+                  icon={<Icon name='arrowRotateRight' />}
+                  loading={historyQuery.isFetching}
+                  onClick={(event) => {
+                    retryHadFocus.current =
+                      document.activeElement === event.currentTarget;
+                    void historyQuery.refetch();
+                  }}
+                >
+                  {t['shell.tryAgain']}
+                </Button>
+              }
+            />
+          </div>
+        ) : !hasData ? (
+          <div className='loading' role='status'>
+            <span className='live-dot' aria-hidden='true' />
+            {t['history.loading']}
+          </div>
+        ) : null}
         {rows.length > 0 && (
           // Safari VoiceOver drops list semantics when list-style is none.
           <ol className='history-rows' role='list'>
@@ -148,7 +191,7 @@ export function HistoryScreen() {
             ))}
           </ol>
         )}
-        {!history.length && (
+        {hasData && !history.length && (
           <Empty
             className='empty-state'
             icon={<Icon name='code' />}
