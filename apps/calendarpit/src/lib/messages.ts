@@ -267,6 +267,8 @@ const en = {
   'history.copyResponse': 'Copy response JSON',
   'history.copy': 'Copy',
   'history.copied': 'Copied',
+  'history.loading': 'Loading API history…',
+  'history.loadErrorTitle': 'Could not load API history',
   'history.waiting': 'Waiting for your app.',
   'history.waitingDescription':
     'Requests that your app sends to the Calendar API and OAuth endpoints appear here.',
@@ -634,6 +636,8 @@ const ja = {
   'history.copyResponse': 'レスポンスの JSON をコピー',
   'history.copy': 'コピー',
   'history.copied': 'コピーしました',
+  'history.loading': 'API 履歴を読み込んでいます…',
+  'history.loadErrorTitle': 'API 履歴を読み込めませんでした',
   'history.waiting': 'アプリからのリクエストを待っています。',
   'history.waitingDescription':
     'アプリが Calendar API と OAuth のエンドポイントに送ったリクエストが、ここに表示されます。',
