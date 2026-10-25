@@ -19,6 +19,10 @@ const en = {
   'shell.refresh': 'Refresh',
   'shell.refreshed': 'Workspace refreshed.',
   'shell.loading': 'Loading your workspace…',
+  'shell.loadErrorTitle': 'Could not load workspace',
+  'shell.loadErrorDescription':
+    'Check that the local Calendarpit server is running.',
+  'shell.tryAgain': 'Try again',
   'shell.yourSchedule': 'Your schedule',
   'shell.primary': 'primary',
   'shell.createUser': 'Create a test user to begin.',
@@ -378,6 +382,10 @@ const ja = {
   'shell.refresh': '更新',
   'shell.refreshed': 'ワークスペースを更新しました。',
   'shell.loading': 'ワークスペースを読み込んでいます…',
+  'shell.loadErrorTitle': 'ワークスペースを読み込めませんでした',
+  'shell.loadErrorDescription':
+    'ローカルの Calendarpit サーバーが起動しているか確認してください。',
+  'shell.tryAgain': '再試行',
   'shell.yourSchedule': 'スケジュール',
   'shell.primary': 'プライマリ',
   'shell.createUser': 'まずテストユーザーを作成してください。',
