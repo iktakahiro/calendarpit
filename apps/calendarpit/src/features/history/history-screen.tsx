@@ -32,14 +32,17 @@ export function HistoryScreen() {
   // Keep the error and retry action visible while a refetch resets the query
   // to pending without data, including retries triggered by polling.
   const loadFailed = !hasData && historyQuery.errorUpdateCount > 0;
+  // Only a retry from the button disables it, so background polling never
+  // takes focus away from it.
+  const [retrying, setRetrying] = useState(false);
   const retryRef = useRef<HTMLButtonElement>(null);
   const retryHadFocus = useRef(false);
   // Disabling the retry button can drop focus; restore it after a failed retry.
   useEffect(() => {
-    if (historyQuery.isFetching || !retryHadFocus.current) return;
+    if (retrying || !retryHadFocus.current) return;
     retryHadFocus.current = false;
     if (document.activeElement === document.body) retryRef.current?.focus();
-  }, [historyQuery.isFetching]);
+  }, [retrying]);
   const rows = filterHistory(history, query, errorsOnly);
   const counts = countHistory(history, query);
   const filtering = errorsOnly || query.trim() !== '';
@@ -123,11 +126,14 @@ export function HistoryScreen() {
                   ref={retryRef}
                   variant='primary'
                   icon={<Icon name='arrowRotateRight' />}
-                  loading={historyQuery.isFetching}
+                  loading={retrying}
                   onClick={(event) => {
                     retryHadFocus.current =
                       document.activeElement === event.currentTarget;
-                    void historyQuery.refetch();
+                    setRetrying(true);
+                    void historyQuery
+                      .refetch()
+                      .finally(() => setRetrying(false));
                   }}
                 >
                   {t['shell.tryAgain']}
