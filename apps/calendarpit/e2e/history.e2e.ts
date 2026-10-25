@@ -70,7 +70,7 @@ test('retries loading history after the initial read fails', async ({
     error.getByRole('heading', { name: 'Could not load API history' }),
   ).toBeVisible();
   await expect(error).toContainText(
-    'Check that the local Calendarpit server is running and try again.',
+    'Check that the local Calendarpit server is running.',
   );
   await expect(page.getByText('Waiting for your app.')).toHaveCount(0);
   await expect(history.getByText('Loading API history…')).toHaveCount(0);
