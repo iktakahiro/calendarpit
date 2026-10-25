@@ -84,20 +84,24 @@ export function eventFormValues(
 }
 
 /**
- * Returns new `start` and `end` values after toggling all-day: one day from
- * the start date, or 10:00–11:00 on the existing dates.
+ * Returns new `start` and `end` values for the requested all-day mode.
+ * All-day mode uses the start date and an exclusive end one day later,
+ * matching Google Calendar. Timed mode starts at 10:00 and ends at 11:00
+ * on the last included date: a date-only end moves back one day, while an
+ * end with a time keeps its date. The end date is clamped to the start date.
  */
 export function toggleAllDay(
   values: Pick<EventFormValues, 'start' | 'end'>,
   allDay: boolean,
 ) {
-  const startDate = values.start.slice(0, 10);
-  return allDay
-    ? { start: startDate, end: shiftDate(startDate, 1) }
-    : {
-        start: `${startDate}T10:00`,
-        end: `${values.end.slice(0, 10)}T11:00`,
-      };
+  const startDate = datePart(values.start);
+  if (allDay) return { start: startDate, end: shiftDate(startDate, 1) };
+  const endDate =
+    values.end.length === 10 ? shiftDate(values.end, -1) : datePart(values.end);
+  return {
+    start: `${startDate}T10:00`,
+    end: `${endDate < startDate ? startDate : endDate}T11:00`,
+  };
 }
 
 /** Parses the extended properties text, or returns `undefined` if invalid. */

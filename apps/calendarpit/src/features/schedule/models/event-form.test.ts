@@ -48,13 +48,52 @@ describe('eventFormValues', () => {
   });
 });
 
-test.each([
-  [true, { start: '2026-10-19', end: '2026-10-20' }],
-  [false, { start: '2026-10-19T10:00', end: '2026-10-20T11:00' }],
-])('toggleAllDay(%p)', (allDay, expected) => {
-  expect(
-    toggleAllDay({ start: '2026-10-19T09:15', end: '2026-10-20' }, allDay),
-  ).toEqual(expected);
+describe('toggleAllDay', () => {
+  test('turns all-day on with an exclusive end one day after the start', () => {
+    expect(
+      toggleAllDay(
+        { start: '2026-10-19T09:15', end: '2026-10-22T17:00' },
+        true,
+      ),
+    ).toEqual({ start: '2026-10-19', end: '2026-10-20' });
+  });
+
+  test.each([
+    ['2026-10-20', '2026-10-19T11:00'],
+    ['2026-10-22', '2026-10-21T11:00'],
+  ])(
+    'turns all-day off using the last included date for end %p',
+    (end, expected) => {
+      expect(toggleAllDay({ start: '2026-10-19', end }, false)).toEqual({
+        start: '2026-10-19T10:00',
+        end: expected,
+      });
+    },
+  );
+
+  test('keeps the date of an end that already has a time', () => {
+    expect(
+      toggleAllDay(
+        { start: '2026-10-19T09:15', end: '2026-10-22T17:00' },
+        false,
+      ),
+    ).toEqual({ start: '2026-10-19T10:00', end: '2026-10-22T11:00' });
+  });
+
+  test.each(['2026-10-19', '2026-10-18'])(
+    'clamps an exclusive end %p at or before the start to the start date',
+    (end) => {
+      expect(toggleAllDay({ start: '2026-10-19', end }, false)).toEqual({
+        start: '2026-10-19T10:00',
+        end: '2026-10-19T11:00',
+      });
+    },
+  );
+
+  test('round trips a one-hour event through all-day on the same date', () => {
+    const timed = { start: '2026-10-19T10:00', end: '2026-10-19T11:00' };
+    expect(toggleAllDay(toggleAllDay(timed, true), false)).toEqual(timed);
+  });
 });
 
 describe('date and time halves', () => {
