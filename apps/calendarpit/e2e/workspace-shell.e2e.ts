@@ -15,7 +15,7 @@ test('retries loading the workspace after the initial request fails', async ({
     error.getByRole('heading', { name: 'Could not load workspace' }),
   ).toBeVisible();
   await expect(error).toContainText(
-    'Check that the local Calendarpit server is running and try again.',
+    'Check that the local Calendarpit server is running.',
   );
   await expect(main.getByText('Loading your workspace…')).toHaveCount(0);
   await expect(page.getByText('Disconnected', { exact: true })).toBeVisible();

@@ -21,7 +21,7 @@ const en = {
   'shell.loading': 'Loading your workspace…',
   'shell.loadErrorTitle': 'Could not load workspace',
   'shell.loadErrorDescription':
-    'Check that the local Calendarpit server is running and try again.',
+    'Check that the local Calendarpit server is running.',
   'shell.tryAgain': 'Try again',
   'shell.yourSchedule': 'Your schedule',
   'shell.primary': 'primary',
