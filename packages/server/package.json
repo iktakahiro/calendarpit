@@ -16,6 +16,6 @@
   },
   "devDependencies": {
     "@calendarpit/typescript-config": "workspace:*",
-    "@types/bun": "1.4.3"
+    "@types/bun": "1.4.4"
   }
 }

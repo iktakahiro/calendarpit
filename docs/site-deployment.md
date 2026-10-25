@@ -95,7 +95,7 @@ enabled for `main`, and previews are disabled.
    | Deploy command                           | `bun run deploy`                                                  |
    | Preview/non-production builds            | Disabled                                                          |
    | Build watch paths                        | All paths (`*`)                                                   |
-   | Build variable `BUN_VERSION`             | `1.4.3` (keep in sync with `.bun-version`)                        |
+   | Build variable `BUN_VERSION`             | `1.4.4` (keep in sync with `.bun-version`)                        |
    | Build variable `SKIP_DEPENDENCY_INSTALL` | `true`                                                            |
    | Build variable `DOCS_BASE_PATH`          | `/`                                                               |
    | Build variable `DOCS_SITE_URL`           | `https://calendarpit.dev`                                         |
