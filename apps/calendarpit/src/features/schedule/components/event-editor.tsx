@@ -4,7 +4,7 @@ import { Checkbox } from '@cloudflare/kumo/components/checkbox';
 import { Input, InputArea } from '@cloudflare/kumo/components/input';
 import { Select } from '@cloudflare/kumo/components/select';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { ConfirmButton } from '../../../components/confirm-button';
 import { FieldError } from '../../../components/field-error';
 import { Icon } from '../../../components/icon';
@@ -45,6 +45,8 @@ export function EventEditor({
   const locale = useLocale();
   const panel = useRef<HTMLElement>(null);
   const saveTrigger = useRef<HTMLButtonElement>(null);
+  // Prefixes the error ids so two editors on one page never share one.
+  const idPrefix = useId();
   useEffect(() => {
     // Move focus into the editor so keyboard and narrow-screen users land on it.
     panel.current?.focus({ preventScroll: true });
@@ -188,21 +190,30 @@ export function EventEditor({
                 const spoken = end ? t['event.end'] : t['event.start'];
                 return (
                   <form.Field name={name} key={name}>
-                    {(field) => (
-                      <div className='field'>
-                        <span>
-                          {allDay && end ? t['event.endExclusive'] : spoken}
-                        </span>
-                        <DateTimeField
-                          name={spoken}
-                          value={field.state.value}
-                          allDay={allDay}
-                          change={(value) => field.handleChange(value)}
-                          blur={field.handleBlur}
-                        />
-                        <FieldError errors={field.state.meta.errors} />
-                      </div>
-                    )}
+                    {(field) => {
+                      const errorId = `${idPrefix}-${name}-error`;
+                      return (
+                        <div className='field'>
+                          <span>
+                            {allDay && end ? t['event.endExclusive'] : spoken}
+                          </span>
+                          <DateTimeField
+                            name={spoken}
+                            value={field.state.value}
+                            allDay={allDay}
+                            change={(value) => field.handleChange(value)}
+                            blur={field.handleBlur}
+                            errorId={
+                              field.state.meta.errors[0] ? errorId : undefined
+                            }
+                          />
+                          <FieldError
+                            id={errorId}
+                            errors={field.state.meta.errors}
+                          />
+                        </div>
+                      );
+                    }}
                   </form.Field>
                 );
               })
@@ -255,21 +266,27 @@ export function EventEditor({
           )}
         </form.Field>
         <form.Field name='extendedProperties'>
-          {(field) => (
-            <label className='field'>
-              <span>{t['event.extendedProperties']}</span>
-              <InputArea
-                aria-label={t['event.extendedProperties']}
-                className='mono'
-                rows={4}
-                spellCheck={false}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-              <FieldError errors={field.state.meta.errors} />
-            </label>
-          )}
+          {(field) => {
+            const errorId = `${idPrefix}-extended-properties-error`;
+            const invalid = Boolean(field.state.meta.errors[0]);
+            return (
+              <label className='field'>
+                <span>{t['event.extendedProperties']}</span>
+                <InputArea
+                  aria-label={t['event.extendedProperties']}
+                  className='mono'
+                  rows={4}
+                  spellCheck={false}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
+                />
+                <FieldError id={errorId} errors={field.state.meta.errors} />
+              </label>
+            );
+          }}
         </form.Field>
         {submitError && (
           <p className='error-message' role='alert'>

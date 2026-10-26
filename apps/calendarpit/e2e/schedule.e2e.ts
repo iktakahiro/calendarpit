@@ -108,6 +108,42 @@ test.describe('schedule', () => {
     await expect(editor.getByRole('alert')).toHaveCount(0);
   });
 
+  test('links invalid fields to their error text', async ({ page }) => {
+    await page.goto('/?event=new');
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    const endTime = editor.getByLabel('End time', { exact: true });
+    const endDate = editor.getByRole('button', { name: /^End date:/ });
+    const properties = editor.getByLabel('Extended properties (JSON)');
+
+    await expect(endTime).not.toHaveAttribute('aria-invalid');
+    await expect(endTime).not.toHaveAttribute('aria-describedby');
+
+    await endTime.fill('09:00');
+    await properties.fill('[1]');
+    await editor.getByRole('button', { name: 'Save event' }).click();
+
+    for (const control of [endTime, endDate]) {
+      await expect(control).toHaveAttribute('aria-invalid', 'true');
+      await expect(control).toHaveAccessibleDescription(
+        'End must be after start.',
+      );
+    }
+    await expect(properties).toHaveAttribute('aria-invalid', 'true');
+    await expect(properties).toHaveAccessibleDescription(
+      'Extended properties must be a JSON object.',
+    );
+    await expect(
+      editor.getByLabel('Start time', { exact: true }),
+    ).not.toHaveAttribute('aria-invalid');
+
+    await endTime.fill('12:00');
+    await properties.fill('{}');
+    for (const control of [endTime, endDate, properties]) {
+      await expect(control).not.toHaveAttribute('aria-invalid');
+      await expect(control).not.toHaveAttribute('aria-describedby');
+    }
+  });
+
   test('asks before a save removes recurrence and attendees', async ({
     page,
     request,
