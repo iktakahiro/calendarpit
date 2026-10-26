@@ -28,7 +28,8 @@ export function ScheduleScreen({
   showDate,
   edit,
   showView,
-  openSettings,
+  openUsers,
+  openCalendars,
 }: {
   snapshot: Snapshot;
   selection: Selection;
@@ -45,7 +46,10 @@ export function ScheduleScreen({
   edit: (event?: string, at?: string) => void;
   /** Switches between the day track and the week grid. */
   showView: (view: 'day' | 'week') => void;
-  openSettings: () => void;
+  /** Opens the Users screen, where test users are created. */
+  openUsers: () => void;
+  /** Opens the Calendars screen for the selected user. */
+  openCalendars: () => void;
 }) {
   const busy = useWorkspaceBusy();
   const now = useNow();
@@ -177,10 +181,10 @@ export function ScheduleScreen({
               contents={
                 <Button
                   variant='secondary'
-                  icon={<Icon name='gear' />}
-                  onClick={openSettings}
+                  icon={<Icon name={user ? 'calendar' : 'persons'} />}
+                  onClick={user ? openCalendars : openUsers}
                 >
-                  {t['schedule.openSettings']}
+                  {t[user ? 'schedule.openCalendars' : 'schedule.openUsers']}
                 </Button>
               }
             />

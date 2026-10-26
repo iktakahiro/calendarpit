@@ -97,10 +97,10 @@ const en = {
   'schedule.dailyEvents': 'Daily events',
   'schedule.noCalendarSelected': 'No calendar selected',
   'schedule.userHasNoCalendars': (name: string) =>
-    `${name} has no calendars yet. Add one in workspace settings.`,
-  'schedule.createUserAndCalendar':
-    'Create a test user and a calendar in workspace settings.',
-  'schedule.openSettings': 'Open workspace settings',
+    `Add a calendar for ${name}.`,
+  'schedule.createUserAndCalendar': 'Create a test user, then add a calendar.',
+  'schedule.openCalendars': 'Open Calendars',
+  'schedule.openUsers': 'Open Users',
   'schedule.eventSaved': 'Event saved.',
   'schedule.eventDeleted': 'Event deleted.',
 
@@ -474,10 +474,11 @@ const ja = {
   'schedule.dailyEvents': 'その日のイベント',
   'schedule.noCalendarSelected': 'カレンダーが選択されていません',
   'schedule.userHasNoCalendars': (name: string) =>
-    `${name} にはまだカレンダーがありません。ワークスペースの設定で追加してください。`,
+    `${name} のカレンダーを追加してください。`,
   'schedule.createUserAndCalendar':
-    'ワークスペースの設定でテストユーザーとカレンダーを作成してください。',
-  'schedule.openSettings': 'ワークスペースの設定を開く',
+    'テストユーザーを作成してから、カレンダーを追加してください。',
+  'schedule.openCalendars': 'カレンダー画面を開く',
+  'schedule.openUsers': 'ユーザー画面を開く',
   'schedule.eventSaved': 'イベントを保存しました。',
   'schedule.eventDeleted': 'イベントを削除しました。',
 
