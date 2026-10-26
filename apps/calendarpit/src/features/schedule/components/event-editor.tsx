@@ -5,6 +5,7 @@ import { Input, InputArea } from '@cloudflare/kumo/components/input';
 import { Select } from '@cloudflare/kumo/components/select';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useEffect, useRef, useState } from 'react';
+import { ConfirmButton } from '../../../components/confirm-button';
 import { FieldError } from '../../../components/field-error';
 import { Icon } from '../../../components/icon';
 import { useLocale, useMessages } from '../../../components/language';
@@ -12,6 +13,7 @@ import { useSaveEvent } from '../hooks/use-event-mutations';
 import { DateTimeField } from './date-time-field';
 import {
   eventFormValues,
+  fieldsRemovedBySave,
   toEventBody,
   toggleAllDay,
   validateEventForm,
@@ -68,6 +70,21 @@ export function EventEditor({
       close();
     },
   });
+  // A new event has nothing to lose; neither does one a save leaves intact.
+  const removed = event ? fieldsRemovedBySave(event) : [];
+  const removedNames = t['event.removesList'](
+    removed.map((field) => t[`event.removes.${field}`]),
+  );
+  const submit = () => {
+    setSubmitError('');
+    form
+      .handleSubmit()
+      .catch((error: unknown) =>
+        setSubmitError(
+          error instanceof Error ? error.message : t['event.saveFailed'],
+        ),
+      );
+  };
   return (
     <section
       ref={panel}
@@ -109,14 +126,8 @@ export function EventEditor({
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          setSubmitError('');
-          form
-            .handleSubmit()
-            .catch((error: unknown) =>
-              setSubmitError(
-                error instanceof Error ? error.message : t['event.saveFailed'],
-              ),
-            );
+          // Implicit submission (Enter in a field) must not skip the dialog.
+          if (!removed.length) submit();
         }}
       >
         <form.Field name='summary'>
@@ -251,13 +262,35 @@ export function EventEditor({
             {submitError}
           </p>
         )}
+        {removed.length > 0 && (
+          <p className='hint'>{t['event.removesNote'](removedNames)}</p>
+        )}
         <div className='editor-actions'>
           <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(submitting) => (
-              <Button type='submit' variant='primary' loading={submitting}>
-                {t['event.save']}
-              </Button>
-            )}
+            {(submitting) =>
+              removed.length ? (
+                <ConfirmButton
+                  variant='primary'
+                  loading={submitting}
+                  label={t['event.save']}
+                  title={t['event.removesTitle']}
+                  description={t['event.removesDescription'](removedNames)}
+                  confirmLabel={t['event.removesConfirm']}
+                  beforeOpen={() => {
+                    // Invalid values show their field errors, as a plain save
+                    // would, and keep the dialog closed.
+                    if (!validateEventForm(form.state.values, t)) return true;
+                    submit();
+                    return false;
+                  }}
+                  confirm={submit}
+                />
+              ) : (
+                <Button type='submit' variant='primary' loading={submitting}>
+                  {t['event.save']}
+                </Button>
+              )
+            }
           </form.Subscribe>
           <span className='hint'>
             <kbd>Esc</kbd>

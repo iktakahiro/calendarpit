@@ -21,6 +21,8 @@ export type ConfirmButtonProps = {
   size?: 'sm' | 'base' | 'lg';
   className?: string;
   disabled?: boolean;
+  /** Shows the trigger's spinner and disables it while the action runs. */
+  loading?: boolean;
   /** Dialog heading, phrased as the question being asked. */
   title: string;
   /** What the action changes, including anything it cannot undo. */
@@ -62,6 +64,7 @@ export function ConfirmButton(props: ConfirmButtonProps) {
     size,
     className,
     disabled,
+    loading,
     title,
     description,
     confirmLabel,
@@ -69,7 +72,7 @@ export function ConfirmButton(props: ConfirmButtonProps) {
     confirm,
   } = props;
   const t = useMessages();
-  const shared = { variant, size, className, disabled, icon };
+  const shared = { variant, size, className, disabled, loading, icon };
   return (
     <Dialog.Root
       role='alertdialog'

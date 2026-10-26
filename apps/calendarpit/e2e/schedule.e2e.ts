@@ -108,6 +108,91 @@ test.describe('schedule', () => {
     await expect(editor.getByRole('alert')).toHaveCount(0);
   });
 
+  test('asks before a save removes recurrence and attendees', async ({
+    page,
+    request,
+  }) => {
+    const created = await request.post(
+      '/__calendarpit/calendars/alex-work/events',
+      {
+        data: {
+          id: 'standup',
+          summary: 'Standup',
+          start: {
+            dateTime: '2026-10-20T09:00:00+09:00',
+            timeZone: 'Asia/Tokyo',
+          },
+          end: {
+            dateTime: '2026-10-20T09:15:00+09:00',
+            timeZone: 'Asia/Tokyo',
+          },
+          recurrence: ['RRULE:FREQ=DAILY;COUNT=3'],
+          attendees: [{ email: 'sam@example.test' }],
+        },
+      },
+    );
+    expect(created.ok()).toBe(true);
+    const stored = () =>
+      request
+        .get('/__calendarpit/calendars/alex-work/events/standup')
+        .then((response) => response.json());
+
+    await page.goto('/?date=2026-10-20&event=standup');
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    await expect(
+      editor.getByText(
+        'Saving removes Recurrence, Attendees from this event. Set them through the API instead.',
+      ),
+    ).toBeVisible();
+
+    await editor.getByLabel('Summary', { exact: true }).fill('Standup (new)');
+    await editor.getByRole('button', { name: 'Save event' }).click();
+    const dialog = page.getByRole('alertdialog', {
+      name: 'Save and remove these fields?',
+    });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await stored()).toMatchObject({
+      summary: 'Standup',
+      recurrence: ['RRULE:FREQ=DAILY;COUNT=3'],
+    });
+
+    await editor.getByRole('button', { name: 'Save event' }).click();
+    await dialog.getByRole('button', { name: 'Save and remove' }).click();
+    await expect(toast(page, 'Event saved.')).toBeVisible();
+    const saved = await stored();
+    expect(saved.summary).toBe('Standup (new)');
+    expect(saved.recurrence).toBeUndefined();
+    expect(saved.attendees).toBeUndefined();
+  });
+
+  test('shows field errors instead of the removal dialog when invalid', async ({
+    page,
+    request,
+  }) => {
+    await request.post('/__calendarpit/calendars/alex-work/events', {
+      data: {
+        id: 'colored',
+        summary: 'Colored',
+        start: {
+          dateTime: '2026-10-20T09:00:00+09:00',
+          timeZone: 'Asia/Tokyo',
+        },
+        end: { dateTime: '2026-10-20T10:00:00+09:00', timeZone: 'Asia/Tokyo' },
+        colorId: '5',
+      },
+    });
+    await page.goto('/?date=2026-10-20&event=colored');
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    await editor.getByLabel('End time', { exact: true }).fill('08:00');
+    await editor.getByRole('button', { name: 'Save event' }).click();
+    await expect(editor.getByRole('alert')).toHaveText(
+      'End must be after start.',
+    );
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
   test('moves an event to another day from the editor calendar', async ({
     page,
   }) => {

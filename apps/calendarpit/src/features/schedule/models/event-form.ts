@@ -159,3 +159,36 @@ export function toEventBody(values: EventFormValues, calendar: Calendar) {
     extendedProperties: parseProperties(values.extendedProperties),
   };
 }
+
+/** A stored event field that an admin editor save removes or resets. */
+export type RemovedField =
+  | 'recurrence'
+  | 'attendees'
+  | 'conferenceData'
+  | 'colorId'
+  | 'visibility'
+  | 'reminders';
+
+/**
+ * Returns the fields a save from the editor would remove from `event`, in a
+ * stable order. The editor replaces the event with `PUT` and sends only the
+ * basic fields, so recurrence (and its stored exceptions), attendees (and
+ * their invitation copies), conference data, color, and visibility are
+ * dropped, and custom reminders reset to the default.
+ *
+ * Absent values, empty lists, `visibility: 'default'`, and
+ * `reminders: { useDefault: true }` already match what a save leaves behind,
+ * so they are not reported.
+ */
+export function fieldsRemovedBySave(event: CalendarEvent): RemovedField[] {
+  const removed: RemovedField[] = [];
+  if (event.recurrence?.length) removed.push('recurrence');
+  if (event.attendees?.length) removed.push('attendees');
+  if (event.conferenceData && Object.keys(event.conferenceData).length)
+    removed.push('conferenceData');
+  if (event.colorId) removed.push('colorId');
+  if (event.visibility && event.visibility !== 'default')
+    removed.push('visibility');
+  if (event.reminders && !event.reminders.useDefault) removed.push('reminders');
+  return removed;
+}
