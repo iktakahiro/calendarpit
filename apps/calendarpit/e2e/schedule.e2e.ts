@@ -141,14 +141,14 @@ test.describe('schedule', () => {
     const editor = page.getByRole('region', { name: 'Event editor' });
     await expect(
       editor.getByText(
-        'Saving removes Recurrence, Attendees from this event. Set them through the API instead.',
+        'Saving here removes API-only data (recurrence, attendees). Update this event through the API instead.',
       ),
     ).toBeVisible();
 
     await editor.getByLabel('Summary', { exact: true }).fill('Standup (new)');
     await editor.getByRole('button', { name: 'Save event' }).click();
     const dialog = page.getByRole('alertdialog', {
-      name: 'Save and remove these fields?',
+      name: 'Remove API-only data and save?',
     });
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Cancel' }).click();
@@ -158,8 +158,15 @@ test.describe('schedule', () => {
       recurrence: ['RRULE:FREQ=DAILY;COUNT=3'],
     });
 
+    // Enter in a field asks the same question as a click on Save.
+    await editor.getByLabel('Summary', { exact: true }).press('Enter');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await stored()).toMatchObject({ summary: 'Standup' });
+
     await editor.getByRole('button', { name: 'Save event' }).click();
-    await dialog.getByRole('button', { name: 'Save and remove' }).click();
+    await dialog.getByRole('button', { name: 'Remove data and save' }).click();
     await expect(toast(page, 'Event saved.')).toBeVisible();
     const saved = await stored();
     expect(saved.summary).toBe('Standup (new)');
@@ -187,6 +194,12 @@ test.describe('schedule', () => {
     const editor = page.getByRole('region', { name: 'Event editor' });
     await editor.getByLabel('End time', { exact: true }).fill('08:00');
     await editor.getByRole('button', { name: 'Save event' }).click();
+    await expect(editor.getByRole('alert')).toHaveText(
+      'End must be after start.',
+    );
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+
+    await editor.getByLabel('Summary', { exact: true }).press('Enter');
     await expect(editor.getByRole('alert')).toHaveText(
       'End must be after start.',
     );

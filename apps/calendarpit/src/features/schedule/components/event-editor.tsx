@@ -44,6 +44,7 @@ export function EventEditor({
   const t = useMessages();
   const locale = useLocale();
   const panel = useRef<HTMLElement>(null);
+  const saveTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     // Move focus into the editor so keyboard and narrow-screen users land on it.
     panel.current?.focus({ preventScroll: true });
@@ -126,8 +127,21 @@ export function EventEditor({
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          // Implicit submission (Enter in a field) must not skip the dialog.
           if (!removed.length) submit();
+        }}
+        onKeyDown={(e) => {
+          // With the dialog trigger in place of a submit button, Enter in a
+          // field would do nothing. Send it through the same validation and
+          // confirmation as a click on Save.
+          if (
+            removed.length &&
+            e.key === 'Enter' &&
+            !e.nativeEvent.isComposing &&
+            e.target instanceof HTMLInputElement
+          ) {
+            e.preventDefault();
+            saveTrigger.current?.click();
+          }
         }}
       >
         <form.Field name='summary'>
@@ -272,6 +286,7 @@ export function EventEditor({
                 <ConfirmButton
                   variant='primary'
                   loading={submitting}
+                  triggerRef={saveTrigger}
                   label={t['event.save']}
                   title={t['event.removesTitle']}
                   description={t['event.removesDescription'](removedNames)}
