@@ -1,6 +1,6 @@
 import { Button } from '@cloudflare/kumo/components/button';
 import { Dialog } from '@cloudflare/kumo/components/dialog';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { useMessages } from './language';
 
 /** Button variants a confirmation trigger may use. */
@@ -21,6 +21,13 @@ export type ConfirmButtonProps = {
   size?: 'sm' | 'base' | 'lg';
   className?: string;
   disabled?: boolean;
+  /** Shows the trigger's spinner and disables it while the action runs. */
+  loading?: boolean;
+  /**
+   * Ref to the trigger button, so a caller can open the dialog the same way
+   * a click does, for example from a form's implicit submission.
+   */
+  triggerRef?: Ref<HTMLButtonElement>;
   /** Dialog heading, phrased as the question being asked. */
   title: string;
   /** What the action changes, including anything it cannot undo. */
@@ -62,6 +69,8 @@ export function ConfirmButton(props: ConfirmButtonProps) {
     size,
     className,
     disabled,
+    loading,
+    triggerRef,
     title,
     description,
     confirmLabel,
@@ -69,7 +78,15 @@ export function ConfirmButton(props: ConfirmButtonProps) {
     confirm,
   } = props;
   const t = useMessages();
-  const shared = { variant, size, className, disabled, icon };
+  const shared = {
+    variant,
+    size,
+    className,
+    disabled,
+    loading,
+    icon,
+    ref: triggerRef,
+  };
   return (
     <Dialog.Root
       role='alertdialog'

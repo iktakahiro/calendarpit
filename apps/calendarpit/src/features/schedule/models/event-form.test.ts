@@ -3,6 +3,7 @@ import type { Calendar, CalendarEvent } from '@calendarpit/server';
 import {
   datePart,
   eventFormValues,
+  fieldsRemovedBySave,
   timePart,
   toEventBody,
   toggleAllDay,
@@ -10,6 +11,7 @@ import {
   withDate,
   withTime,
   type EventFormValues,
+  type RemovedField,
 } from './event-form';
 import { messages } from '../../../lib/messages';
 
@@ -170,4 +172,76 @@ test('toEventBody sends local times with the calendar zone, or dates', () => {
       calendar,
     ).end,
   ).toEqual({ date: '2026-10-20' });
+});
+
+describe('fieldsRemovedBySave', () => {
+  const plain = {
+    id: 'plain',
+    summary: 'Plain',
+    start: { dateTime: '2026-10-19T01:00:00Z' },
+    end: { dateTime: '2026-10-19T02:00:00Z' },
+  } as CalendarEvent;
+  const event = (extra: Partial<CalendarEvent>): CalendarEvent => ({
+    ...plain,
+    ...extra,
+  });
+
+  test('reports nothing for a plain event', () => {
+    expect(fieldsRemovedBySave(plain)).toEqual([]);
+  });
+
+  test.each([
+    ['recurrence', { recurrence: ['RRULE:FREQ=WEEKLY'] }],
+    [
+      'attendees',
+      {
+        attendees: [
+          { email: 'sam@example.test', responseStatus: 'needsAction' },
+        ],
+      },
+    ],
+    ['conferenceData', { conferenceData: { conferenceId: 'abc-defg-hij' } }],
+    ['colorId', { colorId: '5' }],
+    ['visibility', { visibility: 'private' }],
+    [
+      'reminders',
+      {
+        reminders: {
+          useDefault: false,
+          overrides: [{ method: 'popup', minutes: 10 }],
+        },
+      },
+    ],
+  ] satisfies [RemovedField, Partial<CalendarEvent>][])(
+    'reports %s',
+    (field, extra) => {
+      expect(fieldsRemovedBySave(event(extra))).toEqual([field]);
+    },
+  );
+
+  test('lists several fields in a stable order', () => {
+    expect(
+      fieldsRemovedBySave(
+        event({
+          reminders: { useDefault: false },
+          colorId: '2',
+          recurrence: ['RRULE:FREQ=DAILY'],
+        }),
+      ),
+    ).toEqual(['recurrence', 'colorId', 'reminders']);
+  });
+
+  test('does not count values a save already leaves behind', () => {
+    expect(
+      fieldsRemovedBySave(
+        event({
+          recurrence: [],
+          attendees: [],
+          conferenceData: {},
+          visibility: 'default',
+          reminders: { useDefault: true },
+        }),
+      ),
+    ).toEqual([]);
+  });
 });
