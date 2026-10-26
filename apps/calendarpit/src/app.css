@@ -207,6 +207,10 @@ h3 {
   font-size: 12px;
   color: var(--muted);
 }
+p.hint {
+  /* A note that wraps should not end on a single word. */
+  text-wrap: pretty;
+}
 kbd {
   display: inline-block;
   min-width: 1.6em;
