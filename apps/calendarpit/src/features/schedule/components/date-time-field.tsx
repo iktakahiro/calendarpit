@@ -19,6 +19,8 @@ import { datePart, timePart, withDate, withTime } from '../models/event-form';
  * which a list of preset slots would lose.
  *
  * The two halves are announced as `<name> date` and `<name> time` in English.
+ * While `errorId` is set, both halves are marked invalid and described by the
+ * element with that id.
  */
 export function DateTimeField({
   name,
@@ -26,6 +28,7 @@ export function DateTimeField({
   allDay,
   change,
   blur,
+  errorId,
 }: {
   /** Names the two controls, for example `Start`. */
   name: string;
@@ -34,10 +37,19 @@ export function DateTimeField({
   allDay: boolean;
   change: (value: string) => void;
   blur: () => void;
+  /**
+   * Id of the rendered error message for this field. Pass it only while an
+   * error is shown: it sets `aria-invalid` and `aria-describedby` on the date
+   * button and the time input, and leaving it out removes both.
+   */
+  errorId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const t = useMessages();
   const date = datePart(value);
+  const errorProps = errorId
+    ? ({ 'aria-invalid': true, 'aria-describedby': errorId } as const)
+    : {};
   return (
     <div className='date-time'>
       <Popover open={open} onOpenChange={setOpen}>
@@ -49,6 +61,7 @@ export function DateTimeField({
               aria-label={t['event.dateLabel'](name, date)}
               icon={<Icon name='calendar' />}
               onBlur={blur}
+              {...errorProps}
             >
               {date}
             </Button>
@@ -74,6 +87,7 @@ export function DateTimeField({
           value={timePart(value)}
           onBlur={blur}
           onChange={(e) => change(withTime(value, e.target.value))}
+          {...errorProps}
         />
       )}
     </div>
