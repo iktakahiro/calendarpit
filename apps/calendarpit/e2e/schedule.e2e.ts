@@ -1,4 +1,4 @@
-import { expect, test, toast } from './support/fixtures';
+import { expect, sectionLink, test, toast } from './support/fixtures';
 
 test.describe('schedule', () => {
   test('moves the week view by a week from the toolbar', async ({ page }) => {
@@ -278,5 +278,60 @@ test.describe('schedule', () => {
     await expect(page).toHaveURL(/calendar=alex-personal/);
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Personal' })).toBeVisible();
+  });
+});
+
+test.describe('schedule empty states', () => {
+  test('opens Calendars for a user without calendars', async ({
+    page,
+    request,
+  }) => {
+    const created = await request.post('/__calendarpit/users', {
+      data: { id: 'kim', name: 'Kim Lee', email: 'kim@example.test' },
+    });
+    expect(created.status()).toBe(201);
+
+    await page.goto('/?user=kim');
+    const sheet = page.getByRole('region', { name: 'Daily events' });
+    await expect(sheet.getByText('No calendar selected')).toBeVisible();
+    await expect(sheet.getByText('Add a calendar for Kim Lee.')).toBeVisible();
+
+    await sheet.getByRole('button', { name: 'Open Calendars' }).click();
+
+    await expect(page).toHaveURL(/\/calendars\?user=kim$/);
+    await expect(sectionLink(page, 'Calendars')).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(
+      page.getByRole('combobox', { name: 'Test user' }),
+    ).toContainText('Kim Lee');
+  });
+
+  test('opens Users when the workspace has no users', async ({
+    page,
+    request,
+  }) => {
+    for (const id of ['alex', 'sam']) {
+      const deleted = await request.delete(`/__calendarpit/users/${id}`, {
+        data: {},
+      });
+      expect(deleted.status()).toBe(204);
+    }
+
+    await page.goto('/');
+    const sheet = page.getByRole('region', { name: 'Daily events' });
+    await expect(sheet.getByText('No calendar selected')).toBeVisible();
+    await expect(
+      sheet.getByText('Create a test user, then add a calendar.'),
+    ).toBeVisible();
+
+    await sheet.getByRole('button', { name: 'Open Users' }).click();
+
+    await expect(page).toHaveURL(/\/users$/);
+    await expect(sectionLink(page, 'Users')).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 });

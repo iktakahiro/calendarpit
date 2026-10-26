@@ -45,11 +45,9 @@ function Schedule() {
           }),
         })
       }
-      openSettings={() =>
-        navigate({
-          to: '/settings',
-          search: { user: search.user, calendar: search.calendar },
-        })
+      openUsers={() => navigate({ to: '/users', search: {} })}
+      openCalendars={() =>
+        navigate({ to: '/calendars', search: { user: search.user } })
       }
     />
   );
