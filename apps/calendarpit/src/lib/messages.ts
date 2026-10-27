@@ -629,7 +629,7 @@ const ja = {
   'connections.revokeTitle': (user: string, client: string) =>
     `${user} と ${client} の接続を取り消しますか？`,
   'connections.revokeDescription':
-    'この接続のトークンは使えなくなり、watch チャネルも停止します。再接続するには、アプリからもう一度認可してください。',
+    'この接続のトークンは使えなくなり、Watch チャンネルも停止します。再接続するには、アプリからもう一度認可してください。',
   'connections.revokeConfirm': '接続を取り消す',
   'connections.revokeLabel': (user: string, client: string) =>
     `${user} と ${client} の接続を取り消す`,
@@ -639,7 +639,7 @@ const ja = {
   'connections.emptyDescription':
     'テストユーザーが同意画面でアプリへのアクセスを許可すると、接続がここに表示されます。試すには SDK サンプルを起動します:',
 
-  'watch.channels': 'Watch チャネル',
+  'watch.channels': 'Watch チャンネル',
   'watch.activeCount': (count: number) => `有効なチャネル${count}件`,
   'watch.expires': '有効期限 ',
   'watch.watching': '監視中',
