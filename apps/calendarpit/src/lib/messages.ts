@@ -237,7 +237,7 @@ const en = {
   'connections.revokeTitle': (user: string, client: string) =>
     `Revoke ${user}'s connection to ${client}?`,
   'connections.revokeDescription':
-    "The app's tokens stop working and its watch channels stop. This cannot be undone; the app must be authorized again to reconnect.",
+    "This connection's tokens stop working and its watch channels stop. Authorize again from your app to reconnect.",
   'connections.revokeConfirm': 'Revoke connection',
   'connections.revokeLabel': (user: string, client: string) =>
     `Revoke ${user}'s connection to ${client}`,
@@ -629,7 +629,7 @@ const ja = {
   'connections.revokeTitle': (user: string, client: string) =>
     `${user} と ${client} の接続を取り消しますか？`,
   'connections.revokeDescription':
-    'このアプリのトークンは使えなくなり、Watch チャネルも停止します。この操作は元に戻せません。再び接続するには、アプリからもう一度認可してください。',
+    'この接続のトークンは使えなくなり、watch チャネルも停止します。再接続するには、アプリからもう一度認可してください。',
   'connections.revokeConfirm': '接続を取り消す',
   'connections.revokeLabel': (user: string, client: string) =>
     `${user} と ${client} の接続を取り消す`,
