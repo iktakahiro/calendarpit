@@ -234,6 +234,13 @@ const en = {
   'connections.revoked': 'Revoked',
   'connections.active': 'Active',
   'connections.revoke': 'Revoke',
+  'connections.revokeTitle': (user: string, client: string) =>
+    `Revoke ${user}'s connection to ${client}?`,
+  'connections.revokeDescription':
+    "The app's tokens stop working and its watch channels stop. This cannot be undone; the app must be authorized again to reconnect.",
+  'connections.revokeConfirm': 'Revoke connection',
+  'connections.revokeLabel': (user: string, client: string) =>
+    `Revoke ${user}'s connection to ${client}`,
   'connections.revokedNotice':
     'Connection revoked. Its tokens no longer work; authorize again from your app.',
   'connections.empty': 'No connections yet',
@@ -619,6 +626,13 @@ const ja = {
   'connections.revoked': '取り消し済み',
   'connections.active': '有効',
   'connections.revoke': '取り消す',
+  'connections.revokeTitle': (user: string, client: string) =>
+    `${user} と ${client} の接続を取り消しますか？`,
+  'connections.revokeDescription':
+    'このアプリのトークンは使えなくなり、Watch チャネルも停止します。この操作は元に戻せません。再び接続するには、アプリからもう一度認可してください。',
+  'connections.revokeConfirm': '接続を取り消す',
+  'connections.revokeLabel': (user: string, client: string) =>
+    `${user} と ${client} の接続を取り消す`,
   'connections.revokedNotice':
     '接続を取り消しました。この接続のトークンは使えなくなったため、アプリからもう一度認可してください。',
   'connections.empty': '接続はまだありません',
