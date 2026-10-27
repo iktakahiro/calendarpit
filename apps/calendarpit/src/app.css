@@ -595,9 +595,14 @@ input[type='time'] {
   min-width: 150px;
   font-variant-numeric: tabular-nums;
 }
-/* react-day-picker inside the Kumo popover: keep "today" on our signal color. */
-.rdp-today:not(.rdp-selected) .rdp-day_button {
-  color: var(--signal);
+/* react-day-picker in the Kumo popover: Kumo colors today through --rdp-today-color,
+   so set the token instead of out-specifying its selector. */
+.rdp-root,
+:root[data-mode='dark'] .rdp-root {
+  --rdp-today-color: var(--signal-ink);
+}
+.rdp-today:not(.rdp-outside):not(.rdp-selected) .rdp-day_button {
+  box-shadow: inset 0 0 0 1.5px var(--signal);
 }
 .tz-chip {
   border-style: dashed;
