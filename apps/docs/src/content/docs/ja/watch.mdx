@@ -73,7 +73,7 @@ curl -X POST http://127.0.0.1:4173/calendar/v3/calendars/primary/events/watch \
 
 Calendarpit は watch のレスポンスを返す前に、最初の `sync` 通知（メッセージ番号 `1`）を配信待ちに入れます。そのため、呼び出し側が `200` レスポンスを受け取る前にコールバックが届くことがあります。
 
-`events.watch` では、その後イベントの書き込みが確定するたびに、影響を受けたすべてのカレンダーの watch チャネルへ `exists` 通知を送ります。
+`events.watch` では、その後イベントの書き込みが確定するたびに、影響を受けたすべてのカレンダーの Watch チャネルへ `exists` 通知を送ります。
 
 - **書き込みの種類**: insert・update・patch・delete。
 - **書き込み元**: Calendar API・管理 API・管理画面。

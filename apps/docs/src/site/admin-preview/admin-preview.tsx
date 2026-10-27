@@ -78,7 +78,7 @@ const showcaseCopy: Record<'en' | 'ja', ShowcaseItem[]> = {
     {
       view: 'watch',
       label: 'Watch',
-      text: '有効な watch チャネルと Webhook の配信履歴です。試行回数と、エンドポイントが返した HTTP ステータスを確認できます。',
+      text: '有効な Watch チャネルと Webhook の配信履歴です。試行回数と、エンドポイントが返した HTTP ステータスを確認できます。',
     },
     {
       view: 'connections',

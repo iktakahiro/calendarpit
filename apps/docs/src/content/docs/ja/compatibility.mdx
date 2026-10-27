@@ -27,7 +27,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 | GET                     | `/calendars/{calendarId}/events/{eventId}/instances` | 繰り返しイベントのインスタンスと例外                       |
 | POST                    | `/freeBusy`                                          | 結合して期間内に切り詰めた busy 区間。最大50カレンダー     |
 | POST                    | `/calendars/{calendarId}/events/watch`               | イベントの変更を購読                                       |
-| POST                    | `/channels/stop`                                     | イベントまたはカレンダーリストの watch チャネルを停止      |
+| POST                    | `/channels/stop`                                     | イベントまたはカレンダーリストの Watch チャネルを停止      |
 
 `calendarList.list` のクエリパラメータは、後述の「一覧とページング」に記載しています。
 
@@ -69,7 +69,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
 | Calendars    | `patch`             |  ❌  |                                                                          |
 | Calendars    | `transferOwnership` |  ❌  | 所有者はカレンダーごとに1人で、共有の仕組みはありません                  |
 | Calendars    | `update`            |  ❌  |                                                                          |
-| Channels     | `stop`              |  ✅  | イベントまたはカレンダーリストの watch チャネルを停止します              |
+| Channels     | `stop`              |  ✅  | イベントまたはカレンダーリストの Watch チャネルを停止します              |
 | Colors       | `get`               |  ❌  | イベントの色 1–11 とカレンダーの色 1–24 はエンドポイントなしで使えます   |
 | Events       | `list`              |  ✅  | 時間範囲、ページング、`singleEvents`、同期トークン、フィルタ             |
 | Events       | `get`               |  ✅  | `cancelled` の削除済みレコードと繰り返しのインスタンス ID も取得できます |
@@ -188,7 +188,7 @@ Calendarpit は次のエンドポイントを提供します。アクセスの�
   - 省略した `summaryOverride`、`defaultReminders`、`notificationSettings` は消去されます。
   - `hidden` と `selected` は `false` に戻ります。一度も書き込んでいないエントリは `selected: true` のままです。
   - 色を指定しない場合、`colorId` は `"1"` に戻ります。
-- **内容が変わらない書き込み**は `200` を返します。`etag` は変わらず、カレンダーリストのページトークンも無効にならず、watch チャネルにも通知しません。
+- **内容が変わらない書き込み**は `200` を返します。`etag` は変わらず、カレンダーリストのページトークンも無効にならず、Watch チャネルにも通知しません。
 
 ### 色
 

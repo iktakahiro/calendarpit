@@ -173,15 +173,15 @@ curl --fail-with-body http://127.0.0.1:4173/oauth/revoke \
 
 - `token` フォームフィールド、または `?token=` クエリパラメータに、アクセストークンまたはリフレッシュトークンを渡します。
 - クライアント認証は不要です。
-- どちらのトークンを失効させても、接続（grant）全体が失効します。その接続のアクセストークン、リフレッシュトークン、認可コードがすべて削除され、watch チャネルが停止します。
+- どちらのトークンを失効させても、接続（grant）全体が失効します。その接続のアクセストークン、リフレッシュトークン、認可コードがすべて削除され、Watch チャネルが停止します。
 - 未知のトークンを渡した場合は、空のボディで `200` を返します。
 - `token` が未指定、空、または空白のみの場合は `400 invalidParameter` を返します。
 
 次の操作でもトークンが無効になります。
 
-- **接続の失効**（管理画面、`POST /__calendarpit/connections/{grantId}/revoke`）: その接続のトークンが無効化され、watch チャネルが停止します。
-- **テストユーザーの削除**（`DELETE /__calendarpit/users/{id}`）: そのユーザーのトークンが無効化され、watch チャネルが停止します。
-- **リセットまたは Fixture の読み込み**（`POST /__calendarpit/reset` または `POST /__calendarpit/fixtures`）: すべての接続、トークン、認可コード、保留中の同意が削除され、すべての watch チャネルが停止します。
+- **接続の失効**（管理画面、`POST /__calendarpit/connections/{grantId}/revoke`）: その接続のトークンが無効化され、Watch チャネルが停止します。
+- **テストユーザーの削除**（`DELETE /__calendarpit/users/{id}`）: そのユーザーのトークンが無効化され、Watch チャネルが停止します。
+- **リセットまたは Fixture の読み込み**（`POST /__calendarpit/reset` または `POST /__calendarpit/fixtures`）: すべての接続、トークン、認可コード、保留中の同意が削除され、すべての Watch チャネルが停止します。
 
 詳細は[テスト制御 API](/ja/test-control/)を参照してください。
 

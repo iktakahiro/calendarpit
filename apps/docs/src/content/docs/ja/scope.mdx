@@ -95,7 +95,7 @@ Calendarpit は、ローカルで動く Google Calendar 互換の API・OAuth �
 - 基本的なイベントエディタ
 - テストユーザーとカレンダーの管理
 - OAuth 接続の失効
-- watch チャネルと配信ログの確認
+- Watch チャネルと配信ログの確認
 - マスク処理済みのリクエスト履歴
 - Fixture の読み込みとリセット操作
 - Calendar API のレート制限シミュレーション（デフォルトは `off`、`production` または `error-test` を選択可能）
@@ -146,7 +146,7 @@ Calendarpit は、ローカルで動く Google Calendar 互換の API・OAuth �
 `POST /__calendarpit/reset` は、起動時 Fixture を同じ ID とカレンダーリストの ETag で復元します。次のものを消去します。
 
 - トークン
-- watch チャネル
+- Watch チャネル
 - リクエスト履歴
 - カレンダーリストの設定
 - カレンダーの削除済みレコード
@@ -251,7 +251,7 @@ Calendarpit では、次の E2E の連携ワークフローを再現できます
 2. `events.watch` チャネルを登録し、初回の `sync` 通知を受け取ります。
 3. イベントを作成し、`freebusy.query` で busy 区間を確認します。
 4. イベントを更新・削除し、`exists` 通知を受け取って状態を再取得します。
-5. `channels.stop` で watch チャネルを停止し、以降の変更が配信されないことを確認します。
+5. `channels.stop` で Watch チャネルを停止し、以降の変更が配信されないことを確認します。
 6. 接続を失効させ、OAuth フローで再接続します。
 7. 同意画面で拒否し、`state` が保持され、既存のトークンが失われないことを確認します。
 8. `POST /__calendarpit/reset` でリセットし、同じ Fixture と ID でフローを繰り返します。
