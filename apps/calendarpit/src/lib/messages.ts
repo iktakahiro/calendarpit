@@ -414,7 +414,7 @@ const ja = {
   'section.watch.label': 'Watch',
   'section.watch.eyebrow': '通知',
   'section.watch.lede':
-    'アプリが作成した watch チャネルと、Calendarpit がそのチャネルに送った通知を確認します。すべてのカレンダーが対象です。',
+    'アプリが作成した Watch チャネルと、Calendarpit がそのチャネルに送った通知を確認します。すべてのカレンダーが対象です。',
   'section.connections.label': '接続',
   'section.connections.eyebrow': '連携',
   'section.connections.lede':
@@ -493,7 +493,7 @@ const ja = {
   'day.deleteLabel': (name: string) => `${name} を削除`,
   'day.deleteTitle': 'このイベントを削除しますか？',
   'day.deleteDescription': (name: string, calendar: string) =>
-    `${name} を ${calendar} から削除します。このカレンダーの watch チャネルには通知が送られます。`,
+    `${name} を ${calendar} から削除します。このカレンダーの Watch チャネルには通知が送られます。`,
   'day.deleteConfirm': 'イベントを削除',
   'day.emptyTitle': 'イベントはありません',
   'day.emptyDescription':
@@ -599,7 +599,7 @@ const ja = {
     'フォームから最初のカレンダーを追加してください。',
   'directory.calendar.deleteTitle': 'このカレンダーを削除しますか？',
   'directory.calendar.deleteDescription':
-    'カレンダーとそのイベントを削除し、このカレンダーの watch チャネルを停止します。リセットすると起動時の Fixture に戻ります。',
+    'カレンダーとそのイベントを削除し、このカレンダーの Watch チャネルを停止します。リセットすると起動時の Fixture に戻ります。',
   'directory.calendar.deleteConfirm': 'カレンダーを削除',
   'directory.calendar.name': 'カレンダー名',
   'directory.calendar.timeZone': 'タイムゾーン',
@@ -634,7 +634,7 @@ const ja = {
     'アプリが events.watch や calendarList.watch で作成したチャネルは、期限切れになるか停止されるまでここに表示されます。',
   'watch.deliveries': '配信ログ',
   'watch.deliveriesDescription':
-    'Calendarpit が watch チャネルのアドレスに送ったプッシュ通知を、新しい順に表示します。',
+    'Calendarpit が Watch チャネルのアドレスに送ったプッシュ通知を、新しい順に表示します。',
   'watch.columnChannel': 'チャネル / メッセージ',
   'watch.columnState': '状態',
   'watch.columnAttempts': '試行回数',
@@ -719,14 +719,14 @@ const ja = {
   'settings.loadFixture': 'Fixture を読み込む',
   'settings.loadTitle': 'この Fixture を読み込みますか？',
   'settings.loadDescription':
-    '現在のユーザー、カレンダー、イベント、OAuth クライアントを Fixture の内容で置き換え、接続、リクエスト履歴、watch チャネルを消去します。',
+    '現在のユーザー、カレンダー、イベント、OAuth クライアントを Fixture の内容で置き換え、接続、リクエスト履歴、Watch チャネルを消去します。',
   'settings.fixtureLoaded': 'Fixture を読み込みました。',
   'settings.reset': 'ワークスペースをリセット',
   'settings.resetDescription':
-    '起動時の Fixture に戻し、接続、リクエスト履歴、watch チャネルを消去します。',
+    '起動時の Fixture に戻し、接続、リクエスト履歴、Watch チャネルを消去します。',
   'settings.resetTitle': 'ワークスペースをリセットしますか？',
   'settings.resetConfirmDescription':
-    '起動時の Fixture が復元され、接続、リクエスト履歴、watch チャネルが消去されます。',
+    '起動時の Fixture が復元され、接続、リクエスト履歴、Watch チャネルが消去されます。',
   'settings.resetDone': '起動時の状態に戻しました。',
   'settings.currentState': '現在の状態',
   'settings.stateNote': (revision: string) =>
