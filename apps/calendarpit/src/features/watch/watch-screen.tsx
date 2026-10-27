@@ -5,6 +5,7 @@ import { Table } from '@cloudflare/kumo/components/table';
 import { Icon } from '../../components/icon';
 import { useLocale, useMessages } from '../../components/language';
 import { formatTimestamp } from '../../lib/format';
+import { deliveryStatusKey } from './models/delivery-status';
 
 const deliveryBadge = {
   delivered: 'success',
@@ -17,6 +18,10 @@ const deliveryBadge = {
 export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
   const t = useMessages();
   const locale = useLocale();
+  const statusLabel = (status: string) => {
+    const key = deliveryStatusKey(status);
+    return key ? t[key] : status;
+  };
   return (
     <div className='stack'>
       <section className='panel' aria-labelledby='channels-title'>
@@ -36,7 +41,11 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
                     <code>{c.id}</code>
                   </strong>
                   <p className='data-sub route'>
-                    <code>{c.calendarId ?? 'calendar list'}</code>
+                    {c.calendarId ? (
+                      <code>{c.calendarId}</code>
+                    ) : (
+                      <span>{t['watch.calendarListTarget']}</span>
+                    )}
                     <span className='arrow' aria-hidden='true'>
                       →
                     </span>
@@ -107,7 +116,7 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
                       </Table.Cell>
                       <Table.Cell>
                         <Badge variant={deliveryBadge[d.status] ?? 'secondary'}>
-                          {d.status}
+                          {statusLabel(d.status)}
                           {d.httpStatus ? ` · ${d.httpStatus}` : ''}
                         </Badge>
                       </Table.Cell>
