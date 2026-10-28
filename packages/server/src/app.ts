@@ -1,4 +1,6 @@
 import { fail } from './shared/errors';
+import { faultManagementRoutes } from './features/faults/fault-routes';
+import { injectCalendarFault } from './features/faults/fault-operations';
 import { readBody, requireSameOrigin } from './http/requests';
 import { errorResponse } from './http/responses';
 import { dispatch, type Route, type RouteContext } from './http/router';
@@ -54,6 +56,7 @@ const googleRoutes: Route[] = [
 const managementRoutes: Route[] = [
   ...statusManagementRoutes,
   ...quotaManagementRoutes,
+  ...faultManagementRoutes,
   ...historyManagementRoutes,
   ...fixtureManagementRoutes,
   ...watchManagementRoutes,
@@ -90,8 +93,10 @@ async function route(context: RouteContext): Promise<Response> {
   // Quota applies to every authenticated Calendar API path, before the
   // handler runs, so a rejected request does not change workspace data.
   // Requests without a valid token are not counted and get the route's 401.
-  if (url.pathname.startsWith('/calendar/v3'))
+  if (url.pathname.startsWith('/calendar/v3')) {
+    injectCalendarFault(workspace, request);
     enforceCalendarRateLimit(workspace, request, url);
+  }
   return (
     (await dispatch(googleRoutes, context)) ??
     fail('Unsupported API endpoint or method.', 501, 'unsupportedFeature')

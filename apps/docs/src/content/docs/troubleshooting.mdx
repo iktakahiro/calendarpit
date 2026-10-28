@@ -18,6 +18,8 @@ To investigate a failure, open **API history** (`http://127.0.0.1:4173/history`)
 
 Each entry on this page follows the same pattern: the exact **Error** output (when there is one), the likely **Cause**, and the **Fix**.
 
+A queued fault may also cause an OAuth or Calendar API error. Inspect `GET /__calendarpit/faults` and clear it with `DELETE /__calendarpit/faults`. See [Test control API](/test-control/#simulate-failures).
+
 ## Error response formats
 
 ### Google API error envelope
@@ -40,7 +42,7 @@ Calendar API routes (`/calendar/v3/*`), `/userinfo`, and management API routes (
 }
 ```
 
-- `domain` is `"calendarpit"` on top-level errors, except simulated Calendar API quota errors, which use `"usageLimits"` as Google does. Per-calendar errors inside a `freebusy.query` response use `"domain": "global"`.
+- `domain` is `"calendarpit"` on top-level errors, except injected Calendar errors and simulated quota errors, which use `global` or `"usageLimits"` as Google does. Per-calendar errors inside a `freebusy.query` response use `"domain": "global"`.
 - `401` responses include the `WWW-Authenticate: Bearer` header.
 - `400` validation errors without a more specific reason use `"reason": "invalidParameter"`.
 

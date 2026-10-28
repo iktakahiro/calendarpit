@@ -51,6 +51,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 | `PATCH` / `DELETE`                 | `/clients/{id}`                    | OAuth クライアントを編集・削除（`204`）します。                                |
 | `POST`                             | `/connections/{id}/revoke`         | 接続のトークンを取り消し、その接続の Watch チャネルを停止します（`204`）。     |
 | `POST`                             | `/deliveries/drain`                | 待機中の Webhook 配信が終わるまで待ち、配信ログを返します（`200`）。           |
+| `GET` / `PUT` / `DELETE`           | `/faults`                          | 疑似エラーの確認、追加、クリア（`200`）。                                      |
 | `PUT`                              | `/rate-limit`                      | Calendar API のレート制限モードを設定し、スナップショットを返します（`200`）。 |
 
 ### エンドポイントの詳細
@@ -71,6 +72,20 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` しても削除済みレコードは残ります。
 - **`/deliveries/drain`**: 待機中の配信のリトライが終わるまで待ちます。レスポンスは配信ログの配列です。
 - **`/rate-limit`**: `PUT` のボディは `{ "mode": "off" }`、`{ "mode": "production" }`、`{ "mode": "error-test" }` のいずれかです。未知のフィールドは `400 unsupportedFeature`、未知のモードは `400` を返します。モードはワークスペースに保存され、変更するとメモリ上のカウンタがクリアされます。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
+
+### エラーのシミュレーション
+
+`PUT /__calendarpit/faults` はエラーをキューに追加します。
+
+```json
+{ "target": "calendar", "kind": "rateLimitExceeded", "times": 2 }
+```
+
+`times` のデフォルトは 1 で、1 から 100 の整数を指定します。キューには最大 100 件を追加できます。未知のフィールド、対象、種類は `400` を返します。`GET /__calendarpit/faults` は残りの回数を含む `{ "faults": [...] }` を返し、`DELETE` はキューをクリアします。`/state` にも `faults` が含まれます。エラーはプロセス内の状態であり、Fixture や SQLite に保存されず、リセット、Fixture の読み込み、再起動でクリアされます。
+
+`target: "token"` の種類は `admin_policy_enforced` と `invalid_grant` です。次の有効なリフレッシュトークン交換で消費され、認可コードの交換では消費されません。`invalid_grant` は接続、そのトークン、Watch チャネルを失効させるため、リフレッシュトークンは以後使えません。`admin_policy_enforced` は接続を維持します。
+
+`target: "calendar"` の種類は `expired_access_token`、`invalid_credentials`、`forbidden`、`insufficientPermissions`、`rateLimitExceeded`、`backendError`、`serviceUnavailable` で、それぞれ 401、401、403、403、429、500、503 を返します。有効な Bearer トークンを持つリクエストだけが消費します。対象ごとに最も古いエラーを、クォータの計算とルート処理の前に消費します。期限切れのシミュレーションは元のトークンを失効させません。疑似エラーのレスポンスはリクエスト履歴に記録されます。
 
 ### 連鎖的な削除と管理 API からの書き込み
 

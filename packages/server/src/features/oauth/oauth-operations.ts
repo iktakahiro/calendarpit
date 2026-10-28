@@ -3,6 +3,7 @@ import { secret } from '../../shared/secrets';
 import { string } from '../../shared/validation';
 import type { Consent, Grant } from '../../model/oauth';
 import type { Workspace } from '../../workspace/workspace';
+import { consumeFault } from '../faults/fault-operations';
 import { stopChannel } from '../watch/channel-operations';
 import { identifyClient } from './oauth-client';
 import { oauthError } from './oauth-errors';
@@ -184,6 +185,16 @@ export function exchangeToken(
       oauthError('invalid_grant', 'Invalid refresh token.');
     if (params.has('scope') && params.get('scope') !== grant.scopes.join(' '))
       oauthError('invalid_scope', 'Refresh scope changes are unsupported.');
+    const fault = consumeFault(workspace, 'token');
+    if (fault === 'invalid_grant') {
+      revokeGrant(workspace, grant.id);
+      oauthError('invalid_grant', 'Token has been expired or revoked.');
+    }
+    if (fault === 'admin_policy_enforced')
+      oauthError(
+        'admin_policy_enforced',
+        'The administrator has blocked access to the requested scopes.',
+      );
     return issueTokens(workspace, grant, false);
   }
   return oauthError('unsupported_grant_type', 'Unsupported grant type.');

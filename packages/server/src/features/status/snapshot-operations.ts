@@ -1,3 +1,4 @@
+import { pendingFaults } from '../faults/fault-operations';
 import type { Workspace } from '../../workspace/workspace';
 import { publicClient } from '../oauth/oauth-client';
 import { expireChannels } from '../watch/channel-operations';
@@ -25,6 +26,7 @@ export function snapshot(workspace: Workspace) {
     notifications: workspace.notifications,
     revision: workspace.revision,
     rateLimitMode: workspace.rateLimitMode,
+    faults: pendingFaults(workspace),
   };
 }
 
