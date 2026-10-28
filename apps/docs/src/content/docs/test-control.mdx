@@ -81,11 +81,11 @@ All paths below are relative to `/__calendarpit`.
 { "target": "calendar", "kind": "rateLimitExceeded", "times": 2 }
 ```
 
-`times` defaults to 1 and must be an integer from 1 to 100. Up to 100 faults can be queued. Unknown fields, targets, and kinds return `400`. `GET /__calendarpit/faults` returns `{ "faults": [...] }` with remaining counts; `DELETE` clears the queue. `/state` also includes `faults`. Faults are process-local, are not saved in fixtures or SQLite, and are cleared by reset, fixture load, or restart.
+`times` defaults to 1 and must be an integer from 1 to 100. The queue holds up to 100 faults, and each `target` consumes its earliest queued fault independently. Unknown fields, targets, and kinds return `400`. `GET /__calendarpit/faults` returns `{ "faults": [...] }` with remaining counts; `DELETE` clears the queue. `/state` also includes `faults`. Faults are process-local, are not saved in fixtures or SQLite, and are cleared by reset, fixture load, or restart.
 
-For `target: "token"`, choose `admin_policy_enforced` or `invalid_grant`. The next valid refresh-token exchange consumes the fault; authorization-code exchanges do not. An injected `invalid_grant` revokes the connection, its tokens, and Watch channels, so the refresh token remains unusable. `admin_policy_enforced` leaves the connection intact.
+For `target: "token"`, choose `admin_policy_enforced` or `invalid_grant`. The next valid refresh-token exchange consumes the fault; authorization-code exchanges do not. An injected `invalid_grant` revokes the connection and its tokens and stops its watch channels, so the refresh token remains unusable. `admin_policy_enforced` leaves the connection intact.
 
-For `target: "calendar"`, choose `expired_access_token`, `invalid_credentials`, `forbidden`, `insufficientPermissions`, `rateLimitExceeded`, `backendError`, or `serviceUnavailable`. These return respectively 401, 401, 403, 403, 429, 500, or 503. Only requests with valid bearer tokens consume a fault. Each target consumes its earliest queued fault independently, before quota accounting or route handling. The expired-token simulation does not expire the underlying token. Injected responses are recorded in request history.
+For `target: "calendar"`, choose `expired_access_token` (`401`), `invalid_credentials` (`401`), `forbidden` (`403`), `insufficientPermissions` (`403`), `rateLimitExceeded` (`429`), `backendError` (`500`), or `serviceUnavailable` (`503`). Only `/calendar/v3` requests with a valid bearer token consume a fault. The fault is consumed before quota accounting and route handling, so the request is not counted against the [rate limits](/running/#calendar-api-rate-limits). Simulating `expired_access_token` does not expire the underlying token. Injected responses are recorded in request history.
 
 ### Cascades and admin writes
 

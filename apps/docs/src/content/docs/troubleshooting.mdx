@@ -42,7 +42,7 @@ Calendar API routes (`/calendar/v3/*`), `/userinfo`, and management API routes (
 }
 ```
 
-- `domain` is `"calendarpit"` on top-level errors, except injected Calendar errors and simulated quota errors, which use `global` or `"usageLimits"` as Google does. Per-calendar errors inside a `freebusy.query` response use `"domain": "global"`.
+- `domain` is `"calendarpit"` on top-level errors. The exceptions match Google: rate-limit-mode quota errors use `"usageLimits"`, and Calendar errors injected through `/faults` use `"global"` (`"usageLimits"` for `rateLimitExceeded`). Per-calendar errors inside a `freebusy.query` response use `"domain": "global"`.
 - `401` responses include the `WWW-Authenticate: Bearer` header.
 - `400` validation errors without a more specific reason use `"reason": "invalidParameter"`.
 
