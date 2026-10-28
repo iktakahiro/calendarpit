@@ -1,6 +1,6 @@
 {
   "name": "calendarpit",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "private": true,
   "description": "A local calendar service for development and repeatable tests.",
   "bin": {
