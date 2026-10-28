@@ -2,7 +2,7 @@ import type { User } from '@calendarpit/server';
 import { Button } from '@cloudflare/kumo/components/button';
 import { Input } from '@cloudflare/kumo/components/input';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { FieldError } from '../../../components/field-error';
 import { useMessages } from '../../../components/language';
 import { useWorkspaceBusy } from '../../workspace/hooks/use-workspace-mutation';
@@ -28,6 +28,7 @@ export function UserEditor({
   const busy = useWorkspaceBusy();
   const t = useMessages();
   const creating = create || !user;
+  const idPrefix = useId();
   const form = useForm({
     defaultValues: userFormValues(creating ? undefined : user),
     validationLogic: revalidateLogic({
@@ -75,33 +76,45 @@ export function UserEditor({
         }}
       >
         <form.Field name='name'>
-          {(field) => (
-            <label className='field'>
-              <span>{t['directory.user.name']}</span>
-              <Input
-                aria-label={t['directory.user.name']}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-              <FieldError errors={field.state.meta.errors} />
-            </label>
-          )}
+          {(field) => {
+            const errorId = `${idPrefix}-name-error`;
+            const invalid = Boolean(field.state.meta.errors[0]);
+            return (
+              <label className='field'>
+                <span>{t['directory.user.name']}</span>
+                <Input
+                  aria-label={t['directory.user.name']}
+                  value={field.state.value}
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                <FieldError id={errorId} errors={field.state.meta.errors} />
+              </label>
+            );
+          }}
         </form.Field>
         <form.Field name='email'>
-          {(field) => (
-            <label className='field'>
-              <span>{t['directory.user.email']}</span>
-              <Input
-                aria-label={t['directory.user.email']}
-                type='email'
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-              <FieldError errors={field.state.meta.errors} />
-            </label>
-          )}
+          {(field) => {
+            const errorId = `${idPrefix}-email-error`;
+            const invalid = Boolean(field.state.meta.errors[0]);
+            return (
+              <label className='field'>
+                <span>{t['directory.user.email']}</span>
+                <Input
+                  aria-label={t['directory.user.email']}
+                  type='email'
+                  value={field.state.value}
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                <FieldError id={errorId} errors={field.state.meta.errors} />
+              </label>
+            );
+          }}
         </form.Field>
         {submitError && (
           <p role='alert' className='error-message'>

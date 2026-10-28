@@ -181,14 +181,27 @@ test('an OAuth client callback can change without reloading the fixture', async 
   await page.getByRole('tab', { name: 'OAuth clients' }).click();
   await page.getByRole('button', { name: 'Edit sample-app' }).click();
   const editor = page.getByRole('form', { name: 'Edit sample-app' });
-  await editor.getByLabel('Redirect URIs').fill(`${moved}\nnot a url`);
+  const redirectUris = editor.getByLabel('Redirect URIs');
+  await expect(redirectUris).not.toHaveAttribute('aria-invalid');
+  await expect(redirectUris).not.toHaveAttribute('aria-describedby');
+  await redirectUris.fill(`${moved}\nnot a url`);
   await editor.getByRole('button', { name: 'Save client' }).click();
   await expect(
     editor.getByText(
       'Use absolute http or https URLs without a fragment or credentials.',
     ),
   ).toBeVisible();
-  await editor.getByLabel('Redirect URIs').fill(moved);
+  await expect(redirectUris).toHaveAttribute('aria-invalid', 'true');
+  await expect(redirectUris).toHaveAttribute(
+    'aria-describedby',
+    (await editor.getByRole('alert').getAttribute('id'))!,
+  );
+  await expect(redirectUris).toHaveAccessibleDescription(
+    'Use absolute http or https URLs without a fragment or credentials.',
+  );
+  await redirectUris.fill(moved);
+  await expect(redirectUris).not.toHaveAttribute('aria-invalid');
+  await expect(redirectUris).not.toHaveAttribute('aria-describedby');
   await editor.getByRole('button', { name: 'Save client' }).click();
   await expect(toast(page, 'OAuth client saved.')).toBeVisible();
   await expect(
@@ -355,7 +368,23 @@ test('faults can be queued and cleared from Settings', async ({ page }) => {
   await page
     .getByRole('option', { name: 'rateLimitExceeded (HTTP 429)' })
     .click();
-  await page.getByRole('spinbutton', { name: 'Count (1–100)' }).fill('2');
+  const count = page.getByRole('spinbutton', { name: 'Count (1–100)' });
+  await count.fill('0');
+  await page.getByRole('button', { name: 'Add fault' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Enter an integer from 1 to 100.',
+  );
+  await expect(count).toHaveAttribute('aria-invalid', 'true');
+  await expect(count).toHaveAttribute(
+    'aria-describedby',
+    (await page.getByRole('alert').getAttribute('id'))!,
+  );
+  await expect(count).toHaveAccessibleDescription(
+    'Enter an integer from 1 to 100.',
+  );
+  await count.fill('2');
+  await expect(count).not.toHaveAttribute('aria-invalid');
+  await expect(count).not.toHaveAttribute('aria-describedby');
   await page.getByRole('button', { name: 'Add fault' }).click();
   await expect(page.getByRole('list', { name: 'Queued faults' })).toContainText(
     'rateLimitExceeded (HTTP 429) · Remaining: 2',
