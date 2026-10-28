@@ -2,7 +2,7 @@ import { Button } from '@cloudflare/kumo/components/button';
 import { Input } from '@cloudflare/kumo/components/input';
 import { Select } from '@cloudflare/kumo/components/select';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { ConfirmButton } from '../../../components/confirm-button';
 import { FieldError } from '../../../components/field-error';
 import { Icon } from '../../../components/icon';
@@ -26,6 +26,7 @@ export function FaultsPanel() {
   const busy = useWorkspaceBusy();
   const [submitError, setSubmitError] = useState('');
   const [clearError, setClearError] = useState('');
+  const idPrefix = useId();
   const form = useForm({
     defaultValues: {
       target: 'token' as FaultTarget,
@@ -184,22 +185,28 @@ export function FaultsPanel() {
             )}
           </form.Subscribe>
           <form.Field name='count'>
-            {(field) => (
-              <label className='field'>
-                <span>{t['settings.faultsCount']}</span>
-                <Input
-                  aria-label={t['settings.faultsCount']}
-                  type='number'
-                  min={1}
-                  max={100}
-                  value={field.state.value}
-                  disabled={busy}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                />
-                <FieldError errors={field.state.meta.errors} />
-              </label>
-            )}
+            {(field) => {
+              const errorId = `${idPrefix}-count-error`;
+              const invalid = Boolean(field.state.meta.errors[0]);
+              return (
+                <label className='field'>
+                  <span>{t['settings.faultsCount']}</span>
+                  <Input
+                    aria-label={t['settings.faultsCount']}
+                    type='number'
+                    min={1}
+                    max={100}
+                    value={field.state.value}
+                    disabled={busy}
+                    aria-invalid={invalid || undefined}
+                    aria-describedby={invalid ? errorId : undefined}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                  />
+                  <FieldError id={errorId} errors={field.state.meta.errors} />
+                </label>
+              );
+            }}
           </form.Field>
           {submitError && (
             <p role='alert' className='error-message'>
