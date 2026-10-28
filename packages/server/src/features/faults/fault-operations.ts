@@ -1,6 +1,7 @@
 import { ApiError, fail } from '../../shared/errors';
 import { fields, object } from '../../shared/validation';
 import type { Workspace } from '../../workspace/workspace';
+import { validBearerGrant } from '../oauth/access-token-operations';
 
 const kinds = {
   token: ['admin_policy_enforced', 'invalid_grant'],
@@ -68,12 +69,7 @@ export function consumeFault(
 
 /** Rejects authenticated Calendar requests with the next queued Google-style error. */
 export function injectCalendarFault(workspace: Workspace, request: Request) {
-  const token = request.headers
-    .get('authorization')
-    ?.match(/^Bearer (\S+)$/i)?.[1];
-  const access = token && workspace.access.get(token);
-  const grant = access && workspace.grants.get(access.grantId);
-  if (!access || access.expires <= workspace.now() || !grant || grant.revoked)
+  if (!validBearerGrant(workspace, request.headers.get('authorization')))
     return;
   const kind = consumeFault(workspace, 'calendar');
   if (!kind) return;
