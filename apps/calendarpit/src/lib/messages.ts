@@ -234,6 +234,13 @@ const en = {
   'connections.revoked': 'Revoked',
   'connections.active': 'Active',
   'connections.revoke': 'Revoke',
+  'connections.revokeTitle': (user: string, client: string) =>
+    `Revoke ${user}'s connection to ${client}?`,
+  'connections.revokeDescription':
+    "This connection's tokens stop working and its watch channels stop. Authorize again from your app to reconnect.",
+  'connections.revokeConfirm': 'Revoke connection',
+  'connections.revokeLabel': (user: string, client: string) =>
+    `Revoke ${user}'s connection to ${client}`,
   'connections.revokedNotice':
     'Connection revoked. Its tokens no longer work; authorize again from your app.',
   'connections.empty': 'No connections yet',
@@ -256,6 +263,11 @@ const en = {
   'watch.columnAttempts': 'Attempts',
   'watch.columnTime': 'Time',
   'watch.columnStatus': 'Status',
+  'watch.calendarListTarget': 'Calendars',
+  'watch.statusDelivered': 'Delivered',
+  'watch.statusFailed': 'Failed',
+  'watch.statusQueued': 'Queued',
+  'watch.statusCancelled': 'Cancelled',
   'watch.attempts': (count: number) =>
     `${count} ${count === 1 ? 'attempt' : 'attempts'}`,
   'watch.emptyDeliveries': 'No deliveries yet',
@@ -643,6 +655,13 @@ const ja = {
   'connections.revoked': '取り消し済み',
   'connections.active': '有効',
   'connections.revoke': '取り消す',
+  'connections.revokeTitle': (user: string, client: string) =>
+    `${user} と ${client} の接続を取り消しますか？`,
+  'connections.revokeDescription':
+    'この接続のトークンは使えなくなり、Watch チャネルも停止します。再接続するには、アプリからもう一度認可してください。',
+  'connections.revokeConfirm': '接続を取り消す',
+  'connections.revokeLabel': (user: string, client: string) =>
+    `${user} と ${client} の接続を取り消す`,
   'connections.revokedNotice':
     '接続を取り消しました。この接続のトークンは使えなくなったため、アプリからもう一度認可してください。',
   'connections.empty': '接続はまだありません',
@@ -664,6 +683,11 @@ const ja = {
   'watch.columnAttempts': '試行回数',
   'watch.columnTime': '時刻',
   'watch.columnStatus': '結果',
+  'watch.calendarListTarget': 'カレンダー',
+  'watch.statusDelivered': '配信済み',
+  'watch.statusFailed': '失敗',
+  'watch.statusQueued': '配信待ち',
+  'watch.statusCancelled': '配信中止',
   'watch.attempts': (count: number) => `${count}回`,
   'watch.emptyDeliveries': '配信はまだありません',
   'watch.emptyDeliveriesDescription': '通知はここに表示されます。',

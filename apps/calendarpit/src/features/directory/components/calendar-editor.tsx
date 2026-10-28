@@ -3,7 +3,7 @@ import { Button } from '@cloudflare/kumo/components/button';
 import { Checkbox } from '@cloudflare/kumo/components/checkbox';
 import { Input } from '@cloudflare/kumo/components/input';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { FieldError } from '../../../components/field-error';
 import { useMessages } from '../../../components/language';
 import { useWorkspaceBusy } from '../../workspace/hooks/use-workspace-mutation';
@@ -37,6 +37,7 @@ export function CalendarEditor({
   const busy = useWorkspaceBusy();
   const t = useMessages();
   const creating = create || !calendar;
+  const idPrefix = useId();
   const form = useForm({
     defaultValues: calendarFormValues(creating ? undefined : calendar),
     validationLogic: revalidateLogic({
@@ -85,33 +86,45 @@ export function CalendarEditor({
         }}
       >
         <form.Field name='summary'>
-          {(field) => (
-            <label className='field'>
-              <span>{t['directory.calendar.name']}</span>
-              <Input
-                aria-label={t['directory.calendar.name']}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-              <FieldError errors={field.state.meta.errors} />
-            </label>
-          )}
+          {(field) => {
+            const errorId = `${idPrefix}-summary-error`;
+            const invalid = Boolean(field.state.meta.errors[0]);
+            return (
+              <label className='field'>
+                <span>{t['directory.calendar.name']}</span>
+                <Input
+                  aria-label={t['directory.calendar.name']}
+                  value={field.state.value}
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                <FieldError id={errorId} errors={field.state.meta.errors} />
+              </label>
+            );
+          }}
         </form.Field>
         <form.Field name='timeZone'>
-          {(field) => (
-            <label className='field'>
-              <span>{t['directory.calendar.timeZone']}</span>
-              <Input
-                aria-label={t['directory.calendar.timeZone']}
-                className='mono'
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-              <FieldError errors={field.state.meta.errors} />
-            </label>
-          )}
+          {(field) => {
+            const errorId = `${idPrefix}-timeZone-error`;
+            const invalid = Boolean(field.state.meta.errors[0]);
+            return (
+              <label className='field'>
+                <span>{t['directory.calendar.timeZone']}</span>
+                <Input
+                  aria-label={t['directory.calendar.timeZone']}
+                  className='mono'
+                  value={field.state.value}
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                <FieldError id={errorId} errors={field.state.meta.errors} />
+              </label>
+            );
+          }}
         </form.Field>
         <form.Field name='primary'>
           {(field) => (
