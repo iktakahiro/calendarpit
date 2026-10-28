@@ -1,5 +1,6 @@
 import { ApiError, fail } from '../../shared/errors';
 import type { Workspace } from '../../workspace/workspace';
+import { validBearerGrant } from '../oauth/access-token-operations';
 import {
   calendarWriteId,
   isRateLimitMode,
@@ -77,7 +78,10 @@ export function enforceCalendarRateLimit(
 ) {
   const mode = workspace.rateLimitMode;
   if (mode === 'off') return;
-  const userId = authenticatedUserId(workspace, request);
+  const userId = validBearerGrant(
+    workspace,
+    request.headers.get('authorization'),
+  )?.userId;
   if (!userId) return;
   const now = workspace.now();
   const log = usageLog(workspace);
@@ -164,24 +168,6 @@ function quotaUser(request: Request, url: URL) {
 function acceptedQuotaUser(value: string | null) {
   if (!value || value.length > 40) return undefined;
   return value;
-}
-
-/**
- * The user id behind a still-valid bearer token, or `undefined`.
- *
- * This does not call `authenticate`: scope checks and authentication errors
- * belong to the route that handles the request.
- */
-function authenticatedUserId(workspace: Workspace, request: Request) {
-  const token = request.headers
-    .get('authorization')
-    ?.match(/^Bearer (\S+)$/i)?.[1];
-  if (!token) return undefined;
-  const saved = workspace.access.get(token);
-  if (!saved || saved.expires <= workspace.now()) return undefined;
-  const grant = workspace.grants.get(saved.grantId);
-  if (!grant || grant.revoked) return undefined;
-  return grant.userId;
 }
 
 /** Resolves `primary` to the token user's primary calendar id. */

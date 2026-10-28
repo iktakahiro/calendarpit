@@ -51,12 +51,13 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 | `PATCH` / `DELETE`                 | `/clients/{id}`                    | OAuth クライアントを編集・削除（`204`）します。                                |
 | `POST`                             | `/connections/{id}/revoke`         | 接続のトークンを取り消し、その接続の Watch チャネルを停止します（`204`）。     |
 | `POST`                             | `/deliveries/drain`                | 待機中の Webhook 配信が終わるまで待ち、配信ログを返します（`200`）。           |
+| `GET` / `PUT` / `DELETE`           | `/faults`                          | 疑似エラーを確認、キューに追加、またはクリアします（`200`）。                  |
 | `PUT`                              | `/rate-limit`                      | Calendar API のレート制限モードを設定し、スナップショットを返します（`200`）。 |
 
 ### エンドポイントの詳細
 
 - **`/health`**: サーバーの `name`（`"Calendarpit"`）、`version`、`stage`、`storage`（`"memory"` または `"sqlite"`）を返します。機能フラグ `calendar`、`oauth`、`watch`、`fixtures` も返します。`HEAD` は空の `200` を返します。
-- **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision`、`rateLimitMode`（`off`、`production`、`error-test`）のスナップショットを返します。
+- **`/state`**: まず期限切れのチャネルを削除します。そのうえで、`storage`、`users`、`calendars`、`events`、`clients`（シークレットなし）、`connections`、`channels`（`token` は伏せ字）、`deliveries`、`notifications`、`revision`、`faults`、`rateLimitMode`（`off`、`production`、`error-test`）のスナップショットを返します。
 - **`/changes`**: `EventSource` 向けの [Server-Sent Events](https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events) ストリームです。Calendar API、OAuth、管理 API の書き込みや watch の配信によって保存された状態が変わると、`change` イベントを送ります。何も変えない読み取りではイベントを送りません。イベントに状態は含まれないため、`/state` や `/history` を読み直してください。コメント行で接続を維持し、サーバーが停止するとストリームは終了します。
 - **`/fixtures`**: ユーザー、カレンダー、イベント、クライアントを検証して置き換えます。ランタイム状態をクリアし、接続を無効にします。
 - **`/reset`**: 起動時 Fixture のリセット基準を復元し、ランタイム状態をすべてクリアします。
@@ -71,6 +72,20 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 - **`/calendars/{id}/events/{eventId}`**: `DELETE` しても削除済みレコードは残ります。
 - **`/deliveries/drain`**: 待機中の配信のリトライが終わるまで待ちます。レスポンスは配信ログの配列です。
 - **`/rate-limit`**: `PUT` のボディは `{ "mode": "off" }`、`{ "mode": "production" }`、`{ "mode": "error-test" }` のいずれかです。未知のフィールドは `400 unsupportedFeature`、未知のモードは `400` を返します。モードはワークスペースに保存され、変更するとメモリ上のカウンタがクリアされます。[Calendar API のレート制限](/ja/running/#calendar-api-のレート制限)を参照してください。
+
+### エラーのシミュレーション
+
+`PUT /__calendarpit/faults` は疑似エラーを 1 件キューの末尾に追加します。
+
+```json
+{ "target": "calendar", "kind": "rateLimitExceeded", "times": 2 }
+```
+
+`times` のデフォルトは 1 で、1 から 100 の整数を指定します。キューには最大 100 件まで保持でき、`target` ごとに独立して最も古い疑似エラーから消費されます。未知のフィールドや、未知の `target`・`kind` は `400` を返します。`GET /__calendarpit/faults` は残りの回数を含む `{ "faults": [...] }` を返し、`DELETE` はキューをクリアします。`/state` にも `faults` が含まれます。疑似エラーはプロセス内の状態であり、Fixture や SQLite には保存されず、リセット、Fixture の読み込み、再起動でクリアされます。
+
+`target: "token"` の `kind` には `admin_policy_enforced` または `invalid_grant` を指定します。次の有効なリフレッシュトークン交換で消費され、認可コードの交換では消費されません。疑似エラーの `invalid_grant` は接続とトークンを取り消し、Watch チャネルも停止するため、そのリフレッシュトークンは以後使えなくなります。`admin_policy_enforced` は接続を維持します。
+
+`target: "calendar"` の `kind` には、`expired_access_token`（`401`）、`invalid_credentials`（`401`）、`forbidden`（`403`）、`insufficientPermissions`（`403`）、`rateLimitExceeded`（`429`）、`backendError`（`500`）、`serviceUnavailable`（`503`）を指定できます。有効な Bearer トークンを持つ `/calendar/v3` のリクエストだけが疑似エラーを消費します。消費はクォータの計算とルート処理の前に行われるため、そのリクエストは[レート制限](/ja/running/#calendar-api-のレート制限)にカウントされません。`expired_access_token` を返しても、実際のアクセストークン自体は失効しません。疑似エラーのレスポンスもリクエスト履歴に記録されます。
 
 ### 連鎖的な削除と管理 API からの書き込み
 
@@ -108,7 +123,7 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 どちらのエンドポイントも、有効な[Watch チャネル](/ja/watch/)をすべて停止し、送信中の Webhook リクエストを中断します。さらに、次のものをクリアします。
 
 - OAuth 接続、アクセストークンとリフレッシュトークン、認可コード、処理中の同意
-- リクエスト履歴
+- リクエスト履歴と待機中の疑似エラー
 - [同期トークン](/ja/sync/)と、イベントおよびカレンダーリストのページトークン
 - カレンダーの削除済みレコード
 - ユーザーごとのカレンダーリスト設定（`calendarList.insert`/`patch`/`update` によるカスタマイズと、`calendarList.delete` による削除）
@@ -140,7 +155,7 @@ Calendarpit は、履歴の中の認証情報を次のようにマスクしま�
 
 - クライアントのシークレットが含まれません。`clients` には `id` と `redirectUris` だけが入ります。
 - チャネルのトークンは `"[REDACTED]"` と表示されます。
-- ランタイムのフィールド（`storage`、`connections`、`channels`、`deliveries`、`notifications`、`revision`、`rateLimitMode`）が含まれます。`POST /__calendarpit/fixtures` はこれらを `400`（`unsupportedFeature`）で拒否します。
+- ランタイムのフィールド（`storage`、`connections`、`channels`、`deliveries`、`notifications`、`revision`、`rateLimitMode`、`faults`）が含まれます。`POST /__calendarpit/fixtures` はこれらを `400`（`unsupportedFeature`）で拒否します。
 - カレンダーリストの設定は含まれません。設定は `calendarList.list`/`get` で取得してください。
 
 データの投入や再読み込みには、元の Fixture ファイルを残しておき、それを使ってください。

@@ -3,7 +3,9 @@ import { secret } from '../../shared/secrets';
 import { string } from '../../shared/validation';
 import type { Consent, Grant } from '../../model/oauth';
 import type { Workspace } from '../../workspace/workspace';
+import { consumeFault } from '../faults/fault-operations';
 import { stopChannel } from '../watch/channel-operations';
+import { validBearerGrant } from './access-token-operations';
 import { identifyClient } from './oauth-client';
 import { oauthError } from './oauth-errors';
 
@@ -27,11 +29,8 @@ export function authenticate(
   authorization: string | null,
   required: string[] = [],
 ): Grant {
-  const token = authorization?.match(/^Bearer (\S+)$/i)?.[1];
-  const saved = token ? workspace.access.get(token) : undefined;
-  const grant = saved ? workspace.grants.get(saved.grantId) : undefined;
-  if (!saved || saved.expires <= workspace.now() || !grant || grant.revoked)
-    fail('Invalid or expired access token.', 401, 'authError');
+  const grant = validBearerGrant(workspace, authorization);
+  if (!grant) fail('Invalid or expired access token.', 401, 'authError');
   if (required.length && !required.some((s) => grant.scopes.includes(s)))
     fail('Insufficient scope.', 403, 'insufficientPermissions');
   return grant;
@@ -184,6 +183,16 @@ export function exchangeToken(
       oauthError('invalid_grant', 'Invalid refresh token.');
     if (params.has('scope') && params.get('scope') !== grant.scopes.join(' '))
       oauthError('invalid_scope', 'Refresh scope changes are unsupported.');
+    const fault = consumeFault(workspace, 'token');
+    if (fault === 'invalid_grant') {
+      revokeGrant(workspace, grant.id);
+      oauthError('invalid_grant', 'Token has been expired or revoked.');
+    }
+    if (fault === 'admin_policy_enforced')
+      oauthError(
+        'admin_policy_enforced',
+        'The administrator has blocked access to the requested scopes.',
+      );
     return issueTokens(workspace, grant, false);
   }
   return oauthError('unsupported_grant_type', 'Unsupported grant type.');

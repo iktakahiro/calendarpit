@@ -1,3 +1,4 @@
+import { clearFaults } from '../faults/fault-operations';
 import type { Workspace } from '../../workspace/workspace';
 import { clearRateLimitUsage } from '../quota/rate-limit-operations';
 import { stopChannel } from '../watch/channel-operations';
@@ -11,6 +12,7 @@ import { parseFixture } from './fixture';
  */
 function clearRuntime(workspace: Workspace) {
   clearRateLimitUsage(workspace);
+  clearFaults(workspace);
   for (const channel of workspace.channels.values())
     stopChannel(workspace, channel);
   workspace.grants.clear();
