@@ -345,3 +345,38 @@ test.describe('with a Japanese browser', () => {
     );
   });
 });
+
+test('faults can be queued and cleared from Settings', async ({ page }) => {
+  await page.goto('/settings?tab=developer');
+  await expect(page.getByText('No faults queued.')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Target' }).click();
+  await page.getByRole('option', { name: 'Calendar API' }).click();
+  await page.getByRole('combobox', { name: 'Fault kind' }).click();
+  await page
+    .getByRole('option', { name: 'rateLimitExceeded (HTTP 429)' })
+    .click();
+  await page.getByRole('spinbutton', { name: 'Count (1–100)' }).fill('2');
+  await page.getByRole('button', { name: 'Add fault' }).click();
+  await expect(page.getByRole('list', { name: 'Queued faults' })).toContainText(
+    'rateLimitExceeded (HTTP 429) · Remaining: 2',
+  );
+  await page.getByRole('button', { name: 'Clear all faults' }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Clear all faults' })
+    .click();
+  await expect(page.getByText('No faults queued.')).toBeVisible();
+});
+
+test.describe('fault controls in Japanese', () => {
+  test.use({ locale: 'ja-JP' });
+  test('uses Japanese labels', async ({ page }) => {
+    await page.goto('/settings?tab=developer');
+    await expect(
+      page.getByRole('heading', { name: 'API 疑似エラー' }),
+    ).toBeVisible();
+    await expect(page.getByRole('combobox', { name: '対象' })).toContainText(
+      'トークン更新',
+    );
+  });
+});
