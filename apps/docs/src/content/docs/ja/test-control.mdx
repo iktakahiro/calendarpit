@@ -75,8 +75,6 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 
 ### エラーのシミュレーション
 
-疑似エラーは「設定 > 開発者」からもキューに追加できます。
-
 `PUT /__calendarpit/faults` は疑似エラーを 1 件キューの末尾に追加します。
 
 ```json
@@ -84,6 +82,8 @@ Calendarpit には、`/__calendarpit` の下にローカルの管理 API があ�
 ```
 
 `times` のデフォルトは 1 で、1 から 100 の整数を指定します。キューには最大 100 件まで保持でき、`target` ごとに独立して最も古い疑似エラーから消費されます。未知のフィールドや、未知の `target`・`kind` は `400` を返します。`GET /__calendarpit/faults` は残りの回数を含む `{ "faults": [...] }` を返し、`DELETE` はキューをクリアします。`/state` にも `faults` が含まれます。疑似エラーはプロセス内の状態であり、Fixture や SQLite には保存されず、リセット、Fixture の読み込み、再起動でクリアされます。
+
+管理 UI の **設定 → 開発者** からも疑似エラーをキューに追加できます。
 
 `target: "token"` の `kind` には `admin_policy_enforced` または `invalid_grant` を指定します。次の有効なリフレッシュトークン交換で消費され、認可コードの交換では消費されません。疑似エラーの `invalid_grant` は接続とトークンを取り消し、Watch チャネルも停止するため、そのリフレッシュトークンは以後使えなくなります。`admin_policy_enforced` は接続を維持します。
 

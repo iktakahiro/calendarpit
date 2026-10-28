@@ -75,8 +75,6 @@ All paths below are relative to `/__calendarpit`.
 
 ### Simulate failures
 
-Faults can also be queued from Settings > Developer.
-
 `PUT /__calendarpit/faults` appends one fault to the queue:
 
 ```json
@@ -84,6 +82,8 @@ Faults can also be queued from Settings > Developer.
 ```
 
 `times` defaults to 1 and must be an integer from 1 to 100. The queue holds up to 100 faults, and each `target` consumes its earliest queued fault independently. Unknown fields, targets, and kinds return `400`. `GET /__calendarpit/faults` returns `{ "faults": [...] }` with remaining counts; `DELETE` clears the queue. `/state` also includes `faults`. Faults are process-local, are not saved in fixtures or SQLite, and are cleared by reset, fixture load, or restart.
+
+You can also queue faults from **Settings → Developer** in the admin UI.
 
 For `target: "token"`, choose `admin_policy_enforced` or `invalid_grant`. The next valid refresh-token exchange consumes the fault; authorization-code exchanges do not. An injected `invalid_grant` revokes the connection and its tokens and stops its watch channels, so the refresh token remains unusable. `admin_policy_enforced` leaves the connection intact.
 
