@@ -1539,6 +1539,17 @@ input[type='time'] {
   font-size: 12.5px;
   color: var(--muted);
 }
+.queue-section {
+  display: grid;
+  gap: 10px;
+}
+.queue-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
 .state-dump-summary {
   display: flex;
   flex-wrap: wrap;

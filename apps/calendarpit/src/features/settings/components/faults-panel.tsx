@@ -25,6 +25,7 @@ export function FaultsPanel() {
   const clear = useClearFaults();
   const busy = useWorkspaceBusy();
   const [submitError, setSubmitError] = useState('');
+  const [clearError, setClearError] = useState('');
   const form = useForm({
     defaultValues: {
       target: 'token' as FaultTarget,
@@ -60,35 +61,65 @@ export function FaultsPanel() {
         <div>
           <h2 id='faults-title'>{t['settings.faultsTitle']}</h2>
           <p>{t['settings.faultsDescription']}</p>
+          <p>{t['settings.faultsEffects']}</p>
         </div>
         <Icon name='gear' />
       </header>
       <div className='panel-body'>
-        <p>{t['settings.faultsEffects']}</p>
-        {faults.isPending ? (
-          <p>{t['settings.faultsLoading']}</p>
-        ) : faults.isError ? (
-          <p role='alert' className='error-message'>
-            {serverMessage(faults.error) ?? t['settings.faultsLoadError']}
-          </p>
-        ) : faults.data.faults.length ? (
-          <ol className='settings-notes' aria-label={t['settings.faultsQueue']}>
-            {faults.data.faults.map((fault) => {
-              const base = `${fault.target}-${fault.kind}`;
-              const occurrence = (occurrences.get(base) ?? 0) + 1;
-              occurrences.set(base, occurrence);
-              return (
-                <li key={`${base}-${occurrence}`}>
-                  <strong>{targetLabels[fault.target]}</strong> ·{' '}
-                  <code>{fault.kind}</code> (HTTP {faultStatuses[fault.kind]}) ·{' '}
-                  {t['settings.faultsRemaining'](fault.times)}
-                </li>
-              );
-            })}
-          </ol>
-        ) : (
-          <p>{t['settings.faultsEmpty']}</p>
-        )}
+        <div className='queue-section'>
+          <div className='queue-head'>
+            <h3>{t['settings.faultsQueue']}</h3>
+            <ConfirmButton
+              label={t['settings.faultsClear']}
+              disabled={busy || !faults.data?.faults.length}
+              title={t['settings.faultsClearTitle']}
+              description={t['settings.faultsClearDescription']}
+              confirmLabel={t['settings.faultsClear']}
+              confirm={() => {
+                setClearError('');
+                clear
+                  .mutateAsync(undefined)
+                  .catch((error: unknown) =>
+                    setClearError(
+                      serverMessage(error) ?? t['settings.faultsClearError'],
+                    ),
+                  );
+              }}
+            />
+          </div>
+          {clearError && (
+            <p role='alert' className='error-message'>
+              {clearError}
+            </p>
+          )}
+          {faults.isPending ? (
+            <p>{t['settings.faultsLoading']}</p>
+          ) : faults.isError ? (
+            <p role='alert' className='error-message'>
+              {serverMessage(faults.error) ?? t['settings.faultsLoadError']}
+            </p>
+          ) : faults.data.faults.length ? (
+            <ol
+              className='settings-notes'
+              aria-label={t['settings.faultsQueue']}
+            >
+              {faults.data.faults.map((fault) => {
+                const base = `${fault.target}-${fault.kind}`;
+                const occurrence = (occurrences.get(base) ?? 0) + 1;
+                occurrences.set(base, occurrence);
+                return (
+                  <li key={`${base}-${occurrence}`}>
+                    <strong>{targetLabels[fault.target]}</strong> ·{' '}
+                    <code>{fault.kind}</code> (HTTP {faultStatuses[fault.kind]})
+                    · {t['settings.faultsRemaining'](fault.times)}
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <p>{t['settings.faultsEmpty']}</p>
+          )}
+        </div>
         <form
           className='stack'
           noValidate
@@ -99,7 +130,7 @@ export function FaultsPanel() {
               .handleSubmit()
               .catch((error: unknown) =>
                 setSubmitError(
-                  serverMessage(error) ?? t['settings.faultsActionError'],
+                  serverMessage(error) ?? t['settings.faultsAddError'],
                 ),
               );
           }}
@@ -188,14 +219,6 @@ export function FaultsPanel() {
                 </Button>
               )}
             </form.Subscribe>
-            <ConfirmButton
-              label={t['settings.faultsClear']}
-              disabled={busy || !faults.data?.faults.length}
-              title={t['settings.faultsClearTitle']}
-              description={t['settings.faultsClearDescription']}
-              confirmLabel={t['settings.faultsClear']}
-              confirm={() => clear.mutate(undefined)}
-            />
           </div>
         </form>
       </div>
