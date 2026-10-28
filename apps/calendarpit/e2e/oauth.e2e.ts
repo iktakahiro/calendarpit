@@ -33,7 +33,20 @@ test('consent creates a connection that the admin UI can revoke', async ({
     .filter({ hasText: 'Sam Rivera' });
   await expect(connection.getByText('calendar.readonly')).toBeVisible();
   await expect(connection.getByText('Active')).toBeVisible();
-  await connection.getByRole('button', { name: 'Revoke' }).click();
+  const revoke = connection.getByRole('button', {
+    name: "Revoke Sam Rivera's connection to sample-app",
+  });
+  await revoke.click();
+  const dialog = page.getByRole('alertdialog', {
+    name: "Revoke Sam Rivera's connection to sample-app?",
+  });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(connection.getByText('Active')).toBeVisible();
+
+  await revoke.click();
+  await dialog.getByRole('button', { name: 'Revoke connection' }).click();
   await expect(
     toast(
       page,
