@@ -67,16 +67,22 @@ describe('fault injection', () => {
         ).status,
       ).toBe(200);
       const history = await (await s.request('/__calendarpit/history')).json();
-      expect(
-        history.some((entry: { status: number }) => entry.status === status),
-      ).toBe(true);
+      expect(history.at(-2)).toMatchObject({
+        method: 'GET',
+        path: '/calendar/v3/users/me/calendarList',
+        status,
+        response: { error: { code: status, errors: [{ reason, domain }] } },
+      });
     },
   );
 
   test.each(['admin_policy_enforced', 'invalid_grant'])(
     '%s on refresh',
     async (kind) => {
-      const s = setup();
+      const revokes = kind === 'invalid_grant';
+      const s = setup({
+        deliver: async () => new Response(null, { status: 204 }),
+      });
       const tokens = await s.token();
       const refresh = () =>
         s.form('/oauth/token', {
@@ -85,6 +91,21 @@ describe('fault injection', () => {
           client_secret: 'local-sample-secret',
           refresh_token: tokens.refresh_token,
         });
+      const events = '/calendar/v3/calendars/primary/events';
+      expect(
+        (
+          await s.request(
+            `${events}/watch`,
+            'POST',
+            {
+              id: 'before-fault',
+              type: 'web_hook',
+              address: 'http://127.0.0.1:5555',
+            },
+            tokens.access_token,
+          )
+        ).status,
+      ).toBe(200);
       await s.request('/__calendarpit/faults', 'PUT', {
         target: 'token',
         kind,
@@ -93,19 +114,129 @@ describe('fault injection', () => {
       expect(response.status).toBe(400);
       expect(await response.json()).toEqual({
         error: kind,
-        error_description:
-          kind === 'invalid_grant'
-            ? 'Token has been expired or revoked.'
-            : 'The administrator has blocked access to the requested scopes.',
+        error_description: revokes
+          ? 'Token has been expired or revoked.'
+          : 'The administrator has blocked access to the requested scopes.',
       });
-      expect((await refresh()).status).toBe(
-        kind === 'invalid_grant' ? 400 : 200,
-      );
+      const state = await (await s.request('/__calendarpit/state')).json();
+      expect(
+        state.connections.map((c: { revoked: boolean }) => c.revoked),
+      ).toEqual([revokes]);
+      expect(state.channels).toHaveLength(revokes ? 0 : 1);
+      expect(
+        (await s.request(events, 'GET', undefined, tokens.access_token)).status,
+      ).toBe(revokes ? 401 : 200);
+      expect((await refresh()).status).toBe(revokes ? 400 : 200);
       expect(
         (await (await s.request('/__calendarpit/faults')).json()).faults,
       ).toEqual([]);
     },
   );
+
+  test('authorization-code exchanges do not consume a token fault', async () => {
+    const s = setup();
+    await s.request('/__calendarpit/faults', 'PUT', {
+      target: 'token',
+      kind: 'invalid_grant',
+    });
+    await s.token();
+    expect(
+      (await (await s.request('/__calendarpit/faults')).json()).faults,
+    ).toEqual([{ target: 'token', kind: 'invalid_grant', times: 1 }]);
+  });
+
+  test('different kinds for one target are consumed in queue order', async () => {
+    const s = setup();
+    const { access_token } = await s.token();
+    for (const kind of ['forbidden', 'backendError', 'forbidden'])
+      await s.request('/__calendarpit/faults', 'PUT', {
+        target: 'calendar',
+        kind,
+      });
+    const statuses = [];
+    for (let i = 0; i < 4; i++)
+      statuses.push(
+        (
+          await s.request(
+            '/calendar/v3/users/me/calendarList',
+            'GET',
+            undefined,
+            access_token,
+          )
+        ).status,
+      );
+    expect(statuses).toEqual([403, 500, 403, 200]);
+  });
+
+  test('requests with an expired or revoked token keep the fault queued', async () => {
+    let now = 1_700_000_000_000;
+    const s = setup({ now: () => now, accessTokenTtlMs: 60_000 });
+    const { access_token: expired } = await s.token();
+    now += 60_000;
+    const { access_token: revoked } = await s.token();
+    await s.form('/oauth/revoke', { token: revoked });
+    const { access_token: valid } = await s.token();
+    await s.request('/__calendarpit/faults', 'PUT', {
+      target: 'calendar',
+      kind: 'backendError',
+    });
+    const list = '/calendar/v3/users/me/calendarList';
+    for (const token of [undefined, 'not-a-token', expired, revoked])
+      expect((await s.request(list, 'GET', undefined, token)).status).toBe(401);
+    expect(
+      (await (await s.request('/__calendarpit/faults')).json()).faults,
+    ).toEqual([{ target: 'calendar', kind: 'backendError', times: 1 }]);
+    expect((await s.request(list, 'GET', undefined, valid)).status).toBe(500);
+    expect((await s.request(list, 'GET', undefined, valid)).status).toBe(200);
+  });
+
+  test('faulted requests are not counted against the rate-limit window', async () => {
+    const s = setup({ rateLimitMode: 'error-test' });
+    const { access_token } = await s.token();
+    const list = '/calendar/v3/users/me/calendarList';
+    await s.request('/__calendarpit/faults', 'PUT', {
+      target: 'calendar',
+      kind: 'backendError',
+      times: 10,
+    });
+    for (let i = 0; i < 10; i++)
+      expect(
+        (await s.request(list, 'GET', undefined, access_token)).status,
+      ).toBe(500);
+    for (let i = 0; i < 4; i++)
+      expect(
+        (await s.request(list, 'GET', undefined, access_token)).status,
+      ).toBe(200);
+    const limited = await s.request(list, 'GET', undefined, access_token);
+    expect(limited.status).toBe(403);
+    expect((await limited.json()).error.errors[0].reason).toBe(
+      'userRateLimitExceeded',
+    );
+  });
+
+  test('bounds times and the number of queued faults', async () => {
+    const s = setup();
+    const put = (body: unknown) =>
+      s.request('/__calendarpit/faults', 'PUT', body);
+    for (const times of [101, 1.5, -1, '2'])
+      expect(
+        (await put({ target: 'calendar', kind: 'backendError', times })).status,
+      ).toBe(400);
+    expect(
+      (await put({ target: 'calendar', kind: 'backendError', times: 100 }))
+        .status,
+    ).toBe(200);
+    for (let i = 1; i < 100; i++)
+      expect(
+        (await put({ target: 'token', kind: 'invalid_grant' })).status,
+      ).toBe(200);
+    const full = await put({ target: 'token', kind: 'invalid_grant' });
+    expect(full.status).toBe(400);
+    expect((await full.json()).error.message).toBe('Too many pending faults.');
+    expect(
+      (await (await s.request('/__calendarpit/faults')).json()).faults,
+    ).toHaveLength(100);
+  });
 
   test('counts multiple injections independently by target', async () => {
     const s = setup();
