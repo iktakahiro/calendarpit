@@ -27,7 +27,7 @@ must be documented and tested instead of silently accepted.
 
 ## Release work
 
-Version 0.9.5 is published through GHCR, GitHub Releases, and the Homebrew tap.
+Version 0.9.6 is published through GHCR, GitHub Releases, and the Homebrew tap.
 The release workflow validates native executables and containers before publication.
 Validate new release versions in a dry run and verify each public installation
 channel after publication. See [Releasing](releasing.md).
