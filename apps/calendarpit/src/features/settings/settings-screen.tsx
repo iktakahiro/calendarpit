@@ -11,6 +11,7 @@ import { Icon } from '../../components/icon';
 import { LanguageSwitcher, useMessages } from '../../components/language';
 import { serverMessage } from '../../lib/management-client';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
+import { FaultsPanel } from './components/faults-panel';
 import { ClientsPanel } from './components/clients-panel';
 import { useLoadFixture, useResetWorkspace } from './hooks/use-fixtures';
 import { useSetRateLimitMode } from './hooks/use-rate-limit';
@@ -127,6 +128,7 @@ export function SettingsScreen({
             </ul>
           </div>
         </section>
+        <FaultsPanel />
       </Tabs.Panel>
       <Tabs.Panel value='data' className='stack settings-panel'>
         <section className='panel' aria-labelledby='storage-title'>

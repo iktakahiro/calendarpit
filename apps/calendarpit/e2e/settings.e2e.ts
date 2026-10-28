@@ -345,3 +345,116 @@ test.describe('with a Japanese browser', () => {
     );
   });
 });
+
+test('faults can be queued and cleared from Settings', async ({ page }) => {
+  await page.goto('/settings?tab=developer');
+  await expect(page.getByText('No faults queued.')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Target' }).click();
+  await page.getByRole('option', { name: 'Calendar API' }).click();
+  await page.getByRole('combobox', { name: 'Fault kind' }).click();
+  await page
+    .getByRole('option', { name: 'rateLimitExceeded (HTTP 429)' })
+    .click();
+  await page.getByRole('spinbutton', { name: 'Count (1–100)' }).fill('2');
+  await page.getByRole('button', { name: 'Add fault' }).click();
+  await expect(page.getByRole('list', { name: 'Queued faults' })).toContainText(
+    'rateLimitExceeded (HTTP 429) · Remaining: 2',
+  );
+  await page.getByRole('button', { name: 'Clear all faults' }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Clear all faults' })
+    .click();
+  await expect(page.getByText('No faults queued.')).toBeVisible();
+});
+
+test('switching the target resets the fault kind to one the target accepts', async ({
+  page,
+}) => {
+  await page.goto('/settings?tab=developer');
+  await page.getByRole('combobox', { name: 'Target' }).click();
+  await page.getByRole('option', { name: 'Calendar API' }).click();
+  await expect(
+    page.getByRole('combobox', { name: 'Fault kind' }),
+  ).toContainText('expired_access_token (HTTP 401)');
+  const request = page.waitForRequest(
+    (candidate) =>
+      candidate.method() === 'PUT' &&
+      candidate.url().endsWith('/__calendarpit/faults'),
+  );
+  await page.getByRole('button', { name: 'Add fault' }).click();
+  expect((await request).postDataJSON()).toEqual({
+    target: 'calendar',
+    kind: 'expired_access_token',
+    times: 1,
+  });
+  await expect(page.getByRole('list', { name: 'Queued faults' })).toContainText(
+    'expired_access_token (HTTP 401) · Remaining: 1',
+  );
+});
+
+test('a fault the server rejects shows its message inline', async ({
+  page,
+}) => {
+  await page.route('**/__calendarpit/faults', (route) =>
+    route.request().method() === 'PUT'
+      ? route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            error: { message: 'Too many pending faults.' },
+          }),
+        })
+      : route.continue(),
+  );
+  await page.goto('/settings?tab=developer');
+  await page.getByRole('button', { name: 'Add fault' }).click();
+  await expect(
+    page
+      .getByRole('tabpanel', { name: 'Developer' })
+      .getByRole('alert')
+      .filter({ hasText: 'Too many pending faults.' }),
+  ).toBeVisible();
+  await expect(page.getByText('No faults queued.')).toBeVisible();
+});
+
+for (const [name, fail] of [
+  ['an empty 500 response', (route: Route) => route.fulfill({ status: 500 })],
+  ['a network failure', (route: Route) => route.abort()],
+] as const)
+  test(`${name} while clearing faults shows the localized fallback`, async ({
+    page,
+  }) => {
+    await page.goto('/settings?tab=developer');
+    await page.getByRole('button', { name: 'Add fault' }).click();
+    await expect(
+      page.getByRole('list', { name: 'Queued faults' }),
+    ).toBeVisible();
+    await page.route('**/__calendarpit/faults', (route) =>
+      route.request().method() === 'DELETE' ? fail(route) : route.continue(),
+    );
+    await page.getByRole('button', { name: 'Clear all faults' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Clear all faults' })
+      .click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Could not clear faults.' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('list', { name: 'Queued faults' }),
+    ).toBeVisible();
+  });
+
+test.describe('fault controls in Japanese', () => {
+  test.use({ locale: 'ja-JP' });
+  test('uses Japanese labels', async ({ page }) => {
+    await page.goto('/settings?tab=developer');
+    await expect(
+      page.getByRole('heading', { name: 'API 疑似エラー' }),
+    ).toBeVisible();
+    await expect(page.getByRole('combobox', { name: '対象' })).toContainText(
+      'トークン更新',
+    );
+  });
+});
