@@ -187,6 +187,31 @@ describe('watch', () => {
       expect(s.app.workspace.deliveries[0]!.failure).toBeUndefined();
     });
 
+    test('keeps an earlier HTTP status beside the last attempt failure', async () => {
+      const outcomes = [
+        () => new Response(null, { status: 503 }),
+        () => {
+          throw new TypeError('Unable to connect');
+        },
+        () => {
+          throw new DOMException('The operation timed out.', 'TimeoutError');
+        },
+      ];
+      const s = setup({
+        retryDelayMs: 1,
+        deliver: async () => outcomes.shift()!(),
+      });
+      const { access_token: t } = await s.token();
+      await watch(s, t);
+      await s.app.drain();
+      expect(s.app.workspace.deliveries[0]).toMatchObject({
+        attempts: 3,
+        status: 'failed',
+        httpStatus: 503,
+        failure: 'timeout',
+      });
+    });
+
     test('keeps no error text or credentials', async () => {
       const s = setup({
         retryDelayMs: 1,

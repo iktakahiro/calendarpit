@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { messages } from '../../../lib/messages';
-import { deliveryFailureKey } from './delivery-failure';
+import { deliveryDetail, deliveryFailureKey } from './delivery-failure';
 
 test('maps every failure reason to a message key', () => {
   expect(deliveryFailureKey('timeout')).toBe('watch.failureTimeout');
@@ -23,4 +23,35 @@ test('every mapped key has an English and a Japanese label', () => {
     expect(typeof messages.en[key!]).toBe('string');
     expect(typeof messages.ja[key!]).toBe('string');
   }
+});
+
+test('a failed delivery shows its failure reason over an earlier HTTP status', () => {
+  expect(
+    deliveryDetail({ status: 'failed', httpStatus: 503, failure: 'network' }),
+  ).toEqual({ kind: 'failure', key: 'watch.failureNetwork' });
+});
+
+test('falls back to the HTTP status without a recognized reason', () => {
+  expect(deliveryDetail({ status: 'failed', httpStatus: 500 })).toEqual({
+    kind: 'http',
+    status: 500,
+  });
+  expect(
+    deliveryDetail({
+      status: 'failed',
+      httpStatus: 500,
+      failure: 'dns' as never,
+    }),
+  ).toEqual({ kind: 'http', status: 500 });
+  expect(deliveryDetail({ status: 'delivered', httpStatus: 204 })).toEqual({
+    kind: 'http',
+    status: 204,
+  });
+});
+
+test('shows no detail for a failure without a reason or a non-failed status', () => {
+  expect(deliveryDetail({ status: 'failed' })).toBeUndefined();
+  expect(
+    deliveryDetail({ status: 'cancelled', failure: 'timeout' }),
+  ).toBeUndefined();
 });

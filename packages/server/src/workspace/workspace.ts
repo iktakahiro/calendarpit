@@ -177,10 +177,11 @@ export class Workspace {
         this.notifications = saved.notifications ?? [];
         this.rateLimitMode = readRateLimitMode(saved.rateLimitMode);
         // Deliveries never replay after a restart.
-        this.deliveries = saved.deliveries.slice(-recordLimit).map((entry) => ({
-          ...entry,
-          status: entry.status === 'queued' ? 'cancelled' : entry.status,
-        }));
+        this.deliveries = saved.deliveries.slice(-recordLimit).map((entry) => {
+          if (entry.status !== 'queued') return entry;
+          const { failure: _failure, ...rest } = entry;
+          return { ...rest, status: 'cancelled' };
+        });
         for (const channel of saved.channels)
           if (rules.canResumeChannel(channel, this))
             this.channels.set(channel.id, {
@@ -266,7 +267,10 @@ export class Workspace {
     if (this.closed) return;
     for (const channel of this.channels.values()) channel.controller.abort();
     for (const entry of this.deliveries)
-      if (entry.status === 'queued') entry.status = 'cancelled';
+      if (entry.status === 'queued') {
+        entry.status = 'cancelled';
+        delete entry.failure;
+      }
     try {
       this.persist();
     } finally {
