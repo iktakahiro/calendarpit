@@ -99,6 +99,135 @@ describe('watch', () => {
     await s.app.drain();
     expect(calls).toBe(3);
   });
+  describe('delivery failure reason', () => {
+    const watch = (
+      s: ReturnType<typeof setup>,
+      t: string,
+      address = 'http://127.0.0.1:5555/hook',
+    ) =>
+      s.request(
+        `${path}/watch`,
+        'POST',
+        { id: 'reasons', type: 'web_hook', address, token: 'channel-secret' },
+        t,
+      );
+
+    test('records a timeout and a network error', async () => {
+      for (const [error, failure] of [
+        [
+          new DOMException('The operation timed out.', 'TimeoutError'),
+          'timeout',
+        ],
+        [new TypeError('Unable to connect'), 'network'],
+      ] as const) {
+        const s = setup({
+          retryDelayMs: 1,
+          deliver: async () => {
+            throw error;
+          },
+        });
+        const { access_token: t } = await s.token();
+        await watch(s, t);
+        await s.app.drain();
+        const [delivery] = s.app.workspace.deliveries;
+        expect(delivery).toMatchObject({
+          attempts: 3,
+          status: 'failed',
+          failure,
+        });
+        expect(delivery!.httpStatus).toBeUndefined();
+      }
+    });
+
+    test('records a callback that no longer passes the allowlist', async () => {
+      let calls = 0;
+      const s = setup({
+        retryDelayMs: 1,
+        allowedWatchHosts: ['hook.test'],
+        deliver: async () => {
+          calls++;
+          return new Response(null, { status: 204 });
+        },
+      });
+      const { access_token: t } = await s.token();
+      await watch(s, t, 'http://hook.test/hook');
+      await s.app.drain();
+      expect(calls).toBe(1);
+      s.app.workspace.options.allowedWatchHosts = [];
+      await s.request(path, 'POST', timed, t);
+      await s.app.drain();
+      expect(calls).toBe(1);
+      expect(s.app.workspace.deliveries[1]).toMatchObject({
+        attempts: 3,
+        status: 'failed',
+        failure: 'callbackRejected',
+      });
+    });
+
+    test('a later HTTP response replaces the reason', async () => {
+      const outcomes = [
+        () => {
+          throw new DOMException('The operation timed out.', 'TimeoutError');
+        },
+        () => new Response(null, { status: 503 }),
+        () => new Response(null, { status: 204 }),
+      ];
+      const s = setup({
+        retryDelayMs: 1,
+        deliver: async () => outcomes.shift()!(),
+      });
+      const { access_token: t } = await s.token();
+      await watch(s, t);
+      await s.app.drain();
+      expect(s.app.workspace.deliveries[0]).toMatchObject({
+        attempts: 3,
+        status: 'delivered',
+        httpStatus: 204,
+      });
+      expect(s.app.workspace.deliveries[0]!.failure).toBeUndefined();
+    });
+
+    test('keeps no error text or credentials', async () => {
+      const s = setup({
+        retryDelayMs: 1,
+        deliver: async () => {
+          throw new TypeError('connect failed http://u:p@127.0.0.1:5555/hook');
+        },
+      });
+      const { access_token: t } = await s.token();
+      await watch(s, t);
+      await s.app.drain();
+      const text = JSON.stringify(s.app.workspace.deliveries);
+      expect(text).not.toContain('connect failed');
+      expect(text).not.toContain('channel-secret');
+      expect(text).not.toContain('5555');
+    });
+
+    test('a stopped channel ends cancelled without a reason', async () => {
+      const s = setup({
+        retryDelayMs: 1,
+        deliver: (_url, init) =>
+          new Promise((_resolve, reject) =>
+            init.signal!.addEventListener(
+              'abort',
+              () => reject(new Error('aborted')),
+              { once: true },
+            ),
+          ),
+      });
+      const { access_token: t } = await s.token();
+      const channel = await (await watch(s, t)).json();
+      await s.request(
+        '/calendar/v3/channels/stop',
+        'POST',
+        { id: channel.id, resourceId: channel.resourceId },
+        t,
+      );
+      await s.app.drain();
+      expect(s.app.workspace.deliveries[0]!.status).toBe('cancelled');
+      expect(s.app.workspace.deliveries[0]!.failure).toBeUndefined();
+    });
+  });
   test('reset aborts in-flight delivery and prevents retries and stale state', async () => {
     let calls = 0;
     let started!: () => void;

@@ -5,6 +5,7 @@ import { Table } from '@cloudflare/kumo/components/table';
 import { Icon } from '../../components/icon';
 import { useLocale, useMessages } from '../../components/language';
 import { formatTimestamp } from '../../lib/format';
+import { deliveryFailureKey } from './models/delivery-failure';
 import { deliveryStatusKey } from './models/delivery-status';
 
 const deliveryBadge = {
@@ -21,6 +22,13 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
   const statusLabel = (status: string) => {
     const key = deliveryStatusKey(status);
     return key ? t[key] : status;
+  };
+  // The HTTP status wins; the failure reason covers attempts with no response.
+  const statusDetail = (d: Snapshot['deliveries'][number]) => {
+    if (d.httpStatus) return ` · ${d.httpStatus}`;
+    const key =
+      d.status === 'failed' ? deliveryFailureKey(d.failure) : undefined;
+    return key ? ` · ${t[key]}` : '';
   };
   return (
     <div className='stack'>
@@ -117,7 +125,7 @@ export function WatchScreen({ snapshot }: { snapshot: Snapshot }) {
                       <Table.Cell>
                         <Badge variant={deliveryBadge[d.status] ?? 'secondary'}>
                           {statusLabel(d.status)}
-                          {d.httpStatus ? ` · ${d.httpStatus}` : ''}
+                          {statusDetail(d)}
                         </Badge>
                       </Table.Cell>
                     </Table.Row>

@@ -263,6 +263,35 @@ describe('SQLite persistence', () => {
     ]);
   });
 
+  test('keeps the delivery failure reason after reopening', async () => {
+    const database = file();
+    const deliver: WorkspaceOptions['deliver'] = async () => {
+      throw new TypeError('Unable to connect');
+    };
+    let current = open(database, { deliver, retryDelayMs: 1 });
+    const { access_token } = await current.authorize();
+    await current.request(
+      '/calendar/v3/calendars/primary/events/watch',
+      'POST',
+      {
+        id: 'unreachable',
+        type: 'web_hook',
+        address: 'http://127.0.0.1:5555/hook',
+      },
+      access_token,
+    );
+    await current.app.drain();
+    current.app.close();
+    current = open(database);
+    expect(current.app.workspace.deliveries[0]).toMatchObject({
+      status: 'failed',
+      failure: 'network',
+    });
+    expect(snapshot(current.app.workspace).deliveries[0]!.failure).toBe(
+      'network',
+    );
+  });
+
   test('closing cancels pending deliveries without deleting the subscription', async () => {
     const database = file();
     const first = open(database, {
@@ -290,6 +319,7 @@ describe('SQLite persistence', () => {
     const second = open(database);
     await first.app.drain();
     expect(second.app.workspace.deliveries[0]!.status).toBe('cancelled');
+    expect(second.app.workspace.deliveries[0]!.failure).toBeUndefined();
     expect(second.app.workspace.channels.size).toBe(1);
     await second.request('/__calendarpit/reset', 'POST', {});
     second.app.close();

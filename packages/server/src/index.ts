@@ -41,4 +41,4 @@ export type { Fixture } from './model/fixture';
 export type { History } from './model/history';
 export type { Notification } from './model/notification';
 export type { Client, Grant } from './model/oauth';
-export type { Delivery } from './model/watch';
+export type { Delivery, DeliveryFailure } from './model/watch';

@@ -31,6 +31,18 @@ export type Channel = {
 /** The persisted part of a {@link Channel}. */
 export type SavedChannel = Omit<Channel, 'controller' | 'tail'>;
 
+/**
+ * Why a delivery attempt got no HTTP response. Carries no error text, URL, or
+ * credentials.
+ */
+export type DeliveryFailure =
+  /** The callback did not answer within the attempt timeout. */
+  | 'timeout'
+  /** The connection failed, such as a refused connection or a DNS error. */
+  | 'network'
+  /** The callback URL no longer passes the allowed watch host list. */
+  | 'callbackRejected';
+
 /** One webhook delivery attempt record, shown in the admin UI. */
 export type Delivery = {
   id: string;
@@ -41,5 +53,11 @@ export type Delivery = {
   time: string;
   attempts: number;
   status: 'queued' | 'delivered' | 'failed' | 'cancelled';
+  /** Status of the last HTTP response, if any attempt got one. */
   httpStatus?: number;
+  /**
+   * Reason the last attempt got no response. Absent when that attempt got an
+   * HTTP response, and on a cancelled delivery.
+   */
+  failure?: DeliveryFailure;
 };
