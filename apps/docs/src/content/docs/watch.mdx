@@ -159,6 +159,8 @@ Calendarpit checks the allowlist at registration, before each delivery attempt, 
 | Ordering                  | Serialized per channel                                                        |
 | Delivery log              | Latest 200 records (`queued`, `delivered`, `failed`, `cancelled`)             |
 
+If the last attempt of a failed delivery gets no HTTP response, the record shows the reason instead of an HTTP status: a timeout (`timeout`), a connection error (`network`), or a callback URL outside the allowed host list (`callbackRejected`).
+
 ### When a channel stops
 
 A channel stops when any of the following happens. Its queued or in-flight deliveries are then marked `cancelled`.

@@ -159,6 +159,8 @@ Google Calendar と違い、Calendarpit では `http:` のコールバックを�
 | 順序                         | チャネルごとに1件ずつ順番に配信                                          |
 | 配信ログ                     | 最新200件（`queued`、`delivered`、`failed`、`cancelled`）                |
 
+失敗した配信の最後の試行で HTTP レスポンスが得られなかった場合、記録には HTTP ステータスの代わりに、タイムアウト（`timeout`）、接続エラー（`network`）、許可ホスト外のコールバック URL（`callbackRejected`）のいずれかの理由が表示されます。
+
 ### チャネルが停止する場合
 
 次のいずれかが起きると、チャネルは停止します。待機中や送信中の配信は `cancelled` になります。

@@ -147,7 +147,7 @@ See [Troubleshooting](/troubleshooting/) for common error responses and how to f
 **Watch** is a read-only view of push notifications across all calendars.
 
 - **Watch channels** lists active channels with their target calendar (or `CalendarList`), your app's callback URL, and the channel expiration time.
-- **Delivery log** lists the latest 200 webhook deliveries with the channel ID and message number, the resource state (`sync` or `exists`), the attempt count, the timestamp, and the delivery status (`queued`, `delivered`, `failed`, or `cancelled`) along with the last HTTP status your endpoint returned.
+- **Delivery log** lists the latest 200 webhook deliveries with the channel ID and message number, the resource state (`sync` or `exists`), the attempt count, the timestamp, and the delivery status (`queued`, `delivered`, `failed`, or `cancelled`) along with the last HTTP status your endpoint returned. If the last attempt of a failed delivery got no HTTP response, it shows the reason instead, such as **Timed out**.
 
 <AdminScreen
   view='watch'

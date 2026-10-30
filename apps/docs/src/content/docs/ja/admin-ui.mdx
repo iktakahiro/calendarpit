@@ -147,7 +147,7 @@ macOS では <kbd>⌘</kbd> <kbd>K</kbd>、それ以外では <kbd>Ctrl</kbd> <k
 **Watch** は、すべてのカレンダーのプッシュ通知を読み取り専用で確認する画面です。
 
 - **Watch channels** には、有効な Watch チャネルが、監視対象のカレンダー（または `CalendarList`）、アプリのコールバック URL、有効期限とともに表示されます。
-- **Delivery log** には、直近200件の Webhook 配信が記録されます。チャネル ID とメッセージ番号、リソースの状態（`sync` または `exists`）、試行回数、時刻、配信結果（`queued`、`delivered`、`failed`、`cancelled`）、およびアプリのエンドポイントが最後に返した HTTP ステータスを確認できます。
+- **Delivery log** には、直近200件の Webhook 配信が記録されます。チャネル ID とメッセージ番号、リソースの状態（`sync` または `exists`）、試行回数、時刻、配信結果（`queued`、`delivered`、`failed`、`cancelled`）、およびアプリのエンドポイントが最後に返した HTTP ステータスを確認できます。失敗した配信の最後の試行で HTTP レスポンスが得られなかった場合は、HTTP ステータスの代わりに「タイムアウト」などの理由が表示されます。
 
 <AdminScreen
   view='watch'

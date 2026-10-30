@@ -1,4 +1,5 @@
-import type { Channel, Delivery } from '../../model/watch';
+import type { Channel, Delivery, DeliveryFailure } from '../../model/watch';
+import { ApiError } from '../../shared/errors';
 import { recordLimit, type Workspace } from '../../workspace/workspace';
 import { callbackUrl } from './callback-url';
 
@@ -38,6 +39,19 @@ function retryDelay(workspace: Workspace, channel: Channel) {
   });
 }
 
+/** Classifies an attempt error without keeping its message or URL. */
+function failureReason(error: unknown): DeliveryFailure {
+  if (error instanceof ApiError) return 'callbackRejected';
+  if (error instanceof Error && error.name === 'TimeoutError') return 'timeout';
+  return 'network';
+}
+
+/** Marks a delivery cancelled; a cancelled delivery has no failure reason. */
+function cancel(entry: Delivery) {
+  entry.status = 'cancelled';
+  delete entry.failure;
+}
+
 /** Sends one notification with Google's `X-Goog-*` headers. */
 async function attempt(
   workspace: Workspace,
@@ -68,6 +82,7 @@ async function attempt(
     },
   );
   entry.httpStatus = response.status;
+  delete entry.failure;
   await response.body?.cancel();
   return response.status;
 }
@@ -77,7 +92,8 @@ async function attempt(
  *
  * Deliveries of one channel run in order. Each is tried up to three times and
  * recorded as `delivered`, `failed`, or `cancelled` when the channel stops,
- * expires, or loses its grant. Failures never record callback credentials.
+ * expires, or loses its grant. A failed delivery records why its last attempt
+ * got no response, never the error itself or callback credentials.
  *
  * @param state - `sync` for the first message of a channel, `exists` after a
  * change.
@@ -103,28 +119,25 @@ export function enqueueDelivery(
   const task = channel.tail
     .then(async () => {
       for (let i = 0; i < maxAttempts; i++) {
-        if (!active()) {
-          entry.status = 'cancelled';
-          return;
-        }
+        if (!active()) return cancel(entry);
         entry.attempts++;
         try {
           const status = await attempt(workspace, channel, entry);
-          if (!active()) {
-            entry.status = 'cancelled';
-            return;
-          }
+          if (!active()) return cancel(entry);
           if (successStatuses.includes(status)) {
             entry.status = 'delivered';
             return;
           }
-        } catch {
-          /* Failures are recorded without including callback credentials. */
+        } catch (error) {
+          // Only the reason is recorded, never the error, which may carry
+          // callback credentials.
+          entry.failure = failureReason(error);
         }
         if (i < maxAttempts - 1 && active())
           await retryDelay(workspace, channel);
       }
-      entry.status = active() ? 'failed' : 'cancelled';
+      if (active()) entry.status = 'failed';
+      else cancel(entry);
     })
     .catch(() => {
       entry.status = 'failed';
