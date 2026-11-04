@@ -9,6 +9,7 @@ import { ConfirmButton } from '../../../components/confirm-button';
 import { FieldError } from '../../../components/field-error';
 import { Icon } from '../../../components/icon';
 import { useLocale, useMessages } from '../../../components/language';
+import { useWorkspaceBusy } from '../../workspace/hooks/use-workspace-mutation';
 import { useDeleteEvent, useSaveEvent } from '../hooks/use-event-mutations';
 import { DateTimeField } from './date-time-field';
 import {
@@ -45,6 +46,7 @@ export function EventEditor({
   const [submitError, setSubmitError] = useState('');
   const save = useSaveEvent();
   const remove = useDeleteEvent();
+  const busy = useWorkspaceBusy();
   const t = useMessages();
   const locale = useLocale();
   const panel = useRef<HTMLElement>(null);
@@ -341,7 +343,7 @@ export function EventEditor({
                   <ConfirmButton
                     label={t['event.delete']}
                     icon={<Icon name='trash' />}
-                    disabled={submitting || save.isPending}
+                    disabled={submitting || save.isPending || busy}
                     loading={remove.isPending}
                     title={t['day.deleteTitle']}
                     description={t['day.deleteDescription'](

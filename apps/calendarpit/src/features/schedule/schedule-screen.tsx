@@ -162,9 +162,7 @@ export function ScheduleScreen({
               remove.mutate(
                 { calendarId: calendar.id, id: event.id },
                 {
-                  onSuccess: () => {
-                    if (editing === event.id) edit(undefined);
-                  },
+                  onSuccess: () => closeDeleted(event.id),
                 },
               )
             }
