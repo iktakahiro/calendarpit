@@ -37,6 +37,16 @@ function Schedule() {
       edit={(event, at) =>
         navigate({ search: (previous) => ({ ...previous, event, at }) })
       }
+      closeDeleted={(id) =>
+        navigate({
+          search: (previous) =>
+            previous.event === id &&
+            previous.calendar === search.calendar &&
+            previous.user === search.user
+              ? { ...previous, event: undefined, at: undefined }
+              : previous,
+        })
+      }
       showView={(view) =>
         navigate({
           search: (previous) => ({

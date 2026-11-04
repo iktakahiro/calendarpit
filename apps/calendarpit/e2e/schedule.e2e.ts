@@ -96,6 +96,136 @@ test.describe('schedule', () => {
     await expect(page.getByText('Design review (moved)')).toHaveCount(0);
   });
 
+  test('confirms deletion from the week event detail', async ({ page }) => {
+    await page.goto('/?date=2026-10-19&view=week&event=planning');
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    const dialog = page.getByRole('alertdialog', {
+      name: 'Delete this event?',
+    });
+    await editor.getByRole('button', { name: 'Delete event' }).click();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(editor).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Weekly planning/ }).first(),
+    ).toBeVisible();
+    await editor.getByRole('button', { name: 'Delete event' }).click();
+    await dialog.getByRole('button', { name: 'Delete event' }).click();
+    await expect(editor).toHaveCount(0);
+    await expect(page).not.toHaveURL(/event=/);
+    await expect(page.getByText('Weekly planning')).toHaveCount(0);
+  });
+
+  test('keeps the editor open when deletion fails', async ({ page }) => {
+    await page.goto('/?date=2026-10-19&view=week&event=planning');
+    await page.route(
+      '**/__calendarpit/calendars/alex-work/events/planning',
+      async (route) => {
+        if (route.request().method() === 'DELETE') {
+          await route.fulfill({
+            status: 500,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: { message: 'Delete failed' } }),
+          });
+        } else await route.continue();
+      },
+    );
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    await editor.getByRole('button', { name: 'Delete event' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Delete event' })
+      .click();
+    await expect(editor.getByRole('alert')).toHaveText('Delete failed');
+    await expect(
+      editor.getByRole('button', { name: 'Save event' }),
+    ).toBeEnabled();
+    await expect(
+      editor.getByRole('button', { name: 'Delete event' }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole('button', { name: /Weekly planning/ }).first(),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/event=planning/);
+  });
+
+  test('keeps another event open when a pending delete finishes', async ({
+    page,
+    request,
+  }) => {
+    const created = await request.post(
+      '/__calendarpit/calendars/alex-work/events',
+      {
+        data: {
+          id: 'other',
+          summary: 'Other event',
+          start: {
+            dateTime: '2026-10-19T13:00:00+09:00',
+            timeZone: 'Asia/Tokyo',
+          },
+          end: {
+            dateTime: '2026-10-19T14:00:00+09:00',
+            timeZone: 'Asia/Tokyo',
+          },
+        },
+      },
+    );
+    expect(created.ok()).toBe(true);
+    let releaseDelete = () => {};
+    const gate = new Promise<void>((resolve) => {
+      releaseDelete = resolve;
+    });
+    let deleteStarted = () => {};
+    const started = new Promise<void>((resolve) => {
+      deleteStarted = resolve;
+    });
+    await page.route(
+      '**/__calendarpit/calendars/alex-work/events/planning',
+      async (route) => {
+        if (route.request().method() === 'DELETE') {
+          deleteStarted();
+          await gate;
+        }
+        await route.continue();
+      },
+    );
+    await page.goto('/?date=2026-10-19&event=planning');
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    await editor.getByRole('button', { name: 'Delete event' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Delete event' })
+      .click();
+    await started;
+    await expect(
+      editor.getByRole('button', { name: 'Save event' }),
+    ).toBeDisabled();
+    await page.getByRole('button', { name: /^Other event/ }).click();
+    await expect(editor.getByLabel('Summary', { exact: true })).toHaveValue(
+      'Other event',
+    );
+    releaseDelete();
+    await expect(toast(page, 'Event deleted.')).toBeVisible();
+    await expect(page).toHaveURL(/event=other/);
+    await expect(editor.getByLabel('Summary', { exact: true })).toHaveValue(
+      'Other event',
+    );
+  });
+
+  test('closes the editor when its event is deleted from the day list', async ({
+    page,
+  }) => {
+    await page.goto('/?date=2026-10-19&event=planning');
+    const editor = page.getByRole('region', { name: 'Event editor' });
+    await expect(editor).toBeVisible();
+    await page.getByRole('button', { name: 'Delete Weekly planning' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Delete event' })
+      .click();
+    await expect(editor).toHaveCount(0);
+    await expect(page).not.toHaveURL(/event=/);
+  });
+
   test('validates the editor before saving', async ({ page }) => {
     await page.goto('/?event=new');
     const editor = page.getByRole('region', { name: 'Event editor' });

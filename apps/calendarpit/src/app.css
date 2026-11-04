@@ -1232,8 +1232,13 @@ input[type='time'] {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   padding-top: 4px;
+}
+.editor-actions .hint {
+  order: 1;
+  flex-basis: 100%;
 }
 .event-facts {
   display: grid;

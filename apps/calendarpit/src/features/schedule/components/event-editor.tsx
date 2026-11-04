@@ -9,7 +9,7 @@ import { ConfirmButton } from '../../../components/confirm-button';
 import { FieldError } from '../../../components/field-error';
 import { Icon } from '../../../components/icon';
 import { useLocale, useMessages } from '../../../components/language';
-import { useSaveEvent } from '../hooks/use-event-mutations';
+import { useDeleteEvent, useSaveEvent } from '../hooks/use-event-mutations';
 import { DateTimeField } from './date-time-field';
 import {
   eventFormValues,
@@ -29,6 +29,7 @@ export function EventEditor({
   date,
   at,
   close,
+  closeDeleted,
 }: {
   calendar: Calendar;
   /** The event to edit; `undefined` creates a new one. */
@@ -38,9 +39,12 @@ export function EventEditor({
   /** Local start a new event takes from the week grid, `YYYY-MM-DDTHH:mm`. */
   at?: string;
   close: () => void;
+  /** Closes only if the deleted event is still being edited. */
+  closeDeleted: (id: string) => void;
 }) {
   const [submitError, setSubmitError] = useState('');
   const save = useSaveEvent();
+  const remove = useDeleteEvent();
   const t = useMessages();
   const locale = useLocale();
   const panel = useRef<HTMLElement>(null);
@@ -129,7 +133,7 @@ export function EventEditor({
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          if (!removed.length) submit();
+          if (!removed.length && !remove.isPending) submit();
         }}
         onKeyDown={(e) => {
           // With the dialog trigger in place of a submit button, Enter in a
@@ -298,36 +302,71 @@ export function EventEditor({
         )}
         <div className='editor-actions'>
           <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(submitting) =>
-              removed.length ? (
-                <ConfirmButton
-                  variant='primary'
-                  loading={submitting}
-                  triggerRef={saveTrigger}
-                  label={t['event.save']}
-                  title={t['event.removesTitle']}
-                  description={t['event.removesDescription'](removedNames)}
-                  confirmLabel={t['event.removesConfirm']}
-                  beforeOpen={() => {
-                    // Invalid values show their field errors, as a plain save
-                    // would, and keep the dialog closed.
-                    if (!validateEventForm(form.state.values, t)) return true;
-                    submit();
-                    return false;
-                  }}
-                  confirm={submit}
-                />
-              ) : (
-                <Button type='submit' variant='primary' loading={submitting}>
-                  {t['event.save']}
-                </Button>
-              )
-            }
+            {(submitting) => (
+              <>
+                {removed.length ? (
+                  <ConfirmButton
+                    variant='primary'
+                    loading={submitting}
+                    disabled={remove.isPending}
+                    triggerRef={saveTrigger}
+                    label={t['event.save']}
+                    title={t['event.removesTitle']}
+                    description={t['event.removesDescription'](removedNames)}
+                    confirmLabel={t['event.removesConfirm']}
+                    beforeOpen={() => {
+                      // Invalid values show their field errors, as a plain save
+                      // would, and keep the dialog closed.
+                      if (!validateEventForm(form.state.values, t)) return true;
+                      submit();
+                      return false;
+                    }}
+                    confirm={submit}
+                  />
+                ) : (
+                  <Button
+                    type='submit'
+                    variant='primary'
+                    loading={submitting}
+                    disabled={remove.isPending}
+                  >
+                    {t['event.save']}
+                  </Button>
+                )}
+                <span className='hint'>
+                  <kbd>Esc</kbd>
+                  {t['event.escToClose']}
+                </span>
+                {event && (
+                  <ConfirmButton
+                    label={t['event.delete']}
+                    icon={<Icon name='trash' />}
+                    disabled={submitting || save.isPending}
+                    loading={remove.isPending}
+                    title={t['day.deleteTitle']}
+                    description={t['day.deleteDescription'](
+                      event.summary || event.id,
+                      calendar.summary,
+                    )}
+                    confirmLabel={t['day.deleteConfirm']}
+                    confirm={() => {
+                      setSubmitError('');
+                      remove
+                        .mutateAsync({ calendarId: calendar.id, id: event.id })
+                        .then(() => closeDeleted(event.id))
+                        .catch((error: unknown) =>
+                          setSubmitError(
+                            error instanceof Error
+                              ? error.message
+                              : t['event.deleteFailed'],
+                          ),
+                        );
+                    }}
+                  />
+                )}
+              </>
+            )}
           </form.Subscribe>
-          <span className='hint'>
-            <kbd>Esc</kbd>
-            {t['event.escToClose']}
-          </span>
         </div>
         {event && (
           <dl className='event-facts'>
