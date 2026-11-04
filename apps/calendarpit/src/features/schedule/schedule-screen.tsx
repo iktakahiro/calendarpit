@@ -27,6 +27,7 @@ export function ScheduleScreen({
   view,
   showDate,
   edit,
+  closeDeleted,
   showView,
   openUsers,
   openCalendars,
@@ -44,6 +45,8 @@ export function ScheduleScreen({
   showDate: (date: string) => void;
   /** Opens the editor for an event ID or `new`, or closes it. */
   edit: (event?: string, at?: string) => void;
+  /** Closes the editor only if it still shows the deleted event. */
+  closeDeleted: (id: string) => void;
   /** Switches between the day track and the week grid. */
   showView: (view: 'day' | 'week') => void;
   /** Opens the Users screen, where test users are created. */
@@ -198,6 +201,7 @@ export function ScheduleScreen({
             date={date}
             at={editing === 'new' ? at : undefined}
             close={() => edit(undefined)}
+            closeDeleted={closeDeleted}
           />
         )}
       </div>

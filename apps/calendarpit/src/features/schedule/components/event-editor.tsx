@@ -29,6 +29,7 @@ export function EventEditor({
   date,
   at,
   close,
+  closeDeleted,
 }: {
   calendar: Calendar;
   /** The event to edit; `undefined` creates a new one. */
@@ -38,6 +39,8 @@ export function EventEditor({
   /** Local start a new event takes from the week grid, `YYYY-MM-DDTHH:mm`. */
   at?: string;
   close: () => void;
+  /** Closes only if the deleted event is still being edited. */
+  closeDeleted: (id: string) => void;
 }) {
   const [submitError, setSubmitError] = useState('');
   const save = useSaveEvent();
@@ -330,15 +333,13 @@ export function EventEditor({
                     {t['event.save']}
                   </Button>
                 )}
-                {!event && (
-                  <span className='hint'>
-                    <kbd>Esc</kbd>
-                    {t['event.escToClose']}
-                  </span>
-                )}
+                <span className='hint'>
+                  <kbd>Esc</kbd>
+                  {t['event.escToClose']}
+                </span>
                 {event && (
                   <ConfirmButton
-                    label={t['day.deleteConfirm']}
+                    label={t['event.delete']}
                     icon={<Icon name='trash' />}
                     disabled={submitting || save.isPending}
                     loading={remove.isPending}
@@ -352,7 +353,7 @@ export function EventEditor({
                       setSubmitError('');
                       remove
                         .mutateAsync({ calendarId: calendar.id, id: event.id })
-                        .then(() => close())
+                        .then(() => closeDeleted(event.id))
                         .catch((error: unknown) =>
                           setSubmitError(
                             error instanceof Error
