@@ -58,13 +58,13 @@ export function useRailNavigation(section: SectionId) {
     const buttonObserver = new ResizeObserver(updateOverflow);
     for (const button of nav.querySelectorAll('button'))
       buttonObserver.observe(button);
-    let active = true;
+    const controller = new AbortController();
     // Web fonts can widen the labels after the first reveal.
     void document.fonts?.ready.then(() => {
-      if (active) revealActive();
+      if (!controller.signal.aborted) revealActive();
     });
     return () => {
-      active = false;
+      controller.abort();
       unsubscribe();
       stripObserver.disconnect();
       buttonObserver.disconnect();
