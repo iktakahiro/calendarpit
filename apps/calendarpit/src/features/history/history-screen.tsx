@@ -8,7 +8,9 @@ import { Icon } from '../../components/icon';
 import { useLocale, useMessages } from '../../components/language';
 import { formatClock, formatTimestamp } from '../../lib/format';
 import { useWorkspaceBusy } from '../workspace/hooks/use-workspace-mutation';
+import { CopyButton } from './components/copy-button';
 import { Payload } from './components/payload';
+import { buildCurl } from './models/curl';
 import { useClearHistory, useHistory } from './hooks/use-history';
 import {
   area,
@@ -178,6 +180,14 @@ export function HistoryScreen() {
                 </Collapsible.Trigger>
                 <Collapsible.Panel>
                   <div className='history-detail'>
+                    <div className='history-actions'>
+                      <CopyButton
+                        label={t['history.copyCurl']}
+                        text={() => buildCurl(row, window.location.origin)}
+                      >
+                        {t['history.copyCurl']}
+                      </CopyButton>
+                    </div>
                     <Payload
                       title={t['history.request']}
                       copyLabel={t['history.copyRequest']}

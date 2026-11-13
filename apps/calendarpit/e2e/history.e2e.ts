@@ -217,3 +217,15 @@ test('clearing history asks first and is unavailable when empty', async ({
   await expect(page.getByText('Waiting for your app.')).toBeVisible();
   await expect(clear).toBeDisabled();
 });
+
+test('offers a cURL command for an expanded request', async ({
+  page,
+  request,
+}) => {
+  await recordTraffic(request);
+  await page.goto('/history');
+  await rows(page).first().getByRole('button').click();
+  await expect(
+    rows(page).first().getByRole('button', { name: 'Copy as cURL' }),
+  ).toBeEnabled();
+});
