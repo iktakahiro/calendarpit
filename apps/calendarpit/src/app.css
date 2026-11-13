@@ -1792,6 +1792,9 @@ pre {
   gap: 14px;
   padding: 14px 16px 16px;
 }
+.history-actions {
+  grid-column: 1 / -1;
+}
 .payload {
   min-width: 0;
 }
