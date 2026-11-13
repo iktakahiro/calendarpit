@@ -221,11 +221,17 @@ test('clearing history asks first and is unavailable when empty', async ({
 test('offers a cURL command for an expanded request', async ({
   page,
   request,
+  context,
 }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await recordTraffic(request);
   await page.goto('/history');
   await rows(page).first().getByRole('button').click();
-  await expect(
-    rows(page).first().getByRole('button', { name: 'Copy as cURL' }),
-  ).toBeEnabled();
+  const copy = rows(page).first().getByRole('button', { name: 'Copy as cURL' });
+  await expect(copy).toBeEnabled();
+  await copy.click();
+  await expect(copy).toHaveText('Copied');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
+    'curl --globoff',
+  );
 });

@@ -31,10 +31,15 @@ export function buildCurl(row: History, origin: string): string {
     ...hopByHop,
     ...connection.split(',').map((name) => name.trim().toLowerCase()),
   ]);
-  const args = ['curl', '-X', quote(row.method), quote(origin + row.path)];
+  const args = [
+    'curl',
+    '--globoff',
+    ...(row.method === 'HEAD' ? ['--head'] : ['-X', quote(row.method)]),
+    quote(origin + row.path),
+  ];
   for (const [key, value] of headers) {
     if (!omitted.has(key.toLowerCase()))
-      args.push('-H', quote(`${key}: ${value}`));
+      args.push('-H', quote(value === '' ? `${key};` : `${key}: ${value}`));
   }
   if (
     row.request !== null &&
