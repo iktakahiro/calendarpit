@@ -9,12 +9,12 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@googleapis/calendar": "20.1.0",
+    "@googleapis/calendar": "20.2.0",
     "google-auth-library": "11.3.4"
   },
   "devDependencies": {
     "@calendarpit/server": "workspace:*",
     "@calendarpit/typescript-config": "workspace:*",
-    "@types/bun": "1.4.4"
+    "@types/bun": "1.4.5"
   }
 }
