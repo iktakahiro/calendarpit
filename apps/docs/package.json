@@ -14,12 +14,12 @@
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.46",
-    "@tanstack/react-start": "1.169.5",
+    "@tanstack/react-start": "1.169.7",
     "fumadocs-core": "16.17.8",
     "fumadocs-mdx": "15.4.10",
     "fumadocs-ui": "16.17.8",
-    "lucide-react": "1.72.0",
-    "motion": "14.6.0",
+    "lucide-react": "1.77.0",
+    "motion": "14.14.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "zod": "4.6.7"
@@ -33,6 +33,6 @@
     "@vitejs/plugin-react": "6.3.0",
     "tailwindcss": "4.3.5",
     "vite": "8.3.8",
-    "wrangler": "4.152.0"
+    "wrangler": "4.166.0"
   }
 }
