@@ -14,6 +14,29 @@ const timed = {
 };
 
 describe('incremental sync', () => {
+  test.each([
+    ['pageToken', 'invalidPageToken'],
+    ['syncToken', 'fullSyncRequired'],
+  ])(
+    'rejects an empty %s instead of returning a successful list',
+    async (name, reason) => {
+      const s = await apiClient();
+      const result = await s.api(`${path}?${name}=`, 'GET', undefined, 410);
+      expect(result.error.errors[0].reason).toBe(reason);
+    },
+  );
+
+  test('invalid page sizes do not issue new sync tokens', async () => {
+    const s = await apiClient();
+    const initial = await s.api(path);
+    for (const query of ['', `&syncToken=${initial.nextSyncToken}`]) {
+      await s.api(`${path}?maxResults=0${query}`, 'GET', undefined, 400);
+      expect([...s.app.workspace.syncTokens.keys()]).toEqual([
+        initial.nextSyncToken,
+      ]);
+    }
+  });
+
   test('frozen pagination does not lose writes; updates and tombstones are delivered once', async () => {
     const s = await apiClient();
     await s.api(path, 'POST', timed);
