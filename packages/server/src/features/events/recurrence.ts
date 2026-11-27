@@ -13,6 +13,11 @@ const maxSpan = 366 * 100 * day;
 const limit = 10000;
 const compact = (value: string) =>
   value.replace(/[-:]/g, '').replace(/\.\d+/, '');
+function recurrenceZone(event: CalendarEvent, calendar: Calendar) {
+  return event.start.date
+    ? calendar.timeZone
+    : (event.start.timeZone ?? calendar.timeZone);
+}
 /**
  * Converts an instant to a "floating" Date whose UTC fields equal the local
  * wall-clock time in `tz`. rrule computes in wall-clock time this way.
@@ -43,7 +48,7 @@ function localDate(value: string, allDay: boolean): Temporal.PlainDateTime {
  * rejected rather than approximated.
  */
 function schedule(event: CalendarEvent, calendar: Calendar): RRuleSet {
-  const tz = event.start.timeZone ?? calendar.timeZone;
+  const tz = recurrenceZone(event, calendar);
   if (!event.start.date && !event.start.timeZone)
     fail('Recurring timed events require start.timeZone.');
   const start = wall(timeValue(event.start, calendar.timeZone), tz);
@@ -203,7 +208,6 @@ function instance(
   date: Date,
   calendar: Calendar,
 ): CalendarEvent {
-  const tz = event.start.timeZone ?? calendar.timeZone;
   const local = Temporal.PlainDateTime.from(date.toISOString().slice(0, -1));
   let start: EventTime;
   let end: EventTime;
@@ -214,6 +218,7 @@ function instance(
     start = { date: local.toPlainDate().toString() };
     end = { date: local.toPlainDate().add({ days }).toString() };
   } else {
+    const tz = recurrenceZone(event, calendar);
     const zoned = local.toZonedDateTime(tz);
     if (!zoned.toPlainDateTime().equals(local))
       fail(
@@ -263,7 +268,7 @@ export function instances(
 ): CalendarEvent[] {
   const set = schedule(event, calendar);
   const [a, b] = interval(event, calendar);
-  const tz = event.start.timeZone ?? calendar.timeZone;
+  const tz = recurrenceZone(event, calendar);
   const lower = Number.isFinite(min)
     ? Math.max(a - day, min - (b - a) - day)
     : a - day;
