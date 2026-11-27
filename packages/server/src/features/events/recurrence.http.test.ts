@@ -84,24 +84,33 @@ describe('recurring events', () => {
     );
     expect(cancelled.items[0].status).toBe('cancelled');
   });
-  test('all-day RRULE, RDATE and EXDATE preserve local dates', async () => {
-    const s = await apiClient();
-    await s.api(path, 'POST', {
-      ...timed,
-      id: 'all-day',
-      start: { date: '2026-10-01', dateTime: null, timeZone: null },
-      end: { date: '2026-10-02', dateTime: null, timeZone: null },
-      recurrence: [
-        'RRULE:FREQ=DAILY;UNTIL=20261003',
-        'EXDATE;VALUE=DATE:20261002',
-        'RDATE;VALUE=DATE:20261005',
-      ],
-    });
-    const list = await s.api(`${path}/all-day/instances`);
-    expect(
-      list.items.map((e: { start: { date: string } }) => e.start.date),
-    ).toEqual(['2026-10-01', '2026-10-03', '2026-10-05']);
-  });
+  test.each([null, 'America/Los_Angeles'])(
+    'all-day RRULE, RDATE and EXDATE preserve calendar dates with timeZone %p',
+    async (timeZone) => {
+      const s = await apiClient();
+      await s.api(path, 'POST', {
+        ...timed,
+        id: 'all-day',
+        start: { date: '2026-10-01', dateTime: null, timeZone },
+        end: { date: '2026-10-02', dateTime: null, timeZone },
+        recurrence: [
+          'RRULE:FREQ=DAILY;UNTIL=20261003',
+          'EXDATE;VALUE=DATE:20261002',
+          'RDATE;VALUE=DATE:20261005',
+        ],
+      });
+      const list = await s.api(`${path}/all-day/instances`);
+      expect(
+        list.items.map((e: { start: { date: string } }) => e.start.date),
+      ).toEqual(['2026-10-01', '2026-10-03', '2026-10-05']);
+      const bounded = await s.api(
+        `${path}/all-day/instances?timeMin=2026-10-02T15:00:00Z&timeMax=2026-10-03T15:00:00Z`,
+      );
+      expect(bounded.items.map((e: { id: string }) => e.id)).toEqual([
+        'all-day_20261003',
+      ]);
+    },
+  );
   test('unbounded expansion fails explicitly without a window and accepts a bounded window', async () => {
     const s = await apiClient();
     await s.api(path, 'POST', {
