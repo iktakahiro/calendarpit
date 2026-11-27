@@ -33,7 +33,7 @@ export function eventPage(
   const key = keyUrl.pathname + keyUrl.search;
   const pageToken = url.searchParams.get('pageToken');
   let offset = 0;
-  if (pageToken) {
+  if (pageToken !== null) {
     const page = workspace.eventPages.get(pageToken);
     if (!page || page.key !== key || page.expires <= workspace.now())
       fail('Invalid or expired page token.', 410, 'invalidPageToken');

@@ -80,7 +80,7 @@ function listEvents(
     fail('Invalid orderBy.');
   if (order === 'startTime' && !single)
     fail('startTime ordering requires singleEvents=true.');
-  if (syncToken) {
+  if (syncToken !== null) {
     if (instanceList) fail('instances does not support syncToken.');
     if (url.searchParams.get('showDeleted') === 'false')
       fail('Incremental synchronization must include deleted events.');
@@ -88,9 +88,17 @@ function listEvents(
       if (url.searchParams.has(key))
         fail(`${key} cannot be combined with syncToken.`);
   }
-  const state = syncToken
-    ? readSync(workspace, syncToken, calendar, caller.userId, single, timeZone)
-    : undefined;
+  const state =
+    syncToken !== null
+      ? readSync(
+          workspace,
+          syncToken,
+          calendar,
+          caller.userId,
+          single,
+          timeZone,
+        )
+      : undefined;
   const min =
     state?.min ??
     (url.searchParams.has('timeMin')
@@ -105,6 +113,7 @@ function listEvents(
   const updatedMin = url.searchParams.has('updatedMin')
     ? instant(url.searchParams.get('updatedMin'))
     : undefined;
+  const size = maxResults(url);
   const source = calendarEvents(workspace, calendar.id);
   let rows: CalendarEvent[] = [];
   let nextSyncToken: string | undefined;
@@ -156,7 +165,7 @@ function listEvents(
   const page = eventPage(
     workspace,
     url,
-    maxResults(url),
+    size,
     caller.userId,
     rows,
     nextSyncToken,
